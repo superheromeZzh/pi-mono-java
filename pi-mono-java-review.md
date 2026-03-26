@@ -168,7 +168,7 @@ pi-coding-agent (Spring Boot 应用)
 | CA-012 | Glob Tool | 中 | 文件模式搜索 |
 | CA-013 | Tool Operations 接口 | 中 | 可插拔 I/O 操作层（本地/远程/SSH） |
 
-### Phase 7: AgentSession + 运行模式（pi-coding-agent）
+### Phase 7: AgentSession + 运行模式 + Skill 系统（pi-coding-agent）
 
 | ID | 需求 | 复杂度 | 说明 |
 |----|------|--------|------|
@@ -176,6 +176,7 @@ pi-coding-agent (Spring Boot 应用)
 | CA-015 | 交互模式 | 大 | TUI 集成、实时流式输出、工具调用 UI 渲染 |
 | CA-016 | One-shot 模式 | 中 | 单次 prompt → 执行 → 输出结果 |
 | CA-017 | 会话持久化 | 中 | JSONL 格式导入/导出消息历史 |
+| CA-018 | Skill 系统 | 大 | Skill 定义（SKILL.md + YAML frontmatter）、目录扫描加载、Registry、/skill:name 命令展开、系统提示集成 |
 
 ### Phase 8: 集成测试
 
@@ -193,7 +194,6 @@ pi-coding-agent (Spring Boot 应用)
 | AI-019 | Mistral Provider | 非核心 Provider |
 | AI-020 | GitHub Copilot Provider | 非核心 Provider |
 | AI-021 | GitHub Copilot OAuth | 依赖 AI-020 |
-| CA-018 | Skill 系统 | 非 MVP |
 | CA-019 | Extension Loader/Runner | 非 MVP |
 | TU-008 | 虚拟滚动 | 性能优化，非 MVP |
 | TU-009 | 可访问性 | 非 MVP |
@@ -210,7 +210,7 @@ pi-coding-agent (Spring Boot 应用)
 | **4** | Agent Core (AC-001~008) | 类型定义可并行 | 代理运行时 |
 | **5** | TUI 核心 (TU-001~007) | 部分可并行 | 终端 UI |
 | **6** | CLI + 内置工具 (CA-001~013) | 工具可并行 | 编码工具链 |
-| **7** | AgentSession + 运行模式 (CA-014~017) | | 完整应用 |
+| **7** | AgentSession + 运行模式 + Skill (CA-014~018) | | 完整应用 |
 | **8** | 集成测试 (IT-001~003) | 可并行 | 质量保障 |
 
 ---
