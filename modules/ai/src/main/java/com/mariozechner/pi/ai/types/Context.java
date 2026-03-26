@@ -1,0 +1,20 @@
+package com.mariozechner.pi.ai.types;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
+import jakarta.annotation.Nullable;
+
+import java.util.List;
+
+/**
+ * The full context supplied to an LLM for a single turn of conversation.
+ *
+ * @param systemPrompt optional system-level instructions
+ * @param messages     the conversation history
+ * @param tools        optional list of tools available for the LLM to invoke
+ */
+public record Context(
+    @JsonProperty("systemPrompt") @Nullable String systemPrompt,
+    @JsonProperty("messages") List<Message> messages,
+    @JsonProperty("tools") @Nullable List<Tool> tools
+) {
+}
