@@ -5,6 +5,7 @@ import com.mariozechner.pi.codingagent.context.ContextFileLoader.ContextFile;
 import com.mariozechner.pi.codingagent.skill.SkillPromptFormatter;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
@@ -57,14 +58,11 @@ public class SystemPromptBuilder {
             }
         }
 
-        // 2. Tool descriptions
+        // 2. Tool descriptions (one-line snippets, matching pi-mono TS)
         if (!config.tools().isEmpty()) {
-            sb.append("\n\n# Tools\n\n");
+            sb.append("\n\nAvailable tools:\n");
             for (AgentTool tool : config.tools()) {
-                sb.append("## ").append(tool.name()).append("\n\n");
-                sb.append(tool.description()).append("\n\n");
-                sb.append("Parameters:\n");
-                sb.append(tool.parameters().toPrettyString()).append("\n");
+                sb.append("- ").append(tool.name()).append(": ").append(tool.description()).append('\n');
             }
         }
 
@@ -138,6 +136,7 @@ public class SystemPromptBuilder {
     }
 
     private void appendEnvironmentInfo(StringBuilder sb, SystemPromptConfig config) {
+        sb.append("- Current date: ").append(LocalDate.now()).append('\n');
         sb.append("- Working directory: ").append(config.cwd()).append('\n');
 
         String os = config.env().getOrDefault("OS_NAME", System.getProperty("os.name", "unknown"));

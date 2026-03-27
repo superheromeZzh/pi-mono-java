@@ -79,10 +79,8 @@ class SystemPromptBuilderTest {
 
             String result = builder.build(config);
 
-            assertTrue(result.contains("# Tools"));
-            assertTrue(result.contains("## bash"));
-            assertTrue(result.contains("Execute bash commands"));
-            assertTrue(result.contains("Parameters:"));
+            assertTrue(result.contains("Available tools:"));
+            assertTrue(result.contains("- bash: Execute bash commands"));
         }
 
         @Test
@@ -96,14 +94,14 @@ class SystemPromptBuilderTest {
 
             String result = builder.build(config);
 
-            assertTrue(result.contains("## read"));
-            assertTrue(result.contains("## write"));
+            assertTrue(result.contains("- read: Read file contents"));
+            assertTrue(result.contains("- write: Write file contents"));
         }
 
         @Test
         void noToolSectionWhenEmpty() {
             String result = builder.build(minimalConfig());
-            assertFalse(result.contains("# Tools"));
+            assertFalse(result.contains("Available tools:"));
         }
     }
 
@@ -286,12 +284,14 @@ class SystemPromptBuilderTest {
             String result = builder.build(config);
 
             // Verify section ordering: base -> tools -> skills -> env -> custom
-            int baseIdx = result.indexOf("interactive agent");
-            int toolsIdx = result.indexOf("# Tools");
+            int baseIdx = result.indexOf("coding agent");
+            int toolsIdx = result.indexOf("Available tools:");
             int skillsIdx = result.indexOf("# Skills");
             int envIdx = result.indexOf("# Environment");
             int customIdx = result.indexOf("# User Instructions");
 
+            assertTrue(baseIdx >= 0, "base prompt not found");
+            assertTrue(toolsIdx >= 0, "tools section not found");
             assertTrue(baseIdx < toolsIdx);
             assertTrue(toolsIdx < skillsIdx);
             assertTrue(skillsIdx < envIdx);

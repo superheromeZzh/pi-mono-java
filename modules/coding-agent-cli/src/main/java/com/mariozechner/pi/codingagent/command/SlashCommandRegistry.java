@@ -19,7 +19,8 @@ public class SlashCommandRegistry {
         return Collections.unmodifiableCollection(commands.values());
     }
 
-    /** Parse and execute a slash command string like "/model gpt-4o". */
+    /** Parse and execute a slash command string like "/model gpt-4o".
+     *  Returns false if no matching registered command is found. */
     public boolean execute(String input, SlashCommandContext context) {
         if (!input.startsWith("/")) return false;
         String stripped = input.substring(1).trim();
@@ -28,8 +29,7 @@ public class SlashCommandRegistry {
         String args = spaceIdx >= 0 ? stripped.substring(spaceIdx + 1).trim() : "";
         var cmd = commands.get(name);
         if (cmd == null) {
-            context.output().println("Unknown command: /" + name + ". Type /help for available commands.");
-            return true;
+            return false;
         }
         cmd.execute(context, args);
         return true;

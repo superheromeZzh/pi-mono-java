@@ -266,8 +266,8 @@ public class InteractiveMode {
                 bashMode = false;
                 editorContainer.setBorderColor(EditorContainer.CYAN);
 
-                // Slash commands
-                if (trimmed.startsWith("/")) {
+                // Slash commands — skip if it's a /skill: invocation or prompt template
+                if (trimmed.startsWith("/") && !isSkillOrTemplate(trimmed, session)) {
                     if (handleSlashCommand(trimmed, session)) {
                         tui.render();
                         continue;
@@ -475,6 +475,23 @@ public class InteractiveMode {
     private static String truncateDisplay(String s, int max) {
         if (s.length() <= max) return s;
         return s.substring(0, max - 3) + "...";
+    }
+
+    /**
+     * Checks if the input is a /skill:name invocation or a prompt template command,
+     * both of which should be sent to AgentSession.prompt() for expansion instead
+     * of being processed as slash commands.
+     */
+    private boolean isSkillOrTemplate(String input, AgentSession session) {
+        if (input.startsWith("/skill:")) return true;
+
+        // Check if it matches a prompt template name
+        int spaceIdx = input.indexOf(' ');
+        String name = spaceIdx >= 0 ? input.substring(1, spaceIdx) : input.substring(1);
+        for (PromptTemplateEntry template : session.getPromptTemplates()) {
+            if (template.name().equals(name)) return true;
+        }
+        return false;
     }
 
     /**
