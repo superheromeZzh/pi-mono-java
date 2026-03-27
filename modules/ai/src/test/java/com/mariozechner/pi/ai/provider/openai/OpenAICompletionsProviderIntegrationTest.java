@@ -36,7 +36,7 @@ class OpenAICompletionsProviderIntegrationTest {
                 baseUrl, false,
                 List.of(InputModality.TEXT, InputModality.IMAGE),
                 new ModelCost(2.5, 10.0, 1.25, 0.0),
-                128000, 16384, null
+                128000, 16384, null, null
         );
     }
 
@@ -88,7 +88,7 @@ class OpenAICompletionsProviderIntegrationTest {
             var eventStream = new AssistantMessageEventStream();
 
             provider.executeStream(model, context, "test-api-key",
-                    null, null, eventStream);
+                    null, null, null, eventStream);
 
             var events = collectEvents(eventStream);
             var finalMsg = eventStream.result().block();
@@ -127,7 +127,7 @@ class OpenAICompletionsProviderIntegrationTest {
             var eventStream = new AssistantMessageEventStream();
 
             provider.executeStream(model, context, "test-api-key",
-                    4096, 0.5, eventStream);
+                    4096, 0.5, null, eventStream);
 
             eventStream.result().block();
 
@@ -170,7 +170,7 @@ class OpenAICompletionsProviderIntegrationTest {
             var eventStream = new AssistantMessageEventStream();
 
             provider.executeStream(model, context, "test-api-key",
-                    null, null, eventStream);
+                    null, null, null, eventStream);
 
             var events = collectEvents(eventStream);
             var finalMsg = eventStream.result().block();
@@ -218,7 +218,7 @@ class OpenAICompletionsProviderIntegrationTest {
             var eventStream = new AssistantMessageEventStream();
 
             provider.executeStream(model, context, "test-api-key",
-                    null, null, eventStream);
+                    null, null, null, eventStream);
 
             var finalMsg = eventStream.result().block();
 
@@ -254,7 +254,7 @@ class OpenAICompletionsProviderIntegrationTest {
             var eventStream = new AssistantMessageEventStream();
 
             provider.executeStream(model, context, "test-api-key",
-                    null, null, eventStream);
+                    null, null, null, eventStream);
 
             assertThrows(Exception.class, () -> eventStream.result().block());
         }
@@ -267,7 +267,7 @@ class OpenAICompletionsProviderIntegrationTest {
             var eventStream = new AssistantMessageEventStream();
 
             provider.executeStream(model, context, null,
-                    null, null, eventStream);
+                    null, null, null, eventStream);
 
             assertThrows(Exception.class, () -> eventStream.result().block());
         }
@@ -299,7 +299,7 @@ class OpenAICompletionsProviderIntegrationTest {
             var eventStream = new AssistantMessageEventStream();
 
             provider.executeStream(model, context, "test-api-key",
-                    null, null, eventStream);
+                    null, null, null, eventStream);
 
             var finalMsg = eventStream.result().block();
 
@@ -326,7 +326,7 @@ class OpenAICompletionsProviderIntegrationTest {
             var eventStream = new AssistantMessageEventStream();
 
             provider.executeStream(model, context, "test-api-key",
-                    null, null, eventStream);
+                    null, null, null, eventStream);
 
             var finalMsg = eventStream.result().block();
 

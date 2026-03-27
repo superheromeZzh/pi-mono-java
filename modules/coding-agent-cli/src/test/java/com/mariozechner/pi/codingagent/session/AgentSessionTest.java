@@ -62,7 +62,7 @@ class AgentSessionTest {
                 "https://api.anthropic.com", true,
                 List.of(InputModality.TEXT, InputModality.IMAGE),
                 new ModelCost(3.0, 15.0, 0.3, 3.75),
-                200000, 16000, null
+                200000, 16000, null, null
         ));
         modelRegistry.register(new Model(
                 "gpt-4o", "GPT-4o",
@@ -70,7 +70,7 @@ class AgentSessionTest {
                 "https://api.openai.com", false,
                 List.of(InputModality.TEXT, InputModality.IMAGE),
                 new ModelCost(2.5, 10.0, 1.25, 2.5),
-                128000, 16384, null
+                128000, 16384, null, null
         ));
 
         skillLoader = new SkillLoader();

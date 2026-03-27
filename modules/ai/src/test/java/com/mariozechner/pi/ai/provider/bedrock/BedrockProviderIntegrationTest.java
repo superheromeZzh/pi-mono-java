@@ -59,7 +59,7 @@ class BedrockProviderIntegrationTest {
                 null, false,
                 List.of(InputModality.TEXT, InputModality.IMAGE),
                 new ModelCost(3.0, 15.0, 0.3, 3.75),
-                200000, 8192, null
+                200000, 8192, null, null
         );
     }
 

@@ -66,6 +66,18 @@ public class AnthropicProvider implements ApiProvider {
     private static final ObjectMapper MAPPER = new ObjectMapper();
     private static final String ENV_API_KEY = "ANTHROPIC_API_KEY";
 
+    /** Resolve API key based on the model's provider. */
+    private static String resolveApiKeyForProvider(Model model) {
+        String providerKey = switch (model.provider()) {
+            case KIMI_CODING -> System.getenv("KIMI_API_KEY");
+            case MINIMAX -> System.getenv("MINIMAX_API_KEY");
+            case MINIMAX_CN -> System.getenv("MINIMAX_CN_API_KEY");
+            default -> null;
+        };
+        if (providerKey != null && !providerKey.isBlank()) return providerKey;
+        return System.getenv(ENV_API_KEY);
+    }
+
     @Override
     public Api getApi() {
         return Api.ANTHROPIC_MESSAGES;
@@ -123,10 +135,16 @@ public class AnthropicProvider implements ApiProvider {
             @Nullable ThinkingBudgets thinkingBudgets,
             AssistantMessageEventStream eventStream) {
 
-        String resolvedApiKey = apiKey != null ? apiKey : System.getenv(ENV_API_KEY);
+        String resolvedApiKey = apiKey != null ? apiKey : resolveApiKeyForProvider(model);
         if (resolvedApiKey == null || resolvedApiKey.isBlank()) {
+            String envHint = switch (model.provider()) {
+                case KIMI_CODING -> "KIMI_API_KEY";
+                case MINIMAX -> "MINIMAX_API_KEY";
+                case MINIMAX_CN -> "MINIMAX_CN_API_KEY";
+                default -> "ANTHROPIC_API_KEY";
+            };
             eventStream.error(new IllegalStateException(
-                    "Anthropic API key not found. Set ANTHROPIC_API_KEY or pass via StreamOptions."));
+                    "API key not found for " + model.provider().value() + ". Set " + envHint + " or pass via StreamOptions."));
             return;
         }
 

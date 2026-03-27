@@ -26,7 +26,7 @@ class AnthropicProviderTest {
                 "https://api.anthropic.com", true,
                 List.of(InputModality.TEXT, InputModality.IMAGE),
                 new ModelCost(3.0, 15.0, 0.3, 3.75),
-                200000, 16000, null
+                200000, 16000, null, null
         );
     }
 

@@ -20,6 +20,7 @@ import java.util.Map;
  * @param contextWindow   maximum context window size in tokens
  * @param maxTokens       maximum output tokens per response
  * @param headers         optional custom HTTP headers for API calls
+ * @param thinkingFormat  optional thinking format identifier (e.g. "zai")
  */
 public record Model(
     @JsonProperty("id") String id,
@@ -32,6 +33,7 @@ public record Model(
     @JsonProperty("cost") ModelCost cost,
     @JsonProperty("contextWindow") int contextWindow,
     @JsonProperty("maxTokens") int maxTokens,
-    @JsonProperty("headers") @Nullable Map<String, String> headers
+    @JsonProperty("headers") @Nullable Map<String, String> headers,
+    @JsonProperty("thinkingFormat") @Nullable String thinkingFormat
 ) {
 }

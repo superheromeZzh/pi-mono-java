@@ -26,7 +26,7 @@ class OpenAICompletionsProviderTest {
                 "https://api.openai.com/v1", false,
                 List.of(InputModality.TEXT, InputModality.IMAGE),
                 new ModelCost(2.5, 10.0, 1.25, 0.0),
-                128000, 16384, null
+                128000, 16384, null, null
         );
     }
 
@@ -295,7 +295,7 @@ class OpenAICompletionsProviderTest {
                     List.of(new UserMessage("Hello", 1L)), null);
 
             var params = provider.buildParams(
-                    testModel(), context, null, null);
+                    testModel(), context, null, null, null);
 
             assertNotNull(params);
         }
@@ -306,7 +306,7 @@ class OpenAICompletionsProviderTest {
                     List.of(new UserMessage("Hello", 1L)), null);
 
             var params = provider.buildParams(
-                    testModel(), context, 4096, null);
+                    testModel(), context, 4096, null, null);
 
             assertNotNull(params);
         }
@@ -318,7 +318,7 @@ class OpenAICompletionsProviderTest {
                     List.of(new UserMessage("Hello", 1L)), null);
 
             var params = provider.buildParams(
-                    testModel(), context, null, null);
+                    testModel(), context, null, null, null);
             assertNotNull(params);
         }
 
@@ -328,7 +328,7 @@ class OpenAICompletionsProviderTest {
                     List.of(new UserMessage("Hello", 1L)), null);
 
             var params = provider.buildParams(
-                    testModel(), context, null, 0.7);
+                    testModel(), context, null, 0.7, null);
 
             assertNotNull(params);
         }
@@ -341,7 +341,7 @@ class OpenAICompletionsProviderTest {
                     List.of(new UserMessage("Hello", 1L)), tools);
 
             var params = provider.buildParams(
-                    testModel(), context, null, null);
+                    testModel(), context, null, null, null);
 
             assertNotNull(params);
         }
@@ -362,7 +362,7 @@ class OpenAICompletionsProviderTest {
 
             // executeStream with null apiKey and no env var
             provider.executeStream(testModel(), context,
-                    null, null, null, eventStream);
+                    null, null, null, null, eventStream);
 
             // The stream should have an error
             assertThrows(Exception.class, () -> eventStream.result().block());

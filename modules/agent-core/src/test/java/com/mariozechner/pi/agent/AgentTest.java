@@ -194,6 +194,7 @@ class AgentTest {
             new ModelCost(1.0, 2.0, 0.5, 0.25),
             200_000,
             4_096,
+            null,
             null
         );
     }

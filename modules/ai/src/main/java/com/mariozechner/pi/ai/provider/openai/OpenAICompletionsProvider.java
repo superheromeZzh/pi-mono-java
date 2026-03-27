@@ -42,6 +42,7 @@ import com.mariozechner.pi.ai.types.StopReason;
 import com.mariozechner.pi.ai.types.StreamOptions;
 import com.mariozechner.pi.ai.types.TextContent;
 import com.mariozechner.pi.ai.types.ThinkingContent;
+import com.mariozechner.pi.ai.types.ThinkingLevel;
 import com.mariozechner.pi.ai.types.Tool;
 import com.mariozechner.pi.ai.types.ToolCall;
 import com.mariozechner.pi.ai.types.ToolResultMessage;
@@ -68,6 +69,23 @@ public class OpenAICompletionsProvider implements ApiProvider {
     private static final ObjectMapper MAPPER = new ObjectMapper();
     private static final String ENV_API_KEY = "OPENAI_API_KEY";
 
+    /** Resolve API key based on the model's provider. */
+    private static String resolveApiKeyForProvider(Model model) {
+        // Check provider-specific env var first
+        String providerKey = switch (model.provider()) {
+            case ZAI -> System.getenv("ZAI_API_KEY");
+            case XAI -> System.getenv("XAI_API_KEY");
+            case GROQ -> System.getenv("GROQ_API_KEY");
+            case CEREBRAS -> System.getenv("CEREBRAS_API_KEY");
+            case OPENROUTER -> System.getenv("OPENROUTER_API_KEY");
+            case HUGGINGFACE -> System.getenv("HF_TOKEN");
+            default -> null;
+        };
+        if (providerKey != null && !providerKey.isBlank()) return providerKey;
+        // Fallback to OPENAI_API_KEY
+        return System.getenv(ENV_API_KEY);
+    }
+
     @Override
     public Api getApi() {
         return Api.OPENAI_COMPLETIONS;
@@ -79,7 +97,8 @@ public class OpenAICompletionsProvider implements ApiProvider {
         return doStream(model, context,
                 options != null ? options.apiKey() : null,
                 options != null ? options.maxTokens() : null,
-                options != null ? options.temperature() : null);
+                options != null ? options.temperature() : null,
+                null);
     }
 
     @Override
@@ -88,20 +107,22 @@ public class OpenAICompletionsProvider implements ApiProvider {
         return doStream(model, context,
                 options != null ? options.apiKey() : null,
                 options != null ? options.maxTokens() : null,
-                options != null ? options.temperature() : null);
+                options != null ? options.temperature() : null,
+                options != null ? options.reasoning() : null);
     }
 
     private AssistantMessageEventStream doStream(
             Model model, Context context,
             @Nullable String apiKey,
             @Nullable Integer maxTokens,
-            @Nullable Double temperature) {
+            @Nullable Double temperature,
+            @Nullable ThinkingLevel reasoning) {
 
         var eventStream = new AssistantMessageEventStream();
 
         Thread.ofVirtual().start(() -> {
             try {
-                executeStream(model, context, apiKey, maxTokens, temperature, eventStream);
+                executeStream(model, context, apiKey, maxTokens, temperature, reasoning, eventStream);
             } catch (Exception e) {
                 eventStream.error(e);
             }
@@ -115,19 +136,29 @@ public class OpenAICompletionsProvider implements ApiProvider {
             @Nullable String apiKey,
             @Nullable Integer maxTokens,
             @Nullable Double temperature,
+            @Nullable ThinkingLevel reasoning,
             AssistantMessageEventStream eventStream) {
 
-        String resolvedApiKey = apiKey != null ? apiKey : System.getenv(ENV_API_KEY);
+        String resolvedApiKey = apiKey != null ? apiKey : resolveApiKeyForProvider(model);
         if (resolvedApiKey == null || resolvedApiKey.isBlank()) {
+            String envHint = switch (model.provider()) {
+                case ZAI -> "ZAI_API_KEY";
+                case XAI -> "XAI_API_KEY";
+                case GROQ -> "GROQ_API_KEY";
+                case CEREBRAS -> "CEREBRAS_API_KEY";
+                case OPENROUTER -> "OPENROUTER_API_KEY";
+                case HUGGINGFACE -> "HF_TOKEN";
+                default -> "OPENAI_API_KEY";
+            };
             eventStream.error(new IllegalStateException(
-                    "OpenAI API key not found. Set OPENAI_API_KEY or pass via StreamOptions."));
+                    "API key not found for " + model.provider().value() + ". Set " + envHint + " or pass via StreamOptions."));
             return;
         }
 
         OpenAIClient client = buildClient(resolvedApiKey, model.baseUrl());
 
         try {
-            ChatCompletionCreateParams params = buildParams(model, context, maxTokens, temperature);
+            ChatCompletionCreateParams params = buildParams(model, context, maxTokens, temperature, reasoning);
             processStream(client, params, model, eventStream);
         } catch (Exception e) {
             eventStream.error(e);
@@ -145,7 +176,8 @@ public class OpenAICompletionsProvider implements ApiProvider {
     ChatCompletionCreateParams buildParams(
             Model model, Context context,
             @Nullable Integer maxTokens,
-            @Nullable Double temperature) {
+            @Nullable Double temperature,
+            @Nullable ThinkingLevel reasoning) {
 
         int resolvedMaxTokens = maxTokens != null ? maxTokens
                 : Math.min(model.maxTokens(), 32000);
@@ -173,6 +205,13 @@ public class OpenAICompletionsProvider implements ApiProvider {
         // Temperature
         if (temperature != null) {
             builder.temperature(temperature);
+        }
+
+        // ZAI thinking support
+        if ("zai".equals(model.thinkingFormat()) && model.reasoning()
+                && reasoning != null && reasoning != ThinkingLevel.OFF) {
+            builder.putAdditionalBodyProperty("enable_thinking",
+                    com.openai.core.JsonValue.from(true));
         }
 
         return builder.build();

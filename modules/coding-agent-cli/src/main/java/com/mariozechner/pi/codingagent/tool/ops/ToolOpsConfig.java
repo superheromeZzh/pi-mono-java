@@ -27,6 +27,11 @@ public class ToolOpsConfig {
     }
 
     @Bean
+    public LsOperations lsOperations() {
+        return new LocalLsOperations();
+    }
+
+    @Bean
     public FileMutationQueue fileMutationQueue() {
         return new FileMutationQueue();
     }

@@ -1,11 +1,13 @@
 package com.mariozechner.pi.codingagent.session;
 
 import com.mariozechner.pi.agent.Agent;
+import com.mariozechner.pi.agent.event.AgentEventListener;
 import com.mariozechner.pi.ai.PiAiService;
 import com.mariozechner.pi.ai.model.ModelRegistry;
 import com.mariozechner.pi.ai.types.Message;
 import com.mariozechner.pi.ai.types.Model;
 import com.mariozechner.pi.ai.types.Provider;
+import com.mariozechner.pi.ai.types.UserMessage;
 import com.mariozechner.pi.agent.tool.AgentTool;
 import com.mariozechner.pi.codingagent.prompt.SystemPromptBuilder;
 import com.mariozechner.pi.codingagent.prompt.SystemPromptConfig;
@@ -162,6 +164,77 @@ public class AgentSession {
      */
     public boolean isInitialized() {
         return initialized;
+    }
+
+    /**
+     * Subscribes to agent events. Delegates to the underlying {@link Agent}.
+     *
+     * @param listener the event listener
+     * @return a runnable that removes the listener when called
+     * @throws IllegalStateException if the session is not initialized
+     */
+    public Runnable subscribe(AgentEventListener listener) {
+        requireInitialized();
+        return agent.subscribe(listener);
+    }
+
+    /**
+     * Steers the running agent with an additional user message.
+     *
+     * @param message the steering message text
+     * @throws IllegalStateException if the session is not initialized
+     */
+    public void steer(String message) {
+        requireInitialized();
+        Objects.requireNonNull(message, "message");
+        agent.steer(new UserMessage(message, System.currentTimeMillis()));
+    }
+
+    /**
+     * Returns the current model ID, or {@code "unknown"} if no model is set.
+     *
+     * @throws IllegalStateException if the session is not initialized
+     */
+    public String getModelId() {
+        requireInitialized();
+        var model = agent.getState().getModel();
+        return model != null ? model.id() : "unknown";
+    }
+
+    /**
+     * Returns whether the agent is currently streaming a response.
+     *
+     * @throws IllegalStateException if the session is not initialized
+     */
+    public boolean isStreaming() {
+        requireInitialized();
+        return agent.getState().isStreaming();
+    }
+
+    /**
+     * Changes the model used by the agent. Resolves the model ID via the
+     * registry and updates the underlying agent.
+     *
+     * @param modelId the model identifier to switch to
+     * @throws IllegalStateException    if the session is not initialized
+     * @throws IllegalArgumentException if the model cannot be resolved
+     */
+    public void setModel(String modelId) {
+        requireInitialized();
+        Objects.requireNonNull(modelId, "modelId");
+        Model model = resolveModel(modelId);
+        agent.setModel(model);
+    }
+
+    /**
+     * Resets the agent state to start a fresh conversation while keeping the
+     * same session configuration (model, tools, system prompt).
+     *
+     * @throws IllegalStateException if the session is not initialized
+     */
+    public void newSession() {
+        requireInitialized();
+        agent.clearMessages();
     }
 
     // -- package-private for testing --

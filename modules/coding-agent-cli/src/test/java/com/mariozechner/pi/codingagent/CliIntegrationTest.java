@@ -77,7 +77,7 @@ class CliIntegrationTest {
                 "https://api.anthropic.com", true,
                 List.of(InputModality.TEXT, InputModality.IMAGE),
                 new ModelCost(3.0, 15.0, 0.3, 3.75),
-                200_000, 16_000, null
+                200_000, 16_000, null, null
         ));
         piAiService = new PiAiService(providerRegistry, modelRegistry);
         promptBuilder = new SystemPromptBuilder();

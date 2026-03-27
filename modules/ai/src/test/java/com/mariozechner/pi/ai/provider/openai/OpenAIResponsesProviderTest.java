@@ -27,7 +27,7 @@ class OpenAIResponsesProviderTest {
                 "https://api.openai.com/v1", false,
                 List.of(InputModality.TEXT, InputModality.IMAGE),
                 new ModelCost(2.5, 10.0, 1.25, 0.0),
-                128000, 16384, null
+                128000, 16384, null, null
         );
     }
 
@@ -38,7 +38,7 @@ class OpenAIResponsesProviderTest {
                 "https://api.openai.com/v1", true,
                 List.of(InputModality.TEXT, InputModality.IMAGE),
                 new ModelCost(2.0, 8.0, 0.5, 0.0),
-                200000, 100000, null
+                200000, 100000, null, null
         );
     }
 

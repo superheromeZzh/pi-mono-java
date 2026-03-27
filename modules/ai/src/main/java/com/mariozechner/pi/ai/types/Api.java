@@ -16,7 +16,8 @@ public enum Api {
     GOOGLE_VERTEX("google-vertex"),
     MISTRAL_CONVERSATIONS("mistral-conversations"),
     AZURE_OPENAI_RESPONSES("azure-openai-responses"),
-    OPENAI_CODEX_RESPONSES("openai-codex-responses");
+    OPENAI_CODEX_RESPONSES("openai-codex-responses"),
+    GOOGLE_GEMINI_CLI("google-gemini-cli");
 
     private final String value;
 

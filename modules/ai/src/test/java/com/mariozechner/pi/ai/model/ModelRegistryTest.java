@@ -25,7 +25,7 @@ class ModelRegistryTest {
             "https://api.anthropic.com", false,
             List.of(InputModality.TEXT),
             new ModelCost(3.0, 15.0, 0.3, 3.75),
-            200000, 8192, null
+            200000, 8192, null, null
         );
     }
 
@@ -36,7 +36,7 @@ class ModelRegistryTest {
             "https://api.openai.com", false,
             List.of(InputModality.TEXT, InputModality.IMAGE),
             new ModelCost(2.5, 10.0, 1.25, 2.5),
-            128000, 16384, null
+            128000, 16384, null, null
         );
     }
 
@@ -258,9 +258,13 @@ class ModelRegistryTest {
         @Test
         void builtInProviderCount() {
             var providers = registry.getProviders();
-            assertEquals(2, providers.size());
+            assertEquals(6, providers.size());
             assertTrue(providers.contains(Provider.ANTHROPIC));
             assertTrue(providers.contains(Provider.OPENAI));
+            assertTrue(providers.contains(Provider.ZAI));
+            assertTrue(providers.contains(Provider.KIMI_CODING));
+            assertTrue(providers.contains(Provider.MINIMAX));
+            assertTrue(providers.contains(Provider.MINIMAX_CN));
         }
 
         @Test
@@ -271,6 +275,26 @@ class ModelRegistryTest {
         @Test
         void openaiModelCount() {
             assertEquals(4, registry.getModels(Provider.OPENAI).size());
+        }
+
+        @Test
+        void zaiModelCount() {
+            assertEquals(10, registry.getModels(Provider.ZAI).size());
+        }
+
+        @Test
+        void kimiCodingModelCount() {
+            assertEquals(2, registry.getModels(Provider.KIMI_CODING).size());
+        }
+
+        @Test
+        void minimaxModelCount() {
+            assertEquals(2, registry.getModels(Provider.MINIMAX).size());
+        }
+
+        @Test
+        void minimaxCnModelCount() {
+            assertEquals(2, registry.getModels(Provider.MINIMAX_CN).size());
         }
     }
 }

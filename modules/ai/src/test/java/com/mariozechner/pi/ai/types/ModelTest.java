@@ -163,7 +163,7 @@ class ModelTest {
                 "https://api.anthropic.com", true,
                 List.of(InputModality.TEXT, InputModality.IMAGE),
                 new ModelCost(15.0, 75.0, 1.5, 18.75),
-                200000, 32000, null
+                200000, 32000, null, null
             );
         }
 
@@ -190,7 +190,8 @@ class ModelTest {
                 List.of(InputModality.TEXT, InputModality.IMAGE),
                 new ModelCost(2.5, 10.0, 0.0, 0.0),
                 128000, 16384,
-                Map.of("X-Custom", "value")
+                Map.of("X-Custom", "value"),
+                null
             );
             assertNotNull(model.headers());
             assertEquals("value", model.headers().get("X-Custom"));

@@ -15,7 +15,21 @@ public enum Provider {
     MISTRAL("mistral"),
     AMAZON_BEDROCK("amazon-bedrock"),
     AZURE_OPENAI("azure-openai-responses"),
-    OPENAI_CODEX("openai-codex");
+    OPENAI_CODEX("openai-codex"),
+    ZAI("zai"),
+    KIMI_CODING("kimi-coding"),
+    MINIMAX("minimax"),
+    MINIMAX_CN("minimax-cn"),
+    GITHUB_COPILOT("github-copilot"),
+    XAI("xai"),
+    GROQ("groq"),
+    CEREBRAS("cerebras"),
+    OPENROUTER("openrouter"),
+    VERCEL_AI_GATEWAY("vercel-ai-gateway"),
+    HUGGINGFACE("huggingface"),
+    GOOGLE_GEMINI_CLI("google-gemini-cli"),
+    GOOGLE_ANTIGRAVITY("google-antigravity"),
+    OPENCODE("opencode");
 
     private final String value;
 
