@@ -23,6 +23,7 @@ import com.mariozechner.pi.ai.types.Context;
 import com.mariozechner.pi.ai.types.Message;
 import com.mariozechner.pi.ai.types.Model;
 import com.mariozechner.pi.ai.types.SimpleStreamOptions;
+import com.mariozechner.pi.ai.types.StopReason;
 import com.mariozechner.pi.ai.types.Tool;
 import com.mariozechner.pi.ai.types.ToolCall;
 import com.mariozechner.pi.ai.types.ToolResultMessage;
@@ -110,6 +111,13 @@ public class AgentLoop {
                 context.appendMessage(assistantMessage);
                 context.setAssistantMessage(assistantMessage);
                 eventListener.onEvent(new MessageEndEvent(assistantMessage));
+
+                // Stop on error or aborted stop reasons
+                if (assistantMessage.stopReason() == StopReason.ERROR
+                        || assistantMessage.stopReason() == StopReason.ABORTED) {
+                    eventListener.onEvent(new TurnEndEvent(assistantMessage, List.of()));
+                    break;
+                }
 
                 var toolCalls = extractToolCalls(assistantMessage);
                 if (!toolCalls.isEmpty()) {

@@ -1,5 +1,7 @@
 package com.mariozechner.pi.codingagent.mode;
 
+import com.mariozechner.pi.agent.event.*;
+import com.mariozechner.pi.ai.stream.AssistantMessageEvent;
 import com.mariozechner.pi.ai.types.AssistantMessage;
 import com.mariozechner.pi.ai.types.ContentBlock;
 import com.mariozechner.pi.ai.types.Message;
@@ -8,13 +10,12 @@ import com.mariozechner.pi.ai.types.TextContent;
 import com.mariozechner.pi.codingagent.session.AgentSession;
 
 import java.io.PrintStream;
-import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 
 /**
- * Executes a single prompt against the agent session, prints the assistant's
- * text output to stdout, and returns an exit code.
+ * Executes a single prompt against the agent session with streaming output.
+ * Text deltas are printed to stdout as they arrive for responsive UX.
  *
  * <p>Exit codes:
  * <ul>
@@ -37,8 +38,8 @@ public class OneShotMode {
     }
 
     /**
-     * Sends the prompt to the session, waits for completion, prints the
-     * assistant's text response to stdout, and returns an exit code.
+     * Sends the prompt to the session, streams text output to stdout as it
+     * arrives, and returns an exit code.
      *
      * @param session an initialized {@link AgentSession}
      * @param prompt  the user prompt to execute
@@ -48,55 +49,62 @@ public class OneShotMode {
         Objects.requireNonNull(session, "session");
         Objects.requireNonNull(prompt, "prompt");
 
+        // Subscribe for streaming output
+        var hasOutput = new boolean[]{false};
+        Runnable unsub = session.subscribe(event -> {
+            if (event instanceof MessageUpdateEvent e) {
+                if (e.assistantMessageEvent() instanceof AssistantMessageEvent.TextDeltaEvent delta) {
+                    out.print(delta.delta());
+                    out.flush();
+                    hasOutput[0] = true;
+                }
+            }
+        });
+
         CompletableFuture<Void> future = session.prompt(prompt);
 
         try {
             future.join();
         } catch (Exception e) {
             String error = session.getAgent().getState().getError();
-            err.println("Error: " + (error != null ? error : e.getMessage()));
+            err.println("\nError: " + (error != null ? error : e.getMessage()));
             return 1;
+        } finally {
+            unsub.run();
         }
 
-        // Check for error state even if the future completed normally
+        // Check for error state
         String error = session.getAgent().getState().getError();
         if (error != null) {
-            err.println("Error: " + error);
+            err.println("\nError: " + error);
             return 1;
         }
 
-        List<Message> history = session.getHistory();
-        AssistantMessage lastAssistant = findLastAssistantMessage(history);
-
-        if (lastAssistant == null) {
-            return 0;
-        }
-
-        if (lastAssistant.stopReason() == StopReason.ERROR) {
-            String errorMsg = lastAssistant.errorMessage();
-            err.println("Error: " + (errorMsg != null ? errorMsg : "agent stopped with error"));
-            return 1;
-        }
-
-        printAssistantText(lastAssistant);
-        return 0;
-    }
-
-    private AssistantMessage findLastAssistantMessage(List<Message> history) {
+        // Check stop reason and print fallback if streaming didn't capture output
+        var history = session.getHistory();
         for (int i = history.size() - 1; i >= 0; i--) {
             if (history.get(i) instanceof AssistantMessage am) {
-                return am;
+                if (am.stopReason() == StopReason.ERROR) {
+                    String errorMsg = am.errorMessage();
+                    err.println("\nError: " + (errorMsg != null ? errorMsg : "agent stopped with error"));
+                    return 1;
+                }
+                // Fallback: if streaming didn't produce output, print text from final message
+                if (!hasOutput[0]) {
+                    for (ContentBlock block : am.content()) {
+                        if (block instanceof TextContent text) {
+                            out.print(text.text());
+                            hasOutput[0] = true;
+                        }
+                    }
+                }
+                break;
             }
         }
-        return null;
-    }
 
-    private void printAssistantText(AssistantMessage message) {
-        for (ContentBlock block : message.content()) {
-            if (block instanceof TextContent text) {
-                out.print(text.text());
-            }
+        if (hasOutput[0]) {
+            out.println();
         }
-        out.println();
+        return 0;
     }
 }

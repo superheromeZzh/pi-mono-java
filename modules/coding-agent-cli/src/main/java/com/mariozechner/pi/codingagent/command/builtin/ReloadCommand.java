@@ -20,18 +20,14 @@ public class ReloadCommand implements SlashCommand {
 
     @Override
     public void execute(SlashCommandContext context, String arguments) {
-        // Reload skills from disk
         var session = context.session();
-        var cwd = System.getProperty("user.dir");
-        // Skills are loaded from user and project directories
-        // Re-initialization would require rebuilding the system prompt
-        context.output().println("Reloading skills and settings...");
+        context.output().println("Reloading skills, templates, and system prompt...");
         try {
-            var skillRegistry = session.getSkillRegistry();
-            skillRegistry.clear();
-            // Note: full reload would require re-building system prompt
-            // For now, clear and report
-            context.output().println("Skills cleared. Restart session for full reload.");
+            session.reload();
+            int skillCount = session.getSkillRegistry().getAll().size();
+            int templateCount = session.getPromptTemplates().size();
+            context.output().println("Reloaded: " + skillCount + " skill(s), "
+                    + templateCount + " template(s). System prompt rebuilt.");
         } catch (Exception e) {
             context.output().println("Reload failed: " + e.getMessage());
         }

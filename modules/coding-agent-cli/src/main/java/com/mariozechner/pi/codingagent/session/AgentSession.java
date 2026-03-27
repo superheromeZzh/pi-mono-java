@@ -270,15 +270,40 @@ public class AgentSession {
     }
 
     /**
-     * Reloads skills and prompt templates from disk.
-     * Useful for the /reload command.
+     * Reloads skills, prompt templates, context files, and rebuilds the system prompt.
+     * Called by the /reload command.
+     *
+     * @param customPrompt the user-supplied custom prompt (may be null)
      */
-    public void reload() {
+    public void reload(String customPrompt) {
         requireInitialized();
-        var model = agent.getState().getModel();
         Path cwd = Path.of(System.getProperty("user.dir"));
+
+        // Reload skills
         loadSkills(cwd);
+
+        // Reload prompt templates
         promptTemplates = promptTemplateLoader.load(cwd, USER_AGENT_DIR);
+
+        // Reload context files and rebuild system prompt
+        List<ContextFile> contextFiles = contextFileLoader.loadProjectContextFiles(cwd, USER_AGENT_DIR);
+        String systemPromptOverride = contextFileLoader.loadSystemPrompt(cwd, USER_AGENT_DIR);
+        String appendSystemPrompt = contextFileLoader.loadAppendSystemPrompt(cwd, USER_AGENT_DIR);
+
+        List<Skill> visibleSkills = skillRegistry.getVisibleSkills();
+        Map<String, String> env = buildEnvironmentMap();
+
+        SystemPromptConfig promptConfig = new SystemPromptConfig(
+                tools, visibleSkills, cwd, customPrompt, env,
+                contextFiles, systemPromptOverride, appendSystemPrompt
+        );
+        String systemPrompt = promptBuilder.build(promptConfig);
+        agent.setSystemPrompt(systemPrompt);
+    }
+
+    /** Overload for backward compatibility. */
+    public void reload() {
+        reload(null);
     }
 
     /**

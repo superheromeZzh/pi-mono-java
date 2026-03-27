@@ -49,6 +49,7 @@ class OneShotModeTest {
 
         when(session.getAgent()).thenReturn(agent);
         when(agent.getState()).thenReturn(state);
+        when(session.subscribe(any())).thenReturn(() -> {});
     }
 
     private String stdout() {
