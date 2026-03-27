@@ -24,6 +24,7 @@ import com.mariozechner.pi.tui.component.Text;
 import com.mariozechner.pi.tui.terminal.Terminal;
 
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.*;
@@ -313,9 +314,12 @@ public class InteractiveMode {
                     continue;
                 }
 
+                // Expand @file references before sending
+                String expandedInput = expandFileReferences(trimmed);
+
                 // Execute prompt
                 executingPrompt.set(true);
-                executePrompt(session, trimmed, abortedFlag);
+                executePrompt(session, expandedInput, abortedFlag);
                 executingPrompt.set(false);
 
                 // Auto-compaction check after prompt completes
@@ -492,6 +496,39 @@ public class InteractiveMode {
     private static String truncateDisplay(String s, int max) {
         if (s.length() <= max) return s;
         return s.substring(0, max - 3) + "...";
+    }
+
+    /**
+     * Expands @file references in the input text. Each @filepath token is replaced
+     * with the file's content. Matches pi-mono TS @file behavior.
+     */
+    static String expandFileReferences(String input) {
+        if (input == null || !input.contains("@")) return input;
+
+        var sb = new StringBuilder();
+        var tokens = input.split("\\s+");
+        boolean first = true;
+        for (String token : tokens) {
+            if (!first) sb.append(' ');
+            first = false;
+
+            if (token.startsWith("@") && token.length() > 1) {
+                String filePath = token.substring(1);
+                Path path = Path.of(filePath);
+                if (Files.isRegularFile(path)) {
+                    try {
+                        sb.append(Files.readString(path));
+                    } catch (IOException e) {
+                        sb.append("[Error reading ").append(filePath).append(": ").append(e.getMessage()).append("]");
+                    }
+                } else {
+                    sb.append(token); // Not a valid file, keep as-is
+                }
+            } else {
+                sb.append(token);
+            }
+        }
+        return sb.toString();
     }
 
     /**

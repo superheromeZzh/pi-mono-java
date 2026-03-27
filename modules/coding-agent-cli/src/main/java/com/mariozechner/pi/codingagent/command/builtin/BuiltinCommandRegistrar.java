@@ -39,5 +39,6 @@ public class BuiltinCommandRegistrar {
         registry.register(new SessionCommand());
         registry.register(new NameCommand());
         registry.register(new ReloadCommand());
+        registry.register(new DebugCommand());
     }
 }
