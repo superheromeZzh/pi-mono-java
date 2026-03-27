@@ -24,9 +24,30 @@ public class HelpCommand implements SlashCommand {
 
     @Override
     public void execute(SlashCommandContext context, String arguments) {
-        context.output().println("Available commands:");
+        var out = context.output();
+        out.println("Available commands:");
         for (SlashCommand cmd : registry.getAll()) {
-            context.output().println("  /" + cmd.name() + " - " + cmd.description());
+            out.println("  /" + cmd.name() + " - " + cmd.description());
+        }
+
+        // Skills
+        var skills = context.session().getSkillRegistry().getAll();
+        if (!skills.isEmpty()) {
+            out.println("");
+            out.println("Skills (invoke with /skill:<name>):");
+            for (var skill : skills) {
+                out.println("  /skill:" + skill.name() + " - " + skill.description());
+            }
+        }
+
+        // Prompt templates
+        var templates = context.session().getPromptTemplates();
+        if (!templates.isEmpty()) {
+            out.println("");
+            out.println("Prompt templates:");
+            for (var t : templates) {
+                out.println("  /" + t.name() + " - " + t.description());
+            }
         }
     }
 }

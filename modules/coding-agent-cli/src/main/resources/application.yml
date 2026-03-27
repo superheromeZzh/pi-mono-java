@@ -8,5 +8,7 @@ spring:
 
 logging:
   level:
-    root: INFO
-    com.mariozechner.pi: DEBUG
+    root: WARN
+    com.mariozechner.pi: WARN
+    org.springframework: WARN
+    io.netty: ERROR
