@@ -124,7 +124,9 @@ public class OpenAIResponsesProvider implements ApiProvider {
             @Nullable Double temperature,
             AssistantMessageEventStream eventStream) {
 
-        String resolvedApiKey = apiKey != null ? apiKey : System.getenv(ENV_API_KEY);
+        String resolvedApiKey = apiKey != null ? apiKey
+                : (model.apiKey() != null && !model.apiKey().isBlank()) ? model.apiKey()
+                : System.getenv(ENV_API_KEY);
         if (resolvedApiKey == null || resolvedApiKey.isBlank()) {
             eventStream.error(new IllegalStateException(
                     "OpenAI API key not found. Set OPENAI_API_KEY or pass via StreamOptions."));

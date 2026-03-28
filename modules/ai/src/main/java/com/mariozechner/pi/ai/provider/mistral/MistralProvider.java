@@ -269,6 +269,7 @@ public class MistralProvider implements ApiProvider {
 
     private String resolveApiKey(Model model, @Nullable SimpleStreamOptions options) {
         if (options != null && options.apiKey() != null) return options.apiKey();
+        if (model.apiKey() != null && !model.apiKey().isBlank()) return model.apiKey();
         return System.getenv(ENV_API_KEY);
     }
 

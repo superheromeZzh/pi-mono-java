@@ -36,7 +36,8 @@ class OpenAIResponsesProviderIntegrationTest {
                 baseUrl, false,
                 List.of(InputModality.TEXT, InputModality.IMAGE),
                 new ModelCost(2.5, 10.0, 1.25, 0.0),
-                128000, 16384, null, null
+                128000, 16384, null, null,
+                null
         );
     }
 

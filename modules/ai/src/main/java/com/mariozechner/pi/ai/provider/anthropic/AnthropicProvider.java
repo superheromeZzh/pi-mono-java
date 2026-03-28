@@ -68,6 +68,8 @@ public class AnthropicProvider implements ApiProvider {
 
     /** Resolve API key based on the model's provider. */
     private static String resolveApiKeyForProvider(Model model) {
+        // Check model-embedded API key first (for custom models)
+        if (model.apiKey() != null && !model.apiKey().isBlank()) return model.apiKey();
         String providerKey = switch (model.provider()) {
             case KIMI_CODING -> System.getenv("KIMI_API_KEY");
             case MINIMAX -> System.getenv("MINIMAX_API_KEY");

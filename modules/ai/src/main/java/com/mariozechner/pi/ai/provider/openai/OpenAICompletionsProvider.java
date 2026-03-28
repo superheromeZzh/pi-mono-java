@@ -71,6 +71,8 @@ public class OpenAICompletionsProvider implements ApiProvider {
 
     /** Resolve API key based on the model's provider. */
     private static String resolveApiKeyForProvider(Model model) {
+        // Check model-embedded API key first (for custom models)
+        if (model.apiKey() != null && !model.apiKey().isBlank()) return model.apiKey();
         // Check provider-specific env var first
         String providerKey = switch (model.provider()) {
             case ZAI -> System.getenv("ZAI_API_KEY");

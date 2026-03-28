@@ -240,6 +240,7 @@ class AgentStateTest {
             200_000,
             4_096,
             Map.of("x-test", "1"),
+            null,
             null
         );
     }

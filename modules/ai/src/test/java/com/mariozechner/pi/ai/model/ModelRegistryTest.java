@@ -25,7 +25,8 @@ class ModelRegistryTest {
             "https://api.anthropic.com", false,
             List.of(InputModality.TEXT),
             new ModelCost(3.0, 15.0, 0.3, 3.75),
-            200000, 8192, null, null
+            200000, 8192, null, null,
+            null
         );
     }
 
@@ -36,7 +37,8 @@ class ModelRegistryTest {
             "https://api.openai.com", false,
             List.of(InputModality.TEXT, InputModality.IMAGE),
             new ModelCost(2.5, 10.0, 1.25, 2.5),
-            128000, 16384, null, null
+            128000, 16384, null, null,
+            null
         );
     }
 

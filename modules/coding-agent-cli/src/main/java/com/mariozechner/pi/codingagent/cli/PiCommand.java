@@ -3,7 +3,7 @@ package com.mariozechner.pi.codingagent.cli;
 import com.mariozechner.pi.agent.tool.AgentTool;
 import com.mariozechner.pi.ai.PiAiService;
 import com.mariozechner.pi.ai.model.ModelRegistry;
-import com.mariozechner.pi.ai.types.ThinkingLevel;
+import com.mariozechner.pi.ai.types.*;
 import com.mariozechner.pi.codingagent.command.SlashCommandRegistry;
 import com.mariozechner.pi.codingagent.compaction.Compactor;
 import com.mariozechner.pi.codingagent.mode.InteractiveMode;
@@ -111,6 +111,38 @@ public class PiCommand implements Callable<Integer> {
         String effectiveThinking = thinking;
         if (effectiveThinking == null && settings.defaultThinkingLevel() != null) {
             effectiveThinking = settings.defaultThinkingLevel();
+        }
+
+        // Register custom models from settings
+        if (settings.customModels() != null) {
+            for (Settings.CustomModelConfig cm : settings.customModels()) {
+                if (cm.id() == null || cm.api() == null || cm.baseUrl() == null || cm.apiKey() == null) {
+                    System.err.println("Warning: Skipping custom model with missing required fields (id, api, baseUrl, apiKey)");
+                    continue;
+                }
+                List<InputModality> modalities = List.of(InputModality.TEXT);
+                if (cm.inputModalities() != null) {
+                    modalities = cm.inputModalities().stream()
+                            .map(InputModality::fromValue)
+                            .collect(Collectors.toList());
+                }
+                Model customModel = new Model(
+                        cm.id(),
+                        cm.name() != null ? cm.name() : cm.id(),
+                        Api.fromValue(cm.api()),
+                        Provider.CUSTOM,
+                        cm.baseUrl(),
+                        cm.reasoning() != null && cm.reasoning(),
+                        modalities,
+                        new ModelCost(0, 0, 0, 0),
+                        cm.contextWindow() != null ? cm.contextWindow() : 128000,
+                        cm.maxTokens() != null ? cm.maxTokens() : 8192,
+                        null,
+                        cm.thinkingFormat(),
+                        cm.apiKey()
+                );
+                modelRegistry.register(customModel);
+            }
         }
 
         if ("print".equals(mode)) {

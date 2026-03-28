@@ -21,6 +21,7 @@ import java.util.Map;
  * @param maxTokens       maximum output tokens per response
  * @param headers         optional custom HTTP headers for API calls
  * @param thinkingFormat  optional thinking format identifier (e.g. "zai")
+ * @param apiKey          optional API key embedded in the model (for custom models)
  */
 public record Model(
     @JsonProperty("id") String id,
@@ -34,6 +35,7 @@ public record Model(
     @JsonProperty("contextWindow") int contextWindow,
     @JsonProperty("maxTokens") int maxTokens,
     @JsonProperty("headers") @Nullable Map<String, String> headers,
-    @JsonProperty("thinkingFormat") @Nullable String thinkingFormat
+    @JsonProperty("thinkingFormat") @Nullable String thinkingFormat,
+    @JsonProperty("apiKey") @Nullable String apiKey
 ) {
 }

@@ -29,7 +29,8 @@ public enum Provider {
     HUGGINGFACE("huggingface"),
     GOOGLE_GEMINI_CLI("google-gemini-cli"),
     GOOGLE_ANTIGRAVITY("google-antigravity"),
-    OPENCODE("opencode");
+    OPENCODE("opencode"),
+    CUSTOM("custom");
 
     private final String value;
 

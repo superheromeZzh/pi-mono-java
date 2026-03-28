@@ -27,6 +27,7 @@ class ApiProviderTest {
         100_000,
         4096,
         null,
+        null,
         null
     );
 

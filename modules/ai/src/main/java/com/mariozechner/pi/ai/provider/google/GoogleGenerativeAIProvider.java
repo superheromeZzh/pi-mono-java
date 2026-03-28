@@ -163,6 +163,7 @@ public class GoogleGenerativeAIProvider implements ApiProvider {
 
     private String resolveApiKey(Model model, @Nullable SimpleStreamOptions options) {
         if (options != null && options.apiKey() != null) return options.apiKey();
+        if (model.apiKey() != null && !model.apiKey().isBlank()) return model.apiKey();
         String key = System.getenv("GOOGLE_API_KEY");
         if (key != null && !key.isBlank()) return key;
         return System.getenv("GOOGLE_CLOUD_API_KEY");

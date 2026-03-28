@@ -57,7 +57,7 @@ public class GoogleVertexAIProvider implements ApiProvider {
 
     private void executeStream(Model model, Context context, @Nullable SimpleStreamOptions options,
                                AssistantMessageEventStream eventStream) {
-        String apiKey = resolveApiKey(options);
+        String apiKey = resolveApiKey(model, options);
         String projectId = System.getenv("GOOGLE_CLOUD_PROJECT");
         String location = System.getenv("GOOGLE_CLOUD_LOCATION");
         if (location == null || location.isBlank()) location = "us-central1";
@@ -165,8 +165,9 @@ public class GoogleVertexAIProvider implements ApiProvider {
         return body;
     }
 
-    private String resolveApiKey(@Nullable SimpleStreamOptions options) {
+    private String resolveApiKey(Model model, @Nullable SimpleStreamOptions options) {
         if (options != null && options.apiKey() != null) return options.apiKey();
+        if (model.apiKey() != null && !model.apiKey().isBlank()) return model.apiKey();
         String key = System.getenv("GOOGLE_CLOUD_API_KEY");
         if (key != null && !key.isBlank()) return key;
         return System.getenv("GOOGLE_API_KEY");

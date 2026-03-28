@@ -21,10 +21,11 @@ public record Settings(
     @JsonProperty("enableSkillCommands") @Nullable Boolean enableSkillCommands,
     @JsonProperty("sessionDir") @Nullable String sessionDir,
     @JsonProperty("packages") @Nullable List<String> packages,
-    @JsonProperty("extensions") @Nullable List<String> extensions
+    @JsonProperty("extensions") @Nullable List<String> extensions,
+    @JsonProperty("customModels") @Nullable List<CustomModelConfig> customModels
 ) {
     public static Settings empty() {
-        return new Settings(null, null, null, null, null, null, null, null, null, null, null, null, null, null, null);
+        return new Settings(null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null);
     }
 
     public record CompactionSettings(
@@ -38,5 +39,19 @@ public record Settings(
         @JsonProperty("maxRetries") @Nullable Integer maxRetries,
         @JsonProperty("baseDelayMs") @Nullable Long baseDelayMs,
         @JsonProperty("maxDelayMs") @Nullable Long maxDelayMs
+    ) {}
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record CustomModelConfig(
+        @JsonProperty("id") String id,
+        @JsonProperty("name") @Nullable String name,
+        @JsonProperty("api") String api,
+        @JsonProperty("baseUrl") String baseUrl,
+        @JsonProperty("apiKey") String apiKey,
+        @JsonProperty("contextWindow") @Nullable Integer contextWindow,
+        @JsonProperty("maxTokens") @Nullable Integer maxTokens,
+        @JsonProperty("reasoning") @Nullable Boolean reasoning,
+        @JsonProperty("inputModalities") @Nullable List<String> inputModalities,
+        @JsonProperty("thinkingFormat") @Nullable String thinkingFormat
     ) {}
 }
