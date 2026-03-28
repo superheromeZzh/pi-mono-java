@@ -410,16 +410,23 @@ public class InteractiveMode {
 
         CompletableFuture<Void> future = session.prompt(input);
 
+        boolean showedAbort = false;
         try {
             future.join();
         } catch (Exception e) {
             String error = session.getAgent().getState().getError();
             if (aborted.get()) {
                 chatContainer.addChild(new Text("\033[2m  Aborted.\033[0m"));
+                showedAbort = true;
             } else {
                 chatContainer.addChild(new Text(
                         "\033[31m  Error: " + (error != null ? error : e.getMessage()) + "\033[0m"));
             }
+        }
+
+        // Show abort message if cancellation completed without exception
+        if (aborted.get() && !showedAbort) {
+            chatContainer.addChild(new Text("\033[2m  Aborted.\033[0m"));
         }
 
         String error = session.getAgent().getState().getError();

@@ -190,6 +190,7 @@ public class AgentLoop {
         var assistantStarted = false;
 
         for (var event : stream.asFlux().toIterable()) {
+            if (signal.isCancelled()) break;
             var currentMessage = extractAssistantMessage(event);
             if (!assistantStarted) {
                 listener.onEvent(new MessageStartEvent(currentMessage));
