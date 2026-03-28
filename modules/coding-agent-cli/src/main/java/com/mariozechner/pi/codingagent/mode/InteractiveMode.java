@@ -90,6 +90,9 @@ public class InteractiveMode {
     // Overlay state — when non-null, input is routed to the overlay component
     private Component activeOverlay;
 
+    // Initial prompt to send on startup
+    private String initialPrompt;
+
     // Status message reuse (matches pi-mono behavior)
     private Component lastStatusComponent;
 
@@ -101,6 +104,13 @@ public class InteractiveMode {
     private final List<QueuedMessage> compactionQueue = new ArrayList<>();
 
     private record QueuedMessage(String text, String mode) {}
+
+    /**
+     * Sets the initial prompt to send automatically when the TUI starts.
+     */
+    public void setInitialPrompt(String prompt) {
+        this.initialPrompt = prompt;
+    }
 
     /**
      * Sets scoped models for Ctrl+P cycling (from --models flag).
@@ -431,6 +441,15 @@ public class InteractiveMode {
         tui.start();
         tui.render();
 
+        // Send initial prompt if provided (from CLI positional args)
+        if (initialPrompt != null && !initialPrompt.isBlank()) {
+            String expanded = expandFileReferences(initialPrompt);
+            executingPrompt.set(true);
+            executePrompt(session, expanded, abortedFlag);
+            executingPrompt.set(false);
+            checkAutoCompaction(session);
+        }
+
         // REPL loop
         try {
             while (!eofFlag.get()) {
@@ -485,6 +504,13 @@ public class InteractiveMode {
                             chatContainer.addChild(new Text(
                                     "\033[38;2;138;190;183m\u2713 New session started\033[0m", 1, 1));
                             footer.resetUsage();
+                            lastStatusComponent = null;
+                            // Create a new session file
+                            var sm = session.getSessionManager();
+                            if (sm != null) {
+                                sm.close();
+                                sm.createSession(cwd);
+                            }
                         }
                         // Update footer after model switch
                         if (trimmed.startsWith("/model ")) {
@@ -914,6 +940,7 @@ public class InteractiveMode {
      */
     private void dismissOverlay() {
         activeOverlay = null;
+        lastStatusComponent = null;
         root.clear();
         root.addChild(chatContainer);
         root.addChild(editorContainer);

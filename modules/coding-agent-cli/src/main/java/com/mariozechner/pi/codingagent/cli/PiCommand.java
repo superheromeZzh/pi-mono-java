@@ -77,7 +77,7 @@ public class PiCommand implements Callable<Integer> {
     @Option(names = {"--api-key"}, description = "API key (overrides env vars)")
     String apiKey;
 
-    @Option(names = {"-p", "--prompt"}, description = "Initial prompt to send to the agent")
+    @Option(names = {"--prompt"}, description = "Initial prompt to send to the agent (internal use)")
     String prompt;
 
     @Option(names = {"--mode"}, description = "Execution mode: interactive, one-shot, or print",
@@ -105,7 +105,7 @@ public class PiCommand implements Callable<Integer> {
     @Option(names = {"--no-tools"}, description = "Disable all built-in tools")
     boolean noTools;
 
-    @Option(names = {"--print"}, description = "Non-interactive mode: process prompt and exit")
+    @Option(names = {"-p", "--print"}, description = "Non-interactive mode: process prompt and exit")
     boolean printMode;
 
     @Option(names = {"-c", "--continue"}, description = "Continue previous session")
@@ -258,8 +258,12 @@ public class PiCommand implements Callable<Integer> {
             return 0;
         }
 
-        // --print flag makes this non-interactive (like pi-mono -p)
-        if (printMode && effectivePrompt != null) {
+        // --print/-p flag makes this non-interactive (like pi-mono -p)
+        if (printMode) {
+            if (effectivePrompt == null) {
+                System.err.println("Error: --print requires a prompt (positional args or piped stdin)");
+                return 1;
+            }
             mode = "one-shot";
         }
 
@@ -417,6 +421,11 @@ public class PiCommand implements Callable<Integer> {
                 }
             }
 
+            // Pass initial prompt to interactive mode if provided
+            if (effectivePrompt != null) {
+                interactiveMode.setInitialPrompt(effectivePrompt);
+            }
+
             interactiveMode.run(session, terminal);
         } finally {
             terminal.close();
@@ -497,5 +506,6 @@ public class PiCommand implements Callable<Integer> {
     String getThinking() { return thinking; }
     String getToolsFilter() { return toolsFilter; }
     boolean isVerbose() { return verbose; }
+    boolean isPrintMode() { return printMode; }
     String getAppendSystemPrompt() { return appendSystemPrompt; }
 }

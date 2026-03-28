@@ -50,12 +50,6 @@ class PiCommandTest {
     class PromptOption {
 
         @Test
-        void shortFlag() {
-            PiCommand cmd = parse("-p", "fix the bug");
-            assertEquals("fix the bug", cmd.getPrompt());
-        }
-
-        @Test
         void longFlag() {
             PiCommand cmd = parse("--prompt", "add tests");
             assertEquals("add tests", cmd.getPrompt());
@@ -64,6 +58,13 @@ class PiCommandTest {
         @Test
         void defaultIsNull() {
             PiCommand cmd = parse();
+            assertNull(cmd.getPrompt());
+        }
+
+        @Test
+        void shortPIsPrintNotPrompt() {
+            PiCommand cmd = parse("-p");
+            assertTrue(cmd.isPrintMode());
             assertNull(cmd.getPrompt());
         }
     }
@@ -226,7 +227,7 @@ class PiCommandTest {
 
         @Test
         void flagTakesPrecedenceOverPositional() {
-            PiCommand cmd = parse("-p", "from flag", "positional", "args");
+            PiCommand cmd = parse("--prompt", "from flag", "positional", "args");
             assertEquals("from flag", cmd.resolvePrompt());
         }
 
@@ -244,7 +245,7 @@ class PiCommandTest {
 
         @Test
         void blankFlagFallsBackToPositional() {
-            PiCommand cmd = parse("-p", "  ", "fallback");
+            PiCommand cmd = parse("--prompt", "  ", "fallback");
             assertEquals("fallback", cmd.resolvePrompt());
         }
     }
@@ -260,7 +261,7 @@ class PiCommandTest {
         void allOptionsTogether() {
             PiCommand cmd = parse(
                     "-m", "claude-sonnet-4-20250514",
-                    "-p", "refactor auth",
+                    "--prompt", "refactor auth",
                     "--mode", "one-shot",
                     "--cwd", "/tmp/work",
                     "--system-prompt", "Use Java 21",
@@ -294,7 +295,7 @@ class PiCommandTest {
 
         @Test
         void printModeReturnsZero() {
-            PiCommand cmd = parse("--mode", "print", "-p", "test");
+            PiCommand cmd = parse("--mode", "print", "--prompt", "test");
             assertEquals(0, cmd.call());
         }
 
