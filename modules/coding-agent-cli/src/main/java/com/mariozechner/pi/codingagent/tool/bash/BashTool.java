@@ -28,7 +28,8 @@ import java.util.Map;
 @Component
 public class BashTool implements AgentTool {
 
-    static final int DEFAULT_TIMEOUT_SECONDS = 120;
+    /** No default timeout — matches pi-mono behavior (timeout only if explicitly set). */
+    static final int NO_TIMEOUT = 0;
     static final int MAX_OUTPUT_LINES = 2000;
     static final int MAX_OUTPUT_BYTES = 100_000;
 
@@ -93,16 +94,19 @@ public class BashTool implements AgentTool {
             );
         }
 
-        int timeoutSeconds = DEFAULT_TIMEOUT_SECONDS;
+        int timeoutSeconds = NO_TIMEOUT;
         Object timeoutParam = params.get("timeout");
-        if (timeoutParam instanceof Number n) {
+        if (timeoutParam instanceof Number n && n.intValue() > 0) {
             timeoutSeconds = n.intValue();
         }
 
+        // Pass current system environment (matching pi-mono behavior)
+        var env = System.getenv();
+
         var options = new BashExecutorOptions(
-                Duration.ofSeconds(timeoutSeconds),
+                timeoutSeconds > 0 ? Duration.ofSeconds(timeoutSeconds) : null,
                 signal,
-                null
+                env.isEmpty() ? null : new java.util.HashMap<>(env)
         );
 
         BashExecutionResult execResult;

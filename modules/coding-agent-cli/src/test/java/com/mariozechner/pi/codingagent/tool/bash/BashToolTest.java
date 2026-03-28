@@ -118,7 +118,7 @@ class BashToolTest {
 
             var captor = ArgumentCaptor.forClass(BashExecutorOptions.class);
             verify(bashExecutor).execute(any(), any(), captor.capture());
-            assertEquals(Duration.ofSeconds(BashTool.DEFAULT_TIMEOUT_SECONDS), captor.getValue().timeout());
+            assertNull(captor.getValue().timeout(), "Default should be no timeout");
         }
 
         @Test

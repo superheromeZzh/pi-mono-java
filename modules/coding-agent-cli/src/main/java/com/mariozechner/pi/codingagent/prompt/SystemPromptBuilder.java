@@ -82,7 +82,13 @@ public class SystemPromptBuilder {
             }
         }
 
-        // 5. Environment info
+        // 5. Pi documentation guidance (matching pi-mono system prompt)
+        sb.append("\n\nPi documentation (read only when asked about pi itself, extensions, themes, skills, or TUI):\n");
+        sb.append("- When asked about: extensions, themes, skills, prompt templates, TUI, keybindings, SDK, custom providers, models, packages\n");
+        sb.append("- When working on pi topics, check for docs/ and examples/ directories in the project before implementing\n");
+        sb.append("- Always read .md files completely and follow links to related docs\n");
+
+        // 6. Environment info
         sb.append("\n\n# Environment\n\n");
         appendEnvironmentInfo(sb, config);
 
@@ -149,6 +155,16 @@ public class SystemPromptBuilder {
 
         String javaVersion = config.env().getOrDefault("JAVA_VERSION",
                 System.getProperty("java.version", "unknown"));
-        sb.append("- Java version: ").append(javaVersion);
+        sb.append("- Java version: ").append(javaVersion).append('\n');
+
+        String shell = System.getenv("SHELL");
+        if (shell != null && !shell.isBlank()) {
+            sb.append("- Shell: ").append(shell).append('\n');
+        }
+
+        String arch = System.getProperty("os.arch", "");
+        if (!arch.isBlank()) {
+            sb.append("- Architecture: ").append(arch);
+        }
     }
 }
