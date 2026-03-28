@@ -124,17 +124,53 @@ public class ToolStatusComponent implements Component {
 
     /** Build the title line: bold tool name + accent-colored path or relevant info. */
     private String buildTitle() {
-        String path = extractPath();
         var sb = new StringBuilder();
         sb.append(ANSI_BOLD).append(toolName).append(ANSI_RESET);
 
-        if (path != null) {
-            sb.append(" ").append(ANSI_ACCENT).append(shortenPath(path)).append(ANSI_RESET);
+        // Tool-specific title info
+        String detail = extractTitleDetail();
+        if (detail != null) {
+            sb.append(" ").append(ANSI_ACCENT).append(detail).append(ANSI_RESET);
         } else if (!complete) {
             sb.append(" ").append(ANSI_TOOL_OUTPUT).append("...").append(ANSI_RESET);
         }
 
         return sb.toString();
+    }
+
+    /** Extract the most relevant info for the title line based on tool type. */
+    private String extractTitleDetail() {
+        if (!(args instanceof Map<?, ?> map)) return null;
+        return switch (toolName) {
+            case "read", "write", "edit", "ls" -> {
+                Object p = map.get("file_path");
+                if (p == null) p = map.get("path");
+                yield p != null ? shortenPath(p.toString()) : null;
+            }
+            case "bash" -> {
+                Object cmd = map.get("command");
+                yield cmd != null ? "$ " + truncateText(cmd.toString(), 80) : null;
+            }
+            case "glob" -> {
+                Object pattern = map.get("pattern");
+                Object path = map.get("path");
+                String s = pattern != null ? pattern.toString() : "";
+                if (path != null) s += " in " + shortenPath(path.toString());
+                yield s.isEmpty() ? null : s;
+            }
+            case "grep" -> {
+                Object pattern = map.get("pattern");
+                Object path = map.get("path");
+                String s = pattern != null ? "/" + pattern + "/" : "";
+                if (path != null) s += " in " + shortenPath(path.toString());
+                yield s.isEmpty() ? null : s;
+            }
+            default -> {
+                Object p = map.get("file_path");
+                if (p == null) p = map.get("path");
+                yield p != null ? shortenPath(p.toString()) : null;
+            }
+        };
     }
 
     /** Get the content to display — file content for write, result for others. */
@@ -179,16 +215,6 @@ public class ToolStatusComponent implements Component {
             sb.append(ANSI_TOOL_OUTPUT).append(line).append(ANSI_RESET);
         }
         return sb.toString();
-    }
-
-    /** Extract file path from args. */
-    private String extractPath() {
-        if (args instanceof Map<?, ?> map) {
-            Object path = map.get("file_path");
-            if (path == null) path = map.get("path");
-            return path != null ? path.toString() : null;
-        }
-        return null;
     }
 
     /** Shorten a path by replacing home directory with ~. */
