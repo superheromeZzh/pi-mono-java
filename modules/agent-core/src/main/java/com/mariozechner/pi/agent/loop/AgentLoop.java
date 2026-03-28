@@ -19,11 +19,13 @@ import com.mariozechner.pi.agent.tool.ToolExecutionMode;
 import com.mariozechner.pi.agent.tool.ToolExecutionPipeline;
 import com.mariozechner.pi.ai.stream.AssistantMessageEvent;
 import com.mariozechner.pi.ai.types.AssistantMessage;
+import com.mariozechner.pi.ai.types.ContentBlock;
 import com.mariozechner.pi.ai.types.Context;
 import com.mariozechner.pi.ai.types.Message;
 import com.mariozechner.pi.ai.types.Model;
 import com.mariozechner.pi.ai.types.SimpleStreamOptions;
 import com.mariozechner.pi.ai.types.StopReason;
+import com.mariozechner.pi.ai.types.TextContent;
 import com.mariozechner.pi.ai.types.Tool;
 import com.mariozechner.pi.ai.types.ToolCall;
 import com.mariozechner.pi.ai.types.ToolResultMessage;
@@ -121,14 +123,20 @@ public class AgentLoop {
 
                 var toolCalls = extractToolCalls(assistantMessage);
                 if (!toolCalls.isEmpty()) {
-                    var toolResults = toolPipeline.executeAll(
-                        resolveToolCalls(toolCalls, context.tools()),
-                        toolExecutionMode,
-                        context,
-                        signal,
-                        eventListener
-                    );
-                    context.appendMessages(toolResults);
+                    // Separate resolved tools from unknown tools
+                    var resolved = new ArrayList<ToolCallWithTool>();
+                    var unknownResults = new ArrayList<ToolResultMessage>();
+                    resolveToolCallsSafe(toolCalls, context.tools(), resolved, unknownResults);
+
+                    // Execute resolved tools via pipeline
+                    var toolResults = new ArrayList<ToolResultMessage>();
+                    if (!resolved.isEmpty()) {
+                        toolResults.addAll(toolPipeline.executeAll(
+                            resolved, toolExecutionMode, context, signal, eventListener));
+                    }
+                    // Add error results for unknown tools
+                    toolResults.addAll(unknownResults);
+                    context.appendMessages(new ArrayList<>(toolResults));
 
                     var steeringMessages = drainSteeringMessages();
                     if (!steeringMessages.isEmpty()) {
@@ -239,21 +247,35 @@ public class AgentLoop {
         return List.copyOf(toolCalls);
     }
 
-    private List<ToolCallWithTool> resolveToolCalls(List<ToolCall> toolCalls, List<AgentTool> tools) {
+    /**
+     * Resolves tool calls, separating known tools from unknown ones.
+     * Unknown tools get an error result instead of throwing, matching TS behavior.
+     */
+    private void resolveToolCallsSafe(
+            List<ToolCall> toolCalls, List<AgentTool> tools,
+            List<ToolCallWithTool> resolved, List<ToolResultMessage> unknownResults) {
+
         var toolsByName = new LinkedHashMap<String, AgentTool>();
         for (var tool : tools) {
             toolsByName.put(tool.name(), tool);
         }
 
-        var resolved = new ArrayList<ToolCallWithTool>(toolCalls.size());
         for (var toolCall : toolCalls) {
             var tool = toolsByName.get(toolCall.name());
-            if (tool == null) {
-                throw new IllegalArgumentException("No AgentTool registered for tool call: " + toolCall.name());
+            if (tool != null) {
+                resolved.add(new ToolCallWithTool(toolCall, tool, toolCall.arguments()));
+            } else {
+                // Return error result for unknown tool (agent can adapt)
+                unknownResults.add(new ToolResultMessage(
+                        toolCall.id(),
+                        toolCall.name(),
+                        List.of(new TextContent("Tool " + toolCall.name() + " not found", null)),
+                        null,
+                        true,
+                        System.currentTimeMillis()
+                ));
             }
-            resolved.add(new ToolCallWithTool(toolCall, tool, toolCall.arguments()));
         }
-        return List.copyOf(resolved);
     }
 
     private List<Message> drainSteeringMessages() {

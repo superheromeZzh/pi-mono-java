@@ -281,9 +281,19 @@ public class InteractiveMode {
                 // Slash commands — skip if it's a /skill: invocation or prompt template
                 if (trimmed.startsWith("/") && !isSkillOrTemplate(trimmed, session)) {
                     if (handleSlashCommand(trimmed, session)) {
-                        // Refresh autocomplete after commands that change state
+                        // Refresh state after commands that change it
                         if (trimmed.startsWith("/new") || trimmed.startsWith("/reload")) {
                             buildCommandSuggestions(session);
+                        }
+                        // Update footer after model switch
+                        if (trimmed.startsWith("/model ")) {
+                            var newModel = session.getAgent().getState().getModel();
+                            if (newModel != null) {
+                                footer.setModel(
+                                        newModel.provider().name().toLowerCase(),
+                                        newModel.id(),
+                                        newModel.contextWindow() > 0 ? newModel.contextWindow() : 200000);
+                            }
                         }
                         tui.render();
                         continue;
