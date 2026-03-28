@@ -429,6 +429,15 @@ public class InteractiveMode {
 
     void handleEvent(AgentEvent event) {
         switch (event) {
+            case TurnStartEvent e -> {
+                // Create a new AssistantMessageComponent for continuation turns
+                // (after tool calls) so thinking/text from each turn are separate.
+                if (currentAssistantMessage != null && currentAssistantMessage.hasContent()) {
+                    currentAssistantMessage.setComplete(true);
+                    currentAssistantMessage = new AssistantMessageComponent();
+                    chatContainer.addChild(currentAssistantMessage);
+                }
+            }
             case MessageUpdateEvent e -> {
                 if (currentAssistantMessage == null) return;
                 if (e.assistantMessageEvent() instanceof AssistantMessageEvent.TextDeltaEvent delta) {
