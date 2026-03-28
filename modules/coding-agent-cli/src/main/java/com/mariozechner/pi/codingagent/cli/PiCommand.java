@@ -128,6 +128,19 @@ public class PiCommand implements Callable<Integer> {
     @Override
     public Integer call() {
         String effectivePrompt = resolvePrompt();
+
+        // Read piped stdin if not a TTY
+        if (effectivePrompt == null && System.console() == null) {
+            try {
+                String piped = new String(System.in.readAllBytes()).trim();
+                if (!piped.isEmpty()) {
+                    effectivePrompt = piped;
+                }
+            } catch (IOException e) {
+                // Ignore — stdin not available
+            }
+        }
+
         Path effectiveCwd = cwd != null ? cwd : Path.of(System.getProperty("user.dir"));
 
         // Ensure user-level config directories exist

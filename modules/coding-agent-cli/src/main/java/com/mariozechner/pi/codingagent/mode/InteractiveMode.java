@@ -242,6 +242,37 @@ public class InteractiveMode {
                     continue;
                 }
 
+                // Global: Ctrl+G — open external editor
+                if (ch == 7) { // 0x07 = Ctrl+G
+                    openExternalEditor();
+                    tui.render();
+                    i++;
+                    continue;
+                }
+
+                // Global: Ctrl+V — paste image from clipboard
+                if (ch == 22) { // 0x16 = Ctrl+V
+                    pasteClipboardImage(session);
+                    tui.render();
+                    i++;
+                    continue;
+                }
+
+                // Global: Ctrl+Z — suspend process
+                if (ch == 26) { // 0x1A = Ctrl+Z
+                    tui.stop();
+                    try {
+                        // Send SIGTSTP to self
+                        ProcessHandle.current().pid();
+                        new ProcessBuilder("kill", "-TSTP", String.valueOf(ProcessHandle.current().pid()))
+                                .inheritIO().start().waitFor();
+                    } catch (Exception ignored) {}
+                    tui.start();
+                    tui.render();
+                    i++;
+                    continue;
+                }
+
                 // Global: Ctrl+C
                 if (ch == 3) {
                     if (executingPrompt.get()) {
@@ -673,6 +704,97 @@ public class InteractiveMode {
             }
         }
         showStatus("Thinking: " + (hideThinkingBlock ? "隐藏" : "可见"));
+    }
+
+    /**
+     * Opens an external editor ($VISUAL or $EDITOR) with the current editor content.
+     * On save, replaces the editor content with the file contents.
+     */
+    private void openExternalEditor() {
+        String editorCmd = System.getenv("VISUAL");
+        if (editorCmd == null || editorCmd.isBlank()) {
+            editorCmd = System.getenv("EDITOR");
+        }
+        if (editorCmd == null || editorCmd.isBlank()) {
+            showStatus("未配置编辑器。请设置 $VISUAL 或 $EDITOR 环境变量");
+            return;
+        }
+
+        String currentText = editorContainer.getEditor().getText();
+        if (currentText == null) currentText = "";
+
+        try {
+            Path tmpFile = Files.createTempFile("pi-editor-", ".pi.md");
+            Files.writeString(tmpFile, currentText);
+
+            // Stop TUI to release terminal
+            tui.stop();
+
+            // Split command to support editor args (e.g., "code --wait")
+            String[] parts = editorCmd.split("\\s+");
+            var cmd = new ArrayList<>(List.of(parts));
+            cmd.add(tmpFile.toString());
+
+            var process = new ProcessBuilder(cmd)
+                    .inheritIO()
+                    .start();
+            process.waitFor();
+
+            if (process.exitValue() == 0) {
+                String newContent = Files.readString(tmpFile).replaceAll("\\n$", "");
+                editorContainer.getEditor().setText(newContent);
+            }
+
+            Files.deleteIfExists(tmpFile);
+
+            // Restart TUI
+            tui.start();
+        } catch (Exception e) {
+            tui.start();
+            showStatus("编辑器错误: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Pastes an image from the system clipboard into the conversation.
+     * Uses osascript on macOS to detect clipboard image.
+     */
+    private void pasteClipboardImage(AgentSession session) {
+        try {
+            // macOS: use osascript to check clipboard for image
+            var check = new ProcessBuilder("osascript", "-e",
+                    "the clipboard info for (class PNGf)")
+                    .redirectErrorStream(true)
+                    .start();
+            String output = new String(check.getInputStream().readAllBytes()).trim();
+            int exit = check.waitFor();
+
+            if (exit != 0 || output.isEmpty()) {
+                showStatus("剪贴板中没有图片");
+                return;
+            }
+
+            // Save clipboard image to temp file
+            Path tmpFile = Files.createTempFile("pi-clipboard-", ".png");
+            var save = new ProcessBuilder("osascript", "-e",
+                    "set imgData to the clipboard as «class PNGf»\n" +
+                    "set fp to open for access POSIX file \"" + tmpFile + "\" with write permission\n" +
+                    "write imgData to fp\n" +
+                    "close access fp")
+                    .redirectErrorStream(true)
+                    .start();
+            save.waitFor();
+
+            if (Files.exists(tmpFile) && Files.size(tmpFile) > 0) {
+                // TODO: Attach image to message when image support is implemented
+                showStatus("已粘贴图片: " + tmpFile.getFileName());
+            } else {
+                showStatus("读取剪贴板图片失败");
+                Files.deleteIfExists(tmpFile);
+            }
+        } catch (Exception e) {
+            showStatus("粘贴图片错误: " + e.getMessage());
+        }
     }
 
     /**

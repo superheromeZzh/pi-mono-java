@@ -94,6 +94,15 @@ public class SessionCommand implements SlashCommand {
         }
 
         out.println("  CWD: " + System.getProperty("user.dir"));
+
+        // Session file info
+        var sm = session.getSessionManager();
+        if (sm != null) {
+            out.println("  Session ID: " + sm.getSessionId());
+            if (sm.getSessionFile() != null) {
+                out.println("  Session file: " + sm.getSessionFile());
+            }
+        }
     }
 
     private static String formatTokens(int tokens) {
