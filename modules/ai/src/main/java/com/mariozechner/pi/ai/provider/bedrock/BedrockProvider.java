@@ -582,6 +582,15 @@ public class BedrockProvider implements ApiProvider {
         for (ContentBlock cb : tr.content()) {
             if (cb instanceof TextContent tc) {
                 contentBlocks.add(ToolResultContentBlock.fromText(tc.text()));
+            } else if (cb instanceof ImageContent ic) {
+                contentBlocks.add(ToolResultContentBlock.fromImage(
+                    software.amazon.awssdk.services.bedrockruntime.model.ImageBlock.builder()
+                        .format(mapImageFormat(ic.mimeType()))
+                        .source(software.amazon.awssdk.services.bedrockruntime.model.ImageSource.builder()
+                            .bytes(software.amazon.awssdk.core.SdkBytes
+                                .fromByteArray(java.util.Base64.getDecoder().decode(ic.data())))
+                            .build())
+                        .build()));
             }
         }
 

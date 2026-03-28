@@ -92,7 +92,12 @@ public final class GoogleShared {
                     for (var block : trm.content()) {
                         if (block instanceof TextContent tc) sb.append(tc.text());
                     }
-                    response.put("result", sb.toString());
+                    String resultText = sb.toString();
+                    if (trm.isError()) {
+                        response.put("error", resultText);
+                    } else {
+                        response.put("output", resultText);
+                    }
                     fr.set("response", response);
                     fnResp.set("functionResponse", fr);
                     parts.add(fnResp);

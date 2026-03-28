@@ -455,11 +455,17 @@ public class OpenAICompletionsProvider implements ApiProvider {
     private static ChatCompletionMessageParam convertAssistantMessage(AssistantMessage am) {
         // Build text content as a plain string (OpenAI expects string, not array)
         StringBuilder textContent = new StringBuilder();
+        StringBuilder thinkingText = new StringBuilder();
         List<ChatCompletionMessageToolCall> toolCalls = new ArrayList<>();
 
         for (ContentBlock cb : am.content()) {
             if (cb instanceof TextContent tc) {
                 textContent.append(tc.text());
+            } else if (cb instanceof ThinkingContent tc) {
+                // Preserve thinking as plain text (no tags to avoid model mimicking)
+                if (tc.thinking() != null && !tc.thinking().isBlank()) {
+                    thinkingText.append(tc.thinking());
+                }
             } else if (cb instanceof ToolCall tc) {
                 toolCalls.add(ChatCompletionMessageToolCall.ofFunction(
                         ChatCompletionMessageFunctionToolCall.builder()
@@ -470,7 +476,11 @@ public class OpenAICompletionsProvider implements ApiProvider {
                                         .build())
                                 .build()));
             }
-            // ThinkingContent is dropped for cross-provider compatibility
+        }
+
+        // Prepend thinking to text content for replay
+        if (!thinkingText.isEmpty()) {
+            textContent.insert(0, thinkingText.toString() + "\n\n");
         }
 
         var builder = ChatCompletionAssistantMessageParam.builder();
