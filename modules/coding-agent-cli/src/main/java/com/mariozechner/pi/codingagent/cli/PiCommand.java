@@ -108,6 +108,15 @@ public class PiCommand implements Callable<Integer> {
     @Option(names = {"-c", "--continue"}, description = "Continue previous session")
     boolean continueSession;
 
+    @Option(names = {"-r", "--resume"}, description = "Select a session to resume")
+    boolean resumeSession;
+
+    @Option(names = {"--session"}, description = "Use specific session file")
+    Path sessionPath;
+
+    @Option(names = {"--fork"}, description = "Fork specific session file into a new session")
+    Path forkPath;
+
     @Option(names = {"--no-session"}, description = "Don't save session (ephemeral)")
     boolean noSession;
 
@@ -303,9 +312,36 @@ public class PiCommand implements Callable<Integer> {
         SessionConfig config = new SessionConfig(effectiveModel, effectiveCwd, effectiveSystemPrompt, mode);
         session.initialize(config);
 
-        // Handle --continue: resume latest session or create new
+        // Handle session flags: --session, --fork, --continue, --resume
         if (sessionManager != null) {
-            if (continueSession) {
+            if (sessionPath != null) {
+                // --session: load specific session file
+                var messages = sessionManager.loadSession(sessionPath);
+                if (!messages.isEmpty()) {
+                    for (var msg : messages) {
+                        session.getAgent().getState().appendMessage(msg);
+                    }
+                    System.err.println("Loaded session " + sessionManager.getSessionId()
+                            + " (" + messages.size() + " messages)");
+                } else {
+                    System.err.println("Warning: session file empty or invalid: " + sessionPath);
+                    sessionManager.createSession(effectiveCwd.toString());
+                }
+            } else if (forkPath != null) {
+                // --fork: load session, then create new file (fork)
+                var messages = sessionManager.loadSession(forkPath);
+                String originalId = sessionManager.getSessionId();
+                sessionManager.createSession(effectiveCwd.toString());
+                if (!messages.isEmpty()) {
+                    for (var msg : messages) {
+                        session.getAgent().getState().appendMessage(msg);
+                        sessionManager.appendMessage(msg);
+                    }
+                    System.err.println("Forked session " + originalId + " → "
+                            + sessionManager.getSessionId() + " (" + messages.size() + " messages)");
+                }
+            } else if (continueSession) {
+                // --continue: resume latest session
                 var messages = sessionManager.resumeLatestSession(effectiveCwd.toString());
                 if (!messages.isEmpty()) {
                     for (var msg : messages) {
@@ -316,6 +352,10 @@ public class PiCommand implements Callable<Integer> {
                 } else {
                     sessionManager.createSession(effectiveCwd.toString());
                 }
+            } else if (resumeSession) {
+                // --resume: show list and let user pick (in non-interactive context, just list)
+                System.err.println("Use /resume command in interactive mode to select a session.");
+                sessionManager.createSession(effectiveCwd.toString());
             } else {
                 sessionManager.createSession(effectiveCwd.toString());
             }
