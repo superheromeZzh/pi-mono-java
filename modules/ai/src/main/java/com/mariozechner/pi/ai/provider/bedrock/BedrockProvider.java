@@ -30,6 +30,7 @@ import org.springframework.stereotype.Component;
 import software.amazon.awssdk.core.document.Document;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.bedrockruntime.BedrockRuntimeAsyncClient;
+import software.amazon.awssdk.services.bedrockruntime.model.ImageFormat;
 import software.amazon.awssdk.services.bedrockruntime.model.ContentBlockDeltaEvent;
 import software.amazon.awssdk.services.bedrockruntime.model.ContentBlockStartEvent;
 import software.amazon.awssdk.services.bedrockruntime.model.ContentBlockStopEvent;
@@ -512,8 +513,16 @@ public class BedrockProvider implements ApiProvider {
             if (cb instanceof TextContent tc) {
                 blocks.add(software.amazon.awssdk.services.bedrockruntime.model.ContentBlock
                         .fromText(tc.text()));
+            } else if (cb instanceof ImageContent ic) {
+                blocks.add(software.amazon.awssdk.services.bedrockruntime.model.ContentBlock
+                        .fromImage(software.amazon.awssdk.services.bedrockruntime.model.ImageBlock.builder()
+                                .format(mapImageFormat(ic.mimeType()))
+                                .source(software.amazon.awssdk.services.bedrockruntime.model.ImageSource.builder()
+                                        .bytes(software.amazon.awssdk.core.SdkBytes
+                                                .fromByteArray(java.util.Base64.getDecoder().decode(ic.data())))
+                                        .build())
+                                .build()));
             }
-            // Image support can be added via ImageBlock when needed
         }
         return software.amazon.awssdk.services.bedrockruntime.model.Message.builder()
                 .role(ConversationRole.USER)
@@ -705,6 +714,16 @@ public class BedrockProvider implements ApiProvider {
         } catch (Exception e) {
             return Document.fromMap(Map.of());
         }
+    }
+
+    private static ImageFormat mapImageFormat(String mimeType) {
+        return switch (mimeType) {
+            case "image/jpeg" -> ImageFormat.JPEG;
+            case "image/png" -> ImageFormat.PNG;
+            case "image/gif" -> ImageFormat.GIF;
+            case "image/webp" -> ImageFormat.WEBP;
+            default -> ImageFormat.JPEG; // Fallback
+        };
     }
 
     /**

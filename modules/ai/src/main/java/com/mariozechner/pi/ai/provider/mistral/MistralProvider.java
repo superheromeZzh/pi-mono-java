@@ -83,10 +83,12 @@ public class MistralProvider implements ApiProvider {
 
             List<ContentBlock> accumulatedBlocks = new ArrayList<>();
             StringBuilder currentText = new StringBuilder();
+            StringBuilder currentThinking = new StringBuilder();
             Map<Integer, ToolCallAccumulator> toolCallAccs = new HashMap<>();
             Usage[] usage = {Usage.empty()};
             StopReason[] stop = {StopReason.STOP};
             int textIndex = 0;
+            boolean[] thinkingStarted = {false};
 
             try (var reader = new BufferedReader(new InputStreamReader(response.body()))) {
                 String line;
@@ -102,13 +104,66 @@ public class MistralProvider implements ApiProvider {
                     var choice = choices.get(0);
                     var delta = choice.path("delta");
 
-                    // Text content
+                    // Content — can be a string or an array of typed items
                     if (delta.has("content") && !delta.get("content").isNull()) {
-                        String text = delta.get("content").asText();
-                        currentText.append(text);
-                        var partial = buildPartial(model, accumulatedBlocks, currentText.toString(),
-                            toolCallAccs, stop[0], usage[0]);
-                        eventStream.pushTextDelta(textIndex, text, partial);
+                        var contentNode = delta.get("content");
+                        if (contentNode.isTextual()) {
+                            // Simple string content
+                            String text = contentNode.asText();
+                            if (!text.isEmpty()) {
+                                currentText.append(text);
+                                var partial = buildPartial(model, accumulatedBlocks,
+                                    currentText.toString(), currentThinking.toString(),
+                                    toolCallAccs, stop[0], usage[0]);
+                                eventStream.pushTextDelta(textIndex, text, partial);
+                            }
+                        } else if (contentNode.isArray()) {
+                            // Array of typed items (thinking, text, etc.)
+                            for (var item : contentNode) {
+                                String itemType = item.path("type").asText("");
+                                if ("thinking".equals(itemType)) {
+                                    // Extract thinking text from nested array
+                                    var thinkingArr = item.path("thinking");
+                                    var sb = new StringBuilder();
+                                    if (thinkingArr.isArray()) {
+                                        for (var part : thinkingArr) {
+                                            if ("text".equals(part.path("type").asText(""))) {
+                                                sb.append(part.path("text").asText(""));
+                                            }
+                                        }
+                                    }
+                                    String thinkText = sb.toString();
+                                    if (!thinkText.isEmpty()) {
+                                        if (!thinkingStarted[0]) {
+                                            thinkingStarted[0] = true;
+                                            accumulatedBlocks.add(new ThinkingContent("", null, false));
+                                            int idx = accumulatedBlocks.size() - 1;
+                                            eventStream.push(new com.mariozechner.pi.ai.stream.AssistantMessageEvent.ThinkingStartEvent(
+                                                idx, buildPartial(model, accumulatedBlocks,
+                                                    currentText.toString(), currentThinking.toString(),
+                                                    toolCallAccs, stop[0], usage[0])));
+                                        }
+                                        currentThinking.append(thinkText);
+                                        int idx = accumulatedBlocks.size() - 1;
+                                        accumulatedBlocks.set(idx, new ThinkingContent(currentThinking.toString(), null, false));
+                                        eventStream.push(new com.mariozechner.pi.ai.stream.AssistantMessageEvent.ThinkingDeltaEvent(
+                                            idx, thinkText,
+                                            buildPartial(model, accumulatedBlocks,
+                                                currentText.toString(), currentThinking.toString(),
+                                                toolCallAccs, stop[0], usage[0])));
+                                    }
+                                } else if ("text".equals(itemType)) {
+                                    String text = item.path("text").asText("");
+                                    if (!text.isEmpty()) {
+                                        currentText.append(text);
+                                        var partial = buildPartial(model, accumulatedBlocks,
+                                            currentText.toString(), currentThinking.toString(),
+                                            toolCallAccs, stop[0], usage[0]);
+                                        eventStream.pushTextDelta(textIndex, text, partial);
+                                    }
+                                }
+                            }
+                        }
                     }
 
                     // Tool calls
@@ -138,6 +193,16 @@ public class MistralProvider implements ApiProvider {
                 }
             }
 
+            // Close open thinking block
+            if (thinkingStarted[0] && !currentThinking.isEmpty()) {
+                int thinkIdx = accumulatedBlocks.size() - 1;
+                accumulatedBlocks.set(thinkIdx, new ThinkingContent(currentThinking.toString(), null, false));
+                eventStream.push(new com.mariozechner.pi.ai.stream.AssistantMessageEvent.ThinkingEndEvent(
+                    thinkIdx, currentThinking.toString(),
+                    buildPartial(model, accumulatedBlocks, currentText.toString(),
+                        currentThinking.toString(), toolCallAccs, stop[0], usage[0])));
+            }
+
             // Build final message
             var finalBlocks = new ArrayList<ContentBlock>(accumulatedBlocks);
             if (!currentText.isEmpty()) {
@@ -165,6 +230,7 @@ public class MistralProvider implements ApiProvider {
     private AssistantMessage buildPartial(
         Model model,
         List<ContentBlock> accumulatedBlocks, String currentText,
+        String currentThinking,
         Map<Integer, ToolCallAccumulator> toolCallAccs,
         StopReason stop, Usage usage
     ) {

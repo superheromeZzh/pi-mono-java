@@ -34,7 +34,6 @@ import com.mariozechner.pi.ai.types.ImageContent;
 import com.mariozechner.pi.ai.types.Message;
 import com.mariozechner.pi.ai.types.Model;
 import com.mariozechner.pi.ai.types.ModelCost;
-import com.mariozechner.pi.ai.types.Provider;
 import com.mariozechner.pi.ai.types.SimpleStreamOptions;
 import com.mariozechner.pi.ai.types.StopReason;
 import com.mariozechner.pi.ai.types.StreamOptions;
@@ -566,7 +565,7 @@ public class OpenAIResponsesProvider implements ApiProvider {
         return new AssistantMessage(
                 List.copyOf(contentBlocks),
                 Api.OPENAI_RESPONSES.value(),
-                Provider.OPENAI.value(),
+                model.provider().value(),
                 model.id(),
                 responseId,
                 piUsage,

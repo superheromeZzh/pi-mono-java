@@ -4,6 +4,7 @@ import com.anthropic.client.AnthropicClient;
 import com.anthropic.client.okhttp.AnthropicOkHttpClient;
 import com.anthropic.core.http.StreamResponse;
 import com.anthropic.models.messages.Base64ImageSource;
+import com.anthropic.models.messages.CacheControlEphemeral;
 import com.anthropic.models.messages.ContentBlockParam;
 import com.anthropic.models.messages.ImageBlockParam;
 import com.anthropic.models.messages.MessageCreateParams;
@@ -37,7 +38,6 @@ import com.mariozechner.pi.ai.types.ImageContent;
 import com.mariozechner.pi.ai.types.Message;
 import com.mariozechner.pi.ai.types.Model;
 import com.mariozechner.pi.ai.types.ModelCost;
-import com.mariozechner.pi.ai.types.Provider;
 import com.mariozechner.pi.ai.types.SimpleStreamOptions;
 import com.mariozechner.pi.ai.types.StopReason;
 import com.mariozechner.pi.ai.types.StreamOptions;
@@ -193,10 +193,14 @@ public class AnthropicProvider implements ApiProvider {
                 .maxTokens(resolvedMaxTokens)
                 .messages(convertMessages(context.messages()));
 
-        // System prompt
+        // System prompt (with cache control for Anthropic API)
         if (context.systemPrompt() != null && !context.systemPrompt().isBlank()) {
+            var sysBlock = TextBlockParam.builder().text(context.systemPrompt());
+            if (shouldEnableCaching(model.baseUrl())) {
+                sysBlock.cacheControl(CacheControlEphemeral.builder().build());
+            }
             builder.system(MessageCreateParams.System.ofTextBlockParams(
-                    List.of(TextBlockParam.builder().text(context.systemPrompt()).build())));
+                    List.of(sysBlock.build())));
         }
 
         // Tools
@@ -599,7 +603,7 @@ public class AnthropicProvider implements ApiProvider {
         return new AssistantMessage(
                 List.copyOf(contentBlocks),
                 Api.ANTHROPIC_MESSAGES.value(),
-                Provider.ANTHROPIC.value(),
+                model.provider().value(),
                 model.id(),
                 responseId,
                 piUsage,
@@ -625,6 +629,14 @@ public class AnthropicProvider implements ApiProvider {
             case "tool_use" -> StopReason.TOOL_USE;
             default -> StopReason.STOP;
         };
+    }
+
+    /**
+     * Returns true if prompt caching should be enabled.
+     * Only enables caching for the official Anthropic API endpoint.
+     */
+    private static boolean shouldEnableCaching(@Nullable String baseUrl) {
+        return baseUrl != null && baseUrl.contains("api.anthropic.com");
     }
 
     /**

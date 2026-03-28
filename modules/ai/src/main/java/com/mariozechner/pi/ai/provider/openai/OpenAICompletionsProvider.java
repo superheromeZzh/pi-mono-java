@@ -573,7 +573,7 @@ public class OpenAICompletionsProvider implements ApiProvider {
         return new AssistantMessage(
                 List.copyOf(contentBlocks),
                 Api.OPENAI_COMPLETIONS.value(),
-                Provider.OPENAI.value(),
+                model.provider().value(),
                 model.id(),
                 responseId,
                 piUsage,
