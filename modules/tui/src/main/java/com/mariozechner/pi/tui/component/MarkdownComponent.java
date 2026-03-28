@@ -487,7 +487,9 @@ public class MarkdownComponent implements Component {
     private static final Pattern LINK = Pattern.compile("\\[([^\\]]+)]\\(([^)]+)\\)");
     private static final Pattern STRIKETHROUGH = Pattern.compile("~~(.+?)~~");
     private static final Pattern BOLD = Pattern.compile("\\*\\*(.+?)\\*\\*");
+    private static final Pattern BOLD_UNDERSCORE = Pattern.compile("(?<!\\w)__(.+?)__(?!\\w)");
     private static final Pattern ITALIC = Pattern.compile("(?<!\\*)\\*(?!\\*)(.+?)(?<!\\*)\\*(?!\\*)");
+    private static final Pattern ITALIC_UNDERSCORE = Pattern.compile("(?<!\\w)_(?!_)(.+?)(?<!_)_(?!\\w)");
 
     /**
      * Applies inline Markdown formatting (bold, italic, code, links) to text.
@@ -528,8 +530,20 @@ public class MarkdownComponent implements Component {
             return theme.bold(inner);
         }, placeholders);
 
+        // 4b. Bold with underscores (__text__)
+        text = replaceAll(text, BOLD_UNDERSCORE, m -> {
+            String inner = m.group(1);
+            return theme.bold(inner);
+        }, placeholders);
+
         // 5. Italic
         text = replaceAll(text, ITALIC, m -> {
+            String inner = m.group(1);
+            return theme.italic(inner);
+        }, placeholders);
+
+        // 5b. Italic with underscores (_text_)
+        text = replaceAll(text, ITALIC_UNDERSCORE, m -> {
             String inner = m.group(1);
             return theme.italic(inner);
         }, placeholders);
