@@ -196,23 +196,28 @@ public class ToolStatusComponent implements Component {
             return display;
         }
 
-        // For edit tool, show diff from result
+        // Other tools: show result summary in gray
         if (complete && resultSummary != null) {
-            return resultSummary;
+            return colorizeContent(resultSummary);
         }
         if (!complete && partialResultSummary != null) {
-            return partialResultSummary;
+            return colorizeContent(partialResultSummary);
         }
 
         return null;
     }
 
-    /** Colorize content for display in tool output (gray text). */
+    /** Colorize content for display in tool output (gray text, tabs replaced). */
     private String colorizeContent(String content) {
         var sb = new StringBuilder();
-        for (String line : content.split("\n", -1)) {
+        for (String line : content.replace("\t", "    ").split("\n", -1)) {
             if (!sb.isEmpty()) sb.append("\n");
-            sb.append(ANSI_TOOL_OUTPUT).append(line).append(ANSI_RESET);
+            // Preserve diff coloring (lines starting with ANSI escape) but colorize plain lines
+            if (line.startsWith("\033[")) {
+                sb.append(line);
+            } else {
+                sb.append(ANSI_TOOL_OUTPUT).append(line).append(ANSI_RESET);
+            }
         }
         return sb.toString();
     }
