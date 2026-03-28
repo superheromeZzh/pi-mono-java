@@ -3,9 +3,12 @@ package com.mariozechner.pi.codingagent.mode;
 import com.mariozechner.pi.agent.event.*;
 import com.mariozechner.pi.agent.tool.CancellationToken;
 import com.mariozechner.pi.ai.PiAiService;
+import com.mariozechner.pi.ai.model.ModelRegistry;
 import com.mariozechner.pi.ai.stream.AssistantMessageEvent;
 import com.mariozechner.pi.ai.types.AssistantMessage;
 import com.mariozechner.pi.ai.types.Message;
+import com.mariozechner.pi.ai.types.Model;
+import com.mariozechner.pi.ai.types.ThinkingLevel;
 import com.mariozechner.pi.ai.types.UserMessage;
 import com.mariozechner.pi.codingagent.command.SlashCommand;
 import com.mariozechner.pi.codingagent.command.SlashCommandContext;
@@ -52,6 +55,7 @@ public class InteractiveMode {
     private final SlashCommandRegistry commandRegistry;
     private final BashExecutor bashExecutor;
     private final Compactor compactor;
+    private final ModelRegistry modelRegistry;
 
     // TUI components
     private Tui tui;
@@ -74,6 +78,9 @@ public class InteractiveMode {
     // Tool output expand/collapse state (toggled by Ctrl+O)
     private boolean toolsExpanded;
 
+    // Thinking block visibility state (toggled by Ctrl+T)
+    private boolean hideThinkingBlock;
+
     // Follow-up / steering queues during compaction
     private final List<QueuedMessage> compactionQueue = new ArrayList<>();
 
@@ -81,10 +88,12 @@ public class InteractiveMode {
 
     public InteractiveMode(SlashCommandRegistry commandRegistry,
                            BashExecutor bashExecutor,
-                           Compactor compactor) {
+                           Compactor compactor,
+                           ModelRegistry modelRegistry) {
         this.commandRegistry = Objects.requireNonNull(commandRegistry, "commandRegistry");
         this.bashExecutor = bashExecutor;
         this.compactor = compactor;
+        this.modelRegistry = modelRegistry;
     }
 
     /**
@@ -205,6 +214,30 @@ public class InteractiveMode {
                     continue;
                 }
 
+                // Global: Ctrl+T — toggle thinking block visibility
+                if (ch == 20) { // 0x14 = Ctrl+T
+                    toggleThinkingBlockVisibility();
+                    tui.render();
+                    i++;
+                    continue;
+                }
+
+                // Global: Ctrl+P — cycle model forward
+                if (ch == 16) { // 0x10 = Ctrl+P
+                    cycleModel(session, true);
+                    tui.render();
+                    i++;
+                    continue;
+                }
+
+                // Global: Ctrl+L — select model (dispatch to /model)
+                if (ch == 12) { // 0x0C = Ctrl+L
+                    handleSlashCommand("/model", session);
+                    tui.render();
+                    i++;
+                    continue;
+                }
+
                 // Global: Ctrl+C
                 if (ch == 3) {
                     if (executingPrompt.get()) {
@@ -228,9 +261,25 @@ public class InteractiveMode {
                     continue;
                 }
 
-                // Detect Alt+Enter for follow-up: ESC [ 1 3 ; 2 u (Kitty) or ESC CR
-                if (ch == '\033' && i + 1 < data.length()) {
-                    // Kitty protocol: \033[13;2u
+                // Escape and escape sequences
+                if (ch == '\033') {
+                    // Standalone Escape — abort streaming or cancel autocomplete
+                    if (i + 1 >= data.length()) {
+                        if (executingPrompt.get()) {
+                            abortedFlag.set(true);
+                            sessionRef.get().abort();
+                        } else {
+                            // Cancel running bash command if any
+                            var token = bashCancelToken;
+                            if (token != null) {
+                                token.cancel();
+                            }
+                        }
+                        i++;
+                        continue;
+                    }
+
+                    // Kitty protocol: Alt+Enter \033[13;2u
                     if (data.startsWith("\033[13;2u", i)) {
                         followUpFlag.set(true);
                         String text = editorContainer.getEditor().getText();
@@ -240,6 +289,24 @@ public class InteractiveMode {
                         i += 7;
                         continue;
                     }
+
+                    // Shift+Tab: \033[Z — cycle thinking level
+                    if (data.startsWith("\033[Z", i)) {
+                        cycleThinkingLevel(session);
+                        tui.render();
+                        i += 3;
+                        continue;
+                    }
+
+                    // Shift+Ctrl+P: various terminal encodings
+                    // Kitty: \033[112;6u   xterm: \033[1;6P   etc.
+                    if (data.startsWith("\033[112;6u", i)) {
+                        cycleModel(session, false);
+                        tui.render();
+                        i += 8;
+                        continue;
+                    }
+
                     // Alt+Enter: ESC CR
                     if (data.charAt(i + 1) == '\r') {
                         followUpFlag.set(true);
@@ -492,6 +559,111 @@ public class InteractiveMode {
 
         if (unsub != null) unsub.run();
         tui.render();
+    }
+
+    /**
+     * Cycles thinking level: off → minimal → low → medium → high → xhigh → off.
+     * Skips xhigh if model doesn't support it. Shows status message.
+     */
+    private void cycleThinkingLevel(AgentSession session) {
+        var model = session.getAgent().getState().getModel();
+        if (model == null || !model.reasoning()) {
+            showStatus("当前模型不支持 thinking");
+            return;
+        }
+
+        ThinkingLevel[] levels = ModelRegistry.supportsXhigh(model)
+                ? ThinkingLevel.values()
+                : new ThinkingLevel[]{ThinkingLevel.OFF, ThinkingLevel.MINIMAL, ThinkingLevel.LOW,
+                        ThinkingLevel.MEDIUM, ThinkingLevel.HIGH};
+
+        var current = session.getAgent().getState().getThinkingLevel();
+        int idx = 0;
+        for (int j = 0; j < levels.length; j++) {
+            if (levels[j] == current) { idx = j; break; }
+        }
+        var next = levels[(idx + 1) % levels.length];
+        session.getAgent().setThinkingLevel(next);
+        footer.setThinkingLevel(next.value());
+        editorContainer.setBorderForThinkingLevel(next.value());
+        showStatus("Thinking: " + next.value());
+    }
+
+    /**
+     * Cycles through available models with configured auth.
+     * @param forward true for next, false for previous
+     */
+    private void cycleModel(AgentSession session, boolean forward) {
+        if (modelRegistry == null) return;
+
+        var allModels = modelRegistry.getAllModels();
+        if (allModels.size() <= 1) {
+            showStatus("只有一个模型可用");
+            return;
+        }
+
+        // Sort models by provider then id for stable ordering
+        allModels.sort(Comparator.comparing((Model m) -> m.provider().value())
+                .thenComparing(Model::id));
+
+        var currentModel = session.getAgent().getState().getModel();
+        int currentIdx = -1;
+        if (currentModel != null) {
+            for (int j = 0; j < allModels.size(); j++) {
+                if (ModelRegistry.modelsAreEqual(allModels.get(j), currentModel)) {
+                    currentIdx = j;
+                    break;
+                }
+            }
+        }
+        if (currentIdx == -1) currentIdx = 0;
+
+        int nextIdx = forward
+                ? (currentIdx + 1) % allModels.size()
+                : (currentIdx - 1 + allModels.size()) % allModels.size();
+        var newModel = allModels.get(nextIdx);
+        session.getAgent().setModel(newModel);
+
+        footer.setModel(
+                newModel.provider().name().toLowerCase(),
+                newModel.id(),
+                newModel.contextWindow() > 0 ? newModel.contextWindow() : 200000,
+                newModel.reasoning());
+
+        // Re-clamp thinking level for new model
+        if (!newModel.reasoning()) {
+            session.getAgent().setThinkingLevel(ThinkingLevel.OFF);
+            footer.setThinkingLevel("off");
+        }
+        editorContainer.setBorderForThinkingLevel(
+                session.getAgent().getState().getThinkingLevel() != null
+                        ? session.getAgent().getState().getThinkingLevel().value() : "off");
+
+        String thinkingStr = newModel.reasoning()
+                ? " • " + session.getAgent().getState().getThinkingLevel().value()
+                : "";
+        showStatus("切换到 " + newModel.name() + thinkingStr);
+    }
+
+    /**
+     * Toggles thinking block visibility on all assistant messages.
+     */
+    private void toggleThinkingBlockVisibility() {
+        hideThinkingBlock = !hideThinkingBlock;
+        for (var child : chatContainer.getChildren()) {
+            if (child instanceof AssistantMessageComponent msg) {
+                msg.setHideThinking(hideThinkingBlock);
+            }
+        }
+        showStatus("Thinking: " + (hideThinkingBlock ? "隐藏" : "可见"));
+    }
+
+    /**
+     * Shows a temporary status message in the chat area.
+     */
+    private void showStatus(String message) {
+        chatContainer.addChild(new Text(
+                "\033[38;2;128;128;128m  " + message + "\033[0m", 1, 0));
     }
 
     void handleEvent(AgentEvent event) {

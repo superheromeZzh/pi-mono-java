@@ -29,6 +29,7 @@ public class AssistantMessageComponent implements Component {
     private final MarkdownComponent markdownComponent = new MarkdownComponent();
 
     private boolean complete = false;
+    private boolean hideThinking = false;
 
     // Cache — includes complete state in key
     private String cachedThinking;
@@ -56,6 +57,15 @@ public class AssistantMessageComponent implements Component {
         return !thinkingContent.isEmpty() || !textContent.isEmpty();
     }
 
+    public void setHideThinking(boolean hide) {
+        this.hideThinking = hide;
+        invalidate();
+    }
+
+    public boolean isHideThinking() {
+        return hideThinking;
+    }
+
     @Override
     public void invalidate() {
         cachedLines = null;
@@ -80,7 +90,7 @@ public class AssistantMessageComponent implements Component {
         lines.add(""); // spacer before message
 
         // Thinking block — italic + gray color (matching pi-mono thinkingText)
-        if (!thinking.isBlank()) {
+        if (!thinking.isBlank() && !hideThinking) {
             int contentWidth = Math.max(1, width - 2);
             List<String> thinkingLines = AnsiUtils.wrapTextWithAnsi(thinking.strip(), contentWidth);
             for (String line : thinkingLines) {

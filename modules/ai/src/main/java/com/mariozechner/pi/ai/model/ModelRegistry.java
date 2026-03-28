@@ -138,6 +138,19 @@ public class ModelRegistry {
     }
 
     /**
+     * Returns all registered models across all providers.
+     */
+    public List<Model> getAllModels() {
+        synchronized (lock) {
+            var all = new ArrayList<Model>();
+            for (var byId : models.values()) {
+                all.addAll(byId.values());
+            }
+            return all;
+        }
+    }
+
+    /**
      * Removes all registered models.
      */
     public void clear() {

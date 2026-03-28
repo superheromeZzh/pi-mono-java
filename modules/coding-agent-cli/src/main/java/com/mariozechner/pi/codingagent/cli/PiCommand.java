@@ -210,7 +210,7 @@ public class PiCommand implements Callable<Integer> {
         // Interactive mode (default)
         Terminal terminal = new JLineTerminal();
         try {
-            new InteractiveMode(commandRegistry, bashExecutor, new Compactor(piAiService))
+            new InteractiveMode(commandRegistry, bashExecutor, new Compactor(piAiService), modelRegistry)
                     .run(session, terminal);
         } finally {
             terminal.close();
