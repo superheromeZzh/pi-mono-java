@@ -13,6 +13,7 @@ import com.mariozechner.pi.codingagent.session.AgentSession;
 import com.mariozechner.pi.codingagent.session.SessionConfig;
 import com.mariozechner.pi.codingagent.skill.SkillExpander;
 import com.mariozechner.pi.codingagent.skill.SkillLoader;
+import com.mariozechner.pi.codingagent.config.ConfigValueResolver;
 import com.mariozechner.pi.codingagent.settings.Settings;
 import com.mariozechner.pi.codingagent.settings.SettingsManager;
 import com.mariozechner.pi.codingagent.tool.bash.BashExecutor;
@@ -129,12 +130,14 @@ public class PiCommand implements Callable<Integer> {
                             .map(InputModality::fromValue)
                             .collect(Collectors.toList());
                 }
+                String resolvedApiKey = ConfigValueResolver.resolve(cm.apiKey());
+                String resolvedBaseUrl = ConfigValueResolver.resolve(cm.baseUrl());
                 Model customModel = new Model(
                         cm.id(),
                         cm.name() != null ? cm.name() : cm.id(),
                         Api.fromValue(cm.api()),
                         Provider.CUSTOM,
-                        cm.baseUrl(),
+                        resolvedBaseUrl,
                         cm.reasoning() != null && cm.reasoning(),
                         modalities,
                         new ModelCost(0, 0, 0, 0),
@@ -142,7 +145,7 @@ public class PiCommand implements Callable<Integer> {
                         cm.maxTokens() != null ? cm.maxTokens() : 8192,
                         null,
                         cm.thinkingFormat(),
-                        cm.apiKey()
+                        resolvedApiKey
                 );
                 modelRegistry.register(customModel);
             }

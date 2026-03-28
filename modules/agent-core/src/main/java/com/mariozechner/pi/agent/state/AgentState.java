@@ -29,7 +29,7 @@ public class AgentState {
     private String error;
 
     public AgentState() {
-        this.thinkingLevel = ThinkingLevel.OFF;
+        this.thinkingLevel = ThinkingLevel.MEDIUM;
         this.tools = new ArrayList<>();
         this.messages = new ArrayList<>();
         this.pendingToolCalls = ConcurrentHashMap.newKeySet();

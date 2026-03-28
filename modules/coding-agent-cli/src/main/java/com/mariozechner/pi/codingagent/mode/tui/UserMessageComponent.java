@@ -14,8 +14,6 @@ public class UserMessageComponent implements Component {
 
     // Dark gray background matching TS theme "userMessageBg": "#343541"
     private static final String BG_START = "\033[48;2;52;53;65m";
-    private static final String ANSI_BOLD = "\033[1m";
-    private static final String ANSI_UNBOLD = "\033[22m";
     private static final String ANSI_RESET = "\033[0m";
 
     private final String text;
@@ -35,18 +33,16 @@ public class UserMessageComponent implements Component {
         var lines = new ArrayList<String>();
         lines.add(""); // spacer before
 
-        // Wrap text with 2-char padding on each side
-        int contentWidth = Math.max(1, width - 4);
+        // Wrap text with 1-char padding on each side (matching pi-mono paddingX=1)
+        int contentWidth = Math.max(1, width - 2);
         List<String> wrapped = AnsiUtils.wrapTextWithAnsi(text, contentWidth);
 
         // Top padding line with background
         lines.add(bgLine("", width));
 
-        // Content lines with background + bold
-        // Note: use ANSI_UNBOLD instead of ANSI_RESET to turn off bold without
-        // resetting the background color — bgLine handles the final reset.
+        // Content lines with background (no bold, matching pi-mono)
         for (String line : wrapped) {
-            String content = "  " + ANSI_BOLD + line + ANSI_UNBOLD;
+            String content = " " + line;
             lines.add(bgLine(content, width));
         }
 

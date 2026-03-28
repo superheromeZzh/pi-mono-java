@@ -18,8 +18,8 @@ import java.util.function.Consumer;
  */
 public class EditorContainer implements Component, Focusable {
 
-    public static final String CYAN = "\033[36m";
-    public static final String YELLOW = "\033[33m";
+    public static final String CYAN = "\033[38;2;95;135;255m";
+    public static final String YELLOW = "\033[38;2;181;189;104m";
     private static final String ANSI_RESET = "\033[0m";
     private static final int MAX_SUGGESTIONS = 8;
     private static final String KEY_TAB = "\t";

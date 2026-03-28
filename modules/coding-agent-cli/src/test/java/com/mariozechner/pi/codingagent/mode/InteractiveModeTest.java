@@ -122,7 +122,7 @@ class InteractiveModeTest {
         @Test
         void rendersModelInfo() {
             var footer = new com.mariozechner.pi.codingagent.mode.tui.FooterComponent();
-            footer.setModel("zai", "glm-5", 200000);
+            footer.setModel("zai", "glm-5", 200000, false);
             var lines = footer.render(80);
 
             String output = String.join("\n", lines);
@@ -133,7 +133,7 @@ class InteractiveModeTest {
         @Test
         void rendersTokenStats() {
             var footer = new com.mariozechner.pi.codingagent.mode.tui.FooterComponent();
-            footer.setModel("zai", "glm-5", 200000);
+            footer.setModel("zai", "glm-5", 200000, false);
             footer.updateUsage(1500, 200, 0, 0, 0.001);
             var lines = footer.render(80);
 
@@ -145,7 +145,7 @@ class InteractiveModeTest {
         @Test
         void rendersPwdAndStatsLines() {
             var footer = new com.mariozechner.pi.codingagent.mode.tui.FooterComponent();
-            footer.setModel("zai", "glm-5", 200000);
+            footer.setModel("zai", "glm-5", 200000, false);
             footer.setCwd("/Users/z/project");
             var lines = footer.render(80);
             assertEquals(2, lines.size()); // pwd + stats
@@ -155,7 +155,7 @@ class InteractiveModeTest {
         @Test
         void contextPercentageColorCoding() {
             var footer = new com.mariozechner.pi.codingagent.mode.tui.FooterComponent();
-            footer.setModel("zai", "glm-5", 1000);
+            footer.setModel("zai", "glm-5", 1000, false);
             // 95% usage — should be red
             footer.updateUsage(950, 0, 0, 0, 0);
             var lines = footer.render(120);
@@ -248,7 +248,7 @@ class InteractiveModeTest {
             thread.start();
 
             mode.run(session, terminal);
-            assertTrue(terminal.getFullOutput().contains("Pi Coding Agent"));
+            assertTrue(terminal.getFullOutput().contains("v0.1.0"));
         }
 
         @Test

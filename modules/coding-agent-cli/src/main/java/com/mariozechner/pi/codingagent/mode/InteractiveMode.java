@@ -99,32 +99,36 @@ public class InteractiveMode {
         editorContainer = new EditorContainer();
         footer = new FooterComponent();
 
-        // Welcome text with keybinding hints and resource info
+        // Welcome text with keybinding hints matching pi-mono style
+        // Colors from pi-mono dark theme: dim=#666666, muted=#808080
+        String DIM = "\033[38;2;102;102;102m";
+        String MUTED = "\033[38;2;128;128;128m";
+        String RST = "\033[0m";
         var wb = new StringBuilder();
-        wb.append("\033[1m\033[36mPi Coding Agent\033[0m").append(modelInfo(session)).append("\n");
+        wb.append("\033[1m\033[36mpi\033[0m\033[2m v0.1.0\033[0m\n");
 
-        // Show loaded resources
-        int skillCount = session.getSkillRegistry().getAll().size();
-        int templateCount = session.getPromptTemplates().size();
-        if (skillCount > 0 || templateCount > 0) {
-            wb.append("\033[2m  Loaded: ");
-            if (skillCount > 0) wb.append(skillCount).append(" skill(s)");
-            if (skillCount > 0 && templateCount > 0) wb.append(", ");
-            if (templateCount > 0) wb.append(templateCount).append(" template(s)");
-            wb.append("\033[0m\n");
-        }
-
+        // Keybinding hints (aligned with pi-mono) — key in dim, description in muted
+        wb.append(DIM).append(" escape").append(RST).append(MUTED).append(" to interrupt").append(RST).append("\n");
+        wb.append(DIM).append(" ctrl+c").append(RST).append(MUTED).append(" to clear").append(RST).append("\n");
+        wb.append(DIM).append(" ctrl+c twice").append(RST).append(MUTED).append(" to exit").append(RST).append("\n");
+        wb.append(DIM).append(" ctrl+d").append(RST).append(MUTED).append(" to exit (empty)").append(RST).append("\n");
+        wb.append(DIM).append(" ctrl+z").append(RST).append(MUTED).append(" to suspend").append(RST).append("\n");
+        wb.append(DIM).append(" ctrl+k").append(RST).append(MUTED).append(" to delete to end").append(RST).append("\n");
+        wb.append(DIM).append(" shift+tab").append(RST).append(MUTED).append(" to cycle thinking level").append(RST).append("\n");
+        wb.append(DIM).append(" ctrl+p/shift+ctrl+p").append(RST).append(MUTED).append(" to cycle models").append(RST).append("\n");
+        wb.append(DIM).append(" ctrl+l").append(RST).append(MUTED).append(" to select model").append(RST).append("\n");
+        wb.append(DIM).append(" ctrl+o").append(RST).append(MUTED).append(" to expand tools").append(RST).append("\n");
+        wb.append(DIM).append(" ctrl+t").append(RST).append(MUTED).append(" to expand thinking").append(RST).append("\n");
+        wb.append(DIM).append(" ctrl+g").append(RST).append(MUTED).append(" for external editor").append(RST).append("\n");
+        wb.append(DIM).append(" /").append(RST).append(MUTED).append(" for commands").append(RST).append("\n");
+        wb.append(DIM).append(" !").append(RST).append(MUTED).append(" to run bash").append(RST).append("\n");
+        wb.append(DIM).append(" !!").append(RST).append(MUTED).append(" to run bash (no context)").append(RST).append("\n");
+        wb.append(DIM).append(" alt+enter").append(RST).append(MUTED).append(" to queue follow-up").append(RST).append("\n");
+        wb.append(DIM).append(" alt+up").append(RST).append(MUTED).append(" to edit all queued messages").append(RST).append("\n");
+        wb.append(DIM).append(" ctrl+v").append(RST).append(MUTED).append(" to paste image").append(RST).append("\n");
+        wb.append(DIM).append(" drop files").append(RST).append(MUTED).append(" to attach").append(RST).append("\n");
         wb.append("\n");
-        wb.append("\033[2m  Tips:\033[0m\n");
-        wb.append("\033[2m    Enter           submit message\033[0m\n");
-        wb.append("\033[2m    Shift+Enter     new line (or type \\ before Enter)\033[0m\n");
-        wb.append("\033[2m    Alt+Enter       queue follow-up message\033[0m\n");
-        wb.append("\033[2m    ↑/↓             navigate command history\033[0m\n");
-        wb.append("\033[2m    Ctrl+C          interrupt / clear input\033[0m\n");
-        wb.append("\033[2m    Ctrl+D          exit\033[0m\n");
-        wb.append("\033[2m    !               run bash command\033[0m\n");
-        wb.append("\033[2m    !!              run bash (excluded from context)\033[0m\n");
-        wb.append("\033[2m    /               slash commands (/help for list)\033[0m");
+        wb.append(DIM).append(" Pi can explain its own features and look up its docs. Ask it how to use or extend Pi.").append(RST);
         welcomeComponent = new Text(wb.toString());
         chatContainer.addChild(welcomeComponent);
 
@@ -134,7 +138,8 @@ public class InteractiveMode {
             footer.setModel(
                     model.provider().name().toLowerCase(),
                     model.id(),
-                    model.contextWindow() > 0 ? model.contextWindow() : 200000);
+                    model.contextWindow() > 0 ? model.contextWindow() : 200000,
+                    model.reasoning());
         }
         // Set cwd and thinking level
         String cwd = System.getProperty("user.dir", "");
@@ -299,7 +304,8 @@ public class InteractiveMode {
                                 footer.setModel(
                                         newModel.provider().name().toLowerCase(),
                                         newModel.id(),
-                                        newModel.contextWindow() > 0 ? newModel.contextWindow() : 200000);
+                                        newModel.contextWindow() > 0 ? newModel.contextWindow() : 200000,
+                                        newModel.reasoning());
                             }
                         }
                         tui.render();

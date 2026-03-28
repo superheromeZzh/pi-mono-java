@@ -13,8 +13,10 @@ import java.util.List;
  */
 public class AssistantMessageComponent implements Component {
 
-    private static final String ANSI_DIM = "\033[2m";
+    // Thinking style: italic + gray #808080 (matching pi-mono thinkingText color)
     private static final String ANSI_ITALIC = "\033[3m";
+    private static final String ANSI_THINKING_COLOR = "\033[38;2;128;128;128m";
+    private static final String ANSI_DIM = "\033[2m";
     private static final String ANSI_RESET = "\033[0m";
 
     private final StringBuilder thinkingContent = new StringBuilder();
@@ -70,27 +72,30 @@ public class AssistantMessageComponent implements Component {
         var lines = new ArrayList<String>();
         lines.add(""); // spacer before message
 
-        // Thinking block — dim italic
+        // Thinking block — italic + gray color (matching pi-mono thinkingText)
         if (!thinking.isBlank()) {
-            int contentWidth = Math.max(1, width - 4);
+            int contentWidth = Math.max(1, width - 2);
             List<String> thinkingLines = AnsiUtils.wrapTextWithAnsi(thinking.strip(), contentWidth);
             for (String line : thinkingLines) {
-                lines.add(ANSI_DIM + ANSI_ITALIC + "  " + line + ANSI_RESET);
+                lines.add(ANSI_ITALIC + ANSI_THINKING_COLOR + " " + line + ANSI_RESET);
             }
             if (!text.isBlank()) {
                 lines.add(""); // spacer between thinking and text
             }
         }
 
-        // Text content — rendered as markdown
+        // Text content — rendered as markdown with 1-space left margin (matching pi-mono paddingX=1)
         if (!text.isBlank()) {
             markdownComponent.setContent(text);
-            lines.addAll(markdownComponent.render(width));
+            var mdLines = markdownComponent.render(Math.max(1, width - 1));
+            for (String line : mdLines) {
+                lines.add(" " + line);
+            }
         }
 
         // Streaming indicator — only when not complete AND no content yet
         if (!complete && text.isEmpty() && thinking.isEmpty()) {
-            lines.add(ANSI_DIM + "  ..." + ANSI_RESET);
+            lines.add(ANSI_DIM + " ..." + ANSI_RESET);
         }
 
         cachedThinking = thinking;

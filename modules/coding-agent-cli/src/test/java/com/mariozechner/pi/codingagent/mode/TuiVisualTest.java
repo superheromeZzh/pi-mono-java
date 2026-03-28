@@ -39,7 +39,7 @@ class TuiVisualTest {
         chatContainer.addChild(assistant);
 
         // Footer
-        footer.setModel("zai", "glm-5", 200000);
+        footer.setModel("zai", "glm-5", 200000, true);
         footer.setCwd("/Users/z/pi-mono-java");
         footer.setThinkingLevel("medium");
         footer.updateUsage(752, 71, 832, 0, 0.001);
@@ -152,7 +152,7 @@ class TuiVisualTest {
         root.addChild(new Text("Hello World"));
         root.addChild(new EditorContainer());
         var footer = new FooterComponent();
-        footer.setModel("zai", "glm-5", 200000);
+        footer.setModel("zai", "glm-5", 200000, true);
         footer.setCwd("/tmp");
         root.addChild(footer);
 
