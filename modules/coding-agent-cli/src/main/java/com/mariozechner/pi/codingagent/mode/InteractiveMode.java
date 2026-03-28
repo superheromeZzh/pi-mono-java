@@ -424,22 +424,22 @@ public class InteractiveMode {
         } catch (Exception e) {
             String error = session.getAgent().getState().getError();
             if (aborted.get()) {
-                chatContainer.addChild(new Text("\033[2m  Aborted.\033[0m"));
+                chatContainer.addChild(new Text("\033[38;2;204;102;102m Operation aborted\033[0m"));
                 showedAbort = true;
             } else {
                 chatContainer.addChild(new Text(
-                        "\033[31m  Error: " + (error != null ? error : e.getMessage()) + "\033[0m"));
+                        "\033[38;2;204;102;102m Error: " + (error != null ? error : e.getMessage()) + "\033[0m"));
             }
         }
 
         // Show abort message if cancellation completed without exception
         if (aborted.get() && !showedAbort) {
-            chatContainer.addChild(new Text("\033[2m  Aborted.\033[0m"));
+            chatContainer.addChild(new Text("\033[38;2;204;102;102m Operation aborted\033[0m"));
         }
 
         String error = session.getAgent().getState().getError();
         if (error != null && !aborted.get()) {
-            chatContainer.addChild(new Text("\033[31m  Error: " + error + "\033[0m"));
+            chatContainer.addChild(new Text("\033[38;2;204;102;102m Error: " + error + "\033[0m"));
         }
 
         if (currentAssistantMessage != null) {

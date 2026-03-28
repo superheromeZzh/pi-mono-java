@@ -70,29 +70,33 @@ public class MarkdownTheme {
         private static final String BOLD = "\033[1m";
         private static final String ITALIC = "\033[3m";
         private static final String UNDERLINE = "\033[4m";
-        private static final String DIM = "\033[2m";
-        private static final String CYAN = "\033[36m";
-        private static final String YELLOW = "\033[33m";
-        private static final String GREEN = "\033[32m";
-        private static final String MAGENTA = "\033[35m";
+        // RGB colors matching pi-mono dark theme
+        private static final String HEADING_COLOR = "\033[38;2;240;198;116m"; // mdHeading #f0c674
+        private static final String ACCENT = "\033[38;2;138;190;183m";       // accent #8abeb7
+        private static final String LINK_COLOR = "\033[38;2;129;162;190m";   // mdLink #81a2be
+        private static final String LINK_URL_COLOR = "\033[38;2;102;102;102m"; // mdLinkUrl=dimGray #666666
+        private static final String CODE_COLOR = "\033[38;2;138;190;183m";   // mdCode=accent #8abeb7
+        private static final String CODE_BLOCK_COLOR = "\033[38;2;181;189;104m"; // mdCodeBlock #b5bd68
+        private static final String CODE_BORDER_COLOR = "\033[38;2;128;128;128m"; // mdCodeBlockBorder=gray #808080
+        private static final String GRAY = "\033[38;2;128;128;128m";         // gray #808080
         private static final String BG_GRAY = "\033[48;5;236m";
 
-        // Default styling functions
-        private UnaryOperator<String> heading1 = s -> BOLD + CYAN + UNDERLINE + s + RESET;
-        private UnaryOperator<String> heading2 = s -> BOLD + CYAN + s + RESET;
-        private UnaryOperator<String> heading3 = s -> BOLD + GREEN + s + RESET;
+        // Default styling functions — colors from pi-mono dark theme
+        private UnaryOperator<String> heading1 = s -> BOLD + HEADING_COLOR + UNDERLINE + s + RESET;
+        private UnaryOperator<String> heading2 = s -> BOLD + HEADING_COLOR + s + RESET;
+        private UnaryOperator<String> heading3 = s -> BOLD + HEADING_COLOR + s + RESET;
         private UnaryOperator<String> bold = s -> BOLD + s + RESET;
         private UnaryOperator<String> italic = s -> ITALIC + s + RESET;
-        private UnaryOperator<String> code = s -> YELLOW + s + RESET;
+        private UnaryOperator<String> code = s -> CODE_COLOR + s + RESET;
         private UnaryOperator<String> codeBlock = s -> BG_GRAY + s + RESET;
-        private UnaryOperator<String> codeBlockBorder = s -> DIM + s + RESET;
-        private UnaryOperator<String> link = s -> CYAN + UNDERLINE + s + RESET;
-        private UnaryOperator<String> linkUrl = s -> DIM + s + RESET;
-        private UnaryOperator<String> listBullet = s -> CYAN + s + RESET;
+        private UnaryOperator<String> codeBlockBorder = s -> CODE_BORDER_COLOR + s + RESET;
+        private UnaryOperator<String> link = s -> LINK_COLOR + UNDERLINE + s + RESET;
+        private UnaryOperator<String> linkUrl = s -> LINK_URL_COLOR + s + RESET;
+        private UnaryOperator<String> listBullet = s -> ACCENT + s + RESET;
         private static final String STRIKETHROUGH_STYLE = "\033[9m";
-        private UnaryOperator<String> hr = s -> DIM + s + RESET;
+        private UnaryOperator<String> hr = s -> GRAY + s + RESET;
         private UnaryOperator<String> strikethrough = s -> STRIKETHROUGH_STYLE + s + RESET;
-        private UnaryOperator<String> quoteBorder = s -> DIM + CYAN + s + RESET;
+        private UnaryOperator<String> quoteBorder = s -> GRAY + s + RESET;
 
         public Builder heading1(UnaryOperator<String> fn) { this.heading1 = fn; return this; }
         public Builder heading2(UnaryOperator<String> fn) { this.heading2 = fn; return this; }

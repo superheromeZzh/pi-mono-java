@@ -12,11 +12,11 @@ import java.util.List;
  */
 public class BashExecutionComponent implements Component {
 
-    private static final String ANSI_DIM = "\033[2m";
+    // Colors matching pi-mono dark theme
+    private static final String ANSI_BASH_COLOR = "\033[38;2;181;189;104m"; // bashMode green #b5bd68
     private static final String ANSI_BOLD = "\033[1m";
-    private static final String ANSI_YELLOW = "\033[33m";
-    private static final String ANSI_RED = "\033[31m";
-    private static final String ANSI_GREEN = "\033[32m";
+    private static final String ANSI_GRAY = "\033[38;2;128;128;128m";      // gray #808080
+    private static final String ANSI_ERROR = "\033[38;2;204;102;102m";     // error #cc6666
     private static final String ANSI_RESET = "\033[0m";
 
     private final String command;
@@ -43,24 +43,22 @@ public class BashExecutionComponent implements Component {
     @Override
     public List<String> render(int width) {
         var lines = new ArrayList<String>();
-        lines.add(""); // spacer
 
-        // Command line: $ command (or $$ for excluded)
+        // Command line: $ command (matching pi-mono: bold green)
         String prefix = excluded ? "$$" : "$";
-        String excludedHint = excluded ? ANSI_DIM + " (no context)" + ANSI_RESET : "";
-        lines.add(ANSI_YELLOW + ANSI_BOLD + "  " + prefix + " " + ANSI_RESET
-                + ANSI_BOLD + command + ANSI_RESET + excludedHint);
+        String excludedHint = excluded ? ANSI_GRAY + " (no context)" + ANSI_RESET : "";
+        lines.add(" " + ANSI_BOLD + ANSI_BASH_COLOR + prefix + " " + command + ANSI_RESET + excludedHint);
 
         if (!complete) {
-            lines.add(ANSI_DIM + "    running..." + ANSI_RESET);
+            lines.add(" " + ANSI_GRAY + "running..." + ANSI_RESET);
             return lines;
         }
 
         // Output lines
         if (output != null && !output.isEmpty()) {
-            int contentWidth = Math.max(1, width - 4);
+            lines.add(""); // spacer
+            int contentWidth = Math.max(1, width - 1);
             String[] outputLines = output.split("\n", -1);
-            // Limit display to 50 lines
             int maxLines = 50;
             int linesToShow = Math.min(outputLines.length, maxLines);
             for (int i = 0; i < linesToShow; i++) {
@@ -68,18 +66,20 @@ public class BashExecutionComponent implements Component {
                 if (AnsiUtils.visibleWidth(line) > contentWidth) {
                     line = AnsiUtils.sliceByColumn(line, 0, Math.max(1, contentWidth - 3)) + "...";
                 }
-                lines.add(ANSI_DIM + "    " + line + ANSI_RESET);
+                lines.add(" " + ANSI_GRAY + line + ANSI_RESET);
             }
             if (outputLines.length > maxLines) {
-                lines.add(ANSI_DIM + "    ... " + (outputLines.length - maxLines) + " more lines" + ANSI_RESET);
+                lines.add(" " + ANSI_GRAY + "... " + (outputLines.length - maxLines) + " more lines" + ANSI_RESET);
             }
         }
 
-        // Exit code
+        // Exit code (matching pi-mono format)
         if (exitCode != null && exitCode != 0) {
-            lines.add(ANSI_RED + "    exit code: " + exitCode + ANSI_RESET);
+            lines.add("");
+            lines.add(" " + ANSI_ERROR + "(exit " + exitCode + ")" + ANSI_RESET);
         } else if (exitCode == null) {
-            lines.add(ANSI_RED + "    timed out" + ANSI_RESET);
+            lines.add("");
+            lines.add(" " + ANSI_ERROR + "(timed out)" + ANSI_RESET);
         }
 
         return lines;
