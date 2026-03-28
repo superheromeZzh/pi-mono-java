@@ -18,6 +18,7 @@ import com.mariozechner.pi.codingagent.session.AgentSession;
 import com.mariozechner.pi.codingagent.tool.bash.BashExecutionResult;
 import com.mariozechner.pi.codingagent.tool.bash.BashExecutor;
 import com.mariozechner.pi.codingagent.tool.bash.BashExecutorOptions;
+import com.mariozechner.pi.tui.Component;
 import com.mariozechner.pi.tui.Tui;
 import com.mariozechner.pi.tui.component.Container;
 import com.mariozechner.pi.tui.component.Text;
@@ -58,6 +59,7 @@ public class InteractiveMode {
     private Container chatContainer;
     private EditorContainer editorContainer;
     private FooterComponent footer;
+    private Component welcomeComponent;
 
     // Streaming state
     private AssistantMessageComponent currentAssistantMessage;
@@ -118,7 +120,8 @@ public class InteractiveMode {
         wb.append("\033[2m    !               run bash command\033[0m\n");
         wb.append("\033[2m    !!              run bash (excluded from context)\033[0m\n");
         wb.append("\033[2m    /               slash commands (/help for list)\033[0m");
-        chatContainer.addChild(new Text(wb.toString()));
+        welcomeComponent = new Text(wb.toString());
+        chatContainer.addChild(welcomeComponent);
 
         // Set model/footer info
         var model = session.getAgent().getState().getModel();
@@ -284,6 +287,12 @@ public class InteractiveMode {
                         // Refresh state after commands that change it
                         if (trimmed.startsWith("/new") || trimmed.startsWith("/reload")) {
                             buildCommandSuggestions(session);
+                        }
+                        // Clear chat display and reset tokens on /new
+                        if (trimmed.equals("/new")) {
+                            chatContainer.clear();
+                            chatContainer.addChild(welcomeComponent);
+                            footer.resetUsage();
                         }
                         // Update footer after model switch
                         if (trimmed.startsWith("/model ")) {

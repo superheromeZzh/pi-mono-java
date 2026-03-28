@@ -67,6 +67,14 @@ public class FooterComponent implements Component {
         this.totalCost += cost;
     }
 
+    public void resetUsage() {
+        this.inputTokens = 0;
+        this.outputTokens = 0;
+        this.cacheRead = 0;
+        this.cacheWrite = 0;
+        this.totalCost = 0;
+    }
+
     @Override
     public void invalidate() { }
 
