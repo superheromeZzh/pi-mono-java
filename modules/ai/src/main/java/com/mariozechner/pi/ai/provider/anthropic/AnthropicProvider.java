@@ -188,10 +188,11 @@ public class AnthropicProvider implements ApiProvider {
 
         int resolvedMaxTokens = maxTokens != null ? maxTokens : model.maxTokens();
 
+        boolean enableCaching = shouldEnableCaching(model.baseUrl());
         var builder = MessageCreateParams.builder()
                 .model(com.anthropic.models.messages.Model.of(model.id()))
                 .maxTokens(resolvedMaxTokens)
-                .messages(convertMessages(context.messages()));
+                .messages(convertMessages(context.messages(), enableCaching));
 
         // System prompt (with cache control for Anthropic API)
         if (context.systemPrompt() != null && !context.systemPrompt().isBlank()) {
@@ -441,7 +442,7 @@ public class AnthropicProvider implements ApiProvider {
 
     // -- Message conversion --
 
-    static List<MessageParam> convertMessages(List<Message> messages) {
+    static List<MessageParam> convertMessages(List<Message> messages, boolean enableCaching) {
         List<MessageParam> result = new ArrayList<>();
         for (Message message : messages) {
             if (message instanceof com.mariozechner.pi.ai.types.UserMessage um) {
@@ -452,7 +453,51 @@ public class AnthropicProvider implements ApiProvider {
                 result.add(convertToolResult(tr));
             }
         }
+
+        // Add cache_control to the last user message for conversation history caching
+        if (enableCaching && !result.isEmpty()) {
+            for (int i = result.size() - 1; i >= 0; i--) {
+                var msg = result.get(i);
+                if (msg.role() == MessageParam.Role.USER) {
+                    result.set(i, addCacheControlToLastBlock(msg));
+                    break;
+                }
+            }
+        }
+
         return result;
+    }
+
+    /**
+     * Adds cache_control ephemeral to the last content block of a user message.
+     */
+    private static MessageParam addCacheControlToLastBlock(MessageParam msg) {
+        var blockParams = msg.content().blockParams();
+        if (blockParams.isEmpty() || blockParams.get().isEmpty()) return msg;
+
+        var blocks = new ArrayList<>(blockParams.get());
+        int lastIdx = blocks.size() - 1;
+        var lastBlock = blocks.get(lastIdx);
+
+        // Rebuild the last text block with cache_control
+        if (lastBlock.isText()) {
+            var tb = lastBlock.asText();
+            blocks.set(lastIdx, ContentBlockParam.ofText(
+                TextBlockParam.builder()
+                    .text(tb.text())
+                    .cacheControl(CacheControlEphemeral.builder().build())
+                    .build()));
+        } else if (lastBlock.isToolResult()) {
+            // Tool result blocks - add cache_control via additional properties
+            // The SDK doesn't expose cacheControl builder on ToolResultBlockParam,
+            // so we keep it as-is (system prompt caching is the primary benefit)
+            return msg;
+        }
+
+        return MessageParam.builder()
+            .role(msg.role())
+            .content(MessageParam.Content.ofBlockParams(blocks))
+            .build();
     }
 
     private static MessageParam convertUserMessage(com.mariozechner.pi.ai.types.UserMessage um) {

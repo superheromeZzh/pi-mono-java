@@ -533,10 +533,15 @@ public class BedrockProvider implements ApiProvider {
     private static software.amazon.awssdk.services.bedrockruntime.model.Message
     convertAssistantMessage(AssistantMessage am) {
         var blocks = new ArrayList<software.amazon.awssdk.services.bedrockruntime.model.ContentBlock>();
+        boolean isAnthropicModel = am.model() != null
+            && (am.model().contains("anthropic.claude") || am.model().contains("anthropic/claude"));
+
         for (ContentBlock cb : am.content()) {
             if (cb instanceof TextContent tc) {
-                blocks.add(software.amazon.awssdk.services.bedrockruntime.model.ContentBlock
-                        .fromText(tc.text()));
+                if (!tc.text().isBlank()) {
+                    blocks.add(software.amazon.awssdk.services.bedrockruntime.model.ContentBlock
+                            .fromText(tc.text()));
+                }
             } else if (cb instanceof ToolCall tc) {
                 blocks.add(software.amazon.awssdk.services.bedrockruntime.model.ContentBlock
                         .fromToolUse(ToolUseBlock.builder()
@@ -544,8 +549,26 @@ public class BedrockProvider implements ApiProvider {
                                 .name(tc.name())
                                 .input(mapToDocument(tc.arguments()))
                                 .build()));
+            } else if (cb instanceof ThinkingContent tc) {
+                if (tc.thinking() == null || tc.thinking().isBlank()) continue;
+                // Build reasoningContent block
+                var reasoningTextBuilder = software.amazon.awssdk.services.bedrockruntime.model
+                    .ReasoningTextBlock.builder().text(tc.thinking());
+                // Only include signature for Anthropic Claude models
+                if (isAnthropicModel && tc.thinkingSignature() != null
+                        && !tc.thinkingSignature().isBlank()) {
+                    reasoningTextBuilder.signature(tc.thinkingSignature());
+                } else if (isAnthropicModel) {
+                    // Missing signature on Anthropic model — fall back to plain text
+                    blocks.add(software.amazon.awssdk.services.bedrockruntime.model.ContentBlock
+                            .fromText(tc.thinking()));
+                    continue;
+                }
+                blocks.add(software.amazon.awssdk.services.bedrockruntime.model.ContentBlock.builder()
+                    .reasoningContent(software.amazon.awssdk.services.bedrockruntime.model
+                        .ReasoningContentBlock.fromReasoningText(reasoningTextBuilder.build()))
+                    .build());
             }
-            // ThinkingContent is dropped for cross-provider compatibility
         }
         return software.amazon.awssdk.services.bedrockruntime.model.Message.builder()
                 .role(ConversationRole.ASSISTANT)

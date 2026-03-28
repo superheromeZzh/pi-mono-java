@@ -273,8 +273,21 @@ public class MistralProvider implements ApiProvider {
                     m.put("role", "assistant");
                     StringBuilder text = new StringBuilder();
                     var toolCalls = MAPPER.createArrayNode();
+                    var contentArray = MAPPER.createArrayNode();
+                    boolean hasThinking = false;
                     for (var block : am.content()) {
-                        if (block instanceof TextContent tc) text.append(tc.text());
+                        if (block instanceof ThinkingContent tc) {
+                            if (tc.thinking() != null && !tc.thinking().isBlank()) {
+                                hasThinking = true;
+                                var thinkingItem = MAPPER.createObjectNode();
+                                thinkingItem.put("type", "thinking");
+                                var thinkingParts = MAPPER.createArrayNode();
+                                thinkingParts.add(MAPPER.createObjectNode()
+                                    .put("type", "text").put("text", tc.thinking()));
+                                thinkingItem.set("thinking", thinkingParts);
+                                contentArray.add(thinkingItem);
+                            }
+                        } else if (block instanceof TextContent tc) text.append(tc.text());
                         else if (block instanceof ToolCall tc) {
                             var tcNode = MAPPER.createObjectNode();
                             tcNode.put("id", tc.id());
@@ -290,7 +303,16 @@ public class MistralProvider implements ApiProvider {
                             toolCalls.add(tcNode);
                         }
                     }
-                    if (!text.isEmpty()) m.put("content", text.toString());
+                    if (hasThinking) {
+                        // Use array content format when thinking is present
+                        if (!text.isEmpty()) {
+                            contentArray.add(MAPPER.createObjectNode()
+                                .put("type", "text").put("text", text.toString()));
+                        }
+                        m.set("content", contentArray);
+                    } else if (!text.isEmpty()) {
+                        m.put("content", text.toString());
+                    }
                     if (!toolCalls.isEmpty()) m.set("tool_calls", toolCalls);
                     messages.add(m);
                 }

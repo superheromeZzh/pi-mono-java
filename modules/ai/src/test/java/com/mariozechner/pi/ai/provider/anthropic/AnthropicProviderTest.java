@@ -54,7 +54,7 @@ class AnthropicProviderTest {
         @Test
         void convertsUserMessage() {
             var messages = List.<Message>of(new UserMessage("Hello", 1000L));
-            var result = AnthropicProvider.convertMessages(messages);
+            var result = AnthropicProvider.convertMessages(messages, false);
 
             assertEquals(1, result.size());
             assertEquals(MessageParam.Role.USER, result.get(0).role());
@@ -66,7 +66,7 @@ class AnthropicProviderTest {
                     List.of(new TextContent("Hi there", null)),
                     "messages", "anthropic", "model",
                     null, Usage.empty(), StopReason.STOP, null, 1L);
-            var result = AnthropicProvider.convertMessages(List.of(am));
+            var result = AnthropicProvider.convertMessages(List.of(am), false);
 
             assertEquals(1, result.size());
             assertEquals(MessageParam.Role.ASSISTANT, result.get(0).role());
@@ -76,7 +76,7 @@ class AnthropicProviderTest {
         void convertsToolResultAsUserMessage() {
             var tr = new ToolResultMessage("tc-1", "bash",
                     List.of(new TextContent("output")), null, false, 1L);
-            var result = AnthropicProvider.convertMessages(List.of(tr));
+            var result = AnthropicProvider.convertMessages(List.of(tr), false);
 
             assertEquals(1, result.size());
             // Tool results are sent as USER messages in the Anthropic API
@@ -93,14 +93,14 @@ class AnthropicProviderTest {
                             null, Usage.empty(), StopReason.STOP, null, 2L),
                     new UserMessage("How?", 3L)
             );
-            var result = AnthropicProvider.convertMessages(messages);
+            var result = AnthropicProvider.convertMessages(messages, false);
 
             assertEquals(3, result.size());
         }
 
         @Test
         void convertsEmptyMessageList() {
-            var result = AnthropicProvider.convertMessages(List.of());
+            var result = AnthropicProvider.convertMessages(List.of(), false);
             assertTrue(result.isEmpty());
         }
     }

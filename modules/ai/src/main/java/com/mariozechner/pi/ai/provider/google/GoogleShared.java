@@ -55,6 +55,17 @@ public final class GoogleShared {
                     for (var block : am.content()) {
                         switch (block) {
                             case TextContent tc -> parts.add(MAPPER.createObjectNode().put("text", tc.text()));
+                            case ThinkingContent tc -> {
+                                if (tc.thinking() != null && !tc.thinking().isBlank()) {
+                                    var part = MAPPER.createObjectNode();
+                                    part.put("text", tc.thinking());
+                                    part.put("thought", true);
+                                    if (tc.thinkingSignature() != null) {
+                                        part.put("thoughtSignature", tc.thinkingSignature());
+                                    }
+                                    parts.add(part);
+                                }
+                            }
                             case ToolCall tc -> {
                                 var fnCall = MAPPER.createObjectNode();
                                 var fc = MAPPER.createObjectNode();
@@ -63,7 +74,7 @@ public final class GoogleShared {
                                 fnCall.set("functionCall", fc);
                                 parts.add(fnCall);
                             }
-                            default -> {} // Skip thinking, image etc.
+                            default -> {} // Skip image etc.
                         }
                     }
                     content.set("parts", parts);
@@ -75,7 +86,7 @@ public final class GoogleShared {
                     var parts = MAPPER.createArrayNode();
                     var fnResp = MAPPER.createObjectNode();
                     var fr = MAPPER.createObjectNode();
-                    fr.put("name", trm.toolCallId());
+                    fr.put("name", trm.toolName());
                     var response = MAPPER.createObjectNode();
                     var sb = new StringBuilder();
                     for (var block : trm.content()) {

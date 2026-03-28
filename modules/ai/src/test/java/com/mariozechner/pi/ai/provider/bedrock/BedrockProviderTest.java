@@ -127,7 +127,8 @@ class BedrockProviderTest {
         }
 
         @Test
-        void dropsThinkingContentFromAssistantMessage() {
+        void convertsThinkingToTextFallbackWhenSignatureMissing() {
+            // Anthropic Claude with missing signature: thinking falls back to plain text
             var am = new AssistantMessage(
                     List.of(
                             new ThinkingContent("thinking...", null, false),
@@ -139,8 +140,8 @@ class BedrockProviderTest {
             var result = BedrockProvider.convertMessages(List.of(am));
 
             assertEquals(1, result.size());
-            // Only the text block should be present
-            assertEquals(1, result.get(0).content().size());
+            // Thinking (as text fallback) + text = 2 blocks
+            assertEquals(2, result.get(0).content().size());
         }
     }
 
