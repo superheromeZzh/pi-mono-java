@@ -83,8 +83,11 @@ public class GoogleGenerativeAIProvider implements ApiProvider {
             List<ContentBlock> blocks = new ArrayList<>();
             Usage[] usage = {Usage.empty()};
             StopReason[] stop = {StopReason.STOP};
-            int[] textIndex = {-1};
-            int[] thinkingIndex = {-1};
+            // Track current block type for accumulation (like TS currentBlock pattern)
+            String[] currentType = {null}; // "text", "thinking", or null
+            StringBuilder textAcc = new StringBuilder();
+            StringBuilder thinkingAcc = new StringBuilder();
+            String[] thinkingSig = {null};
 
             try (var reader = new BufferedReader(new InputStreamReader(response.body()))) {
                 String line;
@@ -97,34 +100,59 @@ public class GoogleGenerativeAIProvider implements ApiProvider {
                     var parsed = GoogleShared.parseChunk(chunk);
 
                     for (var block : parsed.blocks()) {
-                        blocks.add(block);
-                        int idx = blocks.size() - 1;
                         if (block instanceof ThinkingContent tc) {
-                            if (thinkingIndex[0] < 0) {
-                                thinkingIndex[0] = idx;
+                            if (!"thinking".equals(currentType[0])) {
+                                // Finish previous block
+                                finishCurrentBlock(currentType[0], blocks, textAcc, thinkingAcc, thinkingSig, eventStream, model, usage[0], stop[0]);
+                                currentType[0] = "thinking";
+                                thinkingAcc.setLength(0);
+                                thinkingSig[0] = null;
+                                blocks.add(new ThinkingContent("", null, false));
                                 eventStream.push(new com.mariozechner.pi.ai.stream.AssistantMessageEvent.ThinkingStartEvent(
-                                    idx, buildMessage(model, blocks, usage[0], stop[0])));
+                                    blocks.size() - 1, buildMessage(model, blocks, usage[0], stop[0])));
                             }
+                            thinkingAcc.append(tc.thinking());
+                            if (tc.thinkingSignature() != null) thinkingSig[0] = tc.thinkingSignature();
+                            blocks.set(blocks.size() - 1, new ThinkingContent(thinkingAcc.toString(), thinkingSig[0], false));
                             eventStream.push(new com.mariozechner.pi.ai.stream.AssistantMessageEvent.ThinkingDeltaEvent(
-                                idx, tc.thinking(), buildMessage(model, blocks, usage[0], stop[0])));
+                                blocks.size() - 1, tc.thinking(), buildMessage(model, blocks, usage[0], stop[0])));
+
                         } else if (block instanceof TextContent tc) {
-                            // Close thinking block if transitioning
-                            if (thinkingIndex[0] >= 0 && textIndex[0] < 0) {
-                                eventStream.push(new com.mariozechner.pi.ai.stream.AssistantMessageEvent.ThinkingEndEvent(
-                                    thinkingIndex[0], "", buildMessage(model, blocks, usage[0], stop[0])));
-                            }
-                            if (textIndex[0] < 0) {
-                                textIndex[0] = idx;
+                            if (!"text".equals(currentType[0])) {
+                                finishCurrentBlock(currentType[0], blocks, textAcc, thinkingAcc, thinkingSig, eventStream, model, usage[0], stop[0]);
+                                currentType[0] = "text";
+                                textAcc.setLength(0);
+                                blocks.add(new TextContent("", null));
                                 eventStream.push(new com.mariozechner.pi.ai.stream.AssistantMessageEvent.TextStartEvent(
-                                    idx, buildMessage(model, blocks, usage[0], stop[0])));
+                                    blocks.size() - 1, buildMessage(model, blocks, usage[0], stop[0])));
                             }
-                            eventStream.pushTextDelta(idx, tc.text(), buildMessage(model, blocks, usage[0], stop[0]));
+                            textAcc.append(tc.text());
+                            blocks.set(blocks.size() - 1, new TextContent(textAcc.toString(), null));
+                            eventStream.pushTextDelta(blocks.size() - 1, tc.text(), buildMessage(model, blocks, usage[0], stop[0]));
+
+                        } else if (block instanceof ToolCall tc) {
+                            finishCurrentBlock(currentType[0], blocks, textAcc, thinkingAcc, thinkingSig, eventStream, model, usage[0], stop[0]);
+                            currentType[0] = null;
+                            blocks.add(tc);
+                            int idx = blocks.size() - 1;
+                            eventStream.push(new com.mariozechner.pi.ai.stream.AssistantMessageEvent.ToolCallStartEvent(
+                                idx, buildMessage(model, blocks, usage[0], stop[0])));
+                            eventStream.push(new com.mariozechner.pi.ai.stream.AssistantMessageEvent.ToolCallDeltaEvent(
+                                idx, MAPPER.writeValueAsString(tc.arguments()), buildMessage(model, blocks, usage[0], stop[0])));
+                            eventStream.push(new com.mariozechner.pi.ai.stream.AssistantMessageEvent.ToolCallEndEvent(
+                                idx, tc, buildMessage(model, blocks, usage[0], stop[0])));
                         }
-                        // ToolCalls handled at end
                     }
                     if (parsed.usage() != null) usage[0] = parsed.usage();
                     if (parsed.finishReason() != null) stop[0] = GoogleShared.mapFinishReason(parsed.finishReason());
                 }
+            }
+            // Finish any open block
+            finishCurrentBlock(currentType[0], blocks, textAcc, thinkingAcc, thinkingSig, eventStream, model, usage[0], stop[0]);
+
+            // Override stop reason if tool calls present
+            if (blocks.stream().anyMatch(b -> b instanceof ToolCall)) {
+                stop[0] = StopReason.TOOL_USE;
             }
 
             var cost = computeCost(model, usage[0]);
@@ -199,6 +227,25 @@ public class GoogleGenerativeAIProvider implements ApiProvider {
         String key = System.getenv("GOOGLE_API_KEY");
         if (key != null && !key.isBlank()) return key;
         return System.getenv("GOOGLE_CLOUD_API_KEY");
+    }
+
+    private void finishCurrentBlock(
+            String type, List<ContentBlock> blocks,
+            StringBuilder textAcc, StringBuilder thinkingAcc, String[] thinkingSig,
+            AssistantMessageEventStream eventStream, Model model, Usage usage, StopReason stop) {
+        if (type == null || blocks.isEmpty()) return;
+        int idx = blocks.size() - 1;
+        if ("thinking".equals(type)) {
+            String content = thinkingAcc.toString();
+            blocks.set(idx, new ThinkingContent(content, thinkingSig[0], false));
+            eventStream.push(new com.mariozechner.pi.ai.stream.AssistantMessageEvent.ThinkingEndEvent(
+                idx, content, buildMessage(model, blocks, usage, stop)));
+        } else if ("text".equals(type)) {
+            String content = textAcc.toString();
+            blocks.set(idx, new TextContent(content, null));
+            eventStream.push(new com.mariozechner.pi.ai.stream.AssistantMessageEvent.TextEndEvent(
+                idx, content, buildMessage(model, blocks, usage, stop)));
+        }
     }
 
     private Cost computeCost(Model model, Usage usage) {

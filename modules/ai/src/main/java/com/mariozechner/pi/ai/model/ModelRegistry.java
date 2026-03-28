@@ -102,6 +102,41 @@ public class ModelRegistry {
         log.debug("Registered {} model(s)", modelList.size());
     }
 
+    // -- Static utility functions (aligned with TS models.ts) --
+
+    /**
+     * Calculates cost breakdown for a model and usage.
+     * Returns a new Cost with computed values.
+     */
+    public static Cost calculateCost(Model model, Usage usage) {
+        if (model.cost() == null) return Cost.empty();
+        var mc = model.cost();
+        double input = usage.input() * mc.input() / 1_000_000.0;
+        double output = usage.output() * mc.output() / 1_000_000.0;
+        double cacheRead = usage.cacheRead() * mc.cacheRead() / 1_000_000.0;
+        double cacheWrite = usage.cacheWrite() * mc.cacheWrite() / 1_000_000.0;
+        return new Cost(input, output, cacheRead, cacheWrite,
+            input + output + cacheRead + cacheWrite);
+    }
+
+    /**
+     * Check if a model supports xhigh thinking level.
+     * Supported: GPT-5.x families, Opus 4.6 models.
+     */
+    public static boolean supportsXhigh(Model model) {
+        String id = model.id();
+        return id.contains("gpt-5.2") || id.contains("gpt-5.3") || id.contains("gpt-5.4")
+            || id.contains("opus-4-6") || id.contains("opus-4.6");
+    }
+
+    /**
+     * Check if two models are equal by comparing both id and provider.
+     */
+    public static boolean modelsAreEqual(Model a, Model b) {
+        if (a == null || b == null) return false;
+        return a.id().equals(b.id()) && a.provider() == b.provider();
+    }
+
     /**
      * Removes all registered models.
      */
