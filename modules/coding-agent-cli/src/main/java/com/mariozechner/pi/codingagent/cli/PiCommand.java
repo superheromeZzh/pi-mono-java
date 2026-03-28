@@ -258,6 +258,18 @@ public class PiCommand implements Callable<Integer> {
             return 0;
         }
 
+        // Validate conflicting session flags (matching pi-mono)
+        int sessionFlagCount = 0;
+        var conflicting = new ArrayList<String>();
+        if (sessionPath != null) { sessionFlagCount++; conflicting.add("--session"); }
+        if (continueSession) { sessionFlagCount++; conflicting.add("--continue"); }
+        if (resumeSession) { sessionFlagCount++; conflicting.add("--resume"); }
+        if (noSession) { sessionFlagCount++; conflicting.add("--no-session"); }
+        if (sessionFlagCount > 1) {
+            System.err.println("Error: conflicting flags: " + String.join(", ", conflicting));
+            return 1;
+        }
+
         // --print/-p flag makes this non-interactive (like pi-mono -p)
         if (printMode) {
             if (effectivePrompt == null) {
