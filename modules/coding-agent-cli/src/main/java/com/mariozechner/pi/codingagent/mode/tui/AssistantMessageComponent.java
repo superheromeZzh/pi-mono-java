@@ -114,7 +114,7 @@ public class AssistantMessageComponent implements Component {
         if (!complete && text.isEmpty() && thinking.isEmpty()) {
             String frame = SPINNER_FRAMES[spinnerFrame % SPINNER_FRAMES.length];
             spinnerFrame++;
-            lines.add(" " + ANSI_ACCENT + frame + ANSI_RESET + " " + ANSI_MUTED + "Working..." + ANSI_RESET);
+            lines.add(" " + ANSI_ACCENT + frame + ANSI_RESET + " " + ANSI_MUTED + "Working... (escape to interrupt)" + ANSI_RESET);
         }
 
         cachedThinking = thinking;

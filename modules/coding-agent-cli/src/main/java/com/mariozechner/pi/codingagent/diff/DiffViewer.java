@@ -25,11 +25,17 @@ public class DiffViewer {
 
     /**
      * Compute a simple line-based diff between two texts.
+     * Tabs are replaced with spaces for consistent rendering (matching pi-mono).
      */
     public static List<DiffLine> diff(String oldText, String newText) {
-        String[] oldLines = oldText.split("\n", -1);
-        String[] newLines = newText.split("\n", -1);
+        String[] oldLines = replaceTabs(oldText).split("\n", -1);
+        String[] newLines = replaceTabs(newText).split("\n", -1);
         return computeLcs(oldLines, newLines);
+    }
+
+    /** Replace tabs with spaces for consistent rendering (matching pi-mono). */
+    private static String replaceTabs(String text) {
+        return text != null ? text.replace("\t", "   ") : "";
     }
 
     /**
