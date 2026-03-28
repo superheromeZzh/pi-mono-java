@@ -294,7 +294,8 @@ public class InteractiveMode {
                         // Clear chat display and reset tokens on /new
                         if (trimmed.equals("/new")) {
                             chatContainer.clear();
-                            chatContainer.addChild(welcomeComponent);
+                            chatContainer.addChild(new Text(
+                                    "\033[38;2;138;190;183m\u2713 New session started\033[0m", 1, 1));
                             footer.resetUsage();
                         }
                         // Update footer after model switch
