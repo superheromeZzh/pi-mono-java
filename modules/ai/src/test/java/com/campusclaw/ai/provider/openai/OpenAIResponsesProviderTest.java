@@ -1,18 +1,19 @@
 package com.campusclaw.ai.provider.openai;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.campusclaw.ai.stream.AssistantMessageEventStream;
-import com.campusclaw.ai.types.*;
-import com.openai.models.responses.ResponseInputItem;
-import com.openai.models.responses.ResponseStatus;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.List;
 import java.util.Map;
 
-import static org.junit.jupiter.api.Assertions.*;
+import com.campusclaw.ai.stream.AssistantMessageEventStream;
+import com.campusclaw.ai.types.*;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.openai.models.responses.ResponseInputItem;
+import com.openai.models.responses.ResponseStatus;
+
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
 
 class OpenAIResponsesProviderTest {
 

@@ -1,17 +1,17 @@
 package com.campusclaw.tui.terminal;
 
-import org.jline.terminal.Attributes;
-import org.jline.terminal.Attributes.LocalFlag;
-import org.jline.terminal.Size;
-import org.jline.terminal.TerminalBuilder;
-import org.jline.utils.NonBlockingReader;
-
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.UncheckedIOException;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Consumer;
+
+import org.jline.terminal.Attributes;
+import org.jline.terminal.Attributes.LocalFlag;
+import org.jline.terminal.Size;
+import org.jline.terminal.TerminalBuilder;
+import org.jline.utils.NonBlockingReader;
 
 /**
  * {@link Terminal} implementation backed by JLine 3.

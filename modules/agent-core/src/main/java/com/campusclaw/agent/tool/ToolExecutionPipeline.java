@@ -1,8 +1,12 @@
 package com.campusclaw.agent.tool;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.networknt.schema.JsonSchemaFactory;
-import com.networknt.schema.SpecVersion;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executors;
+
 import com.campusclaw.agent.event.AgentEventListener;
 import com.campusclaw.agent.event.ToolExecutionEndEvent;
 import com.campusclaw.agent.event.ToolExecutionStartEvent;
@@ -11,13 +15,9 @@ import com.campusclaw.ai.types.ContentBlock;
 import com.campusclaw.ai.types.TextContent;
 import com.campusclaw.ai.types.ToolCall;
 import com.campusclaw.ai.types.ToolResultMessage;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executors;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.networknt.schema.JsonSchemaFactory;
+import com.networknt.schema.SpecVersion;
 
 /**
  * Executes tool calls with hook processing, validation, and event emission.

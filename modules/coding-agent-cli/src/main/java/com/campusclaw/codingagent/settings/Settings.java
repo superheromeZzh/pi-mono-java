@@ -1,9 +1,11 @@
 package com.campusclaw.codingagent.settings;
 
+import java.util.List;
+
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+
 import jakarta.annotation.Nullable;
-import java.util.List;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public record Settings(

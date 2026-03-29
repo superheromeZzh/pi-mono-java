@@ -1,10 +1,11 @@
 package com.campusclaw.ai.types;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-import jakarta.annotation.Nullable;
-
 import java.util.List;
 import java.util.Map;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+import jakarta.annotation.Nullable;
 
 /**
  * Definition of an LLM model with its capabilities and pricing.

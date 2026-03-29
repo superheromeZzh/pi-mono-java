@@ -1,14 +1,22 @@
 package com.campusclaw.codingagent.session;
 
+import java.nio.file.Path;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
+
 import com.campusclaw.agent.Agent;
 import com.campusclaw.agent.event.AgentEventListener;
+import com.campusclaw.agent.tool.AgentTool;
 import com.campusclaw.ai.CampusClawAiService;
 import com.campusclaw.ai.model.ModelRegistry;
 import com.campusclaw.ai.types.Message;
 import com.campusclaw.ai.types.Model;
 import com.campusclaw.ai.types.Provider;
 import com.campusclaw.ai.types.UserMessage;
-import com.campusclaw.agent.tool.AgentTool;
+import com.campusclaw.codingagent.config.AppPaths;
 import com.campusclaw.codingagent.context.ContextFileLoader;
 import com.campusclaw.codingagent.context.ContextFileLoader.ContextFile;
 import com.campusclaw.codingagent.prompt.PromptTemplate;
@@ -20,14 +28,6 @@ import com.campusclaw.codingagent.skill.Skill;
 import com.campusclaw.codingagent.skill.SkillExpander;
 import com.campusclaw.codingagent.skill.SkillLoader;
 import com.campusclaw.codingagent.skill.SkillRegistry;
-import com.campusclaw.codingagent.config.AppPaths;
-
-import java.nio.file.Path;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.concurrent.CompletableFuture;
 
 /**
  * Manages a single agent session lifecycle: initialization, prompt handling,

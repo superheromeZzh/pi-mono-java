@@ -1,5 +1,10 @@
 package com.campusclaw.agent.loop;
 
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Objects;
+
 import com.campusclaw.agent.context.ContextTransformer;
 import com.campusclaw.agent.context.MessageConverter;
 import com.campusclaw.agent.event.AgentEndEvent;
@@ -19,7 +24,6 @@ import com.campusclaw.agent.tool.ToolExecutionMode;
 import com.campusclaw.agent.tool.ToolExecutionPipeline;
 import com.campusclaw.ai.stream.AssistantMessageEvent;
 import com.campusclaw.ai.types.AssistantMessage;
-import com.campusclaw.ai.types.ContentBlock;
 import com.campusclaw.ai.types.Context;
 import com.campusclaw.ai.types.Message;
 import com.campusclaw.ai.types.Model;
@@ -29,12 +33,6 @@ import com.campusclaw.ai.types.TextContent;
 import com.campusclaw.ai.types.Tool;
 import com.campusclaw.ai.types.ToolCall;
 import com.campusclaw.ai.types.ToolResultMessage;
-
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
 
 /**
  * Core agent loop that streams assistant responses, executes tools, and manages turn continuation.

@@ -1,11 +1,11 @@
 package com.campusclaw.tui.component;
 
-import com.campusclaw.tui.Component;
-import com.campusclaw.tui.ansi.AnsiUtils;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.UnaryOperator;
+
+import com.campusclaw.tui.Component;
+import com.campusclaw.tui.ansi.AnsiUtils;
 
 /**
  * Box component — wraps a child component with optional border, padding, and background color.

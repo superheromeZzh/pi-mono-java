@@ -1,12 +1,12 @@
 package com.campusclaw.codingagent.mode.tui;
 
+import java.util.*;
+import java.util.function.Consumer;
+
 import com.campusclaw.tui.Component;
 import com.campusclaw.tui.Focusable;
 import com.campusclaw.tui.ansi.AnsiUtils;
 import com.campusclaw.tui.component.Editor;
-
-import java.util.*;
-import java.util.function.Consumer;
 
 /**
  * Editor area with colored separator lines above and below.

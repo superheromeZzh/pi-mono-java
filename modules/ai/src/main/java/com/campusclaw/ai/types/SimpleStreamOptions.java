@@ -1,9 +1,10 @@
 package com.campusclaw.ai.types;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-import jakarta.annotation.Nullable;
-
 import java.util.Map;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+import jakarta.annotation.Nullable;
 
 /**
  * Extended stream options that add reasoning/thinking configuration

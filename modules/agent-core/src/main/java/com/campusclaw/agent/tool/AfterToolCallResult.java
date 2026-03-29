@@ -1,8 +1,8 @@
 package com.campusclaw.agent.tool;
 
-import com.campusclaw.ai.types.ContentBlock;
-
 import java.util.List;
+
+import com.campusclaw.ai.types.ContentBlock;
 
 /**
  * Optional overrides returned from the after-tool-call hook.

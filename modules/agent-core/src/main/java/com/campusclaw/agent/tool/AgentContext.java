@@ -1,11 +1,11 @@
 package com.campusclaw.agent.tool;
 
+import java.util.List;
+import java.util.Objects;
+
 import com.campusclaw.agent.state.AgentState;
 import com.campusclaw.ai.types.AssistantMessage;
 import com.campusclaw.ai.types.Message;
-
-import java.util.List;
-import java.util.Objects;
 
 /**
  * Mutable agent context shared across loop execution and tool hooks.

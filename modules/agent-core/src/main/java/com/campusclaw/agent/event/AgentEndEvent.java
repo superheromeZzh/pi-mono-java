@@ -1,9 +1,9 @@
 package com.campusclaw.agent.event;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.campusclaw.ai.types.Message;
-
 import java.util.List;
+
+import com.campusclaw.ai.types.Message;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
  * Emitted when an agent run ends with the final message history.

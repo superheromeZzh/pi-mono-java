@@ -1,6 +1,7 @@
 package com.campusclaw.ai.types;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+
 import jakarta.annotation.Nullable;
 
 /**

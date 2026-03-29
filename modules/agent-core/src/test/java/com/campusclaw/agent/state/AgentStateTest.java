@@ -1,6 +1,15 @@
 package com.campusclaw.agent.state;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import static org.junit.jupiter.api.Assertions.*;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+
 import com.campusclaw.agent.tool.AgentTool;
 import com.campusclaw.agent.tool.AgentToolResult;
 import com.campusclaw.agent.tool.AgentToolUpdateCallback;
@@ -15,17 +24,9 @@ import com.campusclaw.ai.types.Provider;
 import com.campusclaw.ai.types.TextContent;
 import com.campusclaw.ai.types.ThinkingLevel;
 import com.campusclaw.ai.types.UserMessage;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import org.junit.jupiter.api.Test;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 class AgentStateTest {
 

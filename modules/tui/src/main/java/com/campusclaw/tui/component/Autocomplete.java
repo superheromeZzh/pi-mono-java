@@ -1,9 +1,5 @@
 package com.campusclaw.tui.component;
 
-import com.campusclaw.tui.Component;
-import com.campusclaw.tui.Focusable;
-import com.campusclaw.tui.ansi.AnsiUtils;
-
 import java.io.IOException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
@@ -13,6 +9,10 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.Consumer;
+
+import com.campusclaw.tui.Component;
+import com.campusclaw.tui.Focusable;
+import com.campusclaw.tui.ansi.AnsiUtils;
 
 /**
  * File path autocomplete component — provides tab-completion for file paths using fuzzy matching.

@@ -1,15 +1,15 @@
 package com.campusclaw.codingagent.mode.tui;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
 import com.campusclaw.agent.tool.AgentToolResult;
 import com.campusclaw.ai.types.ContentBlock;
 import com.campusclaw.ai.types.TextContent;
 import com.campusclaw.codingagent.tool.edit.EditToolDetails;
 import com.campusclaw.tui.Component;
 import com.campusclaw.tui.ansi.AnsiUtils;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
 
 /**
  * Displays a tool execution with background color matching campusclaw TS:

@@ -1,7 +1,5 @@
 package com.campusclaw.codingagent.skill;
 
-import org.yaml.snakeyaml.Yaml;
-
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.DirectoryStream;
@@ -11,6 +9,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
+
+import org.yaml.snakeyaml.Yaml;
 
 /**
  * Recursively scans directories to discover and load {@link Skill}s from SKILL.md files.

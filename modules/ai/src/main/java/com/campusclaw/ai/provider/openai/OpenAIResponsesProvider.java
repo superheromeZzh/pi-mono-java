@@ -1,27 +1,10 @@
 package com.campusclaw.ai.provider.openai;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.openai.client.OpenAIClient;
-import com.openai.client.okhttp.OpenAIOkHttpClient;
-import com.openai.core.http.StreamResponse;
-import com.openai.models.responses.EasyInputMessage;
-import com.openai.models.responses.FunctionTool;
-import com.openai.models.responses.ResponseCompletedEvent;
-import com.openai.models.responses.ResponseCreateParams;
-import com.openai.models.responses.ResponseFunctionCallArgumentsDeltaEvent;
-import com.openai.models.responses.ResponseFunctionToolCall;
-import com.openai.models.responses.ResponseInputItem;
-import com.openai.models.responses.ResponseOutputItem;
-import com.openai.models.responses.ResponseOutputItemAddedEvent;
-import com.openai.models.responses.ResponseOutputItemDoneEvent;
-import com.openai.models.responses.ResponseReasoningSummaryTextDeltaEvent;
-import com.openai.models.responses.ResponseStatus;
-import com.openai.models.responses.ResponseStreamEvent;
-import com.openai.models.responses.ResponseTextDeltaEvent;
-import com.openai.models.responses.ResponseUsage;
-import com.openai.models.responses.Tool;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import com.campusclaw.ai.provider.ApiProvider;
 import com.campusclaw.ai.stream.AssistantMessageEvent;
 import com.campusclaw.ai.stream.AssistantMessageEventStream;
@@ -30,7 +13,6 @@ import com.campusclaw.ai.types.AssistantMessage;
 import com.campusclaw.ai.types.ContentBlock;
 import com.campusclaw.ai.types.Context;
 import com.campusclaw.ai.types.Cost;
-import com.campusclaw.ai.types.ImageContent;
 import com.campusclaw.ai.types.Message;
 import com.campusclaw.ai.types.Model;
 import com.campusclaw.ai.types.ModelCost;
@@ -43,13 +25,27 @@ import com.campusclaw.ai.types.ToolCall;
 import com.campusclaw.ai.types.ToolResultMessage;
 import com.campusclaw.ai.types.Usage;
 import com.campusclaw.ai.types.UserMessage;
-import jakarta.annotation.Nullable;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.openai.client.OpenAIClient;
+import com.openai.client.okhttp.OpenAIOkHttpClient;
+import com.openai.core.http.StreamResponse;
+import com.openai.models.responses.EasyInputMessage;
+import com.openai.models.responses.FunctionTool;
+import com.openai.models.responses.ResponseCreateParams;
+import com.openai.models.responses.ResponseFunctionToolCall;
+import com.openai.models.responses.ResponseInputItem;
+import com.openai.models.responses.ResponseOutputItemAddedEvent;
+import com.openai.models.responses.ResponseOutputItemDoneEvent;
+import com.openai.models.responses.ResponseStatus;
+import com.openai.models.responses.ResponseStreamEvent;
+import com.openai.models.responses.ResponseUsage;
+import com.openai.models.responses.Tool;
+
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import jakarta.annotation.Nullable;
 
 /**
  * {@link ApiProvider} implementation for the OpenAI Responses API.

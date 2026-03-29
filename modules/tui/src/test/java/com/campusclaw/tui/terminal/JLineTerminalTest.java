@@ -1,21 +1,18 @@
 package com.campusclaw.tui.terminal;
 
+import static org.junit.jupiter.api.Assertions.*;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+
 import org.jline.terminal.Attributes;
 import org.jline.terminal.Size;
 import org.jline.terminal.TerminalBuilder;
-import org.jline.utils.NonBlockingReader;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.io.StringWriter;
-import java.util.ArrayList;
-import java.util.List;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Tests JLineTerminal using a dumb JLine terminal (no real TTY needed).

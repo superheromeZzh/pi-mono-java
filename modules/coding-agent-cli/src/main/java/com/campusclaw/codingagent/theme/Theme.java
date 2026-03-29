@@ -1,9 +1,11 @@
 package com.campusclaw.codingagent.theme;
 
+import java.util.Map;
+
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+
 import jakarta.annotation.Nullable;
-import java.util.Map;
 
 /**
  * Theme definition with configurable colors for all UI elements.

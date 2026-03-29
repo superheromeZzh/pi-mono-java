@@ -1,13 +1,13 @@
 package com.campusclaw.codingagent.tool.bash;
 
-import org.springframework.stereotype.Service;
-
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.concurrent.TimeUnit;
+
+import org.springframework.stereotype.Service;
 
 /**
  * Execution engine for bash commands, independent of the Bash tool.

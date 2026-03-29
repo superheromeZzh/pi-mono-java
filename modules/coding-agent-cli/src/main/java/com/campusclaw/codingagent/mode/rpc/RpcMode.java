@@ -1,14 +1,15 @@
 package com.campusclaw.codingagent.mode.rpc;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.campusclaw.agent.event.*;
-import com.campusclaw.codingagent.session.AgentSession;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.util.Map;
+
+import com.campusclaw.agent.event.*;
+import com.campusclaw.codingagent.session.AgentSession;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * RPC mode: reads JSONL commands from stdin, writes JSONL events to stdout.

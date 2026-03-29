@@ -1,11 +1,11 @@
 package com.campusclaw.ai.stream;
 
+import java.util.function.Function;
+import java.util.function.Predicate;
+
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.Sinks;
-
-import java.util.function.Function;
-import java.util.function.Predicate;
 
 /**
  * A push-based event stream that bridges imperative event emission

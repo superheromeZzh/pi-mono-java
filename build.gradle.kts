@@ -2,6 +2,7 @@ plugins {
     java
     id("org.springframework.boot") version "3.4.1" apply false
     id("io.spring.dependency-management") version "1.1.7" apply false
+    id("com.diffplug.spotless") version "7.0.4"
 }
 
 val javaVersion = 21
@@ -12,6 +13,14 @@ allprojects {
 
     repositories {
         mavenCentral()
+    }
+}
+
+spotless {
+    java {
+        target("modules/*/src/**/*.java")
+        removeUnusedImports()
+        importOrder("java", "javax", "com", "org", "")
     }
 }
 

@@ -1,11 +1,11 @@
 package com.campusclaw.codingagent.mode.tui;
 
-import com.campusclaw.codingagent.util.GitUtils;
-import com.campusclaw.tui.Component;
-
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+
+import com.campusclaw.codingagent.util.GitUtils;
+import com.campusclaw.tui.Component;
 
 /**
  * Bottom status bar matching campusclaw TS footer layout:

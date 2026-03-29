@@ -1,8 +1,9 @@
 package com.campusclaw.codingagent.compaction;
 
-import com.campusclaw.ai.types.Message;
 import java.util.List;
 import java.util.Set;
+
+import com.campusclaw.ai.types.Message;
 
 public record CompactionResult(
     String summary,

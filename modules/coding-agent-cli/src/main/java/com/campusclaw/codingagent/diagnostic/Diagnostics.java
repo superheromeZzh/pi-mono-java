@@ -1,12 +1,13 @@
 package com.campusclaw.codingagent.diagnostic;
 
-import jakarta.annotation.Nullable;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import jakarta.annotation.Nullable;
 
 /**
  * Diagnostic checks for the coding agent environment.

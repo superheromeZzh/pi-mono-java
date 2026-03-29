@@ -1,11 +1,11 @@
 package com.campusclaw.ai.stream;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonSubTypes;
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.campusclaw.ai.types.AssistantMessage;
 import com.campusclaw.ai.types.StopReason;
 import com.campusclaw.ai.types.ToolCall;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
 /**
  * Sealed union of events emitted during an LLM assistant message stream.

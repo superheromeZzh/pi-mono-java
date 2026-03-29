@@ -1,12 +1,12 @@
 package com.campusclaw.tui;
 
-import com.campusclaw.tui.component.Container;
-import com.campusclaw.tui.terminal.Terminal;
-import com.campusclaw.tui.terminal.TerminalSize;
-
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
+
+import com.campusclaw.tui.component.Container;
+import com.campusclaw.tui.terminal.Terminal;
+import com.campusclaw.tui.terminal.TerminalSize;
 
 /**
  * Full-screen TUI renderer. Manages a component tree, renders it to terminal lines,

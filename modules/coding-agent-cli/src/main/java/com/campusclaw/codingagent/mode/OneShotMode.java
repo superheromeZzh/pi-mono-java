@@ -1,17 +1,16 @@
 package com.campusclaw.codingagent.mode;
 
+import java.io.PrintStream;
+import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
+
 import com.campusclaw.agent.event.*;
 import com.campusclaw.ai.stream.AssistantMessageEvent;
 import com.campusclaw.ai.types.AssistantMessage;
 import com.campusclaw.ai.types.ContentBlock;
-import com.campusclaw.ai.types.Message;
 import com.campusclaw.ai.types.StopReason;
 import com.campusclaw.ai.types.TextContent;
 import com.campusclaw.codingagent.session.AgentSession;
-
-import java.io.PrintStream;
-import java.util.Objects;
-import java.util.concurrent.CompletableFuture;
 
 /**
  * Executes a single prompt against the agent session with streaming output.

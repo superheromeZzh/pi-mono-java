@@ -1,9 +1,10 @@
 package com.campusclaw.ai.types;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-import jakarta.annotation.Nullable;
-
 import java.util.List;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+import jakarta.annotation.Nullable;
 
 /**
  * The full context supplied to an LLM for a single turn of conversation.

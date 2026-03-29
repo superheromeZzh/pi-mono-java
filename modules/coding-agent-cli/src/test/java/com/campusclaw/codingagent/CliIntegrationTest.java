@@ -1,6 +1,14 @@
 package com.campusclaw.codingagent;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import static org.junit.jupiter.api.Assertions.*;
+
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.atomic.AtomicInteger;
+
 import com.campusclaw.agent.event.AgentEndEvent;
 import com.campusclaw.agent.event.AgentEvent;
 import com.campusclaw.agent.event.AgentStartEvent;
@@ -27,18 +35,10 @@ import com.campusclaw.codingagent.tool.ops.LocalWriteOperations;
 import com.campusclaw.codingagent.tool.read.ReadTool;
 import com.campusclaw.codingagent.tool.write.WriteTool;
 import com.campusclaw.codingagent.util.FileMutationQueue;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.io.TempDir;
-
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.atomic.AtomicInteger;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * CLI end-to-end integration tests (IT-003).

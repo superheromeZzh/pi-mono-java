@@ -1,7 +1,8 @@
 package com.campusclaw.codingagent.compaction;
 
-import com.campusclaw.ai.types.*;
 import java.util.*;
+
+import com.campusclaw.ai.types.*;
 
 /**
  * Extracts file read/write operations from tool call history.

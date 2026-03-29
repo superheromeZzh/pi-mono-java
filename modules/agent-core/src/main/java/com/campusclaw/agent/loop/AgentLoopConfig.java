@@ -1,5 +1,7 @@
 package com.campusclaw.agent.loop;
 
+import java.util.Objects;
+
 import com.campusclaw.agent.context.ContextTransformer;
 import com.campusclaw.agent.context.DefaultMessageConverter;
 import com.campusclaw.agent.context.MessageConverter;
@@ -9,7 +11,6 @@ import com.campusclaw.agent.tool.ToolExecutionPipeline;
 import com.campusclaw.ai.CampusClawAiService;
 import com.campusclaw.ai.types.Model;
 import com.campusclaw.ai.types.SimpleStreamOptions;
-import java.util.Objects;
 
 /**
  * Configuration required to run the agent loop.

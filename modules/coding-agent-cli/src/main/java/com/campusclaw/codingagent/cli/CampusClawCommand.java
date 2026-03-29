@@ -1,30 +1,5 @@
 package com.campusclaw.codingagent.cli;
 
-import com.campusclaw.agent.tool.AgentTool;
-import com.campusclaw.ai.CampusClawAiService;
-import com.campusclaw.ai.model.ModelRegistry;
-import com.campusclaw.ai.types.*;
-import com.campusclaw.codingagent.command.SlashCommandRegistry;
-import com.campusclaw.codingagent.compaction.Compactor;
-import com.campusclaw.codingagent.mode.InteractiveMode;
-import com.campusclaw.codingagent.mode.OneShotMode;
-import com.campusclaw.codingagent.prompt.SystemPromptBuilder;
-import com.campusclaw.codingagent.session.AgentSession;
-import com.campusclaw.codingagent.session.SessionConfig;
-import com.campusclaw.codingagent.session.SessionManager;
-import com.campusclaw.codingagent.skill.SkillExpander;
-import com.campusclaw.codingagent.skill.SkillLoader;
-import com.campusclaw.codingagent.config.ConfigValueResolver;
-import com.campusclaw.codingagent.settings.Settings;
-import com.campusclaw.codingagent.settings.SettingsManager;
-import com.campusclaw.codingagent.tool.bash.BashExecutor;
-import com.campusclaw.tui.terminal.JLineTerminal;
-import com.campusclaw.tui.terminal.Terminal;
-import org.springframework.stereotype.Component;
-import picocli.CommandLine.Command;
-import picocli.CommandLine.Option;
-import picocli.CommandLine.Parameters;
-
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -33,6 +8,33 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
+
+import com.campusclaw.agent.tool.AgentTool;
+import com.campusclaw.ai.CampusClawAiService;
+import com.campusclaw.ai.model.ModelRegistry;
+import com.campusclaw.ai.types.*;
+import com.campusclaw.codingagent.command.SlashCommandRegistry;
+import com.campusclaw.codingagent.compaction.Compactor;
+import com.campusclaw.codingagent.config.ConfigValueResolver;
+import com.campusclaw.codingagent.mode.InteractiveMode;
+import com.campusclaw.codingagent.mode.OneShotMode;
+import com.campusclaw.codingagent.prompt.SystemPromptBuilder;
+import com.campusclaw.codingagent.session.AgentSession;
+import com.campusclaw.codingagent.session.SessionConfig;
+import com.campusclaw.codingagent.session.SessionManager;
+import com.campusclaw.codingagent.settings.Settings;
+import com.campusclaw.codingagent.settings.SettingsManager;
+import com.campusclaw.codingagent.skill.SkillExpander;
+import com.campusclaw.codingagent.skill.SkillLoader;
+import com.campusclaw.codingagent.tool.bash.BashExecutor;
+import com.campusclaw.tui.terminal.JLineTerminal;
+import com.campusclaw.tui.terminal.Terminal;
+
+import org.springframework.stereotype.Component;
+
+import picocli.CommandLine.Command;
+import picocli.CommandLine.Option;
+import picocli.CommandLine.Parameters;
 
 /**
  * Main CLI command for CampusClaw.

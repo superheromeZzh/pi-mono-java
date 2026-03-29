@@ -1,16 +1,16 @@
 package com.campusclaw.codingagent.mode.tui;
 
-import com.campusclaw.codingagent.config.AppPaths;
-import com.campusclaw.tui.Component;
-import com.campusclaw.tui.Focusable;
-import com.campusclaw.tui.component.SelectList;
-
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.*;
 import java.util.function.Consumer;
+
+import com.campusclaw.codingagent.config.AppPaths;
+import com.campusclaw.tui.Component;
+import com.campusclaw.tui.Focusable;
+import com.campusclaw.tui.component.SelectList;
 
 /**
  * Session selector overlay for /resume.

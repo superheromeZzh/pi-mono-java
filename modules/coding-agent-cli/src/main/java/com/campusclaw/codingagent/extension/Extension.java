@@ -1,12 +1,12 @@
 package com.campusclaw.codingagent.extension;
 
+import java.util.List;
+
 import com.campusclaw.agent.event.AgentEventListener;
-import com.campusclaw.agent.tool.AgentTool;
 import com.campusclaw.agent.tool.AfterToolCallHandler;
+import com.campusclaw.agent.tool.AgentTool;
 import com.campusclaw.agent.tool.BeforeToolCallHandler;
 import com.campusclaw.codingagent.command.SlashCommand;
-
-import java.util.List;
 
 /**
  * An extension that can contribute tools, commands, and hooks to the coding agent.

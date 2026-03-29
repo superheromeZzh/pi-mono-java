@@ -1,13 +1,14 @@
 package com.campusclaw.codingagent.prompt;
 
-import com.campusclaw.agent.tool.AgentTool;
-import com.campusclaw.codingagent.context.ContextFileLoader.ContextFile;
-import com.campusclaw.codingagent.skill.SkillPromptFormatter;
-import org.springframework.stereotype.Service;
-
 import java.time.LocalDate;
 import java.util.LinkedHashSet;
 import java.util.Set;
+
+import com.campusclaw.agent.tool.AgentTool;
+import com.campusclaw.codingagent.context.ContextFileLoader.ContextFile;
+import com.campusclaw.codingagent.skill.SkillPromptFormatter;
+
+import org.springframework.stereotype.Service;
 
 /**
  * Builds the system prompt from base instructions, tool descriptions,

@@ -1,5 +1,11 @@
 package com.campusclaw.agent;
 
+import java.util.List;
+import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.Executor;
+
 import com.campusclaw.agent.context.ContextTransformer;
 import com.campusclaw.agent.context.DefaultMessageConverter;
 import com.campusclaw.agent.context.MessageConverter;
@@ -30,13 +36,8 @@ import com.campusclaw.ai.types.Model;
 import com.campusclaw.ai.types.SimpleStreamOptions;
 import com.campusclaw.ai.types.ThinkingLevel;
 import com.campusclaw.ai.types.UserMessage;
-import org.springframework.stereotype.Service;
 
-import java.util.List;
-import java.util.Objects;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.Executor;
+import org.springframework.stereotype.Service;
 
 /**
  * Facade for configuring and running the phase-4 agent runtime.

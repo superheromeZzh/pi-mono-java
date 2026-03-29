@@ -1,8 +1,8 @@
 package com.campusclaw.agent.context;
 
-import com.campusclaw.ai.types.Message;
-
 import java.util.List;
+
+import com.campusclaw.ai.types.Message;
 
 /**
  * Default converter that passes agent messages straight through to the LLM.

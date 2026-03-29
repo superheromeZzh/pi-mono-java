@@ -1,12 +1,12 @@
 package com.campusclaw.agent.state;
 
+import java.util.List;
+import java.util.Set;
+
 import com.campusclaw.agent.tool.AgentTool;
 import com.campusclaw.ai.types.Message;
 import com.campusclaw.ai.types.Model;
 import com.campusclaw.ai.types.ThinkingLevel;
-
-import java.util.List;
-import java.util.Set;
 
 /**
  * Immutable snapshot of the current agent state.

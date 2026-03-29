@@ -1,8 +1,8 @@
 package com.campusclaw.agent.tool;
 
-import com.fasterxml.jackson.databind.JsonNode;
-
 import java.util.Map;
+
+import com.fasterxml.jackson.databind.JsonNode;
 
 /**
  * Executable tool contract used by the agent runtime.

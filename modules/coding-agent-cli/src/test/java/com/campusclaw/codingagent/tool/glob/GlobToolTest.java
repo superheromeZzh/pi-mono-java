@@ -1,11 +1,6 @@
 package com.campusclaw.codingagent.tool.glob;
 
-import com.campusclaw.agent.tool.AgentToolResult;
-import com.campusclaw.ai.types.TextContent;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -14,7 +9,13 @@ import java.nio.file.attribute.FileTime;
 import java.time.Instant;
 import java.util.Map;
 
-import static org.junit.jupiter.api.Assertions.*;
+import com.campusclaw.agent.tool.AgentToolResult;
+import com.campusclaw.ai.types.TextContent;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 class GlobToolTest {
 

@@ -1,14 +1,15 @@
 package com.campusclaw.tui.component;
 
-import com.campusclaw.tui.Focusable;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static org.junit.jupiter.api.Assertions.*;
+import com.campusclaw.tui.Focusable;
+
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
 
 /**
  * Comprehensive tests for {@link SelectList}.

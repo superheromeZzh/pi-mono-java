@@ -1,13 +1,14 @@
 package com.campusclaw.ai.provider;
 
-import com.campusclaw.ai.types.Api;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.*;
+import com.campusclaw.ai.types.Api;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
 
 class ApiProviderRegistryTest {
 

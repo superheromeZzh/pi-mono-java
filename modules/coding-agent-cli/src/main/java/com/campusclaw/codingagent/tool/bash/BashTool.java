@@ -1,18 +1,5 @@
 package com.campusclaw.codingagent.tool.bash;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.campusclaw.agent.tool.AgentTool;
-import com.campusclaw.agent.tool.AgentToolResult;
-import com.campusclaw.agent.tool.AgentToolUpdateCallback;
-import com.campusclaw.agent.tool.CancellationToken;
-import com.campusclaw.ai.types.ContentBlock;
-import com.campusclaw.ai.types.TextContent;
-import com.campusclaw.codingagent.util.TruncationUtils;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
-
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -20,6 +7,20 @@ import java.nio.file.Path;
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
+
+import com.campusclaw.agent.tool.AgentTool;
+import com.campusclaw.agent.tool.AgentToolResult;
+import com.campusclaw.agent.tool.AgentToolUpdateCallback;
+import com.campusclaw.agent.tool.CancellationToken;
+import com.campusclaw.ai.types.ContentBlock;
+import com.campusclaw.ai.types.TextContent;
+import com.campusclaw.codingagent.util.TruncationUtils;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 /**
  * Agent tool that executes bash commands via {@link BashExecutor},

@@ -1,7 +1,8 @@
 package com.campusclaw.codingagent.session;
 
-import com.campusclaw.ai.types.Message;
 import java.util.*;
+
+import com.campusclaw.ai.types.Message;
 
 /**
  * In-memory representation of a session as a tree of entries.

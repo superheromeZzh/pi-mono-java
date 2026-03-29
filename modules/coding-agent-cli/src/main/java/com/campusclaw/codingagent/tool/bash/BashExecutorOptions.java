@@ -1,9 +1,9 @@
 package com.campusclaw.codingagent.tool.bash;
 
-import com.campusclaw.agent.tool.CancellationToken;
-
 import java.time.Duration;
 import java.util.Map;
+
+import com.campusclaw.agent.tool.CancellationToken;
 
 /**
  * Options for {@link BashExecutor} command execution.

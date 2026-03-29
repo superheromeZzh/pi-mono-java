@@ -1,16 +1,5 @@
 package com.campusclaw.codingagent.tool.editdiff;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.campusclaw.agent.tool.AgentTool;
-import com.campusclaw.agent.tool.AgentToolResult;
-import com.campusclaw.agent.tool.AgentToolUpdateCallback;
-import com.campusclaw.agent.tool.CancellationToken;
-import com.campusclaw.ai.types.TextContent;
-import com.campusclaw.codingagent.tool.ops.EditOperations;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -18,6 +7,18 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import com.campusclaw.agent.tool.AgentTool;
+import com.campusclaw.agent.tool.AgentToolResult;
+import com.campusclaw.agent.tool.AgentToolUpdateCallback;
+import com.campusclaw.agent.tool.CancellationToken;
+import com.campusclaw.ai.types.TextContent;
+import com.campusclaw.codingagent.tool.ops.EditOperations;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A tool that applies edits using unified diff format.

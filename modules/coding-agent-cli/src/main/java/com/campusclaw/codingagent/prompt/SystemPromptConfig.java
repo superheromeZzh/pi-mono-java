@@ -1,12 +1,12 @@
 package com.campusclaw.codingagent.prompt;
 
-import com.campusclaw.agent.tool.AgentTool;
-import com.campusclaw.codingagent.context.ContextFileLoader.ContextFile;
-import com.campusclaw.codingagent.skill.Skill;
-
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
+
+import com.campusclaw.agent.tool.AgentTool;
+import com.campusclaw.codingagent.context.ContextFileLoader.ContextFile;
+import com.campusclaw.codingagent.skill.Skill;
 
 /**
  * Configuration for building the system prompt.

@@ -1,11 +1,5 @@
 package com.campusclaw.codingagent.util;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import javax.imageio.ImageIO;
-import javax.imageio.ImageReader;
-import javax.imageio.stream.ImageInputStream;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
@@ -15,6 +9,13 @@ import java.nio.file.Path;
 import java.util.Base64;
 import java.util.Iterator;
 import java.util.Optional;
+
+import javax.imageio.ImageIO;
+import javax.imageio.ImageReader;
+import javax.imageio.stream.ImageInputStream;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Image processing utilities: resize, EXIF handling, format conversion, and base64 encoding.

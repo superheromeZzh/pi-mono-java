@@ -1,12 +1,12 @@
 package com.campusclaw.agent.queue;
 
-import com.campusclaw.ai.types.Message;
-
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.locks.ReentrantLock;
+
+import com.campusclaw.ai.types.Message;
 
 /**
  * Thread-safe queue for steering and follow-up messages.

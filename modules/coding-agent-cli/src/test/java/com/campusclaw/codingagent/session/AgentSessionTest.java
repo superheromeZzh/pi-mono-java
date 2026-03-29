@@ -1,27 +1,7 @@
 package com.campusclaw.codingagent.session;
 
-import com.campusclaw.agent.Agent;
-import com.campusclaw.ai.CampusClawAiService;
-import com.campusclaw.ai.model.ModelRegistry;
-import com.campusclaw.ai.types.*;
-import com.campusclaw.agent.tool.AgentTool;
-import com.campusclaw.agent.tool.AgentToolResult;
-import com.campusclaw.agent.tool.AgentToolUpdateCallback;
-import com.campusclaw.agent.tool.CancellationToken;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.campusclaw.codingagent.prompt.SystemPromptBuilder;
-import com.campusclaw.codingagent.skill.Skill;
-import com.campusclaw.codingagent.skill.SkillExpander;
-import com.campusclaw.codingagent.skill.SkillLoader;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.junit.jupiter.api.io.TempDir;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -30,8 +10,28 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import com.campusclaw.agent.Agent;
+import com.campusclaw.agent.tool.AgentTool;
+import com.campusclaw.agent.tool.AgentToolResult;
+import com.campusclaw.agent.tool.AgentToolUpdateCallback;
+import com.campusclaw.agent.tool.CancellationToken;
+import com.campusclaw.ai.CampusClawAiService;
+import com.campusclaw.ai.model.ModelRegistry;
+import com.campusclaw.ai.types.*;
+import com.campusclaw.codingagent.prompt.SystemPromptBuilder;
+import com.campusclaw.codingagent.skill.SkillExpander;
+import com.campusclaw.codingagent.skill.SkillLoader;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.io.TempDir;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 @org.mockito.junit.jupiter.MockitoSettings(strictness = org.mockito.quality.Strictness.LENIENT)

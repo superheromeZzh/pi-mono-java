@@ -1,15 +1,14 @@
 package com.campusclaw.tui.component;
 
-import com.campusclaw.tui.Component;
-import com.campusclaw.tui.Focusable;
-import com.campusclaw.tui.ansi.AnsiUtils;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
+
+import com.campusclaw.tui.Component;
+import com.campusclaw.tui.Focusable;
+import com.campusclaw.tui.ansi.AnsiUtils;
 
 /**
  * A selectable list component with keyboard navigation and scrolling.

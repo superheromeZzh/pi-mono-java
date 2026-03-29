@@ -1,14 +1,14 @@
 package com.campusclaw.codingagent.command.builtin;
 
-import com.campusclaw.ai.types.Message;
-import com.campusclaw.codingagent.command.SlashCommand;
-import com.campusclaw.codingagent.command.SlashCommandContext;
-import com.campusclaw.codingagent.config.AppPaths;
-
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Comparator;
+
+import com.campusclaw.ai.types.Message;
+import com.campusclaw.codingagent.command.SlashCommand;
+import com.campusclaw.codingagent.command.SlashCommandContext;
+import com.campusclaw.codingagent.config.AppPaths;
 
 /**
  * Resume a different session. Lists recent sessions and allows selection.

@@ -1,8 +1,8 @@
 package com.campusclaw.ai.types;
 
-import jakarta.annotation.Nullable;
-
 import java.util.Map;
+
+import jakarta.annotation.Nullable;
 
 /**
  * Factory for creating common {@link SimpleStreamOptions} configurations.

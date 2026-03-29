@@ -1,11 +1,11 @@
 package com.campusclaw.tui.image;
 
-import com.campusclaw.tui.Component;
-
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+
+import com.campusclaw.tui.Component;
 
 /**
  * TUI component that displays an image inline in the terminal.

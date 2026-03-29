@@ -1,12 +1,13 @@
 package com.campusclaw.codingagent.cli;
 
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
-import picocli.CommandLine;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.nio.file.Path;
 
-import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
+
+import picocli.CommandLine;
 
 class CampusClawCommandTest {
 

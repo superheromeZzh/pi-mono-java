@@ -1,18 +1,5 @@
 package com.campusclaw.codingagent.tool.glob;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.campusclaw.agent.tool.AgentTool;
-import com.campusclaw.agent.tool.AgentToolResult;
-import com.campusclaw.agent.tool.AgentToolUpdateCallback;
-import com.campusclaw.agent.tool.CancellationToken;
-import com.campusclaw.ai.types.ContentBlock;
-import com.campusclaw.ai.types.TextContent;
-import com.campusclaw.codingagent.util.PathUtils;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
-
 import java.io.IOException;
 import java.nio.file.FileSystem;
 import java.nio.file.FileVisitResult;
@@ -26,6 +13,20 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import com.campusclaw.agent.tool.AgentTool;
+import com.campusclaw.agent.tool.AgentToolResult;
+import com.campusclaw.agent.tool.AgentToolUpdateCallback;
+import com.campusclaw.agent.tool.CancellationToken;
+import com.campusclaw.ai.types.ContentBlock;
+import com.campusclaw.ai.types.TextContent;
+import com.campusclaw.codingagent.util.PathUtils;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 /**
  * Agent tool for finding files by glob pattern.

@@ -1,6 +1,14 @@
 package com.campusclaw.agent;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import static org.junit.jupiter.api.Assertions.*;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+
 import com.campusclaw.agent.context.DefaultMessageConverter;
 import com.campusclaw.agent.event.AgentEndEvent;
 import com.campusclaw.agent.event.AgentEvent;
@@ -23,10 +31,8 @@ import com.campusclaw.ai.stream.AssistantMessageEvent;
 import com.campusclaw.ai.stream.AssistantMessageEventStream;
 import com.campusclaw.ai.types.Api;
 import com.campusclaw.ai.types.AssistantMessage;
-import com.campusclaw.ai.types.ContentBlock;
 import com.campusclaw.ai.types.Context;
 import com.campusclaw.ai.types.InputModality;
-import com.campusclaw.ai.types.Message;
 import com.campusclaw.ai.types.Model;
 import com.campusclaw.ai.types.ModelCost;
 import com.campusclaw.ai.types.Provider;
@@ -37,17 +43,9 @@ import com.campusclaw.ai.types.ToolCall;
 import com.campusclaw.ai.types.ToolResultMessage;
 import com.campusclaw.ai.types.Usage;
 import com.campusclaw.ai.types.UserMessage;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import org.junit.jupiter.api.Test;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 class AgentTest {
 

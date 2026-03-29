@@ -1,13 +1,14 @@
 package com.campusclaw.ai.stream;
 
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
-import reactor.test.StepVerifier;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
 
-import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
+
+import reactor.test.StepVerifier;
 
 class EventStreamTest {
 

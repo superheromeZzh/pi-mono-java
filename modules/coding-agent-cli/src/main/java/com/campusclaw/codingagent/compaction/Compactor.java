@@ -1,11 +1,12 @@
 package com.campusclaw.codingagent.compaction;
 
+import java.util.*;
+
 import com.campusclaw.ai.CampusClawAiService;
 import com.campusclaw.ai.types.*;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.*;
 
 /**
  * Handles context compaction when conversations exceed token limits.

@@ -1,14 +1,14 @@
 package com.campusclaw.codingagent.mode.tui;
 
+import java.util.*;
+import java.util.function.Consumer;
+
 import com.campusclaw.ai.model.ModelRegistry;
 import com.campusclaw.ai.types.Model;
 import com.campusclaw.tui.Component;
 import com.campusclaw.tui.Focusable;
 import com.campusclaw.tui.component.Input;
 import com.campusclaw.tui.component.SelectList;
-
-import java.util.*;
-import java.util.function.Consumer;
 
 /**
  * Model selector overlay with fuzzy search input.

@@ -1,8 +1,8 @@
 package com.campusclaw.agent.tool;
 
-import com.campusclaw.ai.types.ToolCall;
-
 import java.util.Map;
+
+import com.campusclaw.ai.types.ToolCall;
 
 /**
  * Bundles a resolved tool implementation with the tool call to execute and its validated arguments.

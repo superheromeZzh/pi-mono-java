@@ -1,11 +1,12 @@
 package com.campusclaw.ai.provider;
 
+import java.util.List;
+
 import com.campusclaw.ai.stream.AssistantMessageEvent;
 import com.campusclaw.ai.stream.AssistantMessageEventStream;
 import com.campusclaw.ai.types.*;
-import jakarta.annotation.Nullable;
 
-import java.util.List;
+import jakarta.annotation.Nullable;
 
 /**
  * A mock {@link ApiProvider} for testing that emits a configurable

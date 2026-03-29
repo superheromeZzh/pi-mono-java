@@ -1,14 +1,14 @@
 package com.campusclaw.tui.component;
 
-import com.campusclaw.tui.Component;
-import com.campusclaw.tui.Focusable;
-import com.campusclaw.tui.ansi.AnsiUtils;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.UnaryOperator;
+
+import com.campusclaw.tui.Component;
+import com.campusclaw.tui.Focusable;
+import com.campusclaw.tui.ansi.AnsiUtils;
 
 /**
  * SettingsList component — displays a list of key-value setting entries with keyboard

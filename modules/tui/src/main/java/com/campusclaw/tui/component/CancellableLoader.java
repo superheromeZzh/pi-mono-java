@@ -1,8 +1,8 @@
 package com.campusclaw.tui.component;
 
-import com.campusclaw.tui.Component;
-
 import java.util.List;
+
+import com.campusclaw.tui.Component;
 
 /**
  * A loading animation with cancellation support.

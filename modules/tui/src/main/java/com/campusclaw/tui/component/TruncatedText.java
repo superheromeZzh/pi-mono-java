@@ -1,11 +1,11 @@
 package com.campusclaw.tui.component;
 
-import com.campusclaw.tui.Component;
-import com.campusclaw.tui.ansi.AnsiUtils;
-
 import java.util.Collections;
 import java.util.List;
 import java.util.function.UnaryOperator;
+
+import com.campusclaw.tui.Component;
+import com.campusclaw.tui.ansi.AnsiUtils;
 
 /**
  * TruncatedText component — displays single-line text that is truncated with an ellipsis

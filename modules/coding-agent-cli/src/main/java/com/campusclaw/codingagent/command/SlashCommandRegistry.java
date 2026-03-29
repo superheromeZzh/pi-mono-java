@@ -1,7 +1,8 @@
 package com.campusclaw.codingagent.command;
 
-import org.springframework.stereotype.Service;
 import java.util.*;
+
+import org.springframework.stereotype.Service;
 
 @Service
 public class SlashCommandRegistry {

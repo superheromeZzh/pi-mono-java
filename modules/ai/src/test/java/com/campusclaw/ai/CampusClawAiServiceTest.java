@@ -1,5 +1,9 @@
 package com.campusclaw.ai;
 
+import static org.junit.jupiter.api.Assertions.*;
+
+import java.util.List;
+
 import com.campusclaw.ai.model.ModelRegistry;
 import com.campusclaw.ai.provider.ApiProvider;
 import com.campusclaw.ai.provider.ApiProviderRegistry;
@@ -7,14 +11,12 @@ import com.campusclaw.ai.provider.MockApiProvider;
 import com.campusclaw.ai.stream.AssistantMessageEvent;
 import com.campusclaw.ai.stream.AssistantMessageEventStream;
 import com.campusclaw.ai.types.*;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+
 import reactor.test.StepVerifier;
-
-import java.util.List;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 class CampusClawAiServiceTest {
 

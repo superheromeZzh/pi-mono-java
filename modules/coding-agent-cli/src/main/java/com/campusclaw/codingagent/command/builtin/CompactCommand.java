@@ -1,13 +1,12 @@
 package com.campusclaw.codingagent.command.builtin;
 
+import java.util.ArrayList;
+
 import com.campusclaw.ai.types.Message;
 import com.campusclaw.ai.types.UserMessage;
 import com.campusclaw.codingagent.command.SlashCommand;
 import com.campusclaw.codingagent.command.SlashCommandContext;
 import com.campusclaw.codingagent.compaction.Compactor;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public class CompactCommand implements SlashCommand {
 

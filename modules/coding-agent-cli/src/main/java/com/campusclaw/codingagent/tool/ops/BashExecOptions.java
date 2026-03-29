@@ -1,10 +1,10 @@
 package com.campusclaw.codingagent.tool.ops;
 
-import com.campusclaw.agent.tool.CancellationToken;
-
 import java.time.Duration;
 import java.util.Map;
 import java.util.function.Consumer;
+
+import com.campusclaw.agent.tool.CancellationToken;
 
 /**
  * Options for bash command execution.

@@ -1,12 +1,11 @@
 package com.campusclaw.codingagent.command.builtin;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
+
 import com.campusclaw.ai.types.Message;
 import com.campusclaw.codingagent.command.SlashCommand;
 import com.campusclaw.codingagent.command.SlashCommandContext;
-import com.campusclaw.codingagent.session.SessionManager;
-
-import java.nio.file.Files;
-import java.nio.file.Path;
 
 /**
  * Import and resume a session from a JSONL file.

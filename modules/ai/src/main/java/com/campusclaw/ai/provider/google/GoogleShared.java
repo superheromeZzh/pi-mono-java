@@ -1,16 +1,16 @@
 package com.campusclaw.ai.provider.google;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
+import com.campusclaw.ai.types.*;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.campusclaw.ai.types.*;
-import jakarta.annotation.Nullable;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import jakarta.annotation.Nullable;
 
 /**
  * Shared utilities for Google Generative AI and Vertex AI providers.

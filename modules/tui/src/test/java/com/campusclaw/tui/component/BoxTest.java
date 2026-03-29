@@ -1,13 +1,14 @@
 package com.campusclaw.tui.component;
 
-import com.campusclaw.tui.ansi.AnsiUtils;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.List;
 import java.util.function.UnaryOperator;
 
-import static org.junit.jupiter.api.Assertions.*;
+import com.campusclaw.tui.ansi.AnsiUtils;
+
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
 
 class BoxTest {
 

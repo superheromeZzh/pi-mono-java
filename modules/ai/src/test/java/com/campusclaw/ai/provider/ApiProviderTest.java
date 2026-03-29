@@ -1,15 +1,17 @@
 package com.campusclaw.ai.provider;
 
-import com.campusclaw.ai.stream.AssistantMessageEvent;
-import com.campusclaw.ai.stream.AssistantMessageEvent.*;
-import com.campusclaw.ai.types.*;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
-import reactor.test.StepVerifier;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.*;
+import com.campusclaw.ai.stream.AssistantMessageEvent;
+import com.campusclaw.ai.stream.AssistantMessageEvent.*;
+import com.campusclaw.ai.types.*;
+
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
+
+import reactor.test.StepVerifier;
 
 class ApiProviderTest {
 

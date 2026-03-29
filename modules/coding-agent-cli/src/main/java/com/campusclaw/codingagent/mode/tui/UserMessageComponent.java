@@ -1,10 +1,10 @@
 package com.campusclaw.codingagent.mode.tui;
 
-import com.campusclaw.tui.Component;
-import com.campusclaw.tui.ansi.AnsiUtils;
-
 import java.util.ArrayList;
 import java.util.List;
+
+import com.campusclaw.tui.Component;
+import com.campusclaw.tui.ansi.AnsiUtils;
 
 /**
  * Renders a user message with background color (#343541) matching campusclaw TS.

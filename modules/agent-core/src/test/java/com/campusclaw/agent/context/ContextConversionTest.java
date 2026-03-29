@@ -1,10 +1,6 @@
 package com.campusclaw.agent.context;
 
-import com.campusclaw.agent.tool.CancellationToken;
-import com.campusclaw.ai.types.Message;
-import com.campusclaw.ai.types.TextContent;
-import com.campusclaw.ai.types.UserMessage;
-import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -12,7 +8,12 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static org.junit.jupiter.api.Assertions.*;
+import com.campusclaw.agent.tool.CancellationToken;
+import com.campusclaw.ai.types.Message;
+import com.campusclaw.ai.types.TextContent;
+import com.campusclaw.ai.types.UserMessage;
+
+import org.junit.jupiter.api.Test;
 
 class ContextConversionTest {
 

@@ -1,15 +1,15 @@
 package com.campusclaw.agent.state;
 
-import com.campusclaw.agent.tool.AgentTool;
-import com.campusclaw.ai.types.Message;
-import com.campusclaw.ai.types.Model;
-import com.campusclaw.ai.types.ThinkingLevel;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+
+import com.campusclaw.agent.tool.AgentTool;
+import com.campusclaw.ai.types.Message;
+import com.campusclaw.ai.types.Model;
+import com.campusclaw.ai.types.ThinkingLevel;
 
 /**
  * Thread-safe mutable container for agent runtime state.

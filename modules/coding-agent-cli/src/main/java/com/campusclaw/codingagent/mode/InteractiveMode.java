@@ -1,34 +1,5 @@
 package com.campusclaw.codingagent.mode;
 
-import com.campusclaw.agent.event.*;
-import com.campusclaw.agent.tool.CancellationToken;
-import com.campusclaw.ai.CampusClawAiService;
-import com.campusclaw.ai.model.ModelRegistry;
-import com.campusclaw.ai.stream.AssistantMessageEvent;
-import com.campusclaw.ai.types.AssistantMessage;
-import com.campusclaw.ai.types.Message;
-import com.campusclaw.ai.types.Model;
-import com.campusclaw.ai.types.ThinkingLevel;
-import com.campusclaw.ai.types.UserMessage;
-import com.campusclaw.codingagent.CampusClawApplication;
-import com.campusclaw.codingagent.command.SlashCommand;
-import com.campusclaw.codingagent.command.SlashCommandContext;
-import com.campusclaw.codingagent.command.SlashCommandRegistry;
-import com.campusclaw.codingagent.compaction.Compactor;
-import com.campusclaw.codingagent.mode.tui.*;
-import com.campusclaw.codingagent.mode.tui.EditorContainer.CommandSuggestion;
-import com.campusclaw.codingagent.prompt.PromptTemplateEntry;
-import com.campusclaw.codingagent.skill.Skill;
-import com.campusclaw.codingagent.session.AgentSession;
-import com.campusclaw.codingagent.tool.bash.BashExecutionResult;
-import com.campusclaw.codingagent.tool.bash.BashExecutor;
-import com.campusclaw.codingagent.tool.bash.BashExecutorOptions;
-import com.campusclaw.tui.Component;
-import com.campusclaw.tui.Tui;
-import com.campusclaw.tui.component.Container;
-import com.campusclaw.tui.component.Text;
-import com.campusclaw.tui.terminal.Terminal;
-
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -37,6 +8,33 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
+
+import com.campusclaw.agent.event.*;
+import com.campusclaw.agent.tool.CancellationToken;
+import com.campusclaw.ai.model.ModelRegistry;
+import com.campusclaw.ai.stream.AssistantMessageEvent;
+import com.campusclaw.ai.types.AssistantMessage;
+import com.campusclaw.ai.types.Message;
+import com.campusclaw.ai.types.Model;
+import com.campusclaw.ai.types.ThinkingLevel;
+import com.campusclaw.ai.types.UserMessage;
+import com.campusclaw.codingagent.CampusClawApplication;
+import com.campusclaw.codingagent.command.SlashCommandContext;
+import com.campusclaw.codingagent.command.SlashCommandRegistry;
+import com.campusclaw.codingagent.compaction.Compactor;
+import com.campusclaw.codingagent.mode.tui.*;
+import com.campusclaw.codingagent.mode.tui.EditorContainer.CommandSuggestion;
+import com.campusclaw.codingagent.prompt.PromptTemplateEntry;
+import com.campusclaw.codingagent.session.AgentSession;
+import com.campusclaw.codingagent.skill.Skill;
+import com.campusclaw.codingagent.tool.bash.BashExecutionResult;
+import com.campusclaw.codingagent.tool.bash.BashExecutor;
+import com.campusclaw.codingagent.tool.bash.BashExecutorOptions;
+import com.campusclaw.tui.Component;
+import com.campusclaw.tui.Tui;
+import com.campusclaw.tui.component.Container;
+import com.campusclaw.tui.component.Text;
+import com.campusclaw.tui.terminal.Terminal;
 
 /**
  * Full-screen interactive REPL using TUI component tree rendering.

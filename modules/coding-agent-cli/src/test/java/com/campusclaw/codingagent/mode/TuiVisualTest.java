@@ -1,14 +1,15 @@
 package com.campusclaw.codingagent.mode;
 
-import com.campusclaw.tui.component.*;
-import com.campusclaw.tui.Tui;
-import com.campusclaw.tui.terminal.TestTerminal;
-import com.campusclaw.codingagent.mode.tui.*;
-import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.*;
+import com.campusclaw.codingagent.mode.tui.*;
+import com.campusclaw.tui.Tui;
+import com.campusclaw.tui.component.*;
+import com.campusclaw.tui.terminal.TestTerminal;
+
+import org.junit.jupiter.api.Test;
 
 /**
  * Visual rendering test — validates the full TUI output matches expectations.

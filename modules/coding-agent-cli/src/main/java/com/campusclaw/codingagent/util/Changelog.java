@@ -1,18 +1,19 @@
 package com.campusclaw.codingagent.util;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.*;
+import java.util.*;
+
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import jakarta.annotation.Nullable;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.file.*;
-import java.time.LocalDate;
-import java.util.*;
+import jakarta.annotation.Nullable;
 
 /**
  * Manages application changelog entries.

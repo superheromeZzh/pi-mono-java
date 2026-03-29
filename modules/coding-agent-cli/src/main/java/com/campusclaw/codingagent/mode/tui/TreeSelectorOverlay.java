@@ -1,16 +1,15 @@
 package com.campusclaw.codingagent.mode.tui;
 
+import java.util.*;
+import java.util.function.Consumer;
+
 import com.campusclaw.ai.types.AssistantMessage;
 import com.campusclaw.ai.types.ContentBlock;
 import com.campusclaw.ai.types.TextContent;
 import com.campusclaw.ai.types.UserMessage;
-import com.campusclaw.codingagent.session.SessionManager;
 import com.campusclaw.tui.Component;
 import com.campusclaw.tui.Focusable;
 import com.campusclaw.tui.component.SelectList;
-
-import java.util.*;
-import java.util.function.Consumer;
 
 /**
  * Tree selector overlay for /tree command.

@@ -1,11 +1,11 @@
 package com.campusclaw.codingagent.mode.tui;
 
-import com.campusclaw.tui.Component;
-import com.campusclaw.tui.component.MarkdownComponent;
-import com.campusclaw.tui.ansi.AnsiUtils;
-
 import java.util.ArrayList;
 import java.util.List;
+
+import com.campusclaw.tui.Component;
+import com.campusclaw.tui.ansi.AnsiUtils;
+import com.campusclaw.tui.component.MarkdownComponent;
 
 /**
  * Renders an assistant message with optional thinking block and markdown-formatted text.

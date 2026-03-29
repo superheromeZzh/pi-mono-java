@@ -1,9 +1,19 @@
 package com.campusclaw.codingagent.tool.write;
 
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.*;
+
+import java.io.IOException;
+import java.nio.file.Path;
+import java.util.Map;
+
 import com.campusclaw.agent.tool.AgentToolResult;
 import com.campusclaw.ai.types.TextContent;
 import com.campusclaw.codingagent.tool.ops.WriteOperations;
 import com.campusclaw.codingagent.util.FileMutationQueue;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -12,15 +22,6 @@ import org.junit.jupiter.api.io.TempDir;
 import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-
-import java.io.IOException;
-import java.nio.file.Path;
-import java.util.Map;
-
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class WriteToolTest {

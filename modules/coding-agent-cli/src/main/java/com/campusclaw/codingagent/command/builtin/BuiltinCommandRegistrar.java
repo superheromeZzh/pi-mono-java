@@ -4,6 +4,7 @@ import com.campusclaw.ai.CampusClawAiService;
 import com.campusclaw.codingagent.command.SlashCommandRegistry;
 import com.campusclaw.codingagent.compaction.Compactor;
 import com.campusclaw.codingagent.settings.SettingsManager;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;

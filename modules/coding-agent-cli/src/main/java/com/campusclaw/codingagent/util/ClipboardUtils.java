@@ -1,11 +1,11 @@
 package com.campusclaw.codingagent.util;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.Optional;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Clipboard utilities supporting OSC 52 terminal escape and native pbcopy/xclip.

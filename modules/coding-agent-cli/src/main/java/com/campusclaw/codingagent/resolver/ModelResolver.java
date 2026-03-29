@@ -1,14 +1,16 @@
 package com.campusclaw.codingagent.resolver;
 
+import java.util.*;
+
 import com.campusclaw.ai.model.ModelRegistry;
 import com.campusclaw.ai.types.Model;
 import com.campusclaw.ai.types.Provider;
 import com.campusclaw.codingagent.settings.Settings;
-import jakarta.annotation.Nullable;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
+import jakarta.annotation.Nullable;
 
 /**
  * Resolves model identifiers to {@link Model} instances with fallback

@@ -1,13 +1,15 @@
 package com.campusclaw.ai.model;
 
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+
 import com.campusclaw.ai.types.*;
-import jakarta.annotation.PostConstruct;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
+import jakarta.annotation.PostConstruct;
 
 /**
  * Registry for {@link Model} definitions, indexed by {@link Provider} and model id.

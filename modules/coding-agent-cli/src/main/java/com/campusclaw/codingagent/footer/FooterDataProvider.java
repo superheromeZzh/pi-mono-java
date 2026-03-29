@@ -1,12 +1,12 @@
 package com.campusclaw.codingagent.footer;
 
+import java.util.List;
+
 import com.campusclaw.ai.types.Model;
 import com.campusclaw.ai.types.ThinkingLevel;
 import com.campusclaw.ai.types.Usage;
-import jakarta.annotation.Nullable;
 
-import java.util.ArrayList;
-import java.util.List;
+import jakarta.annotation.Nullable;
 
 /**
  * Provides data for the status bar / footer display in the TUI.

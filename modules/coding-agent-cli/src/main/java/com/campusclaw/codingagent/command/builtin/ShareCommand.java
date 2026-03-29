@@ -1,12 +1,12 @@
 package com.campusclaw.codingagent.command.builtin;
 
-import com.campusclaw.codingagent.command.SlashCommand;
-import com.campusclaw.codingagent.command.SlashCommandContext;
-import com.campusclaw.codingagent.export.HtmlExporter;
-
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+
+import com.campusclaw.codingagent.command.SlashCommand;
+import com.campusclaw.codingagent.command.SlashCommandContext;
+import com.campusclaw.codingagent.export.HtmlExporter;
 
 /**
  * Share session as a secret GitHub Gist.

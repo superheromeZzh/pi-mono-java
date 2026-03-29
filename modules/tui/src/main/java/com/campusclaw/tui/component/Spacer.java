@@ -1,9 +1,9 @@
 package com.campusclaw.tui.component;
 
-import com.campusclaw.tui.Component;
-
 import java.util.ArrayList;
 import java.util.List;
+
+import com.campusclaw.tui.Component;
 
 /**
  * Spacer component — renders a fixed number of empty lines.

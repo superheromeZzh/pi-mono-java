@@ -1,13 +1,13 @@
 package com.campusclaw.tui.component;
 
-import com.campusclaw.tui.Component;
-import com.campusclaw.tui.Focusable;
-import com.campusclaw.tui.ansi.AnsiUtils;
-
 import java.text.BreakIterator;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
+
+import com.campusclaw.tui.Component;
+import com.campusclaw.tui.Focusable;
+import com.campusclaw.tui.ansi.AnsiUtils;
 
 /**
  * Multi-line text editor component with word wrapping, undo/redo, and Emacs-style kill ring.

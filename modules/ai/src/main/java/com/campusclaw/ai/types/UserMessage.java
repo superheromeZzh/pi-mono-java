@@ -1,8 +1,8 @@
 package com.campusclaw.ai.types;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-
 import java.util.List;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
  * A message from the user.

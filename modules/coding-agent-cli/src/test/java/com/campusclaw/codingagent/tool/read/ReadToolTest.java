@@ -1,16 +1,8 @@
 package com.campusclaw.codingagent.tool.read;
 
-import com.campusclaw.agent.tool.AgentToolResult;
-import com.campusclaw.ai.types.ImageContent;
-import com.campusclaw.ai.types.TextContent;
-import com.campusclaw.codingagent.tool.ops.ReadOperations;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.junit.jupiter.api.io.TempDir;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -18,9 +10,18 @@ import java.nio.file.Path;
 import java.util.Base64;
 import java.util.Map;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
+import com.campusclaw.agent.tool.AgentToolResult;
+import com.campusclaw.ai.types.ImageContent;
+import com.campusclaw.ai.types.TextContent;
+import com.campusclaw.codingagent.tool.ops.ReadOperations;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.io.TempDir;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 class ReadToolTest {

@@ -1,18 +1,19 @@
 package com.campusclaw.codingagent.extension;
 
-import com.campusclaw.agent.event.AgentEventListener;
-import com.campusclaw.agent.tool.AgentTool;
-import com.campusclaw.agent.tool.AfterToolCallHandler;
-import com.campusclaw.agent.tool.BeforeToolCallHandler;
-import com.campusclaw.codingagent.command.SlashCommand;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+
+import com.campusclaw.agent.event.AgentEventListener;
+import com.campusclaw.agent.tool.AfterToolCallHandler;
+import com.campusclaw.agent.tool.AgentTool;
+import com.campusclaw.agent.tool.BeforeToolCallHandler;
+import com.campusclaw.codingagent.command.SlashCommand;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Registry for managing extensions that contribute tools, commands, and hooks.

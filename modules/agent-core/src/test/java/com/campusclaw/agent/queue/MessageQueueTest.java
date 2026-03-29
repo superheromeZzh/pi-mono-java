@@ -1,9 +1,6 @@
 package com.campusclaw.agent.queue;
 
-import com.campusclaw.ai.types.Message;
-import com.campusclaw.ai.types.TextContent;
-import com.campusclaw.ai.types.UserMessage;
-import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -12,7 +9,11 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 
-import static org.junit.jupiter.api.Assertions.*;
+import com.campusclaw.ai.types.Message;
+import com.campusclaw.ai.types.TextContent;
+import com.campusclaw.ai.types.UserMessage;
+
+import org.junit.jupiter.api.Test;
 
 class MessageQueueTest {
 

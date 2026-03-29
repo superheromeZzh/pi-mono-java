@@ -1,10 +1,10 @@
 package com.campusclaw.ai.utils;
 
-import com.campusclaw.ai.types.AssistantMessage;
-import com.campusclaw.ai.types.StopReason;
-
 import java.util.List;
 import java.util.regex.Pattern;
+
+import com.campusclaw.ai.types.AssistantMessage;
+import com.campusclaw.ai.types.StopReason;
 
 /**
  * Detects context overflow errors from LLM provider responses.
