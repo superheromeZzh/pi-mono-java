@@ -57,7 +57,7 @@ public class EditTool implements AgentTool {
 
     @Override
     public String description() {
-        return "Make an exact text replacement in a file. Specify the old text to find and new text to replace it with.";
+        return "Make exact text replacements in a file. Use oldText/newText for single replacement, or edits[] for multiple disjoint replacements.";
     }
 
     @Override
@@ -68,18 +68,36 @@ public class EditTool implements AgentTool {
                 .put("description", "The file path to edit"));
         props.set("oldText", MAPPER.createObjectNode()
                 .put("type", "string")
-                .put("description", "The exact text to find and replace"));
+                .put("description", "The exact text to find and replace (single-replacement mode)"));
         props.set("newText", MAPPER.createObjectNode()
                 .put("type", "string")
-                .put("description", "The replacement text"));
+                .put("description", "The replacement text (single-replacement mode)"));
+
+        // Multi-edit schema
+        ObjectNode editItemProps = MAPPER.createObjectNode();
+        editItemProps.set("oldText", MAPPER.createObjectNode()
+                .put("type", "string")
+                .put("description", "Exact text for one targeted replacement. Must be unique and non-overlapping."));
+        editItemProps.set("newText", MAPPER.createObjectNode()
+                .put("type", "string")
+                .put("description", "Replacement text for this targeted edit."));
+        ObjectNode editItemSchema = MAPPER.createObjectNode()
+                .put("type", "object")
+                .<ObjectNode>set("properties", editItemProps)
+                .set("required", MAPPER.createArrayNode().add("oldText").add("newText"));
+        props.set("edits", MAPPER.createObjectNode()
+                .put("type", "array")
+                .<ObjectNode>set("items", editItemSchema)
+                .put("description", "Multiple disjoint edits. Each matched against original, not incrementally. Do not overlap."));
 
         return MAPPER.createObjectNode()
                 .put("type", "object")
                 .<ObjectNode>set("properties", props)
-                .set("required", MAPPER.createArrayNode().add("path").add("oldText").add("newText"));
+                .set("required", MAPPER.createArrayNode().add("path"));
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public AgentToolResult execute(
             String toolCallId,
             Map<String, Object> params,
@@ -87,17 +105,9 @@ public class EditTool implements AgentTool {
             AgentToolUpdateCallback onUpdate
     ) throws Exception {
         String pathInput = (String) params.get("path");
-        String oldText = (String) params.get("oldText");
-        String newText = (String) params.get("newText");
 
         if (pathInput == null || pathInput.isBlank()) {
             return errorResult("Error: path is required");
-        }
-        if (oldText == null) {
-            return errorResult("Error: oldText is required");
-        }
-        if (newText == null) {
-            return errorResult("Error: newText is required");
         }
 
         Path resolvedPath;
@@ -109,6 +119,27 @@ public class EditTool implements AgentTool {
 
         if (!editOperations.exists(resolvedPath)) {
             return errorResult("Error: file not found: " + pathInput);
+        }
+
+        // Multi-edit mode: edits[] array
+        Object editsParam = params.get("edits");
+        if (editsParam instanceof List<?> editsList && !editsList.isEmpty()) {
+            if (params.containsKey("oldText") || params.containsKey("newText")) {
+                return errorResult("Error: use either edits[] or oldText/newText, not both");
+            }
+            return mutationQueue.withLock(resolvedPath, () ->
+                    performMultiEdit(resolvedPath, pathInput, (List<Map<String, Object>>) editsList));
+        }
+
+        // Single-edit mode: oldText + newText
+        String oldText = (String) params.get("oldText");
+        String newText = (String) params.get("newText");
+
+        if (oldText == null) {
+            return errorResult("Error: oldText is required (or use edits[] for multi-edit)");
+        }
+        if (newText == null) {
+            return errorResult("Error: newText is required");
         }
 
         return mutationQueue.withLock(resolvedPath, () -> performEdit(resolvedPath, pathInput, oldText, newText));
@@ -155,6 +186,73 @@ public class EditTool implements AgentTool {
 
         return new AgentToolResult(
                 List.<ContentBlock>of(new TextContent(message)),
+                details
+        );
+    }
+
+    /**
+     * Performs multiple disjoint edits against the original file content.
+     * All edits are matched against the original (not incrementally).
+     * Matching pi-mono's multi-edit behavior.
+     */
+    private AgentToolResult performMultiEdit(Path path, String pathInput,
+                                              List<Map<String, Object>> editsList) throws Exception {
+        byte[] rawBytes = editOperations.readFile(path);
+        String original = new String(rawBytes, StandardCharsets.UTF_8);
+        String content = original;
+
+        // Validate all edits exist and are unique before applying
+        record EditEntry(String oldText, String newText, int position) {}
+        var entries = new java.util.ArrayList<EditEntry>();
+
+        for (int i = 0; i < editsList.size(); i++) {
+            var edit = editsList.get(i);
+            String oldText = (String) edit.get("oldText");
+            String newText = (String) edit.get("newText");
+            if (oldText == null || newText == null) {
+                return errorResult("Error: edits[" + i + "] missing oldText or newText");
+            }
+
+            int pos = original.indexOf(oldText);
+            if (pos < 0) {
+                return errorResult("Error: edits[" + i + "].oldText not found in " + pathInput);
+            }
+            int count = FuzzyMatch.countOccurrences(original, oldText);
+            if (count > 1) {
+                return errorResult("Error: edits[" + i + "].oldText matches " + count
+                        + " occurrences. Provide a more specific match.");
+            }
+            entries.add(new EditEntry(oldText, newText, pos));
+        }
+
+        // Sort by position (descending) to apply from end to start (avoids offset shifts)
+        entries.sort((a, b) -> Integer.compare(b.position, a.position));
+
+        // Check for overlaps
+        for (int i = 0; i < entries.size() - 1; i++) {
+            var curr = entries.get(i);
+            var next = entries.get(i + 1);
+            if (next.position + next.oldText.length() > curr.position) {
+                return errorResult("Error: edits overlap. Merge nearby changes into a single edit.");
+            }
+        }
+
+        // Apply edits from end to start
+        for (var entry : entries) {
+            content = content.substring(0, entry.position)
+                    + entry.newText
+                    + content.substring(entry.position + entry.oldText.length());
+        }
+
+        editOperations.writeFile(path, content);
+
+        String diff = DiffUtils.computeUnifiedDiff(original, content, pathInput);
+        Integer firstChangedLine = DiffUtils.findFirstChangedLine(original, content);
+        var details = new EditToolDetails(diff, firstChangedLine);
+
+        return new AgentToolResult(
+                List.<ContentBlock>of(new TextContent(
+                        "Applied " + entries.size() + " edits to " + pathInput)),
                 details
         );
     }

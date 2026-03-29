@@ -74,8 +74,10 @@ class EditToolTest {
             assertTrue(params.get("properties").has("path"));
             assertTrue(params.get("properties").has("oldText"));
             assertTrue(params.get("properties").has("newText"));
+            assertTrue(params.get("properties").has("edits"));
             var required = params.get("required");
-            assertEquals(3, required.size());
+            assertEquals(1, required.size()); // only path is required (supports edits[] mode)
+            assertEquals("path", required.get(0).asText());
         }
     }
 
