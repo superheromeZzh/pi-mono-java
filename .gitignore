@@ -32,3 +32,4 @@ reports/
 !gradlew
 !gradlew.bat
 !/gradle/wrapper/gradle-wrapper.jar
+docs/agent-core-architecture.md
