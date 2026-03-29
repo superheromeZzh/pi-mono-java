@@ -100,9 +100,12 @@ public class Tui {
         // (matching campusclaw's behavior).
         int shift = startLine - prevStartLine;
         if (shift > 0 && prevHeight == height && prevHeight > 0) {
+            // Clamp shift to terminal height to avoid overwhelming the terminal
+            // with an enormous number of newlines when content grows rapidly.
+            int clampedShift = Math.min(shift, height);
             // Move cursor to bottom of screen, emit newlines to scroll
             sb.append("\033[").append(height).append(";1H");
-            sb.append("\r\n".repeat(shift));
+            sb.append("\r\n".repeat(clampedShift));
         }
 
         sb.append(HOME); // Move cursor to top-left of visible viewport

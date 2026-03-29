@@ -36,6 +36,8 @@ public class EditorContainer implements Component, Focusable {
     private static final int MAX_SUGGESTIONS = 8;
     private static final String KEY_TAB = "\t";
     private static final String KEY_SHIFT_TAB = "\033[Z";
+    private static final String KEY_UP = "\033[A";
+    private static final String KEY_DOWN = "\033[B";
 
     private final Editor editor;
     private Consumer<String> onSubmit;
@@ -62,15 +64,16 @@ public class EditorContainer implements Component, Focusable {
     public void setOnSubmit(Consumer<String> onSubmit) {
         this.onSubmit = onSubmit;
         this.editor.setOnSubmit(value -> {
-            // If showing suggestions and user hasn't typed the full command name,
-            // accept the suggestion. If it matches exactly, submit instead.
+            // If showing suggestions, accept the suggestion and submit immediately
             if (showingSuggestions && suggestionIndex >= 0 && suggestionIndex < filteredSuggestions.size()) {
-                String selectedName = "/" + filteredSuggestions.get(suggestionIndex).name();
-                String currentText = editor.getText();
-                if (currentText != null && !currentText.equals(selectedName)) {
-                    acceptSuggestion();
-                    return;
+                String name = filteredSuggestions.get(suggestionIndex).name();
+                String commandText = "/" + name;
+                dismissSuggestions();
+                editor.setText(commandText);
+                if (this.onSubmit != null) {
+                    this.onSubmit.accept(commandText);
                 }
+                return;
             }
             dismissSuggestions();
             if (this.onSubmit != null) {
@@ -118,13 +121,29 @@ public class EditorContainer implements Component, Focusable {
         this.allCommands = commands != null ? List.copyOf(commands) : List.of();
     }
 
+    /** Returns true if the slash command suggestion menu is currently visible. */
+    public boolean isShowingSuggestions() {
+        return showingSuggestions;
+    }
+
     @Override
     public void handleInput(String data) {
-        // Tab — cycle autocomplete suggestions
-        if (KEY_TAB.equals(data) && showingSuggestions) {
+        // Arrow Up/Down — navigate autocomplete suggestions
+        if (KEY_UP.equals(data) && showingSuggestions) {
+            cyclePrev();
+            return;
+        }
+        if (KEY_DOWN.equals(data) && showingSuggestions) {
             cycleNext();
             return;
         }
+
+        // Tab — accept selected suggestion (matching pi-mono behavior)
+        if (KEY_TAB.equals(data) && showingSuggestions) {
+            acceptSuggestion();
+            return;
+        }
+        // Shift+Tab — cycle to previous suggestion
         if (KEY_SHIFT_TAB.equals(data) && showingSuggestions) {
             cyclePrev();
             return;
@@ -148,10 +167,15 @@ public class EditorContainer implements Component, Focusable {
         // Editor line(s)
         lines.addAll(editor.render(width));
 
-        // Slash command suggestions
+        // Slash command suggestions with scrolling window
         if (showingSuggestions && !filteredSuggestions.isEmpty()) {
-            int visibleCount = Math.min(MAX_SUGGESTIONS, filteredSuggestions.size());
-            for (int i = 0; i < visibleCount; i++) {
+            int total = filteredSuggestions.size();
+            // Calculate visible window centered on selected item (matching pi-mono SelectList)
+            int startIndex = Math.max(0,
+                    Math.min(suggestionIndex - MAX_SUGGESTIONS / 2, total - MAX_SUGGESTIONS));
+            int endIndex = Math.min(startIndex + MAX_SUGGESTIONS, total);
+
+            for (int i = startIndex; i < endIndex; i++) {
                 var suggestion = filteredSuggestions.get(i);
                 boolean isSelected = (i == suggestionIndex);
                 String prefix = isSelected ? "→ " : "  ";
@@ -185,8 +209,9 @@ public class EditorContainer implements Component, Focusable {
                 }
                 lines.add(line);
             }
-            if (filteredSuggestions.size() > visibleCount) {
-                lines.add("\033[2m  (" + filteredSuggestions.size() + " total matches)\033[0m");
+            // Show scroll position indicator when not all items are visible
+            if (startIndex > 0 || endIndex < total) {
+                lines.add("\033[2m  (" + (suggestionIndex + 1) + "/" + total + ")\033[0m");
             }
         }
 

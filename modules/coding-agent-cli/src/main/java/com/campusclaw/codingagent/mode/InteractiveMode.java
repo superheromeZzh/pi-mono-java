@@ -386,8 +386,8 @@ public class InteractiveMode {
                         continue;
                     }
 
-                    // Shift+Tab: \033[Z — cycle thinking level
-                    if (data.startsWith("\033[Z", i)) {
+                    // Shift+Tab: \033[Z — cycle thinking level (unless slash menu is showing)
+                    if (data.startsWith("\033[Z", i) && !editorContainer.isShowingSuggestions()) {
                         cycleThinkingLevel(session);
                         tui.render();
                         i += 3;

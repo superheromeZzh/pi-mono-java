@@ -31,12 +31,20 @@ public final class AnsiUtils {
         char next = str.charAt(pos + 1);
 
         // CSI sequence: ESC [ ... <terminator>
+        // CSI terminators are bytes in the range 0x40–0x7E (i.e. '@' to '~').
+        // Intermediate bytes are in the range 0x20–0x2F.
+        // Parameter bytes are in the range 0x30–0x3F (digits, semicolons, '?', etc.)
         if (next == '[') {
             int j = pos + 2;
             while (j < str.length()) {
                 char c = str.charAt(j);
-                if (c == 'm' || c == 'G' || c == 'K' || c == 'H' || c == 'J') {
+                // Final byte of CSI sequence: 0x40-0x7E
+                if (c >= 0x40 && c <= 0x7E) {
                     return new AnsiCode(str.substring(pos, j + 1), j + 1 - pos);
+                }
+                // Only parameter (0x30-0x3F) and intermediate (0x20-0x2F) bytes are valid
+                if (c < 0x20 || c > 0x3F) {
+                    break; // Malformed sequence — stop scanning
                 }
                 j++;
             }
