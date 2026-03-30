@@ -1,4 +1,11 @@
 @echo off
+:: 双击启动时以最大化窗口重新启动自身
+if "%CAMPUSCLAW_STARTED%"=="1" goto main
+set "CAMPUSCLAW_STARTED=1"
+start "" /MAX "%COMSPEC%" /c ""%~f0" %*"
+exit /b 0
+
+:main
 chcp 65001 >nul
 setlocal enabledelayedexpansion
 
