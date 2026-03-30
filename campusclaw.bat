@@ -1,4 +1,5 @@
 @echo off
+chcp 65001 >nul
 setlocal enabledelayedexpansion
 
 set "SCRIPT_DIR=%~dp0"
@@ -43,7 +44,7 @@ if not defined JAR (
 )
 
 :: Launch
-java -jar "%JAR%" %ARGS%
+java -Dfile.encoding=UTF-8 -Dstdout.encoding=UTF-8 -Dstderr.encoding=UTF-8 -jar "%JAR%" %ARGS%
 pause
 exit /b %errorlevel%
 
