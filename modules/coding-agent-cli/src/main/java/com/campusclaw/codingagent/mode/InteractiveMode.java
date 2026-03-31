@@ -18,6 +18,7 @@ import com.campusclaw.ai.types.Message;
 import com.campusclaw.ai.types.Model;
 import com.campusclaw.ai.types.ThinkingLevel;
 import com.campusclaw.ai.types.UserMessage;
+import com.campusclaw.assistant.task.TaskManager;
 import com.campusclaw.codingagent.CampusClawApplication;
 import com.campusclaw.codingagent.command.SlashCommandContext;
 import com.campusclaw.codingagent.command.SlashCommandRegistry;
@@ -55,6 +56,7 @@ public class InteractiveMode {
     private final BashExecutor bashExecutor;
     private final Compactor compactor;
     private final ModelRegistry modelRegistry;
+    private final TaskManager taskManager;
 
     // Scoped models for Ctrl+P cycling (from --models flag)
     private List<Model> scopedModels = List.of();
@@ -70,6 +72,11 @@ public class InteractiveMode {
     // Streaming state
     private AssistantMessageComponent currentAssistantMessage;
     private final Map<String, ToolStatusComponent> pendingTools = new LinkedHashMap<>();
+
+    // Task-specific streaming state (separate from session agent)
+    private AssistantMessageComponent currentTaskAssistantMessage;
+    private final Map<String, ToolStatusComponent> pendingTaskTools = new LinkedHashMap<>();
+    private boolean taskHeaderAdded;
 
     // Session reference for persistence in event handler
     private AgentSession currentSession;
@@ -122,11 +129,13 @@ public class InteractiveMode {
     public InteractiveMode(SlashCommandRegistry commandRegistry,
                            BashExecutor bashExecutor,
                            Compactor compactor,
-                           ModelRegistry modelRegistry) {
+                           ModelRegistry modelRegistry,
+                           TaskManager taskManager) {
         this.commandRegistry = Objects.requireNonNull(commandRegistry, "commandRegistry");
         this.bashExecutor = bashExecutor;
         this.compactor = compactor;
         this.modelRegistry = modelRegistry;
+        this.taskManager = taskManager;
     }
 
     /**
@@ -443,6 +452,12 @@ public class InteractiveMode {
         tui.start();
         tui.render();
 
+        // Subscribe to TaskManager events (background task streaming output)
+        Runnable taskUnsub = taskManager != null ? taskManager.subscribe(event -> {
+            handleTaskEvent(event);
+            tui.render();
+        }) : null;
+
         // Send initial prompt if provided (from CLI positional args)
         if (initialPrompt != null && !initialPrompt.isBlank()) {
             String expanded = expandFileReferences(initialPrompt);
@@ -574,6 +589,7 @@ public class InteractiveMode {
                 checkAutoCompaction(session);
             }
         } finally {
+            if (taskUnsub != null) taskUnsub.run();
             tui.stop();
         }
     }
@@ -1113,6 +1129,82 @@ public class InteractiveMode {
                 if (tool != null) {
                     tool.setComplete(e.isError(), e.result());
                 }
+            }
+            default -> { }
+        }
+    }
+
+    /**
+     * Handles events from background task agents (TaskManager).
+     * Operates on task-specific streaming state to avoid interfering with session agent events.
+     */
+    void handleTaskEvent(AgentEvent event) {
+        switch (event) {
+            case TurnStartEvent e -> {
+                // Add a header for the task output on first event
+                if (!taskHeaderAdded && taskManager != null) {
+                    var ctx = taskManager.getCurrentTaskContext();
+                    if (ctx != null) {
+                        chatContainer.addChild(new TaskHeaderComponent(ctx.taskId(), ctx.taskName()));
+                        taskHeaderAdded = true;
+                    }
+                }
+                // If we already have content, close the previous assistant message and start fresh
+                if (currentTaskAssistantMessage != null && currentTaskAssistantMessage.hasContent()) {
+                    currentTaskAssistantMessage.setComplete(true);
+                    currentTaskAssistantMessage = new AssistantMessageComponent();
+                    chatContainer.addChild(currentTaskAssistantMessage);
+                }
+            }
+            case MessageUpdateEvent e -> {
+                if (currentTaskAssistantMessage == null) {
+                    // Auto-create on first text/thinking delta
+                    if (!taskHeaderAdded && taskManager != null) {
+                        var ctx = taskManager.getCurrentTaskContext();
+                        if (ctx != null) {
+                            chatContainer.addChild(new TaskHeaderComponent(ctx.taskId(), ctx.taskName()));
+                            taskHeaderAdded = true;
+                        }
+                    }
+                    currentTaskAssistantMessage = new AssistantMessageComponent();
+                    chatContainer.addChild(currentTaskAssistantMessage);
+                }
+                if (e.assistantMessageEvent() instanceof AssistantMessageEvent.TextDeltaEvent delta) {
+                    currentTaskAssistantMessage.appendText(delta.delta());
+                } else if (e.assistantMessageEvent() instanceof AssistantMessageEvent.ThinkingDeltaEvent thinking) {
+                    currentTaskAssistantMessage.appendThinking(thinking.delta());
+                }
+            }
+            case MessageEndEvent e -> {
+                // Do NOT update footer — avoid overwriting session agent usage stats
+            }
+            case ToolExecutionStartEvent e -> {
+                var tool = new ToolStatusComponent(e.toolName());
+                tool.setArgs(e.args());
+                tool.setExpanded(toolsExpanded);
+                pendingTaskTools.put(e.toolCallId(), tool);
+                chatContainer.addChild(tool);
+            }
+            case ToolExecutionUpdateEvent e -> {
+                var tool = pendingTaskTools.get(e.toolCallId());
+                if (tool != null) {
+                    tool.updatePartialResult(e.partialResult());
+                }
+            }
+            case ToolExecutionEndEvent e -> {
+                var tool = pendingTaskTools.get(e.toolCallId());
+                if (tool != null) {
+                    tool.setComplete(e.isError(), e.result());
+                }
+            }
+            case AgentEndEvent e -> {
+                // Mark the last assistant message complete and clear state
+                if (currentTaskAssistantMessage != null) {
+                    currentTaskAssistantMessage.setComplete(true);
+                }
+                currentTaskAssistantMessage = null;
+                pendingTaskTools.clear();
+                taskHeaderAdded = false;
             }
             default -> { }
         }

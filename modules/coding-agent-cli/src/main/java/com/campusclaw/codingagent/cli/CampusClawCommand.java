@@ -13,6 +13,7 @@ import com.campusclaw.agent.tool.AgentTool;
 import com.campusclaw.ai.CampusClawAiService;
 import com.campusclaw.ai.model.ModelRegistry;
 import com.campusclaw.ai.types.*;
+import com.campusclaw.assistant.task.TaskManager;
 import com.campusclaw.codingagent.command.SlashCommandRegistry;
 import com.campusclaw.codingagent.compaction.Compactor;
 import com.campusclaw.codingagent.config.ConfigValueResolver;
@@ -56,11 +57,12 @@ public class CampusClawCommand implements Callable<Integer> {
     private final SlashCommandRegistry commandRegistry;
     private final BashExecutor bashExecutor;
     private final SettingsManager settingsManager;
+    private final TaskManager taskManager;
 
     public CampusClawCommand(CampusClawAiService piAiService, ModelRegistry modelRegistry,
                      SystemPromptBuilder promptBuilder, List<AgentTool> tools,
                      SlashCommandRegistry commandRegistry, BashExecutor bashExecutor,
-                     SettingsManager settingsManager) {
+                     SettingsManager settingsManager, TaskManager taskManager) {
         this.piAiService = piAiService;
         this.modelRegistry = modelRegistry;
         this.promptBuilder = promptBuilder;
@@ -68,6 +70,7 @@ public class CampusClawCommand implements Callable<Integer> {
         this.commandRegistry = commandRegistry;
         this.bashExecutor = bashExecutor;
         this.settingsManager = settingsManager;
+        this.taskManager = taskManager;
     }
 
     @Option(names = {"--provider"}, description = "Provider name (e.g. anthropic, openai, zai, google)")
@@ -409,7 +412,7 @@ public class CampusClawCommand implements Callable<Integer> {
         // Interactive mode (default)
         Terminal terminal = new JLineTerminal();
         try {
-            var interactiveMode = new InteractiveMode(commandRegistry, bashExecutor, new Compactor(piAiService), modelRegistry);
+            var interactiveMode = new InteractiveMode(commandRegistry, bashExecutor, new Compactor(piAiService), modelRegistry, taskManager);
 
             // Resolve --models scoped models for Ctrl+P cycling
             if (modelsFilter != null && !modelsFilter.isBlank()) {

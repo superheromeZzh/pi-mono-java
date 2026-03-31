@@ -6,6 +6,7 @@ dependencies {
     api(project(":modules:campusclaw-ai"))
     api(project(":modules:campusclaw-agent-core"))
     api(project(":modules:campusclaw-tui"))
+    implementation(project(":modules:campusclaw-assistant"))
 
     // Spring Boot
     implementation("org.springframework.boot:spring-boot-starter")
