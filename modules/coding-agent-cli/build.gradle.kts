@@ -42,3 +42,12 @@ springBoot {
 tasks.bootJar {
     archiveBaseName.set("campusclaw-agent")
 }
+
+// 运行常驻容器测试
+tasks.register<JavaExec>("runPersistentContainerTest") {
+    group = "verification"
+    description = "Run persistent container mode test"
+    classpath = sourceSets["test"].runtimeClasspath
+    mainClass.set("com.campusclaw.codingagent.tool.sandbox.PersistentContainerTest")
+    standardInput = System.`in`
+}

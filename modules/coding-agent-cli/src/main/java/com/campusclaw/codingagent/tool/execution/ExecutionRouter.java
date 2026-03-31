@@ -19,6 +19,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Pattern;
 
@@ -33,13 +34,13 @@ public class ExecutionRouter {
     private final SandboxSecurityPolicy securityPolicy;
     private final DockerSandboxClient sandboxClient;
 
-    // 本地工具
-    private final ReadTool localReadTool;
-    private final WriteTool localWriteTool;
-    private final EditTool localEditTool;
-    private final BashTool localBashTool;
-    private final GlobTool localGlobTool;
-    private final GrepTool localGrepTool;
+    // 本地工具（使用 Optional，因为 hybrid 模式下可能不存在）
+    private final Optional<ReadTool> localReadTool;
+    private final Optional<WriteTool> localWriteTool;
+    private final Optional<EditTool> localEditTool;
+    private final Optional<BashTool> localBashTool;
+    private final Optional<GlobTool> localGlobTool;
+    private final Optional<GrepTool> localGrepTool;
 
     // 编译好的正则模式
     private final List<Pattern> sandboxPatterns;
@@ -50,12 +51,12 @@ public class ExecutionRouter {
             ToolExecutionProperties properties,
             SandboxSecurityPolicy securityPolicy,
             DockerSandboxClient sandboxClient,
-            ReadTool localReadTool,
-            WriteTool localWriteTool,
-            EditTool localEditTool,
-            BashTool localBashTool,
-            GlobTool localGlobTool,
-            GrepTool localGrepTool) {
+            Optional<ReadTool> localReadTool,
+            Optional<WriteTool> localWriteTool,
+            Optional<EditTool> localEditTool,
+            Optional<BashTool> localBashTool,
+            Optional<GlobTool> localGlobTool,
+            Optional<GrepTool> localGrepTool) {
 
         this.properties = properties;
         this.securityPolicy = securityPolicy;
@@ -114,13 +115,32 @@ public class ExecutionRouter {
 
         String callId = "local-" + System.currentTimeMillis();
 
+        // 检查本地工具是否可用，不可用则回退到沙箱
+        Optional<?> tool = switch (toolName) {
+            case "read" -> localReadTool.map(t -> t);
+            case "write" -> localWriteTool.map(t -> t);
+            case "edit" -> localEditTool.map(t -> t);
+            case "bash" -> localBashTool.map(t -> t);
+            case "glob" -> localGlobTool.map(t -> t);
+            case "grep" -> localGrepTool.map(t -> t);
+            default -> Optional.empty();
+        };
+
+        if (tool.isEmpty()) {
+            log.warn("Local tool {} not available, falling back to sandbox", toolName);
+            if (properties.isSandboxExecutionEnabled() && sandboxClient.isAvailable()) {
+                return executeSandbox(toolName, params, signal, onUpdate);
+            }
+            throw new IllegalStateException("Tool " + toolName + " not available locally and sandbox is disabled");
+        }
+
         return switch (toolName) {
-            case "read" -> localReadTool.execute(callId, params, signal, onUpdate);
-            case "write" -> localWriteTool.execute(callId, params, signal, onUpdate);
-            case "edit" -> localEditTool.execute(callId, params, signal, onUpdate);
-            case "bash" -> localBashTool.execute(callId, params, signal, onUpdate);
-            case "glob" -> localGlobTool.execute(callId, params, signal, onUpdate);
-            case "grep" -> localGrepTool.execute(callId, params, signal, onUpdate);
+            case "read" -> localReadTool.get().execute(callId, params, signal, onUpdate);
+            case "write" -> localWriteTool.get().execute(callId, params, signal, onUpdate);
+            case "edit" -> localEditTool.get().execute(callId, params, signal, onUpdate);
+            case "bash" -> localBashTool.get().execute(callId, params, signal, onUpdate);
+            case "glob" -> localGlobTool.get().execute(callId, params, signal, onUpdate);
+            case "grep" -> localGrepTool.get().execute(callId, params, signal, onUpdate);
             default -> throw new UnsupportedOperationException("Tool not supported: " + toolName);
         };
     }

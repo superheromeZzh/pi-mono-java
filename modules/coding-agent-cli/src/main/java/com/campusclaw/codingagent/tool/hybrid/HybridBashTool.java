@@ -8,8 +8,10 @@ import com.campusclaw.codingagent.tool.execution.ExecutionMode;
 import com.campusclaw.codingagent.tool.execution.ExecutionRouter;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -19,6 +21,7 @@ import java.util.Map;
  * 混合模式 Bash 工具 - 统一入口，智能路由
  */
 @Component
+@ConditionalOnProperty(name = "tool.execution.hybrid-enabled", havingValue = "true", matchIfMissing = false)
 public class HybridBashTool implements AgentTool {
 
     private final ExecutionRouter router;
@@ -54,11 +57,16 @@ public class HybridBashTool implements AgentTool {
         props.set("timeout", mapper.createObjectNode()
             .put("type", "integer")
             .put("description", "Timeout in seconds (optional)"));
-        props.set("_executionMode", mapper.createObjectNode()
-            .put("type", "string")
-            .put("enum", List.of("local", "sandbox", "auto"))
-            .put("description", "Override execution mode: local (fast), sandbox (safe), auto (smart). " +
-                              "Dangerous commands like 'rm -rf /' always use sandbox."));
+        ArrayNode enumValues = mapper.createArrayNode();
+        enumValues.add("local");
+        enumValues.add("sandbox");
+        enumValues.add("auto");
+        ObjectNode execModeNode = mapper.createObjectNode()
+            .put("type", "string");
+        execModeNode.set("enum", enumValues);
+        execModeNode.put("description", "Override execution mode: local (fast), sandbox (safe), auto (smart). " +
+                              "Dangerous commands like 'rm -rf /' always use sandbox.");
+        props.set("_executionMode", execModeNode);
 
         return mapper.createObjectNode()
             .put("type", "object")

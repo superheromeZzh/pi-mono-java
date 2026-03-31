@@ -55,6 +55,12 @@ public class DockerSandboxClient {
                 return;
             }
 
+            // 如果使用临时容器模式，不需要创建常驻 worker
+            if (properties.isUseEphemeralContainers()) {
+                log.info("Using ephemeral container mode - worker will be created on demand");
+                return;
+            }
+
             // 启动常驻工作容器
             startWorkerContainer();
 
@@ -148,6 +154,31 @@ public class DockerSandboxClient {
     }
 
     /**
+     * 检查 worker 容器是否健康运行
+     */
+    private boolean isWorkerHealthy() {
+        if (workerContainerId == null) {
+            return false;
+        }
+        // 检查容器是否存在且正在运行
+        ProcessResult result = executeDockerCommand(List.of(
+            "inspect", "-f", "{{.State.Running}}", workerContainerId
+        ));
+        return result.exitCode == 0 && "true".equals(result.stdout.trim());
+    }
+
+    /**
+     * 确保 worker 容器可用（如果不存在则重新创建）
+     */
+    private synchronized void ensureWorkerAvailable() {
+        if (!isWorkerHealthy()) {
+            log.warn("Worker container not healthy or missing, recreating...");
+            workerContainerId = null;
+            startWorkerContainer();
+        }
+    }
+
+    /**
      * 在沙箱中执行命令
      */
     public SandboxResult execute(List<String> command, ResourceLimits limits) {
@@ -155,26 +186,53 @@ public class DockerSandboxClient {
             return SandboxResult.error("Docker sandbox not available", "");
         }
 
-        if (workerContainerId == null) {
-            return SandboxResult.error("Sandbox worker not initialized", "");
+        // 如果使用临时容器模式，则创建临时容器
+        if (properties.isUseEphemeralContainers()) {
+            return executeWithEphemeralContainer(command, limits);
         }
 
+        // 常驻 Worker 模式：确保 worker 可用
+        ensureWorkerAvailable();
+
+        if (workerContainerId == null) {
+            return SandboxResult.error("Failed to create sandbox worker container", "");
+        }
+
+        return executeWithWorker(command, limits);
+    }
+
+    /**
+     * 使用常驻 Worker 容器执行
+     */
+    private SandboxResult executeWithWorker(List<String> command, ResourceLimits limits) {
         long startTime = System.currentTimeMillis();
 
         try {
-            // 构建 docker exec 命令
             List<String> execCmd = new java.util.ArrayList<>();
             execCmd.add("exec");
-
-            if (limits.getTimeoutSeconds() > 0) {
-                // Docker 1.29+ 支持 --timeout
-                // 这里用 timeout 命令实现
-            }
-
             execCmd.add(workerContainerId);
             execCmd.addAll(command);
 
             ProcessResult result = executeDockerCommand(execCmd, limits.getTimeoutSeconds());
+
+            // 如果执行失败且容器不存在，尝试重新创建并再次执行
+            if (result.exitCode != 0 &&
+                (result.stderr.contains("No such container") ||
+                 result.stderr.contains("is not running"))) {
+                log.warn("Worker container lost during execution, attempting recovery...");
+
+                // 重新创建 worker
+                workerContainerId = null;
+                startWorkerContainer();
+
+                if (workerContainerId != null) {
+                    // 重试执行
+                    execCmd.set(1, workerContainerId);
+                    result = executeDockerCommand(execCmd, limits.getTimeoutSeconds());
+                } else {
+                    return SandboxResult.error("Failed to recreate worker container", result.stderr);
+                }
+            }
 
             long executionTime = System.currentTimeMillis() - startTime;
 
@@ -190,7 +248,66 @@ public class DockerSandboxClient {
                 .build();
 
         } catch (Exception e) {
-            log.error("Failed to execute command in sandbox", e);
+            log.error("Failed to execute command in worker", e);
+            return SandboxResult.error("Execution failed: " + e.getMessage(), "");
+        }
+    }
+
+    /**
+     * 使用临时容器执行
+     */
+    private SandboxResult executeWithEphemeralContainer(List<String> command, ResourceLimits limits) {
+        long startTime = System.currentTimeMillis();
+        String containerName = "campusclaw-temp-" + UUID.randomUUID().toString().substring(0, 8);
+
+        try {
+            String workspace = properties.getSandboxWorkspacePath();
+            String currentDir = System.getProperty("user.dir");
+
+            // 构建 docker run 命令
+            List<String> runCmd = new java.util.ArrayList<>();
+            runCmd.add("run");
+            runCmd.add("--rm");
+            runCmd.add("--name");
+            runCmd.add(containerName);
+            runCmd.add("-v");
+            runCmd.add(currentDir + ":" + workspace);
+            runCmd.add("-w");
+            runCmd.add(workspace);
+
+            // 资源限制
+            if (!properties.getSandboxWorkerMemory().isEmpty()) {
+                runCmd.add("--memory");
+                runCmd.add(properties.getSandboxWorkerMemory());
+            }
+            if (properties.getSandboxWorkerCpu() > 0) {
+                runCmd.add("--cpus");
+                runCmd.add(String.valueOf(properties.getSandboxWorkerCpu()));
+            }
+
+            runCmd.add(properties.getSandboxWorkerImage());
+            runCmd.addAll(command);
+
+            ProcessResult result = executeDockerCommand(runCmd, limits.getTimeoutSeconds());
+            long executionTime = System.currentTimeMillis() - startTime;
+
+            if (result.timedOut) {
+                // 清理超时的容器
+                executeDockerCommand(List.of("rm", "-f", containerName));
+                return SandboxResult.timeout(limits.getTimeoutSeconds());
+            }
+
+            return SandboxResult.builder()
+                .stdout(result.stdout)
+                .stderr(result.stderr)
+                .exitCode(result.exitCode)
+                .executionTimeMs(executionTime)
+                .build();
+
+        } catch (Exception e) {
+            log.error("Failed to execute command in ephemeral container", e);
+            // 尝试清理
+            executeDockerCommand(List.of("rm", "-f", containerName));
             return SandboxResult.error("Execution failed: " + e.getMessage(), "");
         }
     }
@@ -280,7 +397,15 @@ public class DockerSandboxClient {
      * 检查沙箱是否可用
      */
     public boolean isAvailable() {
-        return dockerAvailable && workerContainerId != null;
+        if (!dockerAvailable) {
+            return false;
+        }
+        // 临时容器模式：只要 Docker 可用即可
+        if (properties.isUseEphemeralContainers()) {
+            return true;
+        }
+        // 常驻 Worker 模式：检查 worker 是否健康
+        return isWorkerHealthy();
     }
 
     /**

@@ -141,6 +141,9 @@ public class CampusClawCommand implements Callable<Integer> {
     @Option(names = {"--verbose"}, description = "Enable verbose startup output")
     boolean verbose;
 
+    @Option(names = {"--exec-mode"}, description = "Tool execution mode: local, sandbox, or auto (default: auto)")
+    String execMode;
+
     @Parameters(description = "Prompt arguments (joined with spaces if no -p given). " +
             "Prefix with @ to include file contents.", arity = "0..*")
     List<String> promptArgs;
@@ -177,6 +180,15 @@ public class CampusClawCommand implements Callable<Integer> {
 
         // Load settings and apply defaults for model and thinking level
         Settings settings = settingsManager != null ? settingsManager.load() : Settings.empty();
+
+        // Apply execution mode from command line if provided
+        if (execMode != null && !execMode.isEmpty()) {
+            System.setProperty("TOOL_EXECUTION_DEFAULT_MODE", execMode.toUpperCase());
+            if (verbose) {
+                System.out.println("Tool execution mode set to: " + execMode.toUpperCase());
+            }
+        }
+
         String effectiveModel = model;
         if (effectiveModel == null && settings.defaultModel() != null) {
             effectiveModel = settings.defaultModel();

@@ -1,7 +1,9 @@
 package com.campusclaw.codingagent.config;
 
 import com.campusclaw.codingagent.tool.execution.ExecutionMode;
+import jakarta.annotation.PostConstruct;
 import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
@@ -11,10 +13,26 @@ import java.util.Set;
 /**
  * 工具执行配置属性
  */
+@Slf4j
 @Data
-@Component
 @ConfigurationProperties(prefix = "tool.execution")
 public class ToolExecutionProperties {
+
+    @PostConstruct
+    public void init() {
+        // Check for system property override
+        String modeOverride = System.getProperty("TOOL_EXECUTION_DEFAULT_MODE");
+        if (modeOverride != null && !modeOverride.isEmpty()) {
+            try {
+                ExecutionMode mode = ExecutionMode.valueOf(modeOverride.toUpperCase());
+                this.defaultMode = mode;
+                log.info("Tool execution mode overridden by system property: {}", mode);
+            } catch (IllegalArgumentException e) {
+                log.warn("Invalid execution mode in system property '{}', using default: {}",
+                        modeOverride, this.defaultMode);
+            }
+        }
+    }
 
     /**
      * 全局默认执行模式
@@ -113,4 +131,10 @@ public class ToolExecutionProperties {
      * 是否启用执行日志
      */
     private boolean executionLoggingEnabled = true;
+
+    /**
+     * 使用临时容器模式（不创建常驻 worker 容器）
+     * 适用于无法拉取镜像的场景
+     */
+    private boolean useEphemeralContainers = false;
 }
