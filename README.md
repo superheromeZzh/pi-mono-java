@@ -51,19 +51,17 @@ $env:ANTHROPIC_API_KEY = "sk-ant-..."
 
 ### 2. 启动
 
-**macOS / Linux：**
+#### 一键启动（推荐）
+
+脚本自动检测 JDK 21、首次自动构建、源码变更后自动重建。
 
 ```bash
+# macOS / Linux
 ./campusclaw.sh -m glm-5
-```
 
-**Windows：**
-
-```cmd
+# Windows
 campusclaw.bat -m glm-5
 ```
-
-启动脚本会自动检测 JDK 21、首次运行时自动构建，源码变更后自动重新构建。
 
 传入 `--rebuild` 可强制重新构建：
 
@@ -81,30 +79,40 @@ campusclaw.bat -m glm-5
 > $env:JAVA_HOME = "C:\Program Files\Eclipse Adoptium\jdk-21"
 > ```
 
-### 3. 其他启动方式
-
-**使用 Gradle `bootRun`（开发推荐，自动编译+运行）：**
+#### Maven 开发模式
 
 ```bash
 # macOS / Linux
-./gradlew :modules:campusclaw-coding-agent:bootRun --args='-m glm-5'
+./mvnw -pl modules/coding-agent-cli spring-boot:run -Dspring-boot.run.arguments='-m glm-5'
 
 # Windows
-gradlew.bat :modules:campusclaw-coding-agent:bootRun --args="-m glm-5"
+mvnw.cmd -pl modules/coding-agent-cli spring-boot:run -Dspring-boot.run.arguments="-m glm-5"
 ```
 
-**手动构建后运行：**
+#### 手动构建后运行
 
 ```bash
-# 构建（只需执行一次，代码没改就不用重新构建）
-./gradlew :modules:campusclaw-coding-agent:bootJar          # macOS / Linux
-gradlew.bat :modules:campusclaw-coding-agent:bootJar         # Windows
+# 构建 fat JAR
+./mvnw package -pl modules/coding-agent-cli -am -DskipTests    # macOS / Linux
+mvnw.cmd package -pl modules/coding-agent-cli -am -DskipTests  # Windows
 
 # 运行
-java -jar modules/coding-agent-cli/build/libs/campusclaw-agent-1.0.0-SNAPSHOT.jar -m glm-5
+java -jar modules/coding-agent-cli/target/campusclaw-agent.jar -m glm-5
 ```
 
-> 如果 Gradle 报 JDK 版本不兼容，在命令前加上 `JAVA_HOME=...`（macOS/Linux）或 `set JAVA_HOME=...`（Windows CMD）。
+#### 常用 Maven 命令
+
+| 命令 | 说明 |
+|------|------|
+| `./mvnw compile` | 编译所有模块 |
+| `./mvnw test` | 运行测试 |
+| `./mvnw verify` | 完整构建（含测试） |
+| `./mvnw package -DskipTests` | 构建全部 JAR（跳过测试） |
+| `./mvnw clean` | 清理 target/ |
+| `./mvnw spotless:apply` | 格式化代码 |
+
+> Windows 用户将 `./mvnw` 替换为 `mvnw.cmd`。
+> 如果 Maven 报 JDK 版本不兼容，在命令前加上 `JAVA_HOME=...`（macOS/Linux）或 `set JAVA_HOME=...`（Windows CMD）。
 
 ## 用法
 
@@ -233,8 +241,7 @@ campusclaw/
 │   ├── agent-core/          # campusclaw-agent-core — Agent 循环、工具执行管线
 │   ├── coding-agent-cli/    # campusclaw-coding-agent — CLI 入口 + TUI 界面
 │   └── tui/                 # campusclaw-tui — 终端 UI 组件（JLine + Lanterna）
-├── build.gradle.kts         # 根构建配置
-├── settings.gradle.kts      # 模块声明
+├── pom.xml                  # 根构建配置（Maven）
 ├── campusclaw.sh            # 启动脚本（macOS / Linux）
 ├── campusclaw.bat           # 启动脚本（Windows）
 └── README.md
@@ -250,49 +257,42 @@ campusclaw/
 | HTTP | Spring WebClient (SSE 流式) |
 | CLI | Picocli 4.7.6 |
 | 终端 | JLine 3.26.2 + Lanterna 3.1.2 |
-| 构建 | Gradle 8.10.2 (Kotlin DSL) |
+| 构建 | Maven 3.9.11 |
 
 ## 开发
 
 ```bash
 # 构建所有模块
-./gradlew build
+./mvnw verify
 
 # 运行测试
-./gradlew test
+./mvnw test
 
 # 仅构建 JAR
-./gradlew :modules:campusclaw-coding-agent:bootJar
+./mvnw package -pl modules/coding-agent-cli -am -DskipTests
 ```
 
-> Windows 用户将 `./gradlew` 替换为 `gradlew.bat`。
+> Windows 用户将 `./mvnw` 替换为 `mvnw.cmd`。
 > 如果默认 JDK 不是 21，需在命令前设置 `JAVA_HOME`。
 
 ## 故障排查
 
-### Gradle 构建失败：JDK 版本不兼容
+### Maven 构建失败：JDK 版本不兼容
 
-**现象**：`Unsupported class file major version` 或 Gradle 直接报版本号错误
+**现象**：`Unsupported class file major version` 或编译报错
 
-**原因**：Gradle 8.10 不支持 JDK 25+，且项目要求 JDK 21
+**原因**：项目要求 JDK 21+
 
 **解决**：
 
 ```bash
 # macOS / Linux — 指定 JAVA_HOME
 export JAVA_HOME=/path/to/jdk-21
-./gradlew build
+./mvnw verify
 
 # Windows CMD
 set JAVA_HOME=C:\Program Files\Eclipse Adoptium\jdk-21
-gradlew.bat build
-```
-
-或在 `gradle.properties` 中指定 toolchain 自动下载（需要网络）：
-
-```properties
-org.gradle.java.installations.auto-detect=true
-org.gradle.java.installations.auto-download=true
+mvnw.cmd verify
 ```
 
 ### 启动脚本找不到 JDK 21

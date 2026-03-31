@@ -4,7 +4,7 @@
 
 为 CampusClaw AI 编程助手添加定时任务能力，参考 OpenClaw 的 cron 扩展思路。用户可通过 LLM 对话创建/管理定时任务，由独立 Agent 实例自动执行。
 
-核心约束：**不修改 agent-core、ai、tui 三个模块的 Java 源码**。cron 作为独立 Gradle 模块，仅通过 Spring DI 和 coding-agent-cli 的少量集成代码接入。
+核心约束：**不修改 agent-core、ai、tui 三个模块的 Java 源码**。cron 作为独立 Maven 模块，仅通过 Spring DI 和 coding-agent-cli 的少量集成代码接入。
 
 ## 依赖关系
 
@@ -15,8 +15,8 @@ coding-agent-cli ──→ campusclaw-cron ──→ agent-core ──→ ai
 ```
 
 修改范围：
-- `settings.gradle.kts`：+2 行
-- `modules/coding-agent-cli/build.gradle.kts`：+1 行依赖
+- `pom.xml`（根）：+1 行 module 声明
+- `modules/coding-agent-cli/pom.xml`：+1 行依赖
 - `InteractiveMode.java`：+4 行（start/stop cron engine）
 - `CampusClawCommand.java`：+3 行（注入并传递 CronService）
 

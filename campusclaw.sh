@@ -2,7 +2,7 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-JAR_DIR="$SCRIPT_DIR/modules/coding-agent-cli/build/libs"
+JAR_DIR="$SCRIPT_DIR/modules/coding-agent-cli/target"
 BUILD_MARKER="$JAR_DIR/.build-timestamp"
 
 # Auto-detect JDK 21
@@ -71,7 +71,7 @@ JAVA="$JAVA_HOME/bin/java"
 # Find the JAR (glob to avoid hardcoding version)
 find_jar() {
     local jar
-    jar="$(find "$JAR_DIR" -maxdepth 1 -name 'campusclaw-agent-*.jar' -not -name '*-plain.jar' 2>/dev/null | head -1)"
+    jar="$(find "$JAR_DIR" -maxdepth 1 -name 'campusclaw-agent.jar' 2>/dev/null | head -1)"
     echo "$jar"
 }
 
@@ -87,7 +87,7 @@ needs_build() {
     fi
     # Check if any source file is newer than the build marker
     local newer
-    newer="$(find "$SCRIPT_DIR/modules" -name '*.java' -o -name '*.kt' -o -name '*.kts' -o -name '*.yml' -o -name '*.yaml' -o -name '*.properties' 2>/dev/null | xargs -r stat -f '%m %N' 2>/dev/null | sort -rn | head -1 | cut -d' ' -f1)"
+    newer="$(find "$SCRIPT_DIR/modules" -name '*.java' -o -name '*.yml' -o -name '*.yaml' -o -name '*.properties' -o -name '*.xml' 2>/dev/null | xargs -r stat -f '%m %N' 2>/dev/null | sort -rn | head -1 | cut -d' ' -f1)"
     local build_time
     build_time="$(stat -f '%m' "$BUILD_MARKER" 2>/dev/null || echo 0)"
     # Linux stat fallback
@@ -117,7 +117,7 @@ if [ "$REBUILD" = true ] || needs_build; then
     else
         echo "Source changed, rebuilding..."
     fi
-    "$SCRIPT_DIR/gradlew" -p "$SCRIPT_DIR" :modules:campusclaw-coding-agent:bootJar -q
+    "$SCRIPT_DIR/mvnw" -f "$SCRIPT_DIR/pom.xml" package -pl modules/coding-agent-cli -am -q -DskipTests
     touch "$BUILD_MARKER"
 fi
 

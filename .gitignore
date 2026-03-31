@@ -1,8 +1,9 @@
-# Gradle
+# Maven
+target/
+
+# Gradle (legacy)
 .gradle
 build/
-!**/src/main/resources/**/META-INF/.gitkeep
-!**/src/test/resources/**/META-INF/.gitkeep
 
 # IDE
 .idea/
@@ -28,8 +29,9 @@ local.properties
 test-results/
 reports/
 
-# CLI
-!gradlew
-!gradlew.bat
-!/gradle/wrapper/gradle-wrapper.jar
+# Wrappers
+!mvnw
+!mvnw.cmd
+!.mvn/wrapper/maven-wrapper.jar
+
 docs/agent-core-architecture.md
