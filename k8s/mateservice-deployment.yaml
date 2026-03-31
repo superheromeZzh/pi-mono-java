@@ -1,0 +1,261 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mateservice-deployment
+  labels:
+    app: mateservice
+    component: coding-agent
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: mateservice
+  template:
+    metadata:
+      labels:
+        app: mateservice
+        version: v1
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8080"
+    spec:
+      # 服务账号（如需访问 K8s API）
+      # serviceAccountName: mateservice-sa
+
+      # 共享卷
+      volumes:
+        - name: workspace
+          emptyDir:
+            sizeLimit: 10Gi
+        - name: tmp
+          emptyDir:
+            sizeLimit: 5Gi
+        - name: docker-certs
+          emptyDir: {}
+
+      containers:
+        # =============================================
+        # 主容器：mateservice (pi-mono-java)
+        # =============================================
+        - name: mateservice
+          image: campusclaw/mateservice:latest
+          imagePullPolicy: IfNotPresent
+
+          ports:
+            - containerPort: 8080
+              name: http
+              protocol: TCP
+            - containerPort: 9249
+              name: metrics
+              protocol: TCP
+
+          env:
+            # 激活 K8s 配置
+            - name: SPRING_PROFILES_ACTIVE
+              value: "k8s"
+
+            # Docker 守护进程地址（连接 DIND Sidecar）
+            - name: DOCKER_HOST
+              value: "tcp://localhost:2375"
+
+            # JVM 配置
+            - name: JAVA_OPTS
+              value: "-XX:+UseG1GC -XX:MaxRAMPercentage=75.0 -XX:InitialRAMPercentage=50.0"
+
+            # 工作目录
+            - name: WORKSPACE_PATH
+              value: "/workspace"
+
+          volumeMounts:
+            - name: workspace
+              mountPath: /workspace
+            - name: tmp
+              mountPath: /tmp
+
+          resources:
+            requests:
+              memory: "2Gi"
+              cpu: "1000m"
+            limits:
+              memory: "4Gi"
+              cpu: "2000m"
+
+          # 健康检查
+          livenessProbe:
+            httpGet:
+              path: /actuator/health/liveness
+              port: 8080
+            initialDelaySeconds: 60
+            periodSeconds: 30
+            timeoutSeconds: 5
+            failureThreshold: 3
+
+          readinessProbe:
+            httpGet:
+              path: /actuator/health/readiness
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+
+          lifecycle:
+            preStop:
+              exec:
+                command: ["sh", "-c", "sleep 10"]
+
+        # =============================================
+        # Sidecar 容器：DIND (Docker in Docker) 沙箱
+        # =============================================
+        - name: dind-sandbox
+          image: docker:25.0-dind-alpine3.19
+          imagePullPolicy: IfNotPresent
+
+          securityContext:
+            privileged: true  # 必须特权模式运行 Docker daemon
+
+          env:
+            # 禁用 TLS（同 Pod 内通信不需要）
+            - name: DOCKER_TLS_CERTDIR
+              value: ""
+
+            # 存储驱动
+            - name: DOCKER_DRIVER
+              value: "overlay2"
+
+            # 资源限制
+            - name: DOCKER_MAX_CONCURRENT_DOWNLOADS
+              value: "3"
+            - name: DOCKER_MAX_CONCURRENT_UPLOADS
+              value: "3"
+
+          ports:
+            - containerPort: 2375
+              name: docker-tcp
+              protocol: TCP
+
+          volumeMounts:
+            # 共享工作空间
+            - name: workspace
+              mountPath: /workspace
+            # Docker 存储（emptyDir，Pod 销毁时清理）
+            - name: tmp
+              mountPath: /var/lib/docker
+
+          resources:
+            requests:
+              memory: "1Gi"
+              cpu: "500m"
+            limits:
+              memory: "4Gi"
+              cpu: "2000m"
+
+          # DIND 健康检查
+          readinessProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - "docker info >/dev/null 2>&1"
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            failureThreshold: 6
+
+          livenessProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - "docker version >/dev/null 2>&1"
+            initialDelaySeconds: 10
+            periodSeconds: 30
+            failureThreshold: 3
+
+      # 反亲和性：尽量分散到不同节点
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchExpressions:
+                    - key: app
+                      operator: In
+                      values:
+                        - mateservice
+                topologyKey: kubernetes.io/hostname
+
+      # 优雅终止
+      terminationGracePeriodSeconds: 60
+
+---
+# Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: mateservice
+  labels:
+    app: mateservice
+spec:
+  selector:
+    app: mateservice
+  ports:
+    - port: 8080
+      targetPort: 8080
+      name: http
+    - port: 9249
+      targetPort: 9249
+      name: metrics
+  type: ClusterIP
+
+---
+# HPA (Horizontal Pod Autoscaler)
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: mateservice-hpa
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: mateservice-deployment
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: 80
+  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: 60
+      policies:
+        - type: Percent
+          value: 100
+          periodSeconds: 60
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      policies:
+        - type: Percent
+          value: 10
+          periodSeconds: 60
+
+---
+# Pod Disruption Budget
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: mateservice-pdb
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: mateservice

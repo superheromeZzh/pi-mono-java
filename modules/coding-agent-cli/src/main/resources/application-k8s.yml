@@ -1,0 +1,48 @@
+# Kubernetes 环境配置
+# 启用混合执行模式 + DIND 沙箱
+
+spring:
+  config:
+    activate:
+      on-profile: k8s
+
+# 工具执行配置
+tool:
+  execution:
+    # 默认执行模式: LOCAL | SANDBOX | AUTO
+    default-mode: AUTO
+
+    # 启用混合路由
+    hybrid-enabled: true
+
+    # 允许本地执行
+    local-execution-enabled: true
+
+    # 允许沙箱执行
+    sandbox-execution-enabled: true
+
+    # Docker 守护进程地址（DIND Sidecar）
+    docker-host: tcp://localhost:2375
+
+    # 沙箱工作目录
+    sandbox-workspace-path: /workspace
+
+    # 沙箱工作镜像
+    sandbox-worker-image: alpine:3.19
+
+    # 沙箱资源限制
+    sandbox-worker-memory: 512m
+    sandbox-worker-cpu: 1.0
+
+    # 超时配置
+    sandbox-timeout-seconds: 120
+    local-timeout-seconds: 60
+
+    # 执行日志
+    execution-logging-enabled: true
+
+# 日志配置
+logging:
+  level:
+    com.campusclaw.codingagent.tool.execution: DEBUG
+    com.campusclaw.codingagent.tool.sandbox: DEBUG

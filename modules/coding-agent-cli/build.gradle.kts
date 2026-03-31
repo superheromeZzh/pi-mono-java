@@ -15,6 +15,10 @@ dependencies {
     implementation("info.picocli:picocli-spring-boot-starter:4.7.6")
     annotationProcessor("info.picocli:picocli-codegen:4.7.6")
 
+    // Lombok
+    compileOnly("org.projectlombok:lombok")
+    annotationProcessor("org.projectlombok:lombok")
+
     // JSON processing
     implementation("com.fasterxml.jackson.core:jackson-databind")
 
