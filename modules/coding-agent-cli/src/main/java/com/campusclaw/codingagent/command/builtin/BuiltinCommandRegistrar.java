@@ -3,6 +3,7 @@ package com.campusclaw.codingagent.command.builtin;
 import com.campusclaw.ai.CampusClawAiService;
 import com.campusclaw.codingagent.command.SlashCommandRegistry;
 import com.campusclaw.codingagent.compaction.Compactor;
+import com.campusclaw.codingagent.loop.LoopManager;
 import com.campusclaw.codingagent.settings.SettingsManager;
 
 import org.slf4j.Logger;
@@ -21,12 +22,14 @@ public class BuiltinCommandRegistrar {
     private final SlashCommandRegistry registry;
     private final CampusClawAiService piAiService;
     private final SettingsManager settingsManager;
+    private final LoopManager loopManager;
 
     public BuiltinCommandRegistrar(SlashCommandRegistry registry, CampusClawAiService piAiService,
-                                   SettingsManager settingsManager) {
+                                   SettingsManager settingsManager, LoopManager loopManager) {
         this.registry = registry;
         this.piAiService = piAiService;
         this.settingsManager = settingsManager;
+        this.loopManager = loopManager;
     }
 
     @PostConstruct
@@ -53,5 +56,7 @@ public class BuiltinCommandRegistrar {
         registry.register(new ScopedModelsCommand());
         registry.register(new LoginCommand());
         registry.register(new LogoutCommand());
+        registry.register(new LoopCommand(loopManager));
+        registry.register(new CronCommand());
     }
 }

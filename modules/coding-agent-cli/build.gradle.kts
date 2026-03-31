@@ -5,6 +5,7 @@ plugins {
 dependencies {
     api(project(":modules:campusclaw-ai"))
     api(project(":modules:campusclaw-agent-core"))
+    api(project(":modules:campusclaw-cron"))
     api(project(":modules:campusclaw-tui"))
 
     // Spring Boot

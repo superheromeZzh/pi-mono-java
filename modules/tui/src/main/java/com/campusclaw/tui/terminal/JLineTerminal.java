@@ -3,6 +3,7 @@ package com.campusclaw.tui.terminal;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.UncheckedIOException;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Consumer;
@@ -38,6 +39,7 @@ public class JLineTerminal implements Terminal {
                     .name("campusclaw-tui")
                     .system(true)
                     .jna(true)
+                    .encoding(StandardCharsets.UTF_8)
                     .build();
         } catch (IOException e) {
             throw new UncheckedIOException("Failed to build JLine terminal", e);

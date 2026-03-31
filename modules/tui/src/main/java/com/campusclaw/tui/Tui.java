@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
 
+import com.campusclaw.tui.ansi.AnsiUtils;
 import com.campusclaw.tui.component.Container;
 import com.campusclaw.tui.terminal.Terminal;
 import com.campusclaw.tui.terminal.TerminalSize;
@@ -28,6 +29,7 @@ public class Tui {
     private static final String ERASE_SCROLLBACK = "\033[3J";
 
     private final Terminal terminal;
+    private final boolean syncOutputSupported;
 
     private Container root;
     private Consumer<String> inputHandler;
@@ -37,6 +39,22 @@ public class Tui {
 
     public Tui(Terminal terminal) {
         this.terminal = Objects.requireNonNull(terminal);
+        this.syncOutputSupported = isSyncOutputSupported();
+    }
+
+    /**
+     * Detect whether the terminal supports synchronized output (DEC private mode 2026).
+     * macOS Terminal.app does not support this and can crash when receiving large
+     * buffered writes with unrecognized escape sequences during its rendering pipeline.
+     */
+    private static boolean isSyncOutputSupported() {
+        String termProgram = System.getenv("TERM_PROGRAM");
+        // Apple Terminal does not support synchronized output and may crash
+        if ("Apple_Terminal".equals(termProgram)) {
+            return false;
+        }
+        // Most modern terminals support it: iTerm2, kitty, WezTerm, Alacritty, etc.
+        return true;
     }
 
     public void setRoot(Container root) {
@@ -92,7 +110,9 @@ public class Tui {
 
         // Build output buffer with synchronized output
         var sb = new StringBuilder(allLines.size() * (width + 20));
-        sb.append(SYNC_START);
+        if (syncOutputSupported) {
+            sb.append(SYNC_START);
+        }
 
         // When viewport shifts down (new content pushes old off-screen),
         // scroll the terminal to push old lines into scrollback buffer.
@@ -108,22 +128,25 @@ public class Tui {
             sb.append("\r\n".repeat(clampedShift));
         }
 
-        sb.append(HOME); // Move cursor to top-left of visible viewport
-
-        for (int i = 0; i < visibleCount; i++) {
+        // Use explicit cursor positioning for each row instead of \r\n.
+        // This prevents line duplication when a line with CJK double-width
+        // characters overflows the terminal width — \r\n would jump to the
+        // wrong row after overflow, but \033[row;1H always goes to the right place.
+        for (int i = 0; i < height; i++) {
+            sb.append("\033[").append(i + 1).append(";1H");
             sb.append(CLEAR_LINE);
-            sb.append(allLines.get(startLine + i));
-            if (i < visibleCount - 1) {
-                sb.append("\r\n");
+            if (i < visibleCount) {
+                String line = allLines.get(startLine + i);
+                if (AnsiUtils.visibleWidth(line) > width) {
+                    line = AnsiUtils.sliceByColumn(line, 0, width);
+                }
+                sb.append(line);
             }
         }
 
-        // Clear any remaining rows below content (from previous renders)
-        for (int i = visibleCount; i < height; i++) {
-            sb.append("\r\n").append(CLEAR_LINE);
+        if (syncOutputSupported) {
+            sb.append(SYNC_END);
         }
-
-        sb.append(SYNC_END);
         terminal.write(sb.toString());
         prevStartLine = startLine;
         prevHeight = height;
