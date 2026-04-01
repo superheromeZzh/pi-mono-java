@@ -51,7 +51,7 @@ if not defined JAR (
 )
 
 :: Launch
-java -Dfile.encoding=UTF-8 -Dstdout.encoding=UTF-8 -Dstderr.encoding=UTF-8 -Djava.net.useSystemProxies=true -jar "%JAR%" %ARGS%
+java -Dfile.encoding=UTF-8 -Dstdout.encoding=UTF-8 -Dstderr.encoding=UTF-8 -jar "%JAR%" %ARGS%
 pause
 exit /b %errorlevel%
 

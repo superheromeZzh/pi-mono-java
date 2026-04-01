@@ -82,15 +82,6 @@ public class ProxyConfig {
                 }
             }
         }
-        // Fallback: read Windows registry if no env vars set
-        if (config.httpProxy == null && config.httpsProxy == null && isWindows()) {
-            ProxyEntry winProxy = detectWindowsRegistryProxy();
-            if (winProxy != null) {
-                config.httpProxy = winProxy;
-                config.httpsProxy = winProxy;
-                log.info("Proxy detected from Windows registry: {}", winProxy.toUrl());
-            }
-        }
         if (config.httpProxy != null || config.httpsProxy != null) {
             log.info("Proxy configured: HTTP={}, HTTPS={}, NO_PROXY={}",
                 config.httpProxy != null ? config.httpProxy.toUrl() : "none",

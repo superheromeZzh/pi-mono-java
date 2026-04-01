@@ -1,6 +1,5 @@
 package com.campusclaw.codingagent;
 
-import com.campusclaw.agent.proxy.ProxyConfig;
 import com.campusclaw.codingagent.cli.CampusClawCommand;
 
 import org.springframework.boot.CommandLineRunner;
@@ -35,14 +34,6 @@ public class CampusClawApplication implements CommandLineRunner, ExitCodeGenerat
         System.setProperty("io.netty.noUnsafe", "true");
         System.setProperty("org.jline.terminal.disableDeprecatedProviderWarning", "true");
         System.setProperty("org.jline.terminal.jansi", "false");
-
-        // Install proxy from HTTP_PROXY/HTTPS_PROXY env vars before any network calls.
-        // java.net.useSystemProxies=true is unreliable on Windows; explicit env-var
-        // based proxy is more portable (works with Clash, V2Ray, etc.).
-        ProxyConfig proxyConfig = ProxyConfig.fromEnvironment();
-        if (proxyConfig.isConfigured()) {
-            proxyConfig.installAsDefault();
-        }
 
         System.exit(SpringApplication.exit(SpringApplication.run(CampusClawApplication.class, args)));
     }

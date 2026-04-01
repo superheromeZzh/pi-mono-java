@@ -127,4 +127,4 @@ if [ -z "$JAR" ]; then
     exit 1
 fi
 
-exec "$JAVA" -Djava.net.useSystemProxies=true -jar "$JAR" "${ARGS[@]}"
+exec "$JAVA" -jar "$JAR" "${ARGS[@]}"
