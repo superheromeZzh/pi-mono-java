@@ -332,6 +332,21 @@ public class Agent {
                 }
             }
         }
+        // Append proxy hint for connection failures
+        if (isConnectionError(current)) {
+            message += "\n  提示: 如需使用代理，请设置环境变量 HTTPS_PROXY=http://127.0.0.1:<端口号>";
+        }
         return message;
+    }
+
+    private boolean isConnectionError(Throwable t) {
+        for (var c = t; c != null; c = c.getCause()) {
+            if (c instanceof java.net.ConnectException
+                || c instanceof java.net.SocketTimeoutException
+                || (c.getMessage() != null && c.getMessage().contains("timed out"))) {
+                return true;
+            }
+        }
+        return false;
     }
 }
