@@ -4,6 +4,7 @@ setlocal enabledelayedexpansion
 
 set "SCRIPT_DIR=%~dp0"
 set "JAR_DIR=%SCRIPT_DIR%modules\coding-agent-cli\target"
+set "BUILD_MARKER=%JAR_DIR%\.build-timestamp"
 
 :: Parse --rebuild flag
 set "REBUILD=0"
@@ -25,13 +26,19 @@ for %%a in (%*) do (
 :: Find JAR
 call :find_jar
 
-:: Build if no JAR or --rebuild
+:: Build if no JAR, --rebuild, or source changed
 if "%REBUILD%"=="1" (
     echo 正在重新构建 campusclaw-agent...
     call :build
 ) else if not defined JAR (
     echo 正在构建 campusclaw-agent...
     call :build
+) else (
+    call :check_needs_build
+    if "!NEEDS_BUILD!"=="1" (
+        echo 源代码已更新，正在重新构建 campusclaw-agent...
+        call :build
+    )
 )
 
 :: Find JAR again after build
@@ -55,9 +62,22 @@ if errorlevel 1 (
     pause
     exit /b 1
 )
+:: Update build marker
+echo.> "%BUILD_MARKER%"
 exit /b 0
 
 :find_jar
 set "JAR="
 if exist "%JAR_DIR%\campusclaw-agent.jar" set "JAR=%JAR_DIR%\campusclaw-agent.jar"
+exit /b 0
+
+:check_needs_build
+set "NEEDS_BUILD=0"
+:: No build marker means never tracked — rebuild
+if not exist "%BUILD_MARKER%" (
+    set "NEEDS_BUILD=1"
+    exit /b 0
+)
+:: Use PowerShell to check if any source file is newer than the build marker
+for /f %%r in ('powershell -NoProfile -Command "$m=(Get-Item '%BUILD_MARKER%').LastWriteTime; $n=Get-ChildItem -Path '%SCRIPT_DIR%modules' -Recurse -Include '*.java','*.xml','*.yml','*.properties' -ErrorAction SilentlyContinue | Where-Object {$_.LastWriteTime -gt $m} | Select-Object -First 1; if($n){'1'}else{'0'}" 2^>nul') do set "NEEDS_BUILD=%%r"
 exit /b 0
