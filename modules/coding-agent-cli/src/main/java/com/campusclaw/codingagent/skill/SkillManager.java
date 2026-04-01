@@ -177,13 +177,26 @@ public class SkillManager {
      * @return the installed skill's directory name
      */
     public String importArchive(Path archivePath) throws SkillInstallException {
+        return importArchive(archivePath, null);
+    }
+
+    /**
+     * Extracts a ZIP or TAR.GZ archive into the skills directory.
+     *
+     * @param archivePath    path to the archive file
+     * @param originalName   original filename for deriving skill name (nullable; falls back to archivePath filename)
+     * @return the installed skill's directory name
+     */
+    public String importArchive(Path archivePath, String originalName) throws SkillInstallException {
         Path resolved = archivePath.toAbsolutePath().normalize();
 
         if (!Files.isRegularFile(resolved)) {
             throw new SkillInstallException("File not found: " + resolved);
         }
 
-        String fileName = resolved.getFileName().toString().toLowerCase();
+        String fileName = (originalName != null && !originalName.isBlank())
+                ? originalName.toLowerCase()
+                : resolved.getFileName().toString().toLowerCase();
         boolean isZip = fileName.endsWith(".zip");
         boolean isTarGz = fileName.endsWith(".tar.gz") || fileName.endsWith(".tgz");
 

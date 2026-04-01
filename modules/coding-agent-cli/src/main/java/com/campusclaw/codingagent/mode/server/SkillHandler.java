@@ -58,9 +58,9 @@ public class SkillHandler {
                                 "Unsupported format: " + filename + ". Supported: .zip, .tar.gz, .tgz"));
             }
 
-            return Mono.fromCallable(() -> Files.createTempFile("skill-upload-", "-" + filename))
+            return Mono.fromCallable(() -> Files.createTempFile("skill-upload-", ".tmp"))
                     .flatMap(tempFile -> filePart.transferTo(tempFile)
-                            .then(Mono.fromCallable(() -> importAndDescribe(tempFile))
+                            .then(Mono.fromCallable(() -> importAndDescribe(tempFile, filename))
                                     .subscribeOn(Schedulers.boundedElastic())))
                     .flatMap(result -> ServerResponse.ok().bodyValue(result))
                     .onErrorResume(SkillInstallException.class, e ->
@@ -103,9 +103,9 @@ public class SkillHandler {
 
     // -- helpers --------------------------------------------------------------
 
-    private Map<String, Object> importAndDescribe(Path tempFile) throws Exception {
+    private Map<String, Object> importAndDescribe(Path tempFile, String originalFilename) throws Exception {
         try {
-            String name = skillManager.importArchive(tempFile);
+            String name = skillManager.importArchive(tempFile, originalFilename);
             var skills = skillLoader.loadFromDirectory(
                     AppPaths.USER_SKILLS_DIR.resolve(name), "user");
             var skillList = new ArrayList<Map<String, String>>();
