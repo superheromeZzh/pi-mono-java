@@ -375,6 +375,7 @@ public class DockerSandboxClient {
             if (!finished) {
                 process.destroyForcibly();
                 timedOut = true;
+                process.waitFor(5, TimeUnit.SECONDS);
             }
 
             exitCode = process.exitValue();

@@ -2,7 +2,7 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-JAR_DIR="$SCRIPT_DIR/modules/coding-agent-cli/build/libs"
+JAR_DIR="$SCRIPT_DIR/modules/coding-agent-cli/target"
 BUILD_MARKER="$JAR_DIR/.build-timestamp"
 
 # Auto-detect JDK 21
@@ -71,7 +71,7 @@ JAVA="$JAVA_HOME/bin/java"
 # Find the JAR (glob to avoid hardcoding version)
 find_jar() {
     local jar
-    jar="$(find "$JAR_DIR" -maxdepth 1 -name 'campusclaw-agent-*.jar' -not -name '*-plain.jar' 2>/dev/null | head -1)"
+    jar="$(find "$JAR_DIR" -maxdepth 1 -name 'campusclaw-agent*.jar' -not -name '*-plain.jar' -not -name '*-sources.jar' -not -name '*-javadoc.jar' 2>/dev/null | head -1)"
     echo "$jar"
 }
 
@@ -117,7 +117,7 @@ if [ "$REBUILD" = true ] || needs_build; then
     else
         echo "Source changed, rebuilding..."
     fi
-    "$SCRIPT_DIR/gradlew" -p "$SCRIPT_DIR" :modules:campusclaw-coding-agent:bootJar -q
+    "$SCRIPT_DIR/mvnw" -f "$SCRIPT_DIR/pom.xml" package -DskipTests -q
     touch "$BUILD_MARKER"
 fi
 

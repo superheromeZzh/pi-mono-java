@@ -150,6 +150,7 @@ public class CampusClawCommand implements Callable<Integer> {
 
     @Override
     public Integer call() {
+        try {
         // Handle package subcommands: install, remove, uninstall, update, list, config
         if (promptArgs != null && !promptArgs.isEmpty()) {
             String first = promptArgs.get(0);
@@ -470,6 +471,11 @@ public class CampusClawCommand implements Callable<Integer> {
             if (sessionManager != null) sessionManager.close();
         }
         return 0;
+        } catch (Exception e) {
+            System.err.println("Fatal error: " + e.getMessage());
+            e.printStackTrace();
+            return 1;
+        }
     }
 
     /**

@@ -1,6 +1,11 @@
+# Maven
+**/target/
+.mvn/
+!**/pom.xml
+
 # Gradle
-.gradle
-build/
+.gradle/
+**/build/
 !**/src/main/resources/**/META-INF/.gitkeep
 !**/src/test/resources/**/META-INF/.gitkeep
 

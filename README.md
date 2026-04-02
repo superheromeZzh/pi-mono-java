@@ -100,28 +100,18 @@ campusclaw.bat -m glm-5
 
 ### 3. 其他启动方式
 
-**使用 Gradle `bootRun`（开发推荐，自动编译+运行）：**
-
-```bash
-# macOS / Linux
-./gradlew :modules:campusclaw-coding-agent:bootRun --args='-m glm-5'
-
-# Windows
-gradlew.bat :modules:campusclaw-coding-agent:bootRun --args="-m glm-5"
-```
-
 **手动构建后运行：**
 
 ```bash
 # 构建（只需执行一次，代码没改就不用重新构建）
-./gradlew :modules:campusclaw-coding-agent:bootJar          # macOS / Linux
-gradlew.bat :modules:campusclaw-coding-agent:bootJar         # Windows
+./mvnw package -DskipTests -q                                 # macOS / Linux
+mvnw.cmd -f pom.xml package -pl modules/coding-agent-cli -am -DskipTests -q   # Windows
 
 # 运行
-java -jar modules/coding-agent-cli/build/libs/campusclaw-agent-1.0.0-SNAPSHOT.jar -m glm-5
+java -jar modules/coding-agent-cli/target/campusclaw-agent.jar -m glm-5
 ```
 
-> 如果 Gradle 报 JDK 版本不兼容，在命令前加上 `JAVA_HOME=...`（macOS/Linux）或 `set JAVA_HOME=...`（Windows CMD）。
+> 如果 Maven 报 JDK 版本不兼容，在命令前加上 `JAVA_HOME=...`（macOS/Linux）或 `set JAVA_HOME=...`（Windows CMD）。
 
 ## 用法
 
@@ -397,6 +387,125 @@ kubectl logs -f deployment/mateservice-deployment -c mateservice
 | HuggingFace | `HF_TOKEN` |
 | GitHub Copilot | `COPILOT_GITHUB_TOKEN` / `GH_TOKEN` |
 
+## `-m` 参数支持的模型
+
+使用 `-m, --model` 参数指定模型，内置 **52** 个模型：
+
+### Anthropic
+| 模型 ID | 显示名称 | 思考 |
+|---------|----------|------|
+| `claude-sonnet-4-20250514` | Claude Sonnet 4 | ✓ |
+| `claude-opus-4-20250115` | Claude Opus 4 | ✓ |
+| `claude-haiku-3-5` | Claude 3.5 Haiku | ✗ |
+
+### OpenAI
+| 模型 ID | 显示名称 | 思考 |
+|---------|----------|------|
+| `gpt-4o` | GPT-4o | ✗ |
+| `gpt-4o-mini` | GPT-4o Mini | ✗ |
+| `o3` | o3 | ✓ |
+| `o4-mini` | o4-mini | ✓ |
+
+### ZAI (智谱)
+| 模型 ID | 显示名称 | 思考 |
+|---------|----------|------|
+| `glm-5` | GLM-5 | ✓ |
+| `glm-5-turbo` | GLM-5-Turbo | ✓ |
+| `glm-4.7` | GLM-4.7 | ✓ |
+| `glm-4.7-flash` | GLM-4.7-Flash | ✓ |
+| `glm-4.6` | GLM-4.6 | ✓ |
+| `glm-4.6v` | GLM-4.6V | ✓ |
+| `glm-4.5` | GLM-4.5 | ✓ |
+| `glm-4.5-air` | GLM-4.5-Air | ✓ |
+| `glm-4.5-flash` | GLM-4.5-Flash | ✓ |
+| `glm-4.5v` | GLM-4.5V | ✓ |
+
+### Kimi Coding
+| 模型 ID | 显示名称 | 思考 |
+|---------|----------|------|
+| `k2p5` | Kimi K2.5 | ✓ |
+| `kimi-k2-thinking` | Kimi K2 Thinking | ✓ |
+
+### MiniMax
+| 模型 ID | 显示名称 | 思考 |
+|---------|----------|------|
+| `MiniMax-M2.7` | MiniMax-M2.7 | ✓ |
+| `MiniMax-M2.7-highspeed` | MiniMax-M2.7-highspeed | ✓ |
+
+### Google Generative AI
+| 模型 ID | 显示名称 | 思考 |
+|---------|----------|------|
+| `gemini-2.5-pro` | Gemini 2.5 Pro | ✓ |
+| `gemini-2.5-flash` | Gemini 2.5 Flash | ✓ |
+| `gemini-2.0-flash` | Gemini 2.0 Flash | ✗ |
+
+### Google Vertex AI
+| 模型 ID | 显示名称 | 思考 |
+|---------|----------|------|
+| `gemini-2.5-pro` | Gemini 2.5 Pro (Vertex) | ✓ |
+| `gemini-2.5-flash` | Gemini 2.5 Flash (Vertex) | ✓ |
+
+### Mistral
+| 模型 ID | 显示名称 | 思考 |
+|---------|----------|------|
+| `mistral-large-latest` | Mistral Large | ✓ |
+| `mistral-medium-latest` | Mistral Medium | ✗ |
+| `mistral-small-latest` | Mistral Small | ✗ |
+| `codestral-latest` | Codestral | ✗ |
+
+### Azure OpenAI
+| 模型 ID | 显示名称 | 思考 |
+|---------|----------|------|
+| `gpt-4o` | GPT-4o (Azure) | ✗ |
+| `gpt-4o-mini` | GPT-4o Mini (Azure) | ✗ |
+| `o3` | o3 (Azure) | ✓ |
+
+### xAI (Grok)
+| 模型 ID | 显示名称 | 思考 |
+|---------|----------|------|
+| `grok-3` | Grok 3 | ✓ |
+| `grok-3-mini` | Grok 3 Mini | ✓ |
+| `grok-3-fast` | Grok 3 Fast | ✗ |
+
+### Groq
+| 模型 ID | 显示名称 | 思考 |
+|---------|----------|------|
+| `llama-3.3-70b-versatile` | Llama 3.3 70B (Groq) | ✗ |
+| `llama-4-maverick-17b-128e-instruct` | Llama 4 Maverick (Groq) | ✗ |
+| `deepseek-r1-distill-llama-70b` | DeepSeek R1 70B (Groq) | ✓ |
+
+### OpenRouter
+| 模型 ID | 显示名称 | 思考 |
+|---------|----------|------|
+| `anthropic/claude-sonnet-4` | Claude Sonnet 4 (OpenRouter) | ✓ |
+| `openai/gpt-4o` | GPT-4o (OpenRouter) | ✗ |
+| `google/gemini-2.5-pro` | Gemini 2.5 Pro (OpenRouter) | ✓ |
+
+### OpenAI Codex
+| 模型 ID | 显示名称 | 思考 |
+|---------|----------|------|
+| `codex-mini-latest` | Codex Mini | ✓ |
+
+### GitHub Copilot
+| 模型 ID | 显示名称 | 思考 |
+|---------|----------|------|
+| `claude-sonnet-4` | Claude Sonnet 4 (Copilot) | ✓ |
+| `gpt-4o` | GPT-4o (Copilot) | ✗ |
+
+### Cerebras
+| 模型 ID | 显示名称 | 思考 |
+|---------|----------|------|
+| `llama-4-scout-17b-16e-instruct` | Llama 4 Scout (Cerebras) | ✗ |
+| `llama-3.3-70b` | Llama 3.3 70B (Cerebras) | ✗ |
+
+### HuggingFace
+| 模型 ID | 显示名称 | 思考 |
+|---------|----------|------|
+| `Qwen/Qwen3-235B-A22B` | Qwen3 235B (HF) | ✓ |
+| `meta-llama/Llama-4-Maverick-17B-128E-Instruct-FP8` | Llama 4 Maverick (HF) | ✗ |
+
+> **提示**：运行 `campusclaw --list-models` 查看当前实际可用的模型列表（需配置对应 API Key）。
+
 ## 项目结构
 
 ```
@@ -419,8 +528,7 @@ campusclaw/
 ├── Dockerfile                    # 多阶段构建镜像
 ├── ARCHITECTURE-HYBRID.md        # 混合架构设计文档
 ├── IMPLEMENTATION-HYBRID.md      # 实现细节文档
-├── build.gradle.kts              # 根构建配置
-├── settings.gradle.kts           # 模块声明
+├── pom.xml                       # 根构建配置（Maven）
 ├── campusclaw.sh                 # 启动脚本（macOS / Linux）
 ├── campusclaw.bat                # 启动脚本（Windows）
 └── README.md
@@ -437,25 +545,25 @@ campusclaw/
 | CLI | Picocli 4.7.6 |
 | 终端 | JLine 3.26.2 + Lanterna 3.1.2 |
 | 沙箱 | Docker Java Client |
-| 构建 | Gradle 8.10.2 (Kotlin DSL) |
+| 构建 | Maven 3.9+ |
 
 ## 开发
 
 ```bash
 # 构建所有模块
-./gradlew build
+./mvnw package -DskipTests -q
 
 # 运行测试
-./gradlew test
+./mvnw test
 
-# 仅构建 JAR
-./gradlew :modules:campusclaw-coding-agent:bootJar
+# 仅构建可执行 JAR
+./mvnw -f pom.xml package -pl modules/coding-agent-cli -am -DskipTests -q
 
 # 构建 Docker 镜像
 docker build -t campusclaw/mateservice:latest .
 ```
 
-> Windows 用户将 `./gradlew` 替换为 `gradlew.bat`。
+> Windows 用户将 `./mvnw` 替换为 `mvnw.cmd`。
 > 如果默认 JDK 不是 21，需在命令前设置 `JAVA_HOME`。
 
 ## 安全策略
@@ -483,29 +591,22 @@ docker build -t campusclaw/mateservice:latest .
 
 ## 故障排查
 
-### Gradle 构建失败：JDK 版本不兼容
+### Maven 构建失败：JDK 版本不兼容
 
-**现象**：`Unsupported class file major version` 或 Gradle 直接报版本号错误
+**现象**：`Unsupported class file major version` 或 `Fatal error compiling: invalid target release`
 
-**原因**：Gradle 8.10 不支持 JDK 25+，且项目要求 JDK 21
+**原因**：项目要求 JDK 21，但当前默认 JDK 版本不匹配
 
 **解决**：
 
 ```bash
 # macOS / Linux — 指定 JAVA_HOME
 export JAVA_HOME=/path/to/jdk-21
-./gradlew build
+./mvnw package -DskipTests -q
 
 # Windows CMD
 set JAVA_HOME=C:\Program Files\Eclipse Adoptium\jdk-21
-gradlew.bat build
-```
-
-或在 `gradle.properties` 中指定 toolchain 自动下载（需要网络）：
-
-```properties
-org.gradle.java.installations.auto-detect=true
-org.gradle.java.installations.auto-download=true
+mvnw.cmd -f pom.xml package -DskipTests -q
 ```
 
 ### 启动脚本找不到 JDK 21

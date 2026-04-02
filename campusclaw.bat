@@ -3,7 +3,7 @@ chcp 65001 >nul
 setlocal enabledelayedexpansion
 
 set "SCRIPT_DIR=%~dp0"
-set "JAR_DIR=%SCRIPT_DIR%modules\coding-agent-cli\build\libs"
+set "JAR_DIR=%SCRIPT_DIR%modules\coding-agent-cli\target"
 
 :: Parse --rebuild flag
 set "REBUILD=0"
@@ -49,7 +49,7 @@ pause
 exit /b %errorlevel%
 
 :build
-call "%SCRIPT_DIR%gradlew.bat" -p "%SCRIPT_DIR%" :modules:campusclaw-coding-agent:bootJar
+call "%SCRIPT_DIR%mvnw.cmd" -f "%SCRIPT_DIR%pom.xml" package -pl modules/coding-agent-cli -am -DskipTests -q
 if errorlevel 1 (
     echo 错误：构建失败。
     pause
@@ -60,7 +60,7 @@ exit /b 0
 :find_jar
 set "JAR="
 for %%f in ("%JAR_DIR%\campusclaw-agent-*.jar") do (
-    echo %%~nf | findstr /v "\-plain" >nul 2>&1
+    echo %%~nf | findstr /v /c:"-plain" /c:"-sources" /c:"-javadoc" >nul 2>&1
     if not errorlevel 1 set "JAR=%%f"
 )
 exit /b 0

@@ -37,7 +37,20 @@ public class CampusClawApplication implements CommandLineRunner, ExitCodeGenerat
         System.setProperty("io.netty.noUnsafe", "true");
         System.setProperty("org.jline.terminal.disableDeprecatedProviderWarning", "true");
         System.setProperty("org.jline.terminal.jansi", "false");
-        System.exit(SpringApplication.exit(SpringApplication.run(CampusClawApplication.class, args)));
+
+        org.springframework.context.ConfigurableApplicationContext ctx =
+            SpringApplication.run(CampusClawApplication.class, args);
+        int exitCode = SpringApplication.exit(ctx);
+
+        // Prevent NoClassDefFoundError on exit by stopping logback before the
+        // Boot JarUrlClassLoader is torn down.
+        try {
+            ((ch.qos.logback.classic.LoggerContext)
+                org.slf4j.LoggerFactory.getILoggerFactory()).stop();
+        } catch (Exception ignored) {
+        }
+
+        System.exit(exitCode);
     }
 
     @Override

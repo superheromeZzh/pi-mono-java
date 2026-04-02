@@ -15,6 +15,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
+
+import org.jobrunr.storage.StorageProvider;
 
 @Component
 public class RecurringTaskHandler {
@@ -25,22 +28,35 @@ public class RecurringTaskHandler {
     private final TaskRepository taskRepository;
     private final JobScheduler jobScheduler;
     private final ModelRegistry modelRegistry;
+    private final StorageProvider storageProvider;
 
     public RecurringTaskHandler(
         TaskManager taskManager,
         TaskRepository taskRepository,
         JobScheduler jobScheduler,
-        ModelRegistry modelRegistry
+        ModelRegistry modelRegistry,
+        StorageProvider storageProvider
     ) {
         this.taskManager = taskManager;
         this.taskRepository = taskRepository;
         this.jobScheduler = jobScheduler;
         this.modelRegistry = modelRegistry;
+        this.storageProvider = storageProvider;
     }
 
     @PostConstruct
     public void scheduleRecurringTasks() {
+        // 获取数据库中的有效任务ID
         List<RecurringTask> recurringTasks = taskRepository.findRecurringTasks();
+        var validTaskIds = recurringTasks.stream()
+            .map(RecurringTask::id)
+            .collect(Collectors.toSet());
+
+        // 清理调度器中无效的任务（数据库中已不存在的）
+        cleanupOrphanRecurringJobs(validTaskIds);
+
+        // 重新调度数据库中的任务
+        log.info("Scheduling {} recurring tasks from database", recurringTasks.size());
         for (RecurringTask recurringTask : recurringTasks) {
             try {
                 jobScheduler.scheduleRecurrently(
@@ -48,6 +64,7 @@ public class RecurringTaskHandler {
                     recurringTask.cronExpression(),
                     () -> enqueueRecurringTask(recurringTask)
                 );
+                log.info("Scheduled recurring task: {} ({})", recurringTask.name(), recurringTask.id());
             } catch (Exception e) {
                 log.warn("Deleting recurring task with invalid cron '{}' ({}): {}",
                     recurringTask.name(), recurringTask.id(), recurringTask.cronExpression());
@@ -56,11 +73,51 @@ public class RecurringTaskHandler {
         }
     }
 
+    /**
+     * 清理调度器中不存在于数据库的孤儿任务
+     */
+    private void cleanupOrphanRecurringJobs(java.util.Set<String> validTaskIds) {
+        try {
+            // 通过StorageProvider获取所有recurring jobs
+            if (storageProvider != null) {
+                var recurringJobs = storageProvider.getRecurringJobs();
+                int deletedCount = 0;
+                for (var job : recurringJobs) {
+                    String jobId = job.getId();
+                    // 只处理以"recurring-"开头的我们的任务
+                    if (jobId.startsWith("recurring-")) {
+                        String taskId = jobId.substring("recurring-".length());
+                        if (!validTaskIds.contains(taskId)) {
+                            try {
+                                BackgroundJob.deleteRecurringJob(jobId);
+                                log.info("Deleted orphan recurring job from scheduler: {}", taskId);
+                                deletedCount++;
+                            } catch (Exception e) {
+                                log.debug("Failed to delete orphan job {}: {}", jobId, e.getMessage());
+                            }
+                        }
+                    }
+                }
+                if (deletedCount > 0) {
+                    log.info("Cleaned up {} orphan recurring jobs from scheduler", deletedCount);
+                }
+            }
+        } catch (Exception e) {
+            log.debug("Could not cleanup orphan recurring jobs: {}", e.getMessage());
+        }
+    }
+
     @Job(name = "Recurring task %0")
     public void executeRecurringTask(String recurringTaskId) {
         Optional<RecurringTask> opt = taskRepository.findRecurringTaskById(recurringTaskId);
         if (opt.isEmpty()) {
-            log.warn("Recurring task not found: {}", recurringTaskId);
+            log.warn("Recurring task not found in DB: {}, deleting from scheduler", recurringTaskId);
+            // 自动删除调度器中无效的任务
+            try {
+                BackgroundJob.deleteRecurringJob("recurring-" + recurringTaskId);
+            } catch (Exception e) {
+                log.debug("Failed to delete recurring job: {}", e.getMessage());
+            }
             return;
         }
         RecurringTask recurringTask = opt.get();

@@ -1,5 +1,6 @@
 package com.campusclaw.codingagent.command.builtin;
 
+import com.campusclaw.codingagent.command.QuitException;
 import com.campusclaw.codingagent.command.SlashCommand;
 import com.campusclaw.codingagent.command.SlashCommandContext;
 
@@ -18,6 +19,6 @@ public class QuitCommand implements SlashCommand {
     @Override
     public void execute(SlashCommandContext context, String arguments) {
         context.output().println("Goodbye.");
-        System.exit(0);
+        throw new QuitException();
     }
 }

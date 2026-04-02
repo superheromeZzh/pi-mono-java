@@ -20,6 +20,7 @@ import com.campusclaw.ai.types.ThinkingLevel;
 import com.campusclaw.ai.types.UserMessage;
 import com.campusclaw.assistant.task.TaskManager;
 import com.campusclaw.codingagent.CampusClawApplication;
+import com.campusclaw.codingagent.command.QuitException;
 import com.campusclaw.codingagent.command.SlashCommandContext;
 import com.campusclaw.codingagent.command.SlashCommandRegistry;
 import com.campusclaw.codingagent.compaction.Compactor;
@@ -510,42 +511,47 @@ public class InteractiveMode {
 
                 // Slash commands — skip if it's a /skill: invocation or prompt template
                 if (trimmed.startsWith("/") && !isSkillOrTemplate(trimmed, session)) {
-                    if (handleSlashCommand(trimmed, session)) {
-                        // Refresh state after commands that change it
-                        if (trimmed.startsWith("/new") || trimmed.startsWith("/reload")) {
-                            buildCommandSuggestions(session);
-                        }
-                        // Clear chat display and reset tokens on /new
-                        if (trimmed.equals("/new")) {
-                            chatContainer.clear();
-                            chatContainer.addChild(new Text(
-                                    "\033[38;2;138;190;183m\u2713 New session started\033[0m", 1, 1));
-                            footer.resetUsage();
-                            lastStatusComponent = null;
-                            // Create a new session file
-                            var sm = session.getSessionManager();
-                            if (sm != null) {
-                                sm.close();
-                                sm.createSession(cwd);
+                    try {
+                        if (handleSlashCommand(trimmed, session)) {
+                            // Refresh state after commands that change it
+                            if (trimmed.startsWith("/new") || trimmed.startsWith("/reload")) {
+                                buildCommandSuggestions(session);
                             }
-                        }
-                        // Update footer after model switch
-                        if (trimmed.startsWith("/model ")) {
-                            var newModel = session.getAgent().getState().getModel();
-                            if (newModel != null) {
-                                footer.setModel(
-                                        newModel.provider().name().toLowerCase(),
-                                        newModel.id(),
-                                        newModel.contextWindow() > 0 ? newModel.contextWindow() : 200000,
-                                        newModel.reasoning());
+                            // Clear chat display and reset tokens on /new
+                            if (trimmed.equals("/new")) {
+                                chatContainer.clear();
+                                chatContainer.addChild(new Text(
+                                        "\033[38;2;138;190;183m\u2713 New session started\033[0m", 1, 1));
+                                footer.resetUsage();
+                                lastStatusComponent = null;
+                                // Create a new session file
+                                var sm = session.getSessionManager();
+                                if (sm != null) {
+                                    sm.close();
+                                    sm.createSession(cwd);
+                                }
                             }
+                            // Update footer after model switch
+                            if (trimmed.startsWith("/model ")) {
+                                var newModel = session.getAgent().getState().getModel();
+                                if (newModel != null) {
+                                    footer.setModel(
+                                            newModel.provider().name().toLowerCase(),
+                                            newModel.id(),
+                                            newModel.contextWindow() > 0 ? newModel.contextWindow() : 200000,
+                                            newModel.reasoning());
+                                }
+                            }
+                            // Update footer session name after /name command
+                            if (trimmed.startsWith("/name ")) {
+                                footer.setSessionName(trimmed.substring(6).trim());
+                            }
+                            tui.render();
+                            continue;
                         }
-                        // Update footer session name after /name command
-                        if (trimmed.startsWith("/name ")) {
-                            footer.setSessionName(trimmed.substring(6).trim());
-                        }
-                        tui.render();
-                        continue;
+                    } catch (QuitException e) {
+                        eofFlag.set(true);
+                        break;
                     }
                 }
 
