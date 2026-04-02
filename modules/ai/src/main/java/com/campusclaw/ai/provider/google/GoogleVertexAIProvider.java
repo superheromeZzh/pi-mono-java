@@ -89,7 +89,9 @@ public class GoogleVertexAIProvider implements ApiProvider {
                 .header("Content-Type", "application/json")
                 .POST(HttpRequest.BodyPublishers.ofString(requestBody.toString()));
 
-            var client = HttpClient.newHttpClient();
+            var client = HttpClient.newBuilder()
+                    .connectTimeout(java.time.Duration.ofSeconds(15))
+                    .build();
             var response = client.send(requestBuilder.build(), HttpResponse.BodyHandlers.ofInputStream());
 
             List<ContentBlock> blocks = new ArrayList<>();

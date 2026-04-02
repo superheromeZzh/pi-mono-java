@@ -168,11 +168,19 @@ public class OpenAICompletionsProvider implements ApiProvider {
             processStream(client, params, model, eventStream);
         } catch (Exception e) {
             eventStream.error(e);
+        } finally {
+            client.close();
         }
     }
 
     OpenAIClient buildClient(String apiKey, String baseUrl) {
-        var builder = OpenAIOkHttpClient.builder().apiKey(apiKey);
+        var builder = OpenAIOkHttpClient.builder()
+                .apiKey(apiKey)
+                .timeout(com.openai.core.Timeout.builder()
+                        .connect(java.time.Duration.ofSeconds(15))
+                        .read(java.time.Duration.ofMinutes(10))
+                        .write(java.time.Duration.ofSeconds(30))
+                        .build());
         if (baseUrl != null && !baseUrl.isBlank()) {
             builder.baseUrl(baseUrl);
         }
@@ -188,20 +196,22 @@ public class OpenAICompletionsProvider implements ApiProvider {
         int resolvedMaxTokens = maxTokens != null ? maxTokens
                 : Math.min(model.maxTokens(), 32000);
 
-        var builder = ChatCompletionCreateParams.builder()
-                .model(model.id())
-                .maxCompletionTokens((long) resolvedMaxTokens)
-                .messages(convertMessages(context.messages()))
-                .streamOptions(ChatCompletionStreamOptions.builder()
-                        .includeUsage(true).build());
-
-        // System prompt
+        // Build messages list with system prompt first
+        var messages = new ArrayList<ChatCompletionMessageParam>();
         if (context.systemPrompt() != null && !context.systemPrompt().isBlank()) {
-            builder.addMessage(ChatCompletionMessageParam.ofSystem(
+            messages.add(ChatCompletionMessageParam.ofSystem(
                     ChatCompletionSystemMessageParam.builder()
                             .content(context.systemPrompt())
                             .build()));
         }
+        messages.addAll(convertMessages(context.messages()));
+
+        var builder = ChatCompletionCreateParams.builder()
+                .model(model.id())
+                .maxCompletionTokens((long) resolvedMaxTokens)
+                .messages(messages)
+                .streamOptions(ChatCompletionStreamOptions.builder()
+                        .includeUsage(true).build());
 
         // Tools
         if (context.tools() != null && !context.tools().isEmpty()) {

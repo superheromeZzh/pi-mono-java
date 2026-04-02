@@ -568,10 +568,16 @@ public final class AnsiUtils {
                 continue;
             }
 
-            char c = text.charAt(i);
-            boolean charIsSpace = c == ' ';
+            int cp = text.codePointAt(i);
+            int charCount = Character.charCount(cp);
+            boolean charIsSpace = cp == ' ';
+            boolean charIsWide = isEastAsianWide(cp);
 
-            if (charIsSpace != inWhitespace && current.length() > 0) {
+            // Break token at: whitespace boundary OR before/after CJK wide characters.
+            // CJK text has no spaces between characters, so without this, an entire
+            // Chinese paragraph becomes one huge token that can't be word-wrapped.
+            boolean shouldBreak = (charIsSpace != inWhitespace) || charIsWide;
+            if (shouldBreak && current.length() > 0) {
                 tokens.add(current.toString());
                 current.setLength(0);
             }
@@ -582,8 +588,15 @@ public final class AnsiUtils {
             }
 
             inWhitespace = charIsSpace;
-            current.append(c);
-            i++;
+            current.appendCodePoint(cp);
+
+            // Also break AFTER a CJK character so each wide char is its own token
+            if (charIsWide) {
+                tokens.add(current.toString());
+                current.setLength(0);
+            }
+
+            i += charCount;
         }
 
         if (pendingAnsi.length() > 0) {

@@ -139,11 +139,19 @@ public class OpenAIResponsesProvider implements ApiProvider {
             processStream(client, params, model, eventStream);
         } catch (Exception e) {
             eventStream.error(e);
+        } finally {
+            client.close();
         }
     }
 
     OpenAIClient buildClient(String apiKey, String baseUrl) {
-        var builder = OpenAIOkHttpClient.builder().apiKey(apiKey);
+        var builder = OpenAIOkHttpClient.builder()
+                .apiKey(apiKey)
+                .timeout(com.openai.core.Timeout.builder()
+                        .connect(java.time.Duration.ofSeconds(15))
+                        .read(java.time.Duration.ofMinutes(10))
+                        .write(java.time.Duration.ofSeconds(30))
+                        .build());
         if (baseUrl != null && !baseUrl.isBlank()) {
             builder.baseUrl(baseUrl);
         }

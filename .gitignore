@@ -1,15 +1,9 @@
 # Maven
-# 如果要提交 target/，注释掉下面这行
-# **/target/
-# 如果要提交 .mvn/，注释掉下面这行
-# .mvn/
-!**/pom.xml
+target/
 
-# Gradle
-.gradle/
-**/build/
-!**/src/main/resources/**/META-INF/.gitkeep
-!**/src/test/resources/**/META-INF/.gitkeep
+# Gradle (legacy)
+.gradle
+build/
 
 # IDE
 .idea/
@@ -35,8 +29,9 @@ local.properties
 test-results/
 reports/
 
-# CLI
-!gradlew
-!gradlew.bat
-!/gradle/wrapper/gradle-wrapper.jar
+# Wrappers
+!mvnw
+!mvnw.cmd
+!.mvn/wrapper/maven-wrapper.jar
+
 docs/agent-core-architecture.md

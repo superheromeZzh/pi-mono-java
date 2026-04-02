@@ -174,7 +174,13 @@ public class AnthropicProvider implements ApiProvider {
     }
 
     AnthropicClient buildClient(String apiKey, String baseUrl) {
-        var builder = AnthropicOkHttpClient.builder().apiKey(apiKey);
+        var builder = AnthropicOkHttpClient.builder()
+                .apiKey(apiKey)
+                .timeout(com.anthropic.core.Timeout.builder()
+                        .connect(java.time.Duration.ofSeconds(15))
+                        .read(java.time.Duration.ofMinutes(10))
+                        .write(java.time.Duration.ofSeconds(30))
+                        .build());
         if (baseUrl != null && !baseUrl.isBlank()) {
             builder.baseUrl(baseUrl);
         }

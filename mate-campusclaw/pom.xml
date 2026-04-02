@@ -22,7 +22,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
-        <start-class>com.huawei.hicampus.campusclaw.codingagent.CampusClawApplication</start-class>
+        <start-class>com.huawei.hicampus.mate.matecampusclaw.codingagent.CampusClawApplication</start-class>
 
         <!-- Spring Boot -->
         <spring-boot.version>3.4.1</spring-boot.version>
@@ -38,6 +38,18 @@
         <lanterna.version>3.1.2</lanterna.version>
         <mockwebserver.version>4.12.0</mockwebserver.version>
     </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-dependencies</artifactId>
+                <version>${spring-boot.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
 
     <dependencies>
         <!-- ==================== -->
@@ -104,6 +116,12 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter</artifactId>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.springframework.boot</groupId>
+                    <artifactId>spring-boot-starter-logging</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -185,15 +203,11 @@
         </dependency>
 
         <!-- ============================== -->
-        <!-- Logging                        -->
+        <!-- Logging (slf4j-api only, 实现由父项目 log4j2 提供) -->
         <!-- ============================== -->
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>ch.qos.logback</groupId>
-            <artifactId>logback-classic</artifactId>
         </dependency>
 
         <!-- ============================== -->
@@ -277,7 +291,7 @@
                     </execution>
                 </executions>
                 <configuration>
-                    <mainClass>com.huawei.hicampus.campusclaw.codingagent.CampusClawApplication</mainClass>
+                    <mainClass>com.huawei.hicampus.mate.matecampusclaw.codingagent.CampusClawApplication</mainClass>
                 </configuration>
             </plugin>
         </plugins>

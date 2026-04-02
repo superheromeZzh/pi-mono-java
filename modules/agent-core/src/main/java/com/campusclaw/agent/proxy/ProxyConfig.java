@@ -47,7 +47,19 @@ public class ProxyConfig {
     private ProxyEntry httpsProxy;
     private final List<String> noProxy = new ArrayList<>();
 
-    /** Create config from environment variables. */
+    /** Create config from a proxy URL string (e.g. from --proxy flag). */
+    public static ProxyConfig fromUrl(String proxyUrl) {
+        ProxyConfig config = new ProxyConfig();
+        ProxyEntry entry = parseProxyUrl(proxyUrl);
+        if (entry != null) {
+            config.httpProxy = entry;
+            config.httpsProxy = entry;
+            log.info("Proxy configured from URL: {}", entry.toUrl());
+        }
+        return config;
+    }
+
+    /** Create config from environment variables, falling back to Windows registry. */
     public static ProxyConfig fromEnvironment() {
         ProxyConfig config = new ProxyConfig();
         // HTTP_PROXY / http_proxy
@@ -197,6 +209,91 @@ public class ProxyConfig {
             log.warn("Failed to parse proxy URL: {}", url, e);
             return null;
         }
+    }
+
+    /**
+     * Read Windows Internet Settings from registry to detect system proxy.
+     * Reads HKCU\Software\Microsoft\Windows\CurrentVersion\Internet Settings
+     * for ProxyEnable and ProxyServer values.
+     */
+    static ProxyEntry detectWindowsRegistryProxy() {
+        try {
+            // Check if proxy is enabled
+            String enableOutput = regQuery("ProxyEnable");
+            if (enableOutput == null || !enableOutput.contains("0x1")) {
+                return null;
+            }
+            // Read proxy server value (e.g. "127.0.0.1:7890" or "http=...:8080;https=...:8080")
+            String serverOutput = regQuery("ProxyServer");
+            if (serverOutput == null) {
+                return null;
+            }
+            // Extract the value after REG_SZ
+            String proxyServer = null;
+            for (String line : serverOutput.split("\n")) {
+                line = line.trim();
+                if (line.contains("ProxyServer") && line.contains("REG_SZ")) {
+                    int idx = line.indexOf("REG_SZ");
+                    proxyServer = line.substring(idx + "REG_SZ".length()).trim();
+                    break;
+                }
+            }
+            if (proxyServer == null || proxyServer.isBlank()) {
+                return null;
+            }
+            // Handle compound format: "http=host:port;https=host:port;..."
+            if (proxyServer.contains("=")) {
+                for (String part : proxyServer.split(";")) {
+                    part = part.trim();
+                    if (part.startsWith("https=") || part.startsWith("http=")) {
+                        String addr = part.substring(part.indexOf('=') + 1);
+                        return parseHostPort(addr);
+                    }
+                }
+                return null;
+            }
+            // Simple format: "host:port"
+            return parseHostPort(proxyServer);
+        } catch (Exception e) {
+            log.debug("Failed to read Windows registry proxy: {}", e.getMessage());
+            return null;
+        }
+    }
+
+    private static String regQuery(String valueName) {
+        try {
+            var process = new ProcessBuilder(
+                    "reg", "query",
+                    "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings",
+                    "/v", valueName
+            ).redirectErrorStream(true).start();
+            String output = new String(process.getInputStream().readAllBytes());
+            int exitCode = process.waitFor();
+            return exitCode == 0 ? output : null;
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    private static ProxyEntry parseHostPort(String hostPort) {
+        if (hostPort == null || hostPort.isBlank()) return null;
+        // If it already looks like a URL, delegate to parseProxyUrl
+        if (hostPort.contains("://")) return parseProxyUrl(hostPort);
+        int colon = hostPort.lastIndexOf(':');
+        if (colon > 0) {
+            String host = hostPort.substring(0, colon);
+            try {
+                int port = Integer.parseInt(hostPort.substring(colon + 1));
+                return new ProxyEntry(ProxyType.HTTP, host, port, null, null);
+            } catch (NumberFormatException e) {
+                return null;
+            }
+        }
+        return null;
+    }
+
+    private static boolean isWindows() {
+        return System.getProperty("os.name", "").toLowerCase().contains("win");
     }
 
     private static String coalesce(String... values) {

@@ -18,9 +18,7 @@ import com.campusclaw.ai.types.Message;
 import com.campusclaw.ai.types.Model;
 import com.campusclaw.ai.types.ThinkingLevel;
 import com.campusclaw.ai.types.UserMessage;
-import com.campusclaw.assistant.task.TaskManager;
 import com.campusclaw.codingagent.CampusClawApplication;
-import com.campusclaw.codingagent.command.QuitException;
 import com.campusclaw.codingagent.command.SlashCommandContext;
 import com.campusclaw.codingagent.command.SlashCommandRegistry;
 import com.campusclaw.codingagent.compaction.Compactor;
@@ -57,7 +55,8 @@ public class InteractiveMode {
     private final BashExecutor bashExecutor;
     private final Compactor compactor;
     private final ModelRegistry modelRegistry;
-    private final TaskManager taskManager;
+    private final com.campusclaw.cron.CronService cronService;
+    private final com.campusclaw.codingagent.loop.LoopManager loopManager;
 
     // Scoped models for Ctrl+P cycling (from --models flag)
     private List<Model> scopedModels = List.of();
@@ -74,13 +73,14 @@ public class InteractiveMode {
     private AssistantMessageComponent currentAssistantMessage;
     private final Map<String, ToolStatusComponent> pendingTools = new LinkedHashMap<>();
 
-    // Task-specific streaming state (separate from session agent)
-    private AssistantMessageComponent currentTaskAssistantMessage;
-    private final Map<String, ToolStatusComponent> pendingTaskTools = new LinkedHashMap<>();
-    private boolean taskHeaderAdded;
-
     // Session reference for persistence in event handler
     private AgentSession currentSession;
+
+    // Lock protecting concurrent TUI component mutations and render calls.
+    // Must be held when modifying chat components (addChild, StringBuilder append, etc.)
+    // from background threads (spinner, agent events, cron listener) to prevent races
+    // with the render cycle that traverses the component tree.
+    private final Object tuiLock = new Object();
 
     // Cancellation token for the currently running bash command
     private volatile CancellationToken bashCancelToken;
@@ -131,12 +131,14 @@ public class InteractiveMode {
                            BashExecutor bashExecutor,
                            Compactor compactor,
                            ModelRegistry modelRegistry,
-                           TaskManager taskManager) {
+                           com.campusclaw.cron.CronService cronService,
+                           com.campusclaw.codingagent.loop.LoopManager loopManager) {
         this.commandRegistry = Objects.requireNonNull(commandRegistry, "commandRegistry");
         this.bashExecutor = bashExecutor;
         this.compactor = compactor;
         this.modelRegistry = modelRegistry;
-        this.taskManager = taskManager;
+        this.cronService = cronService;
+        this.loopManager = loopManager;
     }
 
     /**
@@ -219,6 +221,36 @@ public class InteractiveMode {
         tui = new Tui(terminal);
         tui.setRoot(root);
 
+        // Start cron engine with TUI notifications
+        if (cronService != null) {
+            // Set default model for cron jobs based on current session model
+            var currentModel = session.getAgent().getState().getModel();
+            if (currentModel != null) {
+                cronService.setDefaultModelId(currentModel.id());
+            }
+            cronService.addListener(event -> {
+                String cronTag = "\033[38;2;102;178;178m[cron]\033[0m ";
+                String msg = switch (event) {
+                    case com.campusclaw.cron.model.CronEvent.JobStarted e ->
+                        cronTag + "Running: " + e.jobName();
+                    case com.campusclaw.cron.model.CronEvent.JobCompleted e -> {
+                        String line = cronTag + "Completed: " + e.jobName();
+                        if (e.output() != null && !e.output().isBlank()) {
+                            line += "\n" + e.output();
+                        }
+                        yield line;
+                    }
+                    case com.campusclaw.cron.model.CronEvent.JobFailed e ->
+                        cronTag + "Failed: " + e.jobName() + " — " + e.error();
+                };
+                synchronized (tuiLock) {
+                    chatContainer.addChild(new Text(msg));
+                    tui.render();
+                }
+            });
+            cronService.start();
+        }
+
         // Set terminal title
         terminal.write("\033]0;pi — " + cwd + "\007");
 
@@ -229,6 +261,11 @@ public class InteractiveMode {
         var abortedFlag = new AtomicBoolean(false);
         var sessionRef = new AtomicReference<>(session);
         var followUpFlag = new AtomicBoolean(false);
+
+        // Initialize loop manager for in-session recurring prompts
+        if (loopManager != null) {
+            loopManager.init(submitQueue, executingPrompt);
+        }
 
         editorContainer.setOnSubmit(value -> {
             if (value != null) {
@@ -453,12 +490,6 @@ public class InteractiveMode {
         tui.start();
         tui.render();
 
-        // Subscribe to TaskManager events (background task streaming output)
-        Runnable taskUnsub = taskManager != null ? taskManager.subscribe(event -> {
-            handleTaskEvent(event);
-            tui.render();
-        }) : null;
-
         // Send initial prompt if provided (from CLI positional args)
         if (initialPrompt != null && !initialPrompt.isBlank()) {
             String expanded = expandFileReferences(initialPrompt);
@@ -511,47 +542,42 @@ public class InteractiveMode {
 
                 // Slash commands — skip if it's a /skill: invocation or prompt template
                 if (trimmed.startsWith("/") && !isSkillOrTemplate(trimmed, session)) {
-                    try {
-                        if (handleSlashCommand(trimmed, session)) {
-                            // Refresh state after commands that change it
-                            if (trimmed.startsWith("/new") || trimmed.startsWith("/reload")) {
-                                buildCommandSuggestions(session);
-                            }
-                            // Clear chat display and reset tokens on /new
-                            if (trimmed.equals("/new")) {
-                                chatContainer.clear();
-                                chatContainer.addChild(new Text(
-                                        "\033[38;2;138;190;183m\u2713 New session started\033[0m", 1, 1));
-                                footer.resetUsage();
-                                lastStatusComponent = null;
-                                // Create a new session file
-                                var sm = session.getSessionManager();
-                                if (sm != null) {
-                                    sm.close();
-                                    sm.createSession(cwd);
-                                }
-                            }
-                            // Update footer after model switch
-                            if (trimmed.startsWith("/model ")) {
-                                var newModel = session.getAgent().getState().getModel();
-                                if (newModel != null) {
-                                    footer.setModel(
-                                            newModel.provider().name().toLowerCase(),
-                                            newModel.id(),
-                                            newModel.contextWindow() > 0 ? newModel.contextWindow() : 200000,
-                                            newModel.reasoning());
-                                }
-                            }
-                            // Update footer session name after /name command
-                            if (trimmed.startsWith("/name ")) {
-                                footer.setSessionName(trimmed.substring(6).trim());
-                            }
-                            tui.render();
-                            continue;
+                    if (handleSlashCommand(trimmed, session)) {
+                        // Refresh state after commands that change it
+                        if (trimmed.startsWith("/new") || trimmed.startsWith("/reload")) {
+                            buildCommandSuggestions(session);
                         }
-                    } catch (QuitException e) {
-                        eofFlag.set(true);
-                        break;
+                        // Clear chat display and reset tokens on /new
+                        if (trimmed.equals("/new")) {
+                            chatContainer.clear();
+                            chatContainer.addChild(new Text(
+                                    "\033[38;2;138;190;183m\u2713 New session started\033[0m", 1, 1));
+                            footer.resetUsage();
+                            lastStatusComponent = null;
+                            // Create a new session file
+                            var sm = session.getSessionManager();
+                            if (sm != null) {
+                                sm.close();
+                                sm.createSession(cwd);
+                            }
+                        }
+                        // Update footer after model switch
+                        if (trimmed.startsWith("/model ")) {
+                            var newModel = session.getAgent().getState().getModel();
+                            if (newModel != null) {
+                                footer.setModel(
+                                        newModel.provider().name().toLowerCase(),
+                                        newModel.id(),
+                                        newModel.contextWindow() > 0 ? newModel.contextWindow() : 200000,
+                                        newModel.reasoning());
+                            }
+                        }
+                        // Update footer session name after /name command
+                        if (trimmed.startsWith("/name ")) {
+                            footer.setSessionName(trimmed.substring(6).trim());
+                        }
+                        tui.render();
+                        continue;
                     }
                 }
 
@@ -595,7 +621,12 @@ public class InteractiveMode {
                 checkAutoCompaction(session);
             }
         } finally {
-            if (taskUnsub != null) taskUnsub.run();
+            if (loopManager != null) {
+                loopManager.shutdown();
+            }
+            if (cronService != null) {
+                cronService.stop();
+            }
             tui.stop();
         }
     }
@@ -667,14 +698,18 @@ public class InteractiveMode {
             return t;
         });
         spinnerTimer.scheduleAtFixedRate(() -> {
-            if (currentAssistantMessage != null && !currentAssistantMessage.hasContent()) {
-                tui.render();
+            synchronized (tuiLock) {
+                if (currentAssistantMessage != null && !currentAssistantMessage.hasContent()) {
+                    tui.render();
+                }
             }
         }, 80, 80, TimeUnit.MILLISECONDS);
 
         Runnable unsub = session.getAgent().subscribe(event -> {
-            handleEvent(event);
-            tui.render();
+            synchronized (tuiLock) {
+                handleEvent(event);
+                tui.render();
+            }
         });
 
         CompletableFuture<Void> future = session.prompt(input);
@@ -1135,82 +1170,6 @@ public class InteractiveMode {
                 if (tool != null) {
                     tool.setComplete(e.isError(), e.result());
                 }
-            }
-            default -> { }
-        }
-    }
-
-    /**
-     * Handles events from background task agents (TaskManager).
-     * Operates on task-specific streaming state to avoid interfering with session agent events.
-     */
-    void handleTaskEvent(AgentEvent event) {
-        switch (event) {
-            case TurnStartEvent e -> {
-                // Add a header for the task output on first event
-                if (!taskHeaderAdded && taskManager != null) {
-                    var ctx = taskManager.getCurrentTaskContext();
-                    if (ctx != null) {
-                        chatContainer.addChild(new TaskHeaderComponent(ctx.taskId(), ctx.taskName()));
-                        taskHeaderAdded = true;
-                    }
-                }
-                // If we already have content, close the previous assistant message and start fresh
-                if (currentTaskAssistantMessage != null && currentTaskAssistantMessage.hasContent()) {
-                    currentTaskAssistantMessage.setComplete(true);
-                    currentTaskAssistantMessage = new AssistantMessageComponent();
-                    chatContainer.addChild(currentTaskAssistantMessage);
-                }
-            }
-            case MessageUpdateEvent e -> {
-                if (currentTaskAssistantMessage == null) {
-                    // Auto-create on first text/thinking delta
-                    if (!taskHeaderAdded && taskManager != null) {
-                        var ctx = taskManager.getCurrentTaskContext();
-                        if (ctx != null) {
-                            chatContainer.addChild(new TaskHeaderComponent(ctx.taskId(), ctx.taskName()));
-                            taskHeaderAdded = true;
-                        }
-                    }
-                    currentTaskAssistantMessage = new AssistantMessageComponent();
-                    chatContainer.addChild(currentTaskAssistantMessage);
-                }
-                if (e.assistantMessageEvent() instanceof AssistantMessageEvent.TextDeltaEvent delta) {
-                    currentTaskAssistantMessage.appendText(delta.delta());
-                } else if (e.assistantMessageEvent() instanceof AssistantMessageEvent.ThinkingDeltaEvent thinking) {
-                    currentTaskAssistantMessage.appendThinking(thinking.delta());
-                }
-            }
-            case MessageEndEvent e -> {
-                // Do NOT update footer — avoid overwriting session agent usage stats
-            }
-            case ToolExecutionStartEvent e -> {
-                var tool = new ToolStatusComponent(e.toolName());
-                tool.setArgs(e.args());
-                tool.setExpanded(toolsExpanded);
-                pendingTaskTools.put(e.toolCallId(), tool);
-                chatContainer.addChild(tool);
-            }
-            case ToolExecutionUpdateEvent e -> {
-                var tool = pendingTaskTools.get(e.toolCallId());
-                if (tool != null) {
-                    tool.updatePartialResult(e.partialResult());
-                }
-            }
-            case ToolExecutionEndEvent e -> {
-                var tool = pendingTaskTools.get(e.toolCallId());
-                if (tool != null) {
-                    tool.setComplete(e.isError(), e.result());
-                }
-            }
-            case AgentEndEvent e -> {
-                // Mark the last assistant message complete and clear state
-                if (currentTaskAssistantMessage != null) {
-                    currentTaskAssistantMessage.setComplete(true);
-                }
-                currentTaskAssistantMessage = null;
-                pendingTaskTools.clear();
-                taskHeaderAdded = false;
             }
             default -> { }
         }

@@ -9,16 +9,18 @@ import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
 
+import com.campusclaw.agent.proxy.ProxyConfig;
 import com.campusclaw.agent.tool.AgentTool;
 import com.campusclaw.ai.CampusClawAiService;
 import com.campusclaw.ai.model.ModelRegistry;
 import com.campusclaw.ai.types.*;
-import com.campusclaw.assistant.task.TaskManager;
 import com.campusclaw.codingagent.command.SlashCommandRegistry;
 import com.campusclaw.codingagent.compaction.Compactor;
 import com.campusclaw.codingagent.config.ConfigValueResolver;
 import com.campusclaw.codingagent.mode.InteractiveMode;
 import com.campusclaw.codingagent.mode.OneShotMode;
+import com.campusclaw.codingagent.mode.rpc.RpcMode;
+import com.campusclaw.codingagent.mode.server.ServerMode;
 import com.campusclaw.codingagent.prompt.SystemPromptBuilder;
 import com.campusclaw.codingagent.session.AgentSession;
 import com.campusclaw.codingagent.session.SessionConfig;
@@ -26,7 +28,9 @@ import com.campusclaw.codingagent.session.SessionManager;
 import com.campusclaw.codingagent.settings.Settings;
 import com.campusclaw.codingagent.settings.SettingsManager;
 import com.campusclaw.codingagent.skill.SkillExpander;
+import com.campusclaw.codingagent.skill.SkillInstallException;
 import com.campusclaw.codingagent.skill.SkillLoader;
+import com.campusclaw.codingagent.skill.SkillManager;
 import com.campusclaw.codingagent.tool.bash.BashExecutor;
 import com.campusclaw.tui.terminal.JLineTerminal;
 import com.campusclaw.tui.terminal.Terminal;
@@ -57,12 +61,15 @@ public class CampusClawCommand implements Callable<Integer> {
     private final SlashCommandRegistry commandRegistry;
     private final BashExecutor bashExecutor;
     private final SettingsManager settingsManager;
-    private final TaskManager taskManager;
+    private final com.campusclaw.cron.CronService cronService;
+    private final com.campusclaw.codingagent.loop.LoopManager loopManager;
 
     public CampusClawCommand(CampusClawAiService piAiService, ModelRegistry modelRegistry,
                      SystemPromptBuilder promptBuilder, List<AgentTool> tools,
                      SlashCommandRegistry commandRegistry, BashExecutor bashExecutor,
-                     SettingsManager settingsManager, TaskManager taskManager) {
+                     SettingsManager settingsManager,
+                     @org.springframework.lang.Nullable com.campusclaw.cron.CronService cronService,
+                     com.campusclaw.codingagent.loop.LoopManager loopManager) {
         this.piAiService = piAiService;
         this.modelRegistry = modelRegistry;
         this.promptBuilder = promptBuilder;
@@ -70,7 +77,8 @@ public class CampusClawCommand implements Callable<Integer> {
         this.commandRegistry = commandRegistry;
         this.bashExecutor = bashExecutor;
         this.settingsManager = settingsManager;
-        this.taskManager = taskManager;
+        this.cronService = cronService;
+        this.loopManager = loopManager;
     }
 
     @Option(names = {"--provider"}, description = "Provider name (e.g. anthropic, openai, zai, google)")
@@ -85,9 +93,15 @@ public class CampusClawCommand implements Callable<Integer> {
     @Option(names = {"--prompt"}, description = "Initial prompt to send to the agent (internal use)")
     String prompt;
 
-    @Option(names = {"--mode"}, description = "Execution mode: interactive, one-shot, or print",
+    @Option(names = {"--mode"}, description = "Execution mode: interactive, one-shot, rpc, server, or print",
             defaultValue = "interactive")
     String mode;
+
+    @Option(names = {"--port"}, description = "HTTP server port (for server mode)")
+    Integer port;
+
+    @Option(names = {"--proxy"}, description = "HTTP/SOCKS5 proxy URL (e.g. http://127.0.0.1:7890)")
+    String proxy;
 
     @Option(names = {"--cwd"}, description = "Working directory (defaults to current directory)")
     Path cwd;
@@ -141,8 +155,8 @@ public class CampusClawCommand implements Callable<Integer> {
     @Option(names = {"--verbose"}, description = "Enable verbose startup output")
     boolean verbose;
 
-    @Option(names = {"--exec-mode"}, description = "Tool execution mode: local, sandbox, or auto (default: auto)")
-    String execMode;
+    @Option(names = {"--cron-tick"}, description = "Execute due cron jobs and exit (for OS scheduler)", hidden = true)
+    boolean cronTick;
 
     @Parameters(description = "Prompt arguments (joined with spaces if no -p given). " +
             "Prefix with @ to include file contents.", arity = "0..*")
@@ -150,10 +164,27 @@ public class CampusClawCommand implements Callable<Integer> {
 
     @Override
     public Integer call() {
-        try {
-        // Handle package subcommands: install, remove, uninstall, update, list, config
+        // --proxy: explicit proxy overrides auto-detection from main()
+        if (proxy != null && !proxy.isBlank()) {
+            ProxyConfig proxyConfig = ProxyConfig.fromUrl(proxy);
+            if (proxyConfig.isConfigured()) {
+                proxyConfig.installAsDefault();
+            } else {
+                System.err.println("Warning: invalid proxy URL: " + proxy);
+            }
+        }
+
+        // --cron-tick: execute due cron jobs and exit (for launchd/crontab)
+        if (cronTick) {
+            return executeCronTick();
+        }
+
+        // Handle subcommands: skill, install, remove, uninstall, update, list, config
         if (promptArgs != null && !promptArgs.isEmpty()) {
             String first = promptArgs.get(0);
+            if ("skill".equals(first)) {
+                return handleSkillCommand(promptArgs.subList(1, promptArgs.size()));
+            }
             if ("install".equals(first) || "remove".equals(first) || "uninstall".equals(first)
                     || "update".equals(first) || "list".equals(first) || "config".equals(first)) {
                 return handlePackageCommand(first, promptArgs.subList(1, promptArgs.size()));
@@ -181,15 +212,6 @@ public class CampusClawCommand implements Callable<Integer> {
 
         // Load settings and apply defaults for model and thinking level
         Settings settings = settingsManager != null ? settingsManager.load() : Settings.empty();
-
-        // Apply execution mode from command line if provided
-        if (execMode != null && !execMode.isEmpty()) {
-            System.setProperty("TOOL_EXECUTION_DEFAULT_MODE", execMode.toUpperCase());
-            if (verbose) {
-                System.out.println("Tool execution mode set to: " + execMode.toUpperCase());
-            }
-        }
-
         String effectiveModel = model;
         if (effectiveModel == null && settings.defaultModel() != null) {
             effectiveModel = settings.defaultModel();
@@ -422,10 +444,21 @@ public class CampusClawCommand implements Callable<Integer> {
             return new OneShotMode().run(session, effectivePrompt);
         }
 
+        if ("rpc".equals(mode)) {
+            new RpcMode(session).run();
+            return 0;
+        }
+
+        if ("server".equals(mode)) {
+            new ServerMode(piAiService, modelRegistry, promptBuilder,
+                    effectiveTools, config, port != null ? port : 3000).run();
+            return 0;
+        }
+
         // Interactive mode (default)
         Terminal terminal = new JLineTerminal();
         try {
-            var interactiveMode = new InteractiveMode(commandRegistry, bashExecutor, new Compactor(piAiService), modelRegistry, taskManager);
+            var interactiveMode = new InteractiveMode(commandRegistry, bashExecutor, new Compactor(piAiService), modelRegistry, cronService, loopManager);
 
             // Resolve --models scoped models for Ctrl+P cycling
             if (modelsFilter != null && !modelsFilter.isBlank()) {
@@ -471,11 +504,6 @@ public class CampusClawCommand implements Callable<Integer> {
             if (sessionManager != null) sessionManager.close();
         }
         return 0;
-        } catch (Exception e) {
-            System.err.println("Fatal error: " + e.getMessage());
-            e.printStackTrace();
-            return 1;
-        }
     }
 
     /**
@@ -485,6 +513,38 @@ public class CampusClawCommand implements Callable<Integer> {
      * - Provider prefix: "zai/*"
      * - Fuzzy substring: "sonnet" matches "claude-sonnet-4-20250514"
      */
+    /**
+     * Execute due cron jobs synchronously and exit.
+     * Called by OS scheduler (launchd/crontab) via --cron-tick flag.
+     */
+    private Integer executeCronTick() {
+        if (cronService == null) {
+            System.err.println("Error: Cron service not available");
+            return 1;
+        }
+        var store = new com.campusclaw.cron.store.CronStore();
+        var processLock = store.acquireProcessLock();
+        if (processLock == null) {
+            System.err.println("Another cron-tick is already running, skipping");
+            return 0;
+        }
+        try {
+            var results = cronService.tickOnce();
+            for (var r : results) {
+                System.out.printf("[cron-tick] %s → %s%n", r.jobId(), r.status());
+            }
+            if (results.isEmpty()) {
+                System.out.println("[cron-tick] No jobs due");
+            }
+            return 0;
+        } catch (Exception e) {
+            System.err.println("[cron-tick] Error: " + e.getMessage());
+            return 1;
+        } finally {
+            store.releaseProcessLock(processLock);
+        }
+    }
+
     /**
      * Handles package management subcommands (install, remove, update, list, config).
      * Aligned with campusclaw's package management system.
@@ -560,6 +620,215 @@ public class CampusClawCommand implements Callable<Integer> {
                 System.err.println("Unknown package command: " + command);
                 return 1;
             }
+        }
+    }
+
+    /**
+     * Handles skill management subcommands: install, list, remove, link, update.
+     */
+    private Integer handleSkillCommand(List<String> args) {
+        com.campusclaw.codingagent.config.AppPaths.ensureUserDirs();
+
+        if (args.isEmpty() || "--help".equals(args.get(0)) || "-h".equals(args.get(0))) {
+            printSkillHelp(null);
+            return 0;
+        }
+
+        String action = args.get(0);
+        var actionArgs = args.subList(1, args.size());
+
+        if (actionArgs.contains("--help") || actionArgs.contains("-h")) {
+            printSkillHelp(action);
+            return 0;
+        }
+
+        var manager = new SkillManager(com.campusclaw.codingagent.config.AppPaths.USER_SKILLS_DIR);
+
+        switch (action) {
+            case "install" -> {
+                if (actionArgs.isEmpty()) {
+                    System.err.println("Usage: campusclaw skill install <git-url>");
+                    return 1;
+                }
+                String gitUrl = actionArgs.get(0);
+                try {
+                    System.out.println("Installing skill from: " + gitUrl);
+                    String name = manager.install(gitUrl);
+                    System.out.println("Skill installed: " + name);
+                    // Show what was installed
+                    var skills = new SkillLoader().loadFromDirectory(
+                            com.campusclaw.codingagent.config.AppPaths.USER_SKILLS_DIR.resolve(name), "user");
+                    for (var skill : skills) {
+                        System.out.println("  - " + skill.name() + ": " + skill.description());
+                    }
+                    return 0;
+                } catch (SkillInstallException e) {
+                    System.err.println("Error: " + e.getMessage());
+                    return 1;
+                }
+            }
+            case "list", "ls" -> {
+                var infos = manager.list();
+                if (infos.isEmpty()) {
+                    System.out.println("No skills installed.");
+                    System.out.println("Install skills with: campusclaw skill install <git-url>");
+                    return 0;
+                }
+                // Calculate column widths
+                int maxName = Math.max(4, infos.stream().mapToInt(i -> i.name().length()).max().orElse(4));
+                int maxType = Math.max(6, infos.stream().mapToInt(i -> i.sourceType().length()).max().orElse(6));
+                String fmt = "  %-" + maxName + "s  %-" + maxType + "s  %s%n";
+                System.out.printf(fmt, "NAME", "SOURCE", "DESCRIPTION");
+                System.out.printf(fmt, "-".repeat(maxName), "-".repeat(maxType), "-".repeat(30));
+                for (var info : infos) {
+                    System.out.printf(fmt, info.name(), info.sourceType(), info.description());
+                }
+                return 0;
+            }
+            case "remove", "rm", "uninstall" -> {
+                if (actionArgs.isEmpty()) {
+                    System.err.println("Usage: campusclaw skill remove <name>");
+                    return 1;
+                }
+                String name = actionArgs.get(0);
+                try {
+                    manager.remove(name);
+                    System.out.println("Removed skill: " + name);
+                    return 0;
+                } catch (SkillInstallException e) {
+                    System.err.println("Error: " + e.getMessage());
+                    return 1;
+                }
+            }
+            case "link" -> {
+                if (actionArgs.isEmpty()) {
+                    System.err.println("Usage: campusclaw skill link <path>");
+                    return 1;
+                }
+                Path localPath = Path.of(actionArgs.get(0));
+                try {
+                    String name = manager.link(localPath);
+                    System.out.println("Linked skill: " + name + " → " + localPath.toAbsolutePath().normalize());
+                    return 0;
+                } catch (SkillInstallException e) {
+                    System.err.println("Error: " + e.getMessage());
+                    return 1;
+                }
+            }
+            case "import" -> {
+                if (actionArgs.isEmpty()) {
+                    System.err.println("Usage: campusclaw skill import <archive-path>");
+                    return 1;
+                }
+                Path archivePath = Path.of(actionArgs.get(0));
+                try {
+                    System.out.println("Importing skill from: " + archivePath);
+                    String name = manager.importArchive(archivePath);
+                    System.out.println("Skill imported: " + name);
+                    var skills = new SkillLoader().loadFromDirectory(
+                            com.campusclaw.codingagent.config.AppPaths.USER_SKILLS_DIR.resolve(name), "user");
+                    for (var skill : skills) {
+                        System.out.println("  - " + skill.name() + ": " + skill.description());
+                    }
+                    return 0;
+                } catch (SkillInstallException e) {
+                    System.err.println("Error: " + e.getMessage());
+                    return 1;
+                }
+            }
+            case "update" -> {
+                if (actionArgs.isEmpty()) {
+                    System.err.println("Usage: campusclaw skill update <name>");
+                    return 1;
+                }
+                String name = actionArgs.get(0);
+                try {
+                    System.out.println("Updating skill: " + name);
+                    manager.update(name);
+                    System.out.println("Updated: " + name);
+                    return 0;
+                } catch (SkillInstallException e) {
+                    System.err.println("Error: " + e.getMessage());
+                    return 1;
+                }
+            }
+            default -> {
+                System.err.println("Unknown skill command: " + action);
+                printSkillHelp(null);
+                return 1;
+            }
+        }
+    }
+
+    private void printSkillHelp(String action) {
+        if (action == null) {
+            System.out.println("""
+                    Usage: campusclaw skill <command> [args]
+
+                    Commands:
+                      install <git-url>    Install a skill from a git repository
+                      import <archive>     Import a skill from a .zip or .tar.gz archive
+                      list                 List installed skills
+                      remove <name>        Remove an installed skill
+                      link <path>          Symlink a local skill directory (for development)
+                      update <name>        Update a git-installed skill (git pull)
+
+                    Examples:
+                      campusclaw skill install https://github.com/user/my-skill
+                      campusclaw skill import ./my-skill.zip
+                      campusclaw skill import ~/Downloads/skill-pack.tar.gz
+                      campusclaw skill link ./my-local-skill
+                      campusclaw skill list
+                      campusclaw skill remove my-skill
+                      campusclaw skill update my-skill""");
+            return;
+        }
+        switch (action) {
+            case "install" -> System.out.println("""
+                    Usage: campusclaw skill install <git-url>
+
+                    Clone a git repository into ~/.campusclaw/agent/skills/.
+                    The repository must contain at least one SKILL.md file.
+
+                    Examples:
+                      campusclaw skill install https://github.com/user/my-skill
+                      campusclaw skill install git@github.com:user/skill-collection.git""");
+            case "import" -> System.out.println("""
+                    Usage: campusclaw skill import <archive-path>
+
+                    Extract a .zip or .tar.gz archive into ~/.campusclaw/agent/skills/.
+                    The archive must contain at least one SKILL.md file.
+                    If the archive contains a single top-level directory, it will be unwrapped.
+
+                    Supported formats: .zip, .tar.gz, .tgz
+
+                    Examples:
+                      campusclaw skill import ./my-skill.zip
+                      campusclaw skill import ~/Downloads/skill-collection.tar.gz""");
+            case "list", "ls" -> System.out.println("""
+                    Usage: campusclaw skill list
+
+                    List all skills in ~/.campusclaw/agent/skills/ with their source and description.""");
+            case "remove", "rm", "uninstall" -> System.out.println("""
+                    Usage: campusclaw skill remove <name>
+
+                    Remove an installed skill by its directory name.
+                    For git-installed skills, deletes the cloned directory.
+                    For linked skills, removes the symlink (does not delete the original).""");
+            case "link" -> System.out.println("""
+                    Usage: campusclaw skill link <path>
+
+                    Create a symbolic link in ~/.campusclaw/agent/skills/ pointing to a local directory.
+                    Useful for developing and testing skills without copying files.
+
+                    Example:
+                      campusclaw skill link ./my-skill-in-progress""");
+            case "update" -> System.out.println("""
+                    Usage: campusclaw skill update <name>
+
+                    Run 'git pull --ff-only' in the skill directory.
+                    Only works for git-installed skills.""");
+            default -> printSkillHelp(null);
         }
     }
 

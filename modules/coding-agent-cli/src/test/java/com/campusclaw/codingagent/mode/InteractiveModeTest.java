@@ -48,7 +48,7 @@ class InteractiveModeTest {
         registry = new SlashCommandRegistry();
         registry.register(new HelpCommand(registry));
         registry.register(new QuitCommand());
-        mode = new InteractiveMode(registry, bashExecutor, null, null, null);
+        mode = new InteractiveMode(registry, bashExecutor, null, null, null, null);
 
         when(session.getAgent()).thenReturn(agent);
         when(agent.getState()).thenReturn(state);
@@ -328,7 +328,7 @@ class InteractiveModeTest {
 
         @Test
         void throwsOnNullRegistry() {
-            assertThrows(NullPointerException.class, () -> new InteractiveMode(null, null, null, null, null));
+            assertThrows(NullPointerException.class, () -> new InteractiveMode(null, null, null, null, null, null));
         }
     }
 

@@ -5,9 +5,6 @@ import com.campusclaw.codingagent.command.SlashCommandRegistry;
 import com.campusclaw.codingagent.compaction.Compactor;
 import com.campusclaw.codingagent.loop.LoopManager;
 import com.campusclaw.codingagent.settings.SettingsManager;
-import com.campusclaw.assistant.task.RecurringTaskHandler;
-import com.campusclaw.assistant.task.TaskManager;
-import com.campusclaw.assistant.task.TaskRepository;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,22 +22,13 @@ public class BuiltinCommandRegistrar {
     private final SlashCommandRegistry registry;
     private final CampusClawAiService piAiService;
     private final SettingsManager settingsManager;
-    private final TaskManager taskManager;
-    private final TaskRepository taskRepository;
-    private final RecurringTaskHandler recurringTaskHandler;
     private final LoopManager loopManager;
 
     public BuiltinCommandRegistrar(SlashCommandRegistry registry, CampusClawAiService piAiService,
-                                   SettingsManager settingsManager,
-                                   TaskManager taskManager, TaskRepository taskRepository,
-                                   RecurringTaskHandler recurringTaskHandler,
-                                   LoopManager loopManager) {
+                                   SettingsManager settingsManager, LoopManager loopManager) {
         this.registry = registry;
         this.piAiService = piAiService;
         this.settingsManager = settingsManager;
-        this.taskManager = taskManager;
-        this.taskRepository = taskRepository;
-        this.recurringTaskHandler = recurringTaskHandler;
         this.loopManager = loopManager;
     }
 
@@ -68,7 +56,6 @@ public class BuiltinCommandRegistrar {
         registry.register(new ScopedModelsCommand());
         registry.register(new LoginCommand());
         registry.register(new LogoutCommand());
-        registry.register(new TaskCommand(taskManager, taskRepository, recurringTaskHandler));
         registry.register(new LoopCommand(loopManager));
         registry.register(new CronCommand());
     }

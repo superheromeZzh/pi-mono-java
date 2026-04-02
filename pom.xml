@@ -16,7 +16,6 @@
         <module>modules/tui</module>
         <module>modules/agent-core</module>
         <module>modules/cron</module>
-        <module>modules/assistant</module>
         <module>modules/coding-agent-cli</module>
     </modules>
 
@@ -40,11 +39,6 @@
         <lanterna.version>3.1.2</lanterna.version>
         <mockwebserver.version>4.12.0</mockwebserver.version>
         <spotless.version>2.44.4</spotless.version>
-
-        <!-- New dependencies for assistant module -->
-        <mybatis-spring-boot.version>3.0.4</mybatis-spring-boot.version>
-        <jobrunr.version>7.4.0</jobrunr.version>
-        <lombok.version>1.18.36</lombok.version>
     </properties>
 
     <dependencyManagement>
@@ -71,17 +65,12 @@
             </dependency>
             <dependency>
                 <groupId>com.campusclaw</groupId>
-                <artifactId>campusclaw-tui</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.campusclaw</groupId>
                 <artifactId>campusclaw-cron</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
                 <groupId>com.campusclaw</groupId>
-                <artifactId>campusclaw-assistant</artifactId>
+                <artifactId>campusclaw-tui</artifactId>
                 <version>${project.version}</version>
             </dependency>
 
@@ -158,27 +147,6 @@
                 <groupId>com.googlecode.lanterna</groupId>
                 <artifactId>lanterna</artifactId>
                 <version>${lanterna.version}</version>
-            </dependency>
-
-            <!-- MyBatis -->
-            <dependency>
-                <groupId>org.mybatis.spring.boot</groupId>
-                <artifactId>mybatis-spring-boot-starter</artifactId>
-                <version>${mybatis-spring-boot.version}</version>
-            </dependency>
-
-            <!-- JobRunr -->
-            <dependency>
-                <groupId>org.jobrunr</groupId>
-                <artifactId>jobrunr-spring-boot-3-starter</artifactId>
-                <version>${jobrunr.version}</version>
-            </dependency>
-
-            <!-- Lombok -->
-            <dependency>
-                <groupId>org.projectlombok</groupId>
-                <artifactId>lombok</artifactId>
-                <version>${lombok.version}</version>
             </dependency>
 
             <!-- Test -->

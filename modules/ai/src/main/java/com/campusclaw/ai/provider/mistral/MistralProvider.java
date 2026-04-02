@@ -73,7 +73,9 @@ public class MistralProvider implements ApiProvider {
         ObjectNode requestBody = buildRequestBody(model, context, options);
 
         try {
-            var client = HttpClient.newHttpClient();
+            var client = HttpClient.newBuilder()
+                    .connectTimeout(java.time.Duration.ofSeconds(15))
+                    .build();
             var request = HttpRequest.newBuilder()
                 .uri(URI.create(url))
                 .header("Content-Type", "application/json")
