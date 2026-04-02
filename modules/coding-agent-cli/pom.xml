@@ -31,6 +31,10 @@
         </dependency>
         <dependency>
             <groupId>com.campusclaw</groupId>
+            <artifactId>campusclaw-assistant</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.campusclaw</groupId>
             <artifactId>campusclaw-cron</artifactId>
         </dependency>
         <dependency>
@@ -70,6 +74,13 @@
         <dependency>
             <groupId>io.micrometer</groupId>
             <artifactId>micrometer-core</artifactId>
+        </dependency>
+
+        <!-- Lombok -->
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <optional>true</optional>
         </dependency>
 
         <!-- Test -->
@@ -114,6 +125,10 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <configuration>
                     <annotationProcessorPaths>
+                        <path>
+                            <groupId>org.projectlombok</groupId>
+                            <artifactId>lombok</artifactId>
+                        </path>
                         <path>
                             <groupId>info.picocli</groupId>
                             <artifactId>picocli-codegen</artifactId>

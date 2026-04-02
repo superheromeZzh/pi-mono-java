@@ -11,6 +11,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.jobrunr.jobs.lambdas.JobLambda;
 import org.jobrunr.scheduling.JobScheduler;
+import org.jobrunr.storage.StorageProvider;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -28,6 +29,7 @@ class RecurringTaskHandlerTest {
     @Mock private TaskManager taskManager;
     @Mock private TaskRepository taskRepository;
     @Mock private JobScheduler jobScheduler;
+    @Mock private StorageProvider storageProvider;
     private ModelRegistry modelRegistry;
     private RecurringTaskHandler handler;
 
@@ -54,7 +56,7 @@ class RecurringTaskHandlerTest {
         modelRegistry = new ModelRegistry();
         modelRegistry.register(GLM_5);
         modelRegistry.register(CLAUDE_SONNET);
-        handler = new RecurringTaskHandler(taskManager, taskRepository, jobScheduler, modelRegistry);
+        handler = new RecurringTaskHandler(taskManager, taskRepository, jobScheduler, modelRegistry, storageProvider);
         lenient().when(taskManager.executeTask(anyString(), any())).thenReturn(CompletableFuture.completedFuture("done"));
     }
 

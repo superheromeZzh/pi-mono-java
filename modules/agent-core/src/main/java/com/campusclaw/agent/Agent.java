@@ -350,47 +350,5 @@ public class Agent {
         return false;
     }
 
-    public static String formatError(Throwable throwable) {
-        var current = throwable;
-        // Unwrap standard wrapper exceptions
-        while (current.getCause() != null
-            && (current instanceof java.util.concurrent.CompletionException
-            || current instanceof java.util.concurrent.ExecutionException)) {
-            current = current.getCause();
-        }
-        // Build message including cause chain so the real error is visible
-        // (e.g. "Request failed" from SDK wrapping an actual IOException)
-        String message = current.getMessage() != null ? current.getMessage() : current.getClass().getSimpleName();
-        var cause = current.getCause();
-        if (cause != null && cause != current) {
-            String causeMsg = cause.getMessage();
-            if (causeMsg != null && !causeMsg.isBlank() && !message.contains(causeMsg)) {
-                message = message + ": " + causeMsg;
-            }
-            // One more level for deeply nested causes (e.g. SSLHandshakeException -> PKIX)
-            var rootCause = cause.getCause();
-            if (rootCause != null && rootCause != cause) {
-                String rootMsg = rootCause.getMessage();
-                if (rootMsg != null && !rootMsg.isBlank() && !message.contains(rootMsg)) {
-                    message = message + ": " + rootMsg;
-                }
-            }
-        }
-        // Append proxy hint for connection failures
-        if (isConnectionError(current)) {
-            message += "\n  提示: 如需使用代理，请添加 --proxy http://127.0.0.1:<端口号> 或设置环境变量 HTTPS_PROXY";
-        }
-        return message;
-    }
 
-    private static boolean isConnectionError(Throwable t) {
-        for (var c = t; c != null; c = c.getCause()) {
-            if (c instanceof java.net.ConnectException
-                || c instanceof java.net.SocketTimeoutException
-                || (c.getMessage() != null && c.getMessage().contains("timed out"))) {
-                return true;
-            }
-        }
-        return false;
-    }
 }

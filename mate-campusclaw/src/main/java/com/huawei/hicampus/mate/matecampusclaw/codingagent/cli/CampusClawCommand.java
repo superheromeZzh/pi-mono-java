@@ -458,7 +458,7 @@ public class CampusClawCommand implements Callable<Integer> {
         // Interactive mode (default)
         Terminal terminal = new JLineTerminal();
         try {
-            var interactiveMode = new InteractiveMode(commandRegistry, bashExecutor, new Compactor(piAiService), modelRegistry, cronService, loopManager);
+            var interactiveMode = new InteractiveMode(commandRegistry, bashExecutor, new Compactor(piAiService), modelRegistry, cronService, loopManager, settingsManager);
 
             // Resolve --models scoped models for Ctrl+P cycling
             if (modelsFilter != null && !modelsFilter.isBlank()) {

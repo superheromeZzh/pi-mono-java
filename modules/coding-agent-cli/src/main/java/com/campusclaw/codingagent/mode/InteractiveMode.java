@@ -26,6 +26,7 @@ import com.campusclaw.codingagent.mode.tui.*;
 import com.campusclaw.codingagent.mode.tui.EditorContainer.CommandSuggestion;
 import com.campusclaw.codingagent.prompt.PromptTemplateEntry;
 import com.campusclaw.codingagent.session.AgentSession;
+import com.campusclaw.codingagent.settings.SettingsManager;
 import com.campusclaw.codingagent.skill.Skill;
 import com.campusclaw.codingagent.tool.bash.BashExecutionResult;
 import com.campusclaw.codingagent.tool.bash.BashExecutor;
@@ -57,6 +58,7 @@ public class InteractiveMode {
     private final ModelRegistry modelRegistry;
     private final com.campusclaw.cron.CronService cronService;
     private final com.campusclaw.codingagent.loop.LoopManager loopManager;
+    private final SettingsManager settingsManager;
 
     // Scoped models for Ctrl+P cycling (from --models flag)
     private List<Model> scopedModels = List.of();
@@ -132,13 +134,15 @@ public class InteractiveMode {
                            Compactor compactor,
                            ModelRegistry modelRegistry,
                            com.campusclaw.cron.CronService cronService,
-                           com.campusclaw.codingagent.loop.LoopManager loopManager) {
+                           com.campusclaw.codingagent.loop.LoopManager loopManager,
+                           SettingsManager settingsManager) {
         this.commandRegistry = Objects.requireNonNull(commandRegistry, "commandRegistry");
         this.bashExecutor = bashExecutor;
         this.compactor = compactor;
         this.modelRegistry = modelRegistry;
         this.cronService = cronService;
         this.loopManager = loopManager;
+        this.settingsManager = settingsManager;
     }
 
     /**
@@ -154,6 +158,14 @@ public class InteractiveMode {
         chatContainer = new Container();
         editorContainer = new EditorContainer();
         footer = new FooterComponent();
+
+        // Initialize hideThinkingBlock from settings
+        if (settingsManager != null) {
+            var settings = settingsManager.load();
+            if (settings.hideThinkingBlock() != null) {
+                hideThinkingBlock = settings.hideThinkingBlock();
+            }
+        }
 
         // Welcome text with keybinding hints matching campusclaw style
         // Colors from campusclaw dark theme: dim=#666666, muted=#808080

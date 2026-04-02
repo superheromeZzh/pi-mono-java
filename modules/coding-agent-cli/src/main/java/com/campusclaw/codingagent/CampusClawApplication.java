@@ -1,11 +1,13 @@
 package com.campusclaw.codingagent;
 
 import com.campusclaw.codingagent.cli.CampusClawCommand;
+import com.campusclaw.codingagent.config.ToolExecutionProperties;
 
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.ExitCodeGenerator;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 
 import picocli.CommandLine;
 import picocli.CommandLine.IFactory;
@@ -16,6 +18,7 @@ import picocli.CommandLine.IFactory;
  * Bridges Picocli with Spring Boot via the picocli-spring-boot-starter.
  */
 @SpringBootApplication(scanBasePackages = "com.campusclaw")
+@EnableConfigurationProperties(ToolExecutionProperties.class)
 public class CampusClawApplication implements CommandLineRunner, ExitCodeGenerator {
 
     private final CampusClawCommand piCommand;
