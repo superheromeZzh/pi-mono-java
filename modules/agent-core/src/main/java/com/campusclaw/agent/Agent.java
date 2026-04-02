@@ -245,7 +245,7 @@ public class Agent {
                     currentSignal = null;
                 }
                 if (throwable != null) {
-                    state.setError(messageForThrowable(throwable));
+                    state.setError(formatError(throwable));
                 }
             });
 
@@ -306,7 +306,7 @@ public class Agent {
         }
     }
 
-    private String messageForThrowable(Throwable throwable) {
+    public static String formatError(Throwable throwable) {
         var current = throwable;
         // Unwrap standard wrapper exceptions
         while (current.getCause() != null
@@ -339,7 +339,7 @@ public class Agent {
         return message;
     }
 
-    private boolean isConnectionError(Throwable t) {
+    private static boolean isConnectionError(Throwable t) {
         for (var c = t; c != null; c = c.getCause()) {
             if (c instanceof java.net.ConnectException
                 || c instanceof java.net.SocketTimeoutException

@@ -53,69 +53,10 @@ echo 源码目录: %SCRIPT_DIR%
 :: ── Create wrapper script ─────────────────────────────────────
 if not exist "%BIN_DIR%" mkdir "%BIN_DIR%"
 
-:: Write campusclaw.cmd — embed SCRIPT_DIR as hardcoded REPO_DIR
+:: Write campusclaw.cmd — simple wrapper that delegates to campusclaw.bat
 (
     echo @echo off
-    echo chcp 65001 ^>nul
-    echo setlocal enabledelayedexpansion
-    echo.
-    echo set "REPO_DIR=%SCRIPT_DIR%"
-    echo set "JAR_DIR=%%REPO_DIR%%\modules\coding-agent-cli\target"
-    echo set "JAR=%%JAR_DIR%%\campusclaw-agent.jar"
-    echo.
-    echo :: Parse --rebuild flag
-    echo set "REBUILD=0"
-    echo set "ARGS="
-    echo set "HAS_ARGS=0"
-    echo for %%%%a in ^(%%*^) do ^(
-    echo     if "%%%%~a"=="--rebuild" ^(
-    echo         set "REBUILD=1"
-    echo     ^) else ^(
-    echo         if ^^!HAS_ARGS^^!==1 ^(
-    echo             set "ARGS=^^!ARGS^^! %%%%a"
-    echo         ^) else ^(
-    echo             set "ARGS=%%%%a"
-    echo             set "HAS_ARGS=1"
-    echo         ^)
-    echo     ^)
-    echo ^)
-    echo.
-    echo :: Build if no JAR or --rebuild
-    echo if "%%REBUILD%%"=="1" ^(
-    echo     echo 正在重新构建 campusclaw-agent...
-    echo     call :do_build
-    echo ^) else if not exist "%%JAR%%" ^(
-    echo     echo 正在构建 campusclaw-agent...
-    echo     call :do_build
-    echo ^) else ^(
-    echo     :: Check if any .java file is newer than JAR
-    echo     for /f "delims=" %%%%f in ^('dir /s /b /o-d "%%REPO_DIR%%\modules\*.java" 2^^^>nul ^| findstr /n "^" ^| findstr "^1:"'^) do ^(
-    echo         for %%%%j in ^("%%JAR%%"^) do ^(
-    echo             for %%%%s in ^("%%%%~f"^) do ^(
-    echo                 if "%%%%~ts" GTR "%%%%~tj" ^(
-    echo                     echo 检测到源码变更，正在重新构建...
-    echo                     call :do_build
-    echo                 ^)
-    echo             ^)
-    echo         ^)
-    echo     ^)
-    echo ^)
-    echo.
-    echo if not exist "%%JAR%%" ^(
-    echo     echo 错误：构建失败，找不到 JAR 文件。
-    echo     exit /b 1
-    echo ^)
-    echo.
-    echo java -Dfile.encoding=UTF-8 -Dstdout.encoding=UTF-8 -Dstderr.encoding=UTF-8 -jar "%%JAR%%" %%ARGS%%
-    echo exit /b %%errorlevel%%
-    echo.
-    echo :do_build
-    echo call "%%REPO_DIR%%\mvnw.cmd" -f "%%REPO_DIR%%\pom.xml" package -pl modules/coding-agent-cli -am -q -DskipTests
-    echo if errorlevel 1 ^(
-    echo     echo 错误：构建失败。
-    echo     exit /b 1
-    echo ^)
-    echo exit /b 0
+    echo call "%SCRIPT_DIR%\campusclaw.bat" %%*
 ) > "%BIN_DIR%\campusclaw.cmd"
 
 echo 已创建命令 %BIN_DIR%\campusclaw.cmd

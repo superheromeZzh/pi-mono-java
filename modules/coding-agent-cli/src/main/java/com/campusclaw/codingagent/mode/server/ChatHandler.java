@@ -2,6 +2,7 @@ package com.campusclaw.codingagent.mode.server;
 
 import java.util.Map;
 
+import com.campusclaw.agent.Agent;
 import com.campusclaw.agent.event.AgentEndEvent;
 import com.campusclaw.agent.event.MessageEndEvent;
 import com.campusclaw.agent.event.MessageStartEvent;
@@ -26,20 +27,24 @@ import reactor.core.publisher.Mono;
 
 /**
  * Handles POST /api/chat — streams agent responses as Server-Sent Events.
+ *
+ * <p>Supports multiple independent conversations via {@code conversation_id}.
+ * Each conversation has its own {@link AgentSession} managed by a {@link SessionPool}.
  */
 public class ChatHandler {
 
     private static final Logger log = LoggerFactory.getLogger(ChatHandler.class);
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
-    private final AgentSession session;
+    private final SessionPool pool;
 
-    public ChatHandler(AgentSession session) {
-        this.session = session;
+    public ChatHandler(SessionPool pool) {
+        this.pool = pool;
     }
 
     record ChatRequest(
             @JsonProperty("message") String message,
+            @JsonProperty("conversation_id") @Nullable String conversationId,
             @JsonProperty("model") @Nullable String model,
             @JsonProperty("thinking") @Nullable String thinking
     ) {}
@@ -49,7 +54,7 @@ public class ChatHandler {
                 .flatMap(this::handleChat)
                 .onErrorResume(Exception.class, e ->
                         ServerResponse.status(500)
-                                .bodyValue(Map.of("error", e.getMessage())));
+                                .bodyValue(Map.of("error", Agent.formatError(e))));
     }
 
     private Mono<ServerResponse> handleChat(ChatRequest req) {
@@ -58,11 +63,18 @@ public class ChatHandler {
                     .bodyValue(Map.of("error", "message is required"));
         }
 
+        SessionPool.SessionRef ref = pool.getOrCreate(req.conversationId());
+        AgentSession session = ref.session();
+        String conversationId = ref.conversationId();
+
         if (session.isStreaming()) {
             return ServerResponse.status(409)
-                    .bodyValue(Map.of("error", "A prompt is already being processed"));
+                    .bodyValue(Map.of(
+                            "error", "This conversation is already processing a prompt",
+                            "conversation_id", conversationId));
         }
 
+        // Per-request model (does not leak to other conversations)
         if (req.model() != null && !req.model().isBlank()) {
             try {
                 session.setModel(req.model());
@@ -72,6 +84,7 @@ public class ChatHandler {
             }
         }
 
+        // Per-request thinking level
         if (req.thinking() != null && !req.thinking().isBlank()) {
             try {
                 session.getAgent().setThinkingLevel(ThinkingLevel.fromValue(req.thinking()));
@@ -85,7 +98,9 @@ public class ChatHandler {
             Runnable unsub = session.subscribe(event -> {
                 try {
                     if (event instanceof MessageStartEvent) {
-                        sink.next(sse("message_start", "{}"));
+                        sink.next(sse("message_start",
+                                MAPPER.writeValueAsString(Map.of(
+                                        "conversation_id", conversationId))));
                     } else if (event instanceof MessageUpdateEvent mu) {
                         var msg = mu.message();
                         if (msg != null) {
@@ -107,7 +122,9 @@ public class ChatHandler {
                                 MAPPER.writeValueAsString(Map.of(
                                         "toolCallId", te.toolCallId()))));
                     } else if (event instanceof AgentEndEvent) {
-                        sink.next(sse("done", "{}"));
+                        sink.next(sse("done",
+                                MAPPER.writeValueAsString(Map.of(
+                                        "conversation_id", conversationId))));
                         sink.complete();
                     }
                 } catch (Exception e) {
@@ -117,12 +134,22 @@ public class ChatHandler {
 
             sink.onDispose(unsub::run);
 
-            session.prompt(req.message()).whenComplete((v, ex) -> {
+            // Cancel backend processing when SSE client disconnects
+            sink.onCancel(() -> {
+                if (session.isStreaming()) {
+                    session.abort();
+                    log.info("Aborted conversation {} due to client disconnect", conversationId);
+                }
+            });
+
+            var future = session.prompt(req.message());
+            future.whenComplete((v, ex) -> {
                 if (ex != null) {
                     try {
                         sink.next(sse("error",
-                                MAPPER.writeValueAsString(Map.of("error",
-                                        ex.getMessage() != null ? ex.getMessage() : "Unknown error"))));
+                                MAPPER.writeValueAsString(Map.of(
+                                        "error", Agent.formatError(ex),
+                                        "conversation_id", conversationId))));
                     } catch (Exception ignored) {}
                     sink.complete();
                 }

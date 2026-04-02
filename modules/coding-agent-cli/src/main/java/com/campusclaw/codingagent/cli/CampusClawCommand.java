@@ -450,7 +450,8 @@ public class CampusClawCommand implements Callable<Integer> {
         }
 
         if ("server".equals(mode)) {
-            new ServerMode(session, port != null ? port : 3000).run();
+            new ServerMode(piAiService, modelRegistry, promptBuilder,
+                    effectiveTools, config, port != null ? port : 3000).run();
             return 0;
         }
 

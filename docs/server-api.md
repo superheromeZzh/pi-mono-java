@@ -28,6 +28,7 @@ CampusClaw API server started on http://localhost:3000
 Endpoints:
   GET    /api/health
   POST   /api/chat
+  DELETE /api/conversations/{id}
   POST   /api/skills
   GET    /api/skills
   DELETE /api/skills/{name}
@@ -63,15 +64,22 @@ Content-Type: application/json
 | 字段 | 类型 | 必填 | 说明 |
 |------|------|------|------|
 | `message` | string | 是 | 用户消息 |
-| `model` | string | 否 | 切换模型（如 `claude-sonnet-4-20250514`） |
+| `conversation_id` | string | 否 | 会话 ID。不传则新建会话，传已有 ID 则续聊 |
+| `model` | string | 否 | 本次请求使用的模型（如 `glm-5`），不影响其他会话 |
 | `thinking` | string | 否 | 思考级别：`off` / `minimal` / `low` / `medium` / `high` / `xhigh` |
 
 **请求示例**
 
 ```bash
+# 新建会话
 curl -N http://localhost:3000/api/chat \
   -H "Content-Type: application/json" \
   -d '{"message": "用 Java 写一个快速排序"}'
+
+# 续聊（使用上次返回的 conversation_id）
+curl -N http://localhost:3000/api/chat \
+  -H "Content-Type: application/json" \
+  -d '{"message": "加上泛型支持", "conversation_id": "a1b2c3d4e5f6"}'
 ```
 
 **Response** — `Content-Type: text/event-stream`（SSE 流）
@@ -80,19 +88,19 @@ curl -N http://localhost:3000/api/chat \
 
 | 事件类型 | data 字段 | 说明 |
 |----------|-----------|------|
-| `message_start` | `{}` | 消息开始 |
+| `message_start` | `{"conversation_id": "..."}` | 消息开始，携带会话 ID |
 | `message_update` | `{"message": "..."}` | 文本增量更新（多次） |
 | `tool_start` | `{"toolName": "bash", "toolCallId": "tc_xxx"}` | 工具调用开始 |
 | `tool_end` | `{"toolCallId": "tc_xxx"}` | 工具调用结束 |
 | `message_end` | `{"message": "..."}` | 消息结束，包含完整回复 |
-| `done` | `{}` | 本次对话轮次完成 |
-| `error` | `{"error": "..."}` | 出错（出错后流关闭） |
+| `done` | `{"conversation_id": "..."}` | 本次对话轮次完成 |
+| `error` | `{"error": "...", "conversation_id": "..."}` | 出错（出错后流关闭） |
 
 **SSE 输出示例**
 
 ```
 event: message_start
-data: {}
+data: {"conversation_id":"a1b2c3d4e5f6"}
 
 event: message_update
 data: {"message":"```java\n"}
@@ -110,20 +118,50 @@ event: message_end
 data: {"message":"已为你创建了 QuickSort.java 文件。"}
 
 event: done
-data: {}
+data: {"conversation_id":"a1b2c3d4e5f6"}
 ```
+
+**断连取消**: 当 SSE 客户端断开连接时，后端会自动中止正在执行的 Agent 任务。
 
 **错误响应**
 
 | 状态码 | 说明 |
 |--------|------|
 | 400 | 缺少 `message`、无效的 `model` 或 `thinking` |
-| 409 | 上一个请求还在处理中（同一 session 不支持并发） |
+| 409 | 该会话上一个请求还在处理中（同一会话不支持并发，不同会话可并发） |
 | 500 | 服务端内部错误 |
 
 ---
 
-### 3. 上传 Skill 压缩包
+### 3. 删除会话
+
+```
+DELETE /api/conversations/{id}
+```
+
+**请求示例**
+
+```bash
+curl -X DELETE http://localhost:3000/api/conversations/a1b2c3d4e5f6
+```
+
+**Response** — `200 OK`
+
+```json
+{"message": "Removed conversation: a1b2c3d4e5f6"}
+```
+
+空闲超过 30 分钟的会话会被自动清理。
+
+**错误响应**
+
+| 状态码 | 说明 |
+|--------|------|
+| 404 | 会话不存在 |
+
+---
+
+### 4. 上传 Skill 压缩包
 
 ```
 POST /api/skills
@@ -166,7 +204,7 @@ curl http://localhost:3000/api/skills \
 
 ---
 
-### 4. 查询 Skill 列表
+### 5. 查询 Skill 列表
 
 ```
 GET /api/skills
@@ -199,7 +237,7 @@ curl http://localhost:3000/api/skills
 
 ---
 
-### 5. 删除 Skill
+### 6. 删除 Skill
 
 ```
 DELETE /api/skills/{name}
