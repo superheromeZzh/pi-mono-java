@@ -1,6 +1,8 @@
 # Maven
-**/target/
-.mvn/
+# 如果要提交 target/，注释掉下面这行
+# **/target/
+# 如果要提交 .mvn/，注释掉下面这行
+# .mvn/
 !**/pom.xml
 
 # Gradle
