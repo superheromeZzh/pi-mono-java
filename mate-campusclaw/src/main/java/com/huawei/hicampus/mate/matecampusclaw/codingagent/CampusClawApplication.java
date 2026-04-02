@@ -40,7 +40,18 @@ public class CampusClawApplication implements CommandLineRunner, ExitCodeGenerat
 
     @Override
     public void run(String... args) {
-        exitCode = new CommandLine(piCommand, factory).execute(args);
+        System.err.println("[CampusClaw] args: " + java.util.Arrays.toString(args));
+        try {
+            var cmd = new CommandLine(piCommand, factory);
+            cmd.setErr(new java.io.PrintWriter(System.err, true));
+            cmd.setOut(new java.io.PrintWriter(System.out, true));
+            exitCode = cmd.execute(args);
+            System.err.println("[CampusClaw] exitCode: " + exitCode);
+        } catch (Exception e) {
+            System.err.println("[CampusClaw] Exception in execute:");
+            e.printStackTrace(System.err);
+            exitCode = 1;
+        }
     }
 
     @Override
