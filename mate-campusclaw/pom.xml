@@ -22,7 +22,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
-        <start-class>com.huawei.hicampus.campusclaw.codingagent.CampusClawApplication</start-class>
+        <start-class>com.huawei.hicampus.mate.matecampusclaw.codingagent.CampusClawApplication</start-class>
 
         <!-- Spring Boot -->
         <spring-boot.version>3.4.1</spring-boot.version>
@@ -277,7 +277,7 @@
                     </execution>
                 </executions>
                 <configuration>
-                    <mainClass>com.huawei.hicampus.campusclaw.codingagent.CampusClawApplication</mainClass>
+                    <mainClass>com.huawei.hicampus.mate.matecampusclaw.codingagent.CampusClawApplication</mainClass>
                 </configuration>
             </plugin>
         </plugins>
