@@ -211,7 +211,12 @@ public class CampusClawCommand implements Callable<Integer> {
         com.huawei.hicampus.mate.matecampusclaw.codingagent.config.AppPaths.ensureUserDirs();
 
         // Load settings and apply defaults for model and thinking level
+        System.err.println("[DEBUG] settings path: " + com.huawei.hicampus.mate.matecampusclaw.codingagent.config.AppPaths.GLOBAL_SETTINGS);
+        System.err.println("[DEBUG] settings file exists: " + java.nio.file.Files.exists(com.huawei.hicampus.mate.matecampusclaw.codingagent.config.AppPaths.GLOBAL_SETTINGS));
+        System.err.println("[DEBUG] settingsManager is null: " + (settingsManager == null));
         Settings settings = settingsManager != null ? settingsManager.load() : Settings.empty();
+        System.err.println("[DEBUG] settings.defaultModel: " + settings.defaultModel());
+        System.err.println("[DEBUG] settings.customModels: " + settings.customModels());
         String effectiveModel = model;
         if (effectiveModel == null && settings.defaultModel() != null) {
             effectiveModel = settings.defaultModel();
