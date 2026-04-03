@@ -371,6 +371,7 @@ public class CampusClawCommand implements Callable<Integer> {
             effectiveTools = tools;
         }
 
+        System.err.println("[DEBUG] 1. creating session...");
         AgentSession session = new AgentSession(
                 piAiService, modelRegistry, promptBuilder,
                 new SkillLoader(), new SkillExpander(), effectiveTools
@@ -382,8 +383,10 @@ public class CampusClawCommand implements Callable<Integer> {
             session.setSessionManager(sessionManager);
         }
 
+        System.err.println("[DEBUG] 2. initializing session...");
         SessionConfig config = new SessionConfig(effectiveModel, effectiveCwd, effectiveSystemPrompt, mode);
         session.initialize(config);
+        System.err.println("[DEBUG] 3. session initialized");
 
         // Handle session flags: --session, --fork, --continue, --resume
         if (sessionManager != null) {
@@ -455,8 +458,10 @@ public class CampusClawCommand implements Callable<Integer> {
         }
 
         if ("server".equals(mode)) {
+            System.err.println("[DEBUG] 4. entering server mode on port " + (port != null ? port : 3000));
             new ServerMode(piAiService, modelRegistry, promptBuilder,
                     effectiveTools, config, port != null ? port : 3000).run();
+            System.err.println("[DEBUG] 5. server stopped");
             return 0;
         }
 
