@@ -17,7 +17,6 @@
         <module>modules/agent-core</module>
         <module>modules/assistant</module>
         <module>modules/cron</module>
-        <module>modules/assistant</module>
         <module>modules/coding-agent-cli</module>
     </modules>
 

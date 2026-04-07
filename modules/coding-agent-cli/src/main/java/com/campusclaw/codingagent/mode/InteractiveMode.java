@@ -556,7 +556,8 @@ public class InteractiveMode {
 
                 // Slash commands — skip if it's a /skill: invocation or prompt template
                 if (trimmed.startsWith("/") && !isSkillOrTemplate(trimmed, session)) {
-                    if (handleSlashCommand(trimmed, session)) {
+                    try {
+                        if (handleSlashCommand(trimmed, session)) {
                         // Refresh state after commands that change it
                         if (trimmed.startsWith("/new") || trimmed.startsWith("/reload")) {
                             buildCommandSuggestions(session);
@@ -592,6 +593,10 @@ public class InteractiveMode {
                         }
                         tui.render();
                         continue;
+                    }
+                    } catch (com.campusclaw.codingagent.command.QuitException e) {
+                        // Graceful exit requested via /quit command
+                        break;
                     }
                 }
 

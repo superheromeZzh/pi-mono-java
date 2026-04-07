@@ -7,11 +7,19 @@ import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * Expands {@code /skill:name-here [args]} commands in user input
  * by reading the referenced SKILL.md file and wrapping it in XML format.
+ * <p>
+ * Supports sandbox mode: when {@link SandboxSkillParser} is available,
+ * skill body content is loaded inside a Docker container for security.
  */
 public class SkillExpander {
+
+    private static final Logger log = LoggerFactory.getLogger(SkillExpander.class);
 
     /**
      * Matches {@code /skill:name} at the start, optionally followed by whitespace and args.
@@ -19,6 +27,30 @@ public class SkillExpander {
      */
     private static final Pattern SKILL_COMMAND = Pattern.compile(
             "^/skill:([a-z0-9-]+)(?:\\s+(.*))?$", Pattern.DOTALL);
+
+    private final SandboxSkillParser sandboxParser;
+    private final boolean sandboxEnabled;
+
+    /**
+     * Creates a SkillExpander with direct file reading (no sandbox).
+     */
+    public SkillExpander() {
+        this(null, false);
+    }
+
+    /**
+     * Creates a SkillExpander with optional sandbox parsing.
+     *
+     * @param sandboxParser the sandbox parser (can be null)
+     * @param sandboxEnabled whether to use sandbox when available
+     */
+    public SkillExpander(SandboxSkillParser sandboxParser, boolean sandboxEnabled) {
+        this.sandboxParser = sandboxParser;
+        this.sandboxEnabled = sandboxEnabled && sandboxParser != null && sandboxParser.isAvailable();
+        if (this.sandboxEnabled) {
+            log.info("SkillExpander initialized with sandbox body loading enabled");
+        }
+    }
 
     /**
      * If the user input matches {@code /skill:name [args]}, expands it by:
@@ -54,14 +86,10 @@ public class SkillExpander {
         }
 
         Skill skill = skillOpt.get();
-        String fileContent;
-        try {
-            fileContent = Files.readString(skill.filePath(), StandardCharsets.UTF_8);
-        } catch (IOException e) {
+        String body = loadSkillBody(skill);
+        if (body == null) {
             return userInput;
         }
-
-        String body = SkillLoader.stripFrontmatter(fileContent);
 
         StringBuilder sb = new StringBuilder();
         sb.append("<skill name=\"").append(skillName)
@@ -78,5 +106,35 @@ public class SkillExpander {
         }
 
         return sb.toString();
+    }
+
+    /**
+     * Loads the skill body content, using sandbox if enabled and available.
+     * Falls back to direct file reading if sandbox is not available or fails.
+     *
+     * @param skill the skill to load body for
+     * @return body content, or null if loading fails
+     */
+    private String loadSkillBody(Skill skill) {
+        // Try sandbox first if enabled
+        if (sandboxEnabled && sandboxParser != null) {
+            try {
+                log.debug("Loading skill body in sandbox: {}", skill.filePath());
+                return sandboxParser.loadBodyInSandbox(skill.filePath());
+            } catch (SkillLoadException e) {
+                log.warn("Sandbox body loading failed for {}, falling back to direct reading: {}",
+                        skill.filePath(), e.getMessage());
+                // Fall back to direct reading
+            }
+        }
+
+        // Direct file reading fallback
+        try {
+            String fileContent = Files.readString(skill.filePath(), StandardCharsets.UTF_8);
+            return SkillLoader.stripFrontmatter(fileContent);
+        } catch (IOException e) {
+            log.warn("Failed to read skill file: {}", skill.filePath(), e);
+            return null;
+        }
     }
 }

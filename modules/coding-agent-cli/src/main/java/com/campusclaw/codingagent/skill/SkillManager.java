@@ -48,9 +48,26 @@ public class SkillManager {
     private final Path skillsDir;
     private final SkillLoader skillLoader;
 
+    /**
+     * Creates a SkillManager with direct skill parsing (no sandbox).
+     */
     public SkillManager(Path skillsDir) {
+        this(skillsDir, null, false);
+    }
+
+    /**
+     * Creates a SkillManager with optional sandbox parsing support.
+     *
+     * @param skillsDir the skills directory
+     * @param sandboxParser the sandbox parser (can be null)
+     * @param useSandbox whether to use sandbox when available
+     */
+    public SkillManager(Path skillsDir, SandboxSkillParser sandboxParser, boolean useSandbox) {
         this.skillsDir = skillsDir;
-        this.skillLoader = new SkillLoader();
+        this.skillLoader = new SkillLoader(sandboxParser, useSandbox);
+        if (skillLoader.isSandboxEnabled()) {
+            log.info("SkillManager initialized with sandbox parsing enabled");
+        }
     }
 
     // -- Install from git --------------------------------------------------

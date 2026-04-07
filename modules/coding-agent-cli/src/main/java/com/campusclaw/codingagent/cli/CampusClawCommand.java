@@ -27,6 +27,7 @@ import com.campusclaw.codingagent.session.SessionConfig;
 import com.campusclaw.codingagent.session.SessionManager;
 import com.campusclaw.codingagent.settings.Settings;
 import com.campusclaw.codingagent.settings.SettingsManager;
+import com.campusclaw.codingagent.skill.SandboxSkillParser;
 import com.campusclaw.codingagent.skill.SkillExpander;
 import com.campusclaw.codingagent.skill.SkillInstallException;
 import com.campusclaw.codingagent.skill.SkillLoader;
@@ -64,6 +65,7 @@ public class CampusClawCommand implements Callable<Integer> {
     private final com.campusclaw.cron.CronService cronService;
     private final com.campusclaw.codingagent.loop.LoopManager loopManager;
     private final org.springframework.context.ApplicationContext applicationContext;
+    private final SandboxSkillParser sandboxSkillParser;
 
     public CampusClawCommand(CampusClawAiService piAiService, ModelRegistry modelRegistry,
                      SystemPromptBuilder promptBuilder, List<AgentTool> tools,
@@ -71,7 +73,8 @@ public class CampusClawCommand implements Callable<Integer> {
                      SettingsManager settingsManager,
                      @org.springframework.lang.Nullable com.campusclaw.cron.CronService cronService,
                      com.campusclaw.codingagent.loop.LoopManager loopManager,
-                     org.springframework.context.ApplicationContext applicationContext) {
+                     org.springframework.context.ApplicationContext applicationContext,
+                     @org.springframework.lang.Nullable SandboxSkillParser sandboxSkillParser) {
         this.piAiService = piAiService;
         this.modelRegistry = modelRegistry;
         this.promptBuilder = promptBuilder;
@@ -82,6 +85,7 @@ public class CampusClawCommand implements Callable<Integer> {
         this.cronService = cronService;
         this.loopManager = loopManager;
         this.applicationContext = applicationContext;
+        this.sandboxSkillParser = sandboxSkillParser;
     }
 
     @Option(names = {"--provider"}, description = "Provider name (e.g. anthropic, openai, zai, google)")
@@ -369,9 +373,13 @@ public class CampusClawCommand implements Callable<Integer> {
             effectiveTools = tools;
         }
 
+        // 检查是否启用沙箱 skill 解析
+        boolean useSandbox = Boolean.parseBoolean(System.getenv("SKILL_SANDBOX_PARSING"));
         AgentSession session = new AgentSession(
                 piAiService, modelRegistry, promptBuilder,
-                new SkillLoader(), new SkillExpander(), effectiveTools
+                new SkillLoader(sandboxSkillParser, useSandbox),
+                new SkillExpander(sandboxSkillParser, useSandbox),
+                effectiveTools
         );
 
         // Session persistence (skip if --no-session)
@@ -473,7 +481,8 @@ public class CampusClawCommand implements Callable<Integer> {
 
         if ("server".equals(mode)) {
             new ServerMode(piAiService, modelRegistry, promptBuilder,
-                    effectiveTools, config, port != null ? port : 3000).run();
+                    effectiveTools, config, port != null ? port : 3000,
+                    sandboxSkillParser, useSandbox).run();
             return 0;
         }
 
@@ -664,7 +673,13 @@ public class CampusClawCommand implements Callable<Integer> {
             return 0;
         }
 
-        var manager = new SkillManager(com.campusclaw.codingagent.config.AppPaths.USER_SKILLS_DIR);
+        // 检查是否启用沙箱 skill 解析（通过环境变量或配置）
+        boolean useSandbox = Boolean.parseBoolean(System.getenv("SKILL_SANDBOX_PARSING"));
+        var manager = new SkillManager(
+            com.campusclaw.codingagent.config.AppPaths.USER_SKILLS_DIR,
+            sandboxSkillParser,
+            useSandbox
+        );
 
         switch (action) {
             case "install" -> {
@@ -677,8 +692,9 @@ public class CampusClawCommand implements Callable<Integer> {
                     System.out.println("Installing skill from: " + gitUrl);
                     String name = manager.install(gitUrl);
                     System.out.println("Skill installed: " + name);
-                    // Show what was installed
-                    var skills = new SkillLoader().loadFromDirectory(
+                    // Show what was installed (使用支持沙箱的 SkillLoader)
+                    var skillLoader = new SkillLoader(sandboxSkillParser, useSandbox);
+                    var skills = skillLoader.loadFromDirectory(
                             com.campusclaw.codingagent.config.AppPaths.USER_SKILLS_DIR.resolve(name), "user");
                     for (var skill : skills) {
                         System.out.println("  - " + skill.name() + ": " + skill.description());
