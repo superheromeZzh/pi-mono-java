@@ -1,8 +1,11 @@
 package com.campusclaw.assistant.memory;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.campusclaw.assistant.mapper.ChatMemoryMapper;
+import com.campusclaw.ai.types.AssistantMessage;
 import com.campusclaw.ai.types.Message;
+import com.campusclaw.ai.types.ToolResultMessage;
+import com.campusclaw.ai.types.UserMessage;
+import com.campusclaw.assistant.mapper.ChatMemoryMapper;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.io.UncheckedIOException;
 import java.util.ArrayList;
@@ -38,9 +41,7 @@ public class MyBatisChatMemoryRepository implements ChatMemoryRepository {
     public void append(String conversationId, List<Message> messages) {
         Objects.requireNonNull(conversationId, "conversationId");
         Objects.requireNonNull(messages, "messages");
-        if (messages.isEmpty()) {
-            return;
-        }
+        if (messages.isEmpty()) return;
 
         List<ChatMemoryEntity> existing = mapper.selectByConversationId(conversationId);
         int nextSequence = existing.isEmpty() ? 0 : existing.getLast().sequence() + 1;
@@ -66,9 +67,9 @@ public class MyBatisChatMemoryRepository implements ChatMemoryRepository {
 
     private String extractRole(Message message) {
         return switch (message) {
-            case com.campusclaw.ai.types.UserMessage m -> "user";
-            case com.campusclaw.ai.types.AssistantMessage m -> "assistant";
-            case com.campusclaw.ai.types.ToolResultMessage m -> "toolResult";
+            case UserMessage m -> "user";
+            case AssistantMessage m -> "assistant";
+            case ToolResultMessage m -> "toolResult";
         };
     }
 }

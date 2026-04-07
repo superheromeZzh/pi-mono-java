@@ -193,8 +193,9 @@ public class CampusClawCommand implements Callable<Integer> {
 
         String effectivePrompt = resolvePrompt();
 
-        // Read piped stdin if not a TTY
-        if (effectivePrompt == null && System.console() == null) {
+        // Read piped stdin if not a TTY (skip for modes that don't need a prompt)
+        if (effectivePrompt == null && System.console() == null
+                && !"server".equals(mode) && !"rpc".equals(mode)) {
             try {
                 String piped = new String(System.in.readAllBytes()).trim();
                 if (!piped.isEmpty()) {
@@ -211,7 +212,12 @@ public class CampusClawCommand implements Callable<Integer> {
         com.huawei.hicampus.mate.matecampusclaw.codingagent.config.AppPaths.ensureUserDirs();
 
         // Load settings and apply defaults for model and thinking level
+        System.err.println("[DEBUG] settings path: " + com.huawei.hicampus.mate.matecampusclaw.codingagent.config.AppPaths.GLOBAL_SETTINGS);
+        System.err.println("[DEBUG] settings file exists: " + java.nio.file.Files.exists(com.huawei.hicampus.mate.matecampusclaw.codingagent.config.AppPaths.GLOBAL_SETTINGS));
+        System.err.println("[DEBUG] settingsManager is null: " + (settingsManager == null));
         Settings settings = settingsManager != null ? settingsManager.load() : Settings.empty();
+        System.err.println("[DEBUG] settings.defaultModel: " + settings.defaultModel());
+        System.err.println("[DEBUG] settings.customModels: " + settings.customModels());
         String effectiveModel = model;
         if (effectiveModel == null && settings.defaultModel() != null) {
             effectiveModel = settings.defaultModel();
@@ -366,6 +372,7 @@ public class CampusClawCommand implements Callable<Integer> {
             effectiveTools = tools;
         }
 
+        System.err.println("[DEBUG] 1. creating session...");
         AgentSession session = new AgentSession(
                 piAiService, modelRegistry, promptBuilder,
                 new SkillLoader(), new SkillExpander(), effectiveTools
@@ -377,8 +384,10 @@ public class CampusClawCommand implements Callable<Integer> {
             session.setSessionManager(sessionManager);
         }
 
+        System.err.println("[DEBUG] 2. initializing session...");
         SessionConfig config = new SessionConfig(effectiveModel, effectiveCwd, effectiveSystemPrompt, mode);
         session.initialize(config);
+        System.err.println("[DEBUG] 3. session initialized");
 
         // Handle session flags: --session, --fork, --continue, --resume
         if (sessionManager != null) {
@@ -450,8 +459,10 @@ public class CampusClawCommand implements Callable<Integer> {
         }
 
         if ("server".equals(mode)) {
+            System.err.println("[DEBUG] 4. entering server mode on port " + (port != null ? port : 3000));
             new ServerMode(piAiService, modelRegistry, promptBuilder,
                     effectiveTools, config, port != null ? port : 3000).run();
+            System.err.println("[DEBUG] 5. server stopped");
             return 0;
         }
 

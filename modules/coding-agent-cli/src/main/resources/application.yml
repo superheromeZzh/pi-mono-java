@@ -3,34 +3,33 @@ spring:
     banner-mode: off
     lazy-initialization: true
     web-application-type: none
+  lazy-initialization:
+    exclude: webSocketGatewayConfig,gatewayChannel
   application:
     name: campusclaw-agent
   datasource:
-    url: jdbc:h2:file:./data/pi_assistant;MODE=MySQL
-    username: sa
-    password:
-    driver-class-name: org.h2.Driver
+    url: ${GAUSSDB_URL:jdbc:postgresql://localhost:5432/pi_assistant}
+    username: ${GAUSSDB_USER:root}
+    password: ${GAUSSDB_PASSWORD:root}
+    driver-class-name: org.postgresql.Driver
   sql:
     init:
-      mode: always
-      schema-locations: classpath:schema.sql
+      mode: never
 
 mybatis:
   configuration:
     map-underscore-to-camel-case: true
 
-org:
-  jobrunr:
-    background-job-server:
-      enabled: true
-    dashboard:
+pi:
+  assistant:
+    gateway:
       enabled: false
+      token:
 
 logging:
   level:
     root: WARN
     com.campusclaw: WARN
-    org.springframework: WARN
     io.netty: ERROR
 
 # 工具执行配置 - 沙箱模式

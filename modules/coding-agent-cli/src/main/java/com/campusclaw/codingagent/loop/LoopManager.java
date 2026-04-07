@@ -7,6 +7,7 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import com.campusclaw.assistant.channel.MessageSubmitter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -17,7 +18,7 @@ import org.springframework.stereotype.Service;
  * Loops are session-scoped and do not survive application restart.
  */
 @Service
-public class LoopManager {
+public class LoopManager implements MessageSubmitter {
 
     private static final Logger log = LoggerFactory.getLogger(LoopManager.class);
 
@@ -97,6 +98,19 @@ public class LoopManager {
 
     public boolean isInitialized() {
         return scheduler != null;
+    }
+
+    @Override
+    public boolean submitMessage(String message) {
+        BlockingQueue<String> q = submitQueue;
+        if (q != null) {
+            q.add(message);
+            log.info("External message submitted: {} chars", message.length());
+            return true;
+        } else {
+            log.warn("No active session for external message");
+            return false;
+        }
     }
 
     public void shutdown() {

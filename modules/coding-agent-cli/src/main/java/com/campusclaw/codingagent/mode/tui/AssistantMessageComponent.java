@@ -57,6 +57,10 @@ public class AssistantMessageComponent implements Component {
         return !thinkingContent.isEmpty() || !textContent.isEmpty();
     }
 
+    public String getTextContent() {
+        return textContent.toString();
+    }
+
     public void setHideThinking(boolean hide) {
         this.hideThinking = hide;
         invalidate();
