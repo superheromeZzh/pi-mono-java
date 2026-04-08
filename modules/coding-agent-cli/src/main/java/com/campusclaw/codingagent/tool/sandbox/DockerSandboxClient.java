@@ -52,6 +52,7 @@ public class DockerSandboxClient {
                 dockerAvailable = true;
             } else {
                 log.warn("Docker not available: {}", versionResult.stderr);
+                dockerAvailable = false;
                 return;
             }
 
@@ -384,8 +385,12 @@ public class DockerSandboxClient {
             stderrReader.join(5000);
 
         } catch (IOException | InterruptedException e) {
-            log.error("Failed to execute docker command", e);
-            if (e instanceof InterruptedException) {
+            // IOException usually means Docker is not installed or not in PATH
+            // Log at debug level to avoid noise on systems without Docker
+            if (e instanceof IOException) {
+                log.debug("Docker command failed (Docker may not be installed): {}", e.getMessage());
+            } else {
+                log.error("Failed to execute docker command", e);
                 Thread.currentThread().interrupt();
             }
             return new ProcessResult(-1, "", e.getMessage(), false);
