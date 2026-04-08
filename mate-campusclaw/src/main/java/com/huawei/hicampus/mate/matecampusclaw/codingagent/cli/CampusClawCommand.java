@@ -195,7 +195,7 @@ public class CampusClawCommand implements Callable<Integer> {
 
         // Read piped stdin if not a TTY (skip for modes that don't need a prompt)
         if (effectivePrompt == null && System.console() == null
-                && !"server".equals(mode) && !"rpc".equals(mode)) {
+                && !"server".equals(mode) && !"rpc".equals(mode) && !"print".equals(mode)) {
             try {
                 String piped = new String(System.in.readAllBytes()).trim();
                 if (!piped.isEmpty()) {
