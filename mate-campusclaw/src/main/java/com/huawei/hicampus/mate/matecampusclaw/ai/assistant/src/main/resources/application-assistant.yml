@@ -1,0 +1,5 @@
+pi:
+  assistant:
+    gateway:
+      enabled: false
+      token:
