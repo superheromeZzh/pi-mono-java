@@ -45,6 +45,7 @@ public class ServerMode {
     private final List<AgentTool> tools;
     private final SessionConfig baseConfig;
     private final int port;
+    private final String host;
     private final SandboxSkillParser sandboxParser;
     private final boolean useSandbox;
 
@@ -56,7 +57,7 @@ public class ServerMode {
             SessionConfig baseConfig,
             int port
     ) {
-        this(aiService, modelRegistry, promptBuilder, tools, baseConfig, port, null, false);
+        this(aiService, modelRegistry, promptBuilder, tools, baseConfig, port, "localhost", null, false);
     }
 
     public ServerMode(
@@ -66,6 +67,7 @@ public class ServerMode {
             List<AgentTool> tools,
             SessionConfig baseConfig,
             int port,
+            String host,
             SandboxSkillParser sandboxParser,
             boolean useSandbox
     ) {
@@ -75,6 +77,7 @@ public class ServerMode {
         this.tools = tools;
         this.baseConfig = baseConfig;
         this.port = port;
+        this.host = host;
         this.sandboxParser = sandboxParser;
         this.useSandbox = useSandbox;
     }
@@ -109,12 +112,13 @@ public class ServerMode {
         var adapter = new ReactorHttpHandlerAdapter(httpHandler);
 
         var server = HttpServer.create()
+                .host(host)
                 .port(port)
                 .handle(adapter)
                 .bindNow();
 
-        log.info("CampusClaw API server started on port {}", port);
-        System.out.println("CampusClaw API server started on http://localhost:" + port);
+        log.info("CampusClaw API server started on {}:{}", host, port);
+        System.out.println("CampusClaw API server started on http://" + host + ":" + port);
         System.out.println("Endpoints:");
         System.out.println("  GET    /api/health");
         System.out.println("  POST   /api/chat");

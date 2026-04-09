@@ -100,6 +100,9 @@ public class CampusClawCommand implements Callable<Integer> {
     @Option(names = {"--port"}, description = "HTTP server port (for server mode)")
     Integer port;
 
+    @Option(names = {"--host"}, description = "HTTP server bind address (for server mode, default: localhost)")
+    String host;
+
     @Option(names = {"--proxy"}, description = "HTTP/SOCKS5 proxy URL (e.g. http://127.0.0.1:7890)")
     String proxy;
 
@@ -461,7 +464,8 @@ public class CampusClawCommand implements Callable<Integer> {
         if ("server".equals(mode)) {
             System.err.println("[DEBUG] 4. entering server mode on port " + (port != null ? port : 3000));
             new ServerMode(piAiService, modelRegistry, promptBuilder,
-                    effectiveTools, config, port != null ? port : 3000).run();
+                    effectiveTools, config, port != null ? port : 3000,
+                    host != null ? host : "localhost").run();
             System.err.println("[DEBUG] 5. server stopped");
             return 0;
         }
