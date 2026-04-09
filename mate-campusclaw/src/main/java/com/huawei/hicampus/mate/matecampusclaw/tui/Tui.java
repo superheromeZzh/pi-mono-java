@@ -68,6 +68,7 @@ public class Tui {
     /** Start the TUI. Enters raw mode, hides cursor, clears screen. */
     public void start() {
         running = true;
+        terminal.clearListeners();
         terminal.enterRawMode();
         terminal.write(HIDE_CURSOR + ERASE_SCROLLBACK + ERASE_SCREEN + HOME);
 
