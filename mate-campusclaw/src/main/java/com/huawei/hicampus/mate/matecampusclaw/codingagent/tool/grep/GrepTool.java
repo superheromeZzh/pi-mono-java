@@ -33,6 +33,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
 /**
@@ -40,6 +41,7 @@ import org.springframework.stereotype.Component;
  * Prefers system ripgrep (rg) when available, falls back to a Java implementation.
  */
 @Component
+@ConditionalOnProperty(name = "tool.execution.hybrid-enabled", havingValue = "false", matchIfMissing = true)
 public class GrepTool implements AgentTool {
 
     static final int MAX_RESULTS = 500;

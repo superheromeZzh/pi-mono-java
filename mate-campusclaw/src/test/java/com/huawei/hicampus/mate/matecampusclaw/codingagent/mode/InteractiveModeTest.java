@@ -48,7 +48,7 @@ class InteractiveModeTest {
         registry = new SlashCommandRegistry();
         registry.register(new HelpCommand(registry));
         registry.register(new QuitCommand());
-        mode = new InteractiveMode(registry, bashExecutor, null, null, null, null);
+        mode = new InteractiveMode(registry, bashExecutor, null, null, null, null, null);
 
         when(session.getAgent()).thenReturn(agent);
         when(agent.getState()).thenReturn(state);
@@ -73,7 +73,7 @@ class InteractiveModeTest {
             var delta = new AssistantMessageEvent.TextDeltaEvent(0, "Hello", partial);
             var event = new MessageUpdateEvent(partial, delta);
 
-            var component = new com.huawei.hicampus.mate.matecampusclaw.codingagent.mode.tui.AssistantMessageComponent();
+            var component = new com.campusclaw.codingagent.mode.tui.AssistantMessageComponent();
             component.appendText("Hello");
             assertTrue(component.hasContent());
 
@@ -83,7 +83,7 @@ class InteractiveModeTest {
 
         @Test
         void thinkingDeltaRendersInItalic() {
-            var component = new com.huawei.hicampus.mate.matecampusclaw.codingagent.mode.tui.AssistantMessageComponent();
+            var component = new com.campusclaw.codingagent.mode.tui.AssistantMessageComponent();
             component.appendThinking("Let me think...");
 
             var lines = component.render(80);
@@ -94,7 +94,7 @@ class InteractiveModeTest {
 
         @Test
         void toolStatusShowsRunningThenDone() {
-            var tool = new com.huawei.hicampus.mate.matecampusclaw.codingagent.mode.tui.ToolStatusComponent("bash");
+            var tool = new com.campusclaw.codingagent.mode.tui.ToolStatusComponent("bash");
             var running = tool.render(80);
             String runningOutput = String.join("", running);
             // Tool shows bold name on pending bg
@@ -109,7 +109,7 @@ class InteractiveModeTest {
 
         @Test
         void toolStatusShowsFailed() {
-            var tool = new com.huawei.hicampus.mate.matecampusclaw.codingagent.mode.tui.ToolStatusComponent("bash");
+            var tool = new com.campusclaw.codingagent.mode.tui.ToolStatusComponent("bash");
             tool.setComplete(true);
             var lines = tool.render(80);
             String output = String.join("", lines);
@@ -128,7 +128,7 @@ class InteractiveModeTest {
 
         @Test
         void rendersModelInfo() {
-            var footer = new com.huawei.hicampus.mate.matecampusclaw.codingagent.mode.tui.FooterComponent();
+            var footer = new com.campusclaw.codingagent.mode.tui.FooterComponent();
             footer.setModel("zai", "glm-5", 200000, false);
             var lines = footer.render(80);
 
@@ -139,7 +139,7 @@ class InteractiveModeTest {
 
         @Test
         void rendersTokenStats() {
-            var footer = new com.huawei.hicampus.mate.matecampusclaw.codingagent.mode.tui.FooterComponent();
+            var footer = new com.campusclaw.codingagent.mode.tui.FooterComponent();
             footer.setModel("zai", "glm-5", 200000, false);
             footer.updateUsage(1500, 200, 0, 0, 0.001);
             var lines = footer.render(80);
@@ -151,7 +151,7 @@ class InteractiveModeTest {
 
         @Test
         void rendersPwdAndStatsLines() {
-            var footer = new com.huawei.hicampus.mate.matecampusclaw.codingagent.mode.tui.FooterComponent();
+            var footer = new com.campusclaw.codingagent.mode.tui.FooterComponent();
             footer.setModel("zai", "glm-5", 200000, false);
             footer.setCwd("/Users/z/project");
             var lines = footer.render(80);
@@ -161,7 +161,7 @@ class InteractiveModeTest {
 
         @Test
         void contextPercentageColorCoding() {
-            var footer = new com.huawei.hicampus.mate.matecampusclaw.codingagent.mode.tui.FooterComponent();
+            var footer = new com.campusclaw.codingagent.mode.tui.FooterComponent();
             footer.setModel("zai", "glm-5", 1000, false);
             // 95% usage — should be red
             footer.updateUsage(950, 0, 0, 0, 0);
@@ -172,11 +172,11 @@ class InteractiveModeTest {
 
         @Test
         void tokenFormattingMillions() {
-            assertEquals("1.5M", com.huawei.hicampus.mate.matecampusclaw.codingagent.mode.tui.FooterComponent.formatTokens(1500000));
-            assertEquals("15M", com.huawei.hicampus.mate.matecampusclaw.codingagent.mode.tui.FooterComponent.formatTokens(15000000));
-            assertEquals("200k", com.huawei.hicampus.mate.matecampusclaw.codingagent.mode.tui.FooterComponent.formatTokens(200000));
-            assertEquals("1.5k", com.huawei.hicampus.mate.matecampusclaw.codingagent.mode.tui.FooterComponent.formatTokens(1500));
-            assertEquals("500", com.huawei.hicampus.mate.matecampusclaw.codingagent.mode.tui.FooterComponent.formatTokens(500));
+            assertEquals("1.5M", com.campusclaw.codingagent.mode.tui.FooterComponent.formatTokens(1500000));
+            assertEquals("15M", com.campusclaw.codingagent.mode.tui.FooterComponent.formatTokens(15000000));
+            assertEquals("200k", com.campusclaw.codingagent.mode.tui.FooterComponent.formatTokens(200000));
+            assertEquals("1.5k", com.campusclaw.codingagent.mode.tui.FooterComponent.formatTokens(1500));
+            assertEquals("500", com.campusclaw.codingagent.mode.tui.FooterComponent.formatTokens(500));
         }
     }
 
@@ -189,7 +189,7 @@ class InteractiveModeTest {
 
         @Test
         void rendersCommandAndOutput() {
-            var comp = new com.huawei.hicampus.mate.matecampusclaw.codingagent.mode.tui.BashExecutionComponent("ls -la", false);
+            var comp = new com.campusclaw.codingagent.mode.tui.BashExecutionComponent("ls -la", false);
             comp.setResult("file1.txt\nfile2.txt", 0);
             var lines = comp.render(80);
             String output = String.join("\n", lines);
@@ -200,7 +200,7 @@ class InteractiveModeTest {
 
         @Test
         void excludedCommandShowsDollarDollar() {
-            var comp = new com.huawei.hicampus.mate.matecampusclaw.codingagent.mode.tui.BashExecutionComponent("pwd", true);
+            var comp = new com.campusclaw.codingagent.mode.tui.BashExecutionComponent("pwd", true);
             comp.setResult("/home/user", 0);
             var lines = comp.render(80);
             String output = String.join("\n", lines);
@@ -211,7 +211,7 @@ class InteractiveModeTest {
 
         @Test
         void showsExitCodeOnError() {
-            var comp = new com.huawei.hicampus.mate.matecampusclaw.codingagent.mode.tui.BashExecutionComponent("bad-cmd", false);
+            var comp = new com.campusclaw.codingagent.mode.tui.BashExecutionComponent("bad-cmd", false);
             comp.setResult("command not found", 127);
             var lines = comp.render(80);
             String output = String.join("\n", lines);
@@ -220,7 +220,7 @@ class InteractiveModeTest {
 
         @Test
         void showsRunningWhenIncomplete() {
-            var comp = new com.huawei.hicampus.mate.matecampusclaw.codingagent.mode.tui.BashExecutionComponent("sleep 10", false);
+            var comp = new com.campusclaw.codingagent.mode.tui.BashExecutionComponent("sleep 10", false);
             var lines = comp.render(80);
             String output = String.join("\n", lines);
             // BashExecutionComponent shows "running..." in gray when incomplete
@@ -328,7 +328,7 @@ class InteractiveModeTest {
 
         @Test
         void throwsOnNullRegistry() {
-            assertThrows(NullPointerException.class, () -> new InteractiveMode(null, null, null, null, null, null));
+            assertThrows(NullPointerException.class, () -> new InteractiveMode(null, null, null, null, null, null, null));
         }
     }
 

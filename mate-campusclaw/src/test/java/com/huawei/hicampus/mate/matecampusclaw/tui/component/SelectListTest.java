@@ -419,7 +419,7 @@ class SelectListTest {
             // The rendered line should not exceed 20 visible columns
             // (prefix "→ " is 2 chars, leaving 18 for the label)
             String line = lines.get(0);
-            int visWidth = com.huawei.hicampus.mate.matecampusclaw.tui.ansi.AnsiUtils.visibleWidth(line);
+            int visWidth = com.campusclaw.tui.ansi.AnsiUtils.visibleWidth(line);
             assertTrue(visWidth <= 20, "Line width " + visWidth + " exceeds max 20");
         }
 
@@ -638,7 +638,7 @@ class SelectListTest {
             var list = createList(items("hello world"));
             List<String> lines = list.render(5);
             assertFalse(lines.isEmpty());
-            int visWidth = com.huawei.hicampus.mate.matecampusclaw.tui.ansi.AnsiUtils.visibleWidth(lines.get(0));
+            int visWidth = com.campusclaw.tui.ansi.AnsiUtils.visibleWidth(lines.get(0));
             assertTrue(visWidth <= 5, "Line width " + visWidth + " exceeds max 5");
         }
 

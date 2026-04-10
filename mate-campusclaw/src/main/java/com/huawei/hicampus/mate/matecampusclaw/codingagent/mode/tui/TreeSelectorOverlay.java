@@ -33,7 +33,7 @@ public class TreeSelectorOverlay implements Component, Focusable {
     private boolean focused;
     private final boolean empty;
 
-    public TreeSelectorOverlay(List<com.huawei.hicampus.mate.matecampusclaw.ai.types.Message> messages) {
+    public TreeSelectorOverlay(List<com.campusclaw.ai.types.Message> messages) {
         var items = buildItems(messages);
         this.empty = items.isEmpty();
 
@@ -62,7 +62,7 @@ public class TreeSelectorOverlay implements Component, Focusable {
         return empty;
     }
 
-    private List<TreeItem> buildItems(List<com.huawei.hicampus.mate.matecampusclaw.ai.types.Message> messages) {
+    private List<TreeItem> buildItems(List<com.campusclaw.ai.types.Message> messages) {
         var items = new ArrayList<TreeItem>();
         for (int i = 0; i < messages.size(); i++) {
             var msg = messages.get(i);

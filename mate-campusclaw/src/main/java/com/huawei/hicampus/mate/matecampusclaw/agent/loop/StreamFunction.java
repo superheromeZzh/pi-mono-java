@@ -7,7 +7,7 @@ import com.huawei.hicampus.mate.matecampusclaw.ai.types.SimpleStreamOptions;
 
 /**
  * Functional interface for streaming LLM calls, decoupling the agent loop
- * from the concrete {@link com.huawei.hicampus.mate.matecampusclaw.ai.CampusClawAiService}.
+ * from the concrete {@link com.campusclaw.ai.CampusClawAiService}.
  *
  * <p>Implementations can wrap CampusClawAiService, add caching, logging, or any
  * other cross-cutting concern.

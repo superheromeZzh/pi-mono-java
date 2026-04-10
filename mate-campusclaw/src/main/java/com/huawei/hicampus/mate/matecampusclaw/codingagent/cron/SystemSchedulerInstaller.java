@@ -10,7 +10,7 @@ import java.nio.file.Path;
  */
 public class SystemSchedulerInstaller {
 
-    private static final String LABEL = "com.huawei.hicampus.mate.matecampusclaw.cron";
+    private static final String LABEL = "com.campusclaw.cron";
     private static final String TASK_NAME = "CampusClaw-Cron";
     private static final Path PLIST_PATH = Path.of(System.getProperty("user.home"))
             .resolve("Library/LaunchAgents").resolve(LABEL + ".plist");

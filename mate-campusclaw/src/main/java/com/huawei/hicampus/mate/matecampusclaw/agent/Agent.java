@@ -37,7 +37,6 @@ import com.huawei.hicampus.mate.matecampusclaw.ai.types.SimpleStreamOptions;
 import com.huawei.hicampus.mate.matecampusclaw.ai.types.ThinkingLevel;
 import com.huawei.hicampus.mate.matecampusclaw.ai.types.UserMessage;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 /**
@@ -63,7 +62,6 @@ public class Agent {
     private volatile CompletableFuture<Void> currentExecution = CompletableFuture.completedFuture(null);
     private volatile CancellationToken currentSignal;
 
-    @Autowired
     public Agent(CampusClawAiService piAiService) {
         this(
             piAiService,
@@ -351,4 +349,6 @@ public class Agent {
         }
         return false;
     }
+
+
 }

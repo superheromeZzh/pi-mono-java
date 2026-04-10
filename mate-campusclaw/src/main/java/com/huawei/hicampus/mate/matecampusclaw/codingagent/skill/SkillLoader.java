@@ -10,6 +10,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.yaml.snakeyaml.Yaml;
 
 /**
@@ -20,12 +22,48 @@ import org.yaml.snakeyaml.Yaml;
  *   <li>If a directory contains SKILL.md, it is treated as a skill root (no further recursion)</li>
  *   <li>Otherwise, recurse into subdirectories to find SKILL.md files</li>
  * </ul>
+ * <p>
+ * Supports sandbox mode: when {@link SandboxSkillParser} is available and sandbox mode is enabled,
+ * skills are parsed inside a Docker container for security.
  */
 public class SkillLoader {
 
+    private static final Logger log = LoggerFactory.getLogger(SkillLoader.class);
     static final String SKILL_FILENAME = "SKILL.md";
     private static final Pattern NAME_REGEX = Pattern.compile(Skill.NAME_PATTERN);
     private static final String FRONTMATTER_DELIMITER = "---";
+
+    private final SandboxSkillParser sandboxParser;
+    private final boolean sandboxEnabled;
+
+    /**
+     * Creates a SkillLoader with direct parsing (no sandbox).
+     */
+    public SkillLoader() {
+        this.sandboxParser = null;
+        this.sandboxEnabled = false;
+    }
+
+    /**
+     * Creates a SkillLoader with optional sandbox parsing.
+     *
+     * @param sandboxParser the sandbox parser (can be null)
+     * @param sandboxEnabled whether to use sandbox when available
+     */
+    public SkillLoader(SandboxSkillParser sandboxParser, boolean sandboxEnabled) {
+        this.sandboxParser = sandboxParser;
+        this.sandboxEnabled = sandboxEnabled && sandboxParser != null && sandboxParser.isAvailable();
+        if (this.sandboxEnabled) {
+            log.info("SkillLoader initialized with sandbox parsing enabled");
+        }
+    }
+
+    /**
+     * Checks if sandbox parsing is enabled and available.
+     */
+    public boolean isSandboxEnabled() {
+        return sandboxEnabled;
+    }
 
     /**
      * Loads all skills from the given directory by recursively scanning for SKILL.md files.
@@ -45,6 +83,7 @@ public class SkillLoader {
 
     /**
      * Loads a single skill from a SKILL.md file.
+     * Uses sandbox parsing if enabled and available.
      *
      * @param filePath path to the SKILL.md file
      * @param source   the source label ("user" or "project")
@@ -52,7 +91,25 @@ public class SkillLoader {
      * @throws SkillLoadException if the file cannot be read or parsed, or if validation fails
      */
     public Skill loadFromFile(Path filePath, String source) {
-        return parseSkillFile(filePath, source);
+        if (sandboxEnabled && sandboxParser != null) {
+            try {
+                // Validate first
+                String validationError = sandboxParser.validateSkillInSandbox(filePath);
+                if (!validationError.isEmpty()) {
+                    throw new SkillLoadException("Skill validation failed: " + validationError);
+                }
+                // Parse in sandbox
+                log.debug("Parsing skill in sandbox: {}", filePath);
+                return sandboxParser.parseInSandbox(filePath, source);
+            } catch (SkillLoadException e) {
+                log.warn("Sandbox parsing failed for {}, falling back to direct parsing: {}",
+                        filePath, e.getMessage());
+                // Fall back to direct parsing
+                return parseSkillFile(filePath, source);
+            }
+        } else {
+            return parseSkillFile(filePath, source);
+        }
     }
 
     private void scanDirectory(Path dir, String source, List<Skill> skills) {
@@ -60,8 +117,9 @@ public class SkillLoader {
         if (Files.isRegularFile(skillFile)) {
             // This directory is a skill root — load it and do not recurse further.
             try {
-                skills.add(parseSkillFile(skillFile, source));
+                skills.add(loadSkillFile(skillFile, source));
             } catch (SkillLoadException e) {
+                log.warn("Failed to load skill from {}: {}", skillFile, e.getMessage());
                 // Skip invalid skill files during directory scanning
             }
             return;
@@ -76,6 +134,32 @@ public class SkillLoader {
             }
         } catch (IOException e) {
             // Skip unreadable directories
+        }
+    }
+
+    /**
+     * Loads a single skill file, using sandbox if enabled.
+     */
+    private Skill loadSkillFile(Path skillFile, String source) {
+        if (sandboxEnabled && sandboxParser != null) {
+            try {
+                // First validate in sandbox
+                String validationError = sandboxParser.validateSkillInSandbox(skillFile);
+                if (!validationError.isEmpty()) {
+                    throw new SkillLoadException("Skill validation failed: " + validationError);
+                }
+
+                // Then parse in sandbox
+                log.debug("Parsing skill in sandbox: {}", skillFile);
+                return sandboxParser.parseInSandbox(skillFile, source);
+            } catch (SkillLoadException e) {
+                log.warn("Sandbox parsing failed for {}, falling back to direct parsing: {}",
+                        skillFile, e.getMessage());
+                // Fall back to direct parsing if sandbox fails
+                return parseSkillFile(skillFile, source);
+            }
+        } else {
+            return parseSkillFile(skillFile, source);
         }
     }
 

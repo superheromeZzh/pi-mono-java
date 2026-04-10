@@ -120,13 +120,13 @@ public class GoogleVertexAIProvider implements ApiProvider {
                                 thinkingAcc.setLength(0);
                                 thinkingSig[0] = null;
                                 blocks.add(new ThinkingContent("", null, false));
-                                eventStream.push(new com.huawei.hicampus.mate.matecampusclaw.ai.stream.AssistantMessageEvent.ThinkingStartEvent(
+                                eventStream.push(new com.campusclaw.ai.stream.AssistantMessageEvent.ThinkingStartEvent(
                                     blocks.size() - 1, buildMessage(model, blocks, usage[0], stop[0])));
                             }
                             thinkingAcc.append(tc.thinking());
                             if (tc.thinkingSignature() != null) thinkingSig[0] = tc.thinkingSignature();
                             blocks.set(blocks.size() - 1, new ThinkingContent(thinkingAcc.toString(), thinkingSig[0], false));
-                            eventStream.push(new com.huawei.hicampus.mate.matecampusclaw.ai.stream.AssistantMessageEvent.ThinkingDeltaEvent(
+                            eventStream.push(new com.campusclaw.ai.stream.AssistantMessageEvent.ThinkingDeltaEvent(
                                 blocks.size() - 1, tc.thinking(), buildMessage(model, blocks, usage[0], stop[0])));
 
                         } else if (block instanceof TextContent tc) {
@@ -135,7 +135,7 @@ public class GoogleVertexAIProvider implements ApiProvider {
                                 currentType[0] = "text";
                                 textAcc.setLength(0);
                                 blocks.add(new TextContent("", null));
-                                eventStream.push(new com.huawei.hicampus.mate.matecampusclaw.ai.stream.AssistantMessageEvent.TextStartEvent(
+                                eventStream.push(new com.campusclaw.ai.stream.AssistantMessageEvent.TextStartEvent(
                                     blocks.size() - 1, buildMessage(model, blocks, usage[0], stop[0])));
                             }
                             textAcc.append(tc.text());
@@ -147,13 +147,13 @@ public class GoogleVertexAIProvider implements ApiProvider {
                             currentType[0] = null;
                             blocks.add(tc);
                             int idx = blocks.size() - 1;
-                            eventStream.push(new com.huawei.hicampus.mate.matecampusclaw.ai.stream.AssistantMessageEvent.ToolCallStartEvent(
+                            eventStream.push(new com.campusclaw.ai.stream.AssistantMessageEvent.ToolCallStartEvent(
                                 idx, buildMessage(model, blocks, usage[0], stop[0])));
                             try {
-                                eventStream.push(new com.huawei.hicampus.mate.matecampusclaw.ai.stream.AssistantMessageEvent.ToolCallDeltaEvent(
+                                eventStream.push(new com.campusclaw.ai.stream.AssistantMessageEvent.ToolCallDeltaEvent(
                                     idx, MAPPER.writeValueAsString(tc.arguments()), buildMessage(model, blocks, usage[0], stop[0])));
                             } catch (Exception ignored) {}
-                            eventStream.push(new com.huawei.hicampus.mate.matecampusclaw.ai.stream.AssistantMessageEvent.ToolCallEndEvent(
+                            eventStream.push(new com.campusclaw.ai.stream.AssistantMessageEvent.ToolCallEndEvent(
                                 idx, tc, buildMessage(model, blocks, usage[0], stop[0])));
                         }
                     }
@@ -246,12 +246,12 @@ public class GoogleVertexAIProvider implements ApiProvider {
         if ("thinking".equals(type)) {
             String content = thinkingAcc.toString();
             blocks.set(idx, new ThinkingContent(content, thinkingSig[0], false));
-            eventStream.push(new com.huawei.hicampus.mate.matecampusclaw.ai.stream.AssistantMessageEvent.ThinkingEndEvent(
+            eventStream.push(new com.campusclaw.ai.stream.AssistantMessageEvent.ThinkingEndEvent(
                 idx, content, buildMessage(model, blocks, usage, stop)));
         } else if ("text".equals(type)) {
             String content = textAcc.toString();
             blocks.set(idx, new TextContent(content, null));
-            eventStream.push(new com.huawei.hicampus.mate.matecampusclaw.ai.stream.AssistantMessageEvent.TextEndEvent(
+            eventStream.push(new com.campusclaw.ai.stream.AssistantMessageEvent.TextEndEvent(
                 idx, content, buildMessage(model, blocks, usage, stop)));
         }
     }

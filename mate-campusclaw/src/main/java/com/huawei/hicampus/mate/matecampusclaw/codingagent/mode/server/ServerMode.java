@@ -9,6 +9,7 @@ import com.huawei.hicampus.mate.matecampusclaw.ai.model.ModelRegistry;
 import com.huawei.hicampus.mate.matecampusclaw.codingagent.config.AppPaths;
 import com.huawei.hicampus.mate.matecampusclaw.codingagent.prompt.SystemPromptBuilder;
 import com.huawei.hicampus.mate.matecampusclaw.codingagent.session.SessionConfig;
+import com.huawei.hicampus.mate.matecampusclaw.codingagent.skill.SandboxSkillParser;
 import com.huawei.hicampus.mate.matecampusclaw.codingagent.skill.SkillLoader;
 import com.huawei.hicampus.mate.matecampusclaw.codingagent.skill.SkillManager;
 
@@ -45,6 +46,8 @@ public class ServerMode {
     private final SessionConfig baseConfig;
     private final int port;
     private final String host;
+    private final SandboxSkillParser sandboxParser;
+    private final boolean useSandbox;
 
     public ServerMode(
             CampusClawAiService aiService,
@@ -54,7 +57,7 @@ public class ServerMode {
             SessionConfig baseConfig,
             int port
     ) {
-        this(aiService, modelRegistry, promptBuilder, tools, baseConfig, port, "localhost");
+        this(aiService, modelRegistry, promptBuilder, tools, baseConfig, port, "localhost", null, false);
     }
 
     public ServerMode(
@@ -64,7 +67,9 @@ public class ServerMode {
             List<AgentTool> tools,
             SessionConfig baseConfig,
             int port,
-            String host
+            String host,
+            SandboxSkillParser sandboxParser,
+            boolean useSandbox
     ) {
         this.aiService = aiService;
         this.modelRegistry = modelRegistry;
@@ -73,14 +78,17 @@ public class ServerMode {
         this.baseConfig = baseConfig;
         this.port = port;
         this.host = host;
+        this.sandboxParser = sandboxParser;
+        this.useSandbox = useSandbox;
     }
 
     public void run() {
-        var sessionPool = new SessionPool(aiService, modelRegistry, promptBuilder, tools, baseConfig);
+        var sessionPool = new SessionPool(aiService, modelRegistry, promptBuilder, tools, baseConfig, sandboxParser, useSandbox);
         var chatHandler = new ChatHandler(sessionPool);
+
         var skillHandler = new SkillHandler(
-                new SkillManager(AppPaths.USER_SKILLS_DIR),
-                new SkillLoader());
+                new SkillManager(AppPaths.USER_SKILLS_DIR, sandboxParser, useSandbox),
+                new SkillLoader(sandboxParser, useSandbox));
 
         RouterFunction<ServerResponse> routes = RouterFunctions.route()
                 .GET("/api/health", req ->

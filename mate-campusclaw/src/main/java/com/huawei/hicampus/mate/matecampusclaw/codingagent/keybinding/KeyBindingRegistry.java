@@ -17,7 +17,7 @@ import jakarta.annotation.PostConstruct;
 public class KeyBindingRegistry {
     private static final Logger log = LoggerFactory.getLogger(KeyBindingRegistry.class);
     private static final ObjectMapper MAPPER = new ObjectMapper();
-    private static final Path KEYBINDINGS_FILE = com.huawei.hicampus.mate.matecampusclaw.codingagent.config.AppPaths.KEYBINDINGS_FILE;
+    private static final Path KEYBINDINGS_FILE = com.campusclaw.codingagent.config.AppPaths.KEYBINDINGS_FILE;
 
     private final Map<String, KeyBinding> bindings = new LinkedHashMap<>();
 

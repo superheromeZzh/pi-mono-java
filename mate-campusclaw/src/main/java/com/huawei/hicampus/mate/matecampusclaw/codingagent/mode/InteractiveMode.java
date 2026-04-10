@@ -26,7 +26,6 @@ import com.huawei.hicampus.mate.matecampusclaw.codingagent.mode.tui.*;
 import com.huawei.hicampus.mate.matecampusclaw.codingagent.mode.tui.EditorContainer.CommandSuggestion;
 import com.huawei.hicampus.mate.matecampusclaw.codingagent.prompt.PromptTemplateEntry;
 import com.huawei.hicampus.mate.matecampusclaw.codingagent.session.AgentSession;
-import com.huawei.hicampus.mate.matecampusclaw.codingagent.settings.SettingsManager;
 import com.huawei.hicampus.mate.matecampusclaw.codingagent.skill.Skill;
 import com.huawei.hicampus.mate.matecampusclaw.codingagent.tool.bash.BashExecutionResult;
 import com.huawei.hicampus.mate.matecampusclaw.codingagent.tool.bash.BashExecutor;
@@ -36,6 +35,7 @@ import com.huawei.hicampus.mate.matecampusclaw.tui.Tui;
 import com.huawei.hicampus.mate.matecampusclaw.tui.component.Container;
 import com.huawei.hicampus.mate.matecampusclaw.tui.component.Text;
 import com.huawei.hicampus.mate.matecampusclaw.tui.terminal.Terminal;
+import org.springframework.context.ApplicationContext;
 
 /**
  * Full-screen interactive REPL using TUI component tree rendering.
@@ -56,9 +56,10 @@ public class InteractiveMode {
     private final BashExecutor bashExecutor;
     private final Compactor compactor;
     private final ModelRegistry modelRegistry;
-    private final com.huawei.hicampus.mate.matecampusclaw.cron.CronService cronService;
-    private final com.huawei.hicampus.mate.matecampusclaw.codingagent.loop.LoopManager loopManager;
-    private final SettingsManager settingsManager;
+    private final com.campusclaw.cron.CronService cronService;
+    private final com.campusclaw.codingagent.loop.LoopManager loopManager;
+    private final ApplicationContext applicationContext;
+    private com.campusclaw.assistant.memory.ChatMemoryStore chatMemoryStore;
 
     // Scoped models for Ctrl+P cycling (from --models flag)
     private List<Model> scopedModels = List.of();
@@ -133,16 +134,16 @@ public class InteractiveMode {
                            BashExecutor bashExecutor,
                            Compactor compactor,
                            ModelRegistry modelRegistry,
-                           com.huawei.hicampus.mate.matecampusclaw.cron.CronService cronService,
-                           com.huawei.hicampus.mate.matecampusclaw.codingagent.loop.LoopManager loopManager,
-                           SettingsManager settingsManager) {
+                           com.campusclaw.cron.CronService cronService,
+                           com.campusclaw.codingagent.loop.LoopManager loopManager,
+                           ApplicationContext applicationContext) {
         this.commandRegistry = Objects.requireNonNull(commandRegistry, "commandRegistry");
         this.bashExecutor = bashExecutor;
         this.compactor = compactor;
         this.modelRegistry = modelRegistry;
         this.cronService = cronService;
         this.loopManager = loopManager;
-        this.settingsManager = settingsManager;
+        this.applicationContext = applicationContext;
     }
 
     /**
@@ -153,19 +154,20 @@ public class InteractiveMode {
         Objects.requireNonNull(terminal, "terminal");
         this.currentSession = session;
 
+        // Resolve ChatMemoryStore from Spring context (optional — graceful if DB not configured)
+        if (applicationContext != null) {
+            try {
+                chatMemoryStore = applicationContext.getBean(com.campusclaw.assistant.memory.ChatMemoryStore.class);
+            } catch (Exception e) {
+                chatMemoryStore = null; // DB not configured, skip ChatMemory
+            }
+        }
+
         // Build component tree
         root = new Container();
         chatContainer = new Container();
         editorContainer = new EditorContainer();
         footer = new FooterComponent();
-
-        // Initialize hideThinkingBlock from settings
-        if (settingsManager != null) {
-            var settings = settingsManager.load();
-            if (settings.hideThinkingBlock() != null) {
-                hideThinkingBlock = settings.hideThinkingBlock();
-            }
-        }
 
         // Welcome text with keybinding hints matching campusclaw style
         // Colors from campusclaw dark theme: dim=#666666, muted=#808080
@@ -243,16 +245,16 @@ public class InteractiveMode {
             cronService.addListener(event -> {
                 String cronTag = "\033[38;2;102;178;178m[cron]\033[0m ";
                 String msg = switch (event) {
-                    case com.huawei.hicampus.mate.matecampusclaw.cron.model.CronEvent.JobStarted e ->
+                    case com.campusclaw.cron.model.CronEvent.JobStarted e ->
                         cronTag + "Running: " + e.jobName();
-                    case com.huawei.hicampus.mate.matecampusclaw.cron.model.CronEvent.JobCompleted e -> {
+                    case com.campusclaw.cron.model.CronEvent.JobCompleted e -> {
                         String line = cronTag + "Completed: " + e.jobName();
                         if (e.output() != null && !e.output().isBlank()) {
                             line += "\n" + e.output();
                         }
                         yield line;
                     }
-                    case com.huawei.hicampus.mate.matecampusclaw.cron.model.CronEvent.JobFailed e ->
+                    case com.campusclaw.cron.model.CronEvent.JobFailed e ->
                         cronTag + "Failed: " + e.jobName() + " — " + e.error();
                 };
                 synchronized (tuiLock) {
@@ -554,7 +556,8 @@ public class InteractiveMode {
 
                 // Slash commands — skip if it's a /skill: invocation or prompt template
                 if (trimmed.startsWith("/") && !isSkillOrTemplate(trimmed, session)) {
-                    if (handleSlashCommand(trimmed, session)) {
+                    try {
+                        if (handleSlashCommand(trimmed, session)) {
                         // Refresh state after commands that change it
                         if (trimmed.startsWith("/new") || trimmed.startsWith("/reload")) {
                             buildCommandSuggestions(session);
@@ -590,6 +593,10 @@ public class InteractiveMode {
                         }
                         tui.render();
                         continue;
+                    }
+                    } catch (com.campusclaw.codingagent.command.QuitException e) {
+                        // Graceful exit requested via /quit command
+                        break;
                     }
                 }
 
@@ -697,6 +704,15 @@ public class InteractiveMode {
             sm.appendMessage(new UserMessage(input, System.currentTimeMillis()));
         }
 
+        // Persist user message to ChatMemory (GaussDB)
+        if (chatMemoryStore != null && sm != null) {
+            try {
+                chatMemoryStore.append(sm.getSessionId(), List.of(new UserMessage(input, System.currentTimeMillis())));
+            } catch (Exception e) {
+                System.err.println("[InteractiveMode] Failed to persist user message to ChatMemory: " + e.getMessage());
+            }
+        }
+
         currentAssistantMessage = new AssistantMessageComponent();
         chatContainer.addChild(currentAssistantMessage);
         pendingTools.clear();
@@ -755,6 +771,19 @@ public class InteractiveMode {
 
         if (currentAssistantMessage != null) {
             currentAssistantMessage.setComplete(true);
+
+            // Publish agent response event for WebSocket gateway to relay back
+            if (applicationContext != null && currentAssistantMessage.hasContent()) {
+                String replyText = currentAssistantMessage.getTextContent();
+                if (replyText != null && !replyText.isEmpty()) {
+                    try {
+                        applicationContext.publishEvent(
+                            new com.campusclaw.assistant.channel.gateway.AgentResponseEvent(this, replyText));
+                    } catch (Exception e) {
+                        System.err.println("[InteractiveMode] Failed to publish AgentResponseEvent: " + e.getMessage());
+                    }
+                }
+            }
         }
         currentAssistantMessage = null;
 
@@ -969,19 +998,19 @@ public class InteractiveMode {
                     if (msg instanceof UserMessage um) {
                         String text = "";
                         for (var block : um.content()) {
-                            if (block instanceof com.huawei.hicampus.mate.matecampusclaw.ai.types.TextContent tc) {
+                            if (block instanceof com.campusclaw.ai.types.TextContent tc) {
                                 text = tc.text();
                                 break;
                             }
                         }
                         chatContainer.addChild(new UserMessageComponent(text));
-                    } else if (msg instanceof com.huawei.hicampus.mate.matecampusclaw.ai.types.AssistantMessage am) {
+                    } else if (msg instanceof com.campusclaw.ai.types.AssistantMessage am) {
                         var comp = new AssistantMessageComponent();
                         comp.setHideThinking(hideThinkingBlock);
                         for (var block : am.content()) {
-                            if (block instanceof com.huawei.hicampus.mate.matecampusclaw.ai.types.TextContent tc) {
+                            if (block instanceof com.campusclaw.ai.types.TextContent tc) {
                                 comp.appendText(tc.text());
-                            } else if (block instanceof com.huawei.hicampus.mate.matecampusclaw.ai.types.ThinkingContent tc) {
+                            } else if (block instanceof com.campusclaw.ai.types.ThinkingContent tc) {
                                 comp.appendThinking(tc.thinking());
                             }
                         }
@@ -1161,6 +1190,14 @@ public class InteractiveMode {
                     if (currentSession != null) {
                         var sm = currentSession.getSessionManager();
                         if (sm != null) sm.appendMessage(msg);
+                        // Persist assistant message to ChatMemory (GaussDB)
+                        if (chatMemoryStore != null) {
+                            try {
+                                chatMemoryStore.append(sm.getSessionId(), List.of(msg));
+                            } catch (Exception ex) {
+                                System.err.println("[InteractiveMode] Failed to persist assistant message to ChatMemory: " + ex.getMessage());
+                            }
+                        }
                     }
                 }
             }

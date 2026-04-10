@@ -50,7 +50,7 @@ public class PromptTemplateLoader {
         loadFromDir(globalDir, "user", byName);
 
         // Project prompts override
-        Path projectDir = cwd.resolve(com.huawei.hicampus.mate.matecampusclaw.codingagent.config.AppPaths.CONFIG_DIR_NAME).resolve("prompts");
+        Path projectDir = cwd.resolve(com.campusclaw.codingagent.config.AppPaths.CONFIG_DIR_NAME).resolve("prompts");
         loadFromDir(projectDir, "project", byName);
 
         return List.copyOf(byName.values());

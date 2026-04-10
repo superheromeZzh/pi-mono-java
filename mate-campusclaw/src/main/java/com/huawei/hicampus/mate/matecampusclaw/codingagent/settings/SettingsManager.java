@@ -18,8 +18,8 @@ public class SettingsManager {
     private static final Logger log = LoggerFactory.getLogger(SettingsManager.class);
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
-    private static final Path GLOBAL_SETTINGS = com.huawei.hicampus.mate.matecampusclaw.codingagent.config.AppPaths.GLOBAL_SETTINGS;
-    private static final String PROJECT_SETTINGS = com.huawei.hicampus.mate.matecampusclaw.codingagent.config.AppPaths.PROJECT_SETTINGS;
+    private static final Path GLOBAL_SETTINGS = com.campusclaw.codingagent.config.AppPaths.GLOBAL_SETTINGS;
+    private static final String PROJECT_SETTINGS = com.campusclaw.codingagent.config.AppPaths.PROJECT_SETTINGS;
 
     private Path workingDir = Path.of(System.getProperty("user.dir"));
 

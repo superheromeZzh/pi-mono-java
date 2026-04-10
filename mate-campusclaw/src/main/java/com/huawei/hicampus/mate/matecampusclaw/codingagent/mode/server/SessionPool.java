@@ -15,6 +15,7 @@ import com.huawei.hicampus.mate.matecampusclaw.ai.model.ModelRegistry;
 import com.huawei.hicampus.mate.matecampusclaw.codingagent.prompt.SystemPromptBuilder;
 import com.huawei.hicampus.mate.matecampusclaw.codingagent.session.AgentSession;
 import com.huawei.hicampus.mate.matecampusclaw.codingagent.session.SessionConfig;
+import com.huawei.hicampus.mate.matecampusclaw.codingagent.skill.SandboxSkillParser;
 import com.huawei.hicampus.mate.matecampusclaw.codingagent.skill.SkillExpander;
 import com.huawei.hicampus.mate.matecampusclaw.codingagent.skill.SkillLoader;
 
@@ -35,6 +36,8 @@ public class SessionPool {
     private final SystemPromptBuilder promptBuilder;
     private final List<AgentTool> tools;
     private final SessionConfig baseConfig;
+    private final SandboxSkillParser sandboxParser;
+    private final boolean useSandbox;
 
     private final Map<String, Entry> sessions = new ConcurrentHashMap<>();
     private final ScheduledExecutorService cleaner;
@@ -48,11 +51,25 @@ public class SessionPool {
             List<AgentTool> tools,
             SessionConfig baseConfig
     ) {
+        this(aiService, modelRegistry, promptBuilder, tools, baseConfig, null, false);
+    }
+
+    public SessionPool(
+            CampusClawAiService aiService,
+            ModelRegistry modelRegistry,
+            SystemPromptBuilder promptBuilder,
+            List<AgentTool> tools,
+            SessionConfig baseConfig,
+            SandboxSkillParser sandboxParser,
+            boolean useSandbox
+    ) {
         this.aiService = aiService;
         this.modelRegistry = modelRegistry;
         this.promptBuilder = promptBuilder;
         this.tools = tools;
         this.baseConfig = baseConfig;
+        this.sandboxParser = sandboxParser;
+        this.useSandbox = useSandbox;
 
         this.cleaner = Executors.newSingleThreadScheduledExecutor(r -> {
             var t = new Thread(r, "session-pool-cleaner");
@@ -115,7 +132,9 @@ public class SessionPool {
     private AgentSession createSession() {
         AgentSession session = new AgentSession(
                 aiService, modelRegistry, promptBuilder,
-                new SkillLoader(), new SkillExpander(), tools
+                new SkillLoader(sandboxParser, useSandbox),
+                new SkillExpander(sandboxParser, useSandbox),
+                tools
         );
         session.initialize(baseConfig);
         return session;

@@ -100,7 +100,7 @@ public class OpenAIResponsesProvider implements ApiProvider {
             @Nullable String apiKey,
             @Nullable Integer maxTokens,
             @Nullable Double temperature,
-            @Nullable com.huawei.hicampus.mate.matecampusclaw.ai.types.ThinkingLevel reasoning) {
+            @Nullable com.campusclaw.ai.types.ThinkingLevel reasoning) {
 
         var eventStream = new AssistantMessageEventStream();
 
@@ -120,7 +120,7 @@ public class OpenAIResponsesProvider implements ApiProvider {
             @Nullable String apiKey,
             @Nullable Integer maxTokens,
             @Nullable Double temperature,
-            @Nullable com.huawei.hicampus.mate.matecampusclaw.ai.types.ThinkingLevel reasoning,
+            @Nullable com.campusclaw.ai.types.ThinkingLevel reasoning,
             AssistantMessageEventStream eventStream) {
 
         String resolvedApiKey = apiKey != null ? apiKey
@@ -162,7 +162,7 @@ public class OpenAIResponsesProvider implements ApiProvider {
             Model model, Context context,
             @Nullable Integer maxTokens,
             @Nullable Double temperature,
-            @Nullable com.huawei.hicampus.mate.matecampusclaw.ai.types.ThinkingLevel reasoning) {
+            @Nullable com.campusclaw.ai.types.ThinkingLevel reasoning) {
 
         int resolvedMaxTokens = maxTokens != null ? maxTokens
                 : Math.min(model.maxTokens(), 32000);
@@ -190,7 +190,7 @@ public class OpenAIResponsesProvider implements ApiProvider {
 
         // Reasoning configuration via additional body properties
         if (model.reasoning()) {
-            if (reasoning != null && reasoning != com.huawei.hicampus.mate.matecampusclaw.ai.types.ThinkingLevel.OFF) {
+            if (reasoning != null && reasoning != com.campusclaw.ai.types.ThinkingLevel.OFF) {
                 String effort = mapReasoningEffort(reasoning);
                 var reasoningObj = Map.of("effort", (Object) effort, "summary", (Object) "auto");
                 builder.putAdditionalBodyProperty("reasoning",
@@ -204,7 +204,7 @@ public class OpenAIResponsesProvider implements ApiProvider {
         return builder.build();
     }
 
-    private static String mapReasoningEffort(com.huawei.hicampus.mate.matecampusclaw.ai.types.ThinkingLevel level) {
+    private static String mapReasoningEffort(com.campusclaw.ai.types.ThinkingLevel level) {
         return switch (level) {
             case MINIMAL -> "low";
             case LOW -> "low";
@@ -494,7 +494,7 @@ public class OpenAIResponsesProvider implements ApiProvider {
 
     // -- Tool conversion (Responses API uses its own Tool type) --
 
-    static List<Tool> convertTools(List<com.huawei.hicampus.mate.matecampusclaw.ai.types.Tool> tools) {
+    static List<Tool> convertTools(List<com.campusclaw.ai.types.Tool> tools) {
         List<Tool> result = new ArrayList<>();
         for (var tool : tools) {
             var paramsBuilder = FunctionTool.Parameters.builder();

@@ -22,7 +22,7 @@ public class SessionTreePersistence {
     }
 
     public SessionTreePersistence() {
-        this(com.huawei.hicampus.mate.matecampusclaw.codingagent.config.AppPaths.SESSIONS_DIR);
+        this(com.campusclaw.codingagent.config.AppPaths.SESSIONS_DIR);
     }
 
     /** Save a session tree to a JSONL file. */

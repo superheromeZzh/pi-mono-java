@@ -26,6 +26,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
 /**
@@ -33,6 +34,7 @@ import org.springframework.stereotype.Component;
  * Results are sorted by modification time (most recent first).
  */
 @Component
+@ConditionalOnProperty(name = "tool.execution.hybrid-enabled", havingValue = "false", matchIfMissing = true)
 public class GlobTool implements AgentTool {
 
     static final int MAX_RESULTS = 1000;
