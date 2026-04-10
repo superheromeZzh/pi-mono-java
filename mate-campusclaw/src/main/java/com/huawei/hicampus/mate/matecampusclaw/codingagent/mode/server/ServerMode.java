@@ -44,6 +44,7 @@ public class ServerMode {
     private final List<AgentTool> tools;
     private final SessionConfig baseConfig;
     private final int port;
+    private final String host;
 
     public ServerMode(
             CampusClawAiService aiService,
@@ -53,12 +54,25 @@ public class ServerMode {
             SessionConfig baseConfig,
             int port
     ) {
+        this(aiService, modelRegistry, promptBuilder, tools, baseConfig, port, "localhost");
+    }
+
+    public ServerMode(
+            CampusClawAiService aiService,
+            ModelRegistry modelRegistry,
+            SystemPromptBuilder promptBuilder,
+            List<AgentTool> tools,
+            SessionConfig baseConfig,
+            int port,
+            String host
+    ) {
         this.aiService = aiService;
         this.modelRegistry = modelRegistry;
         this.promptBuilder = promptBuilder;
         this.tools = tools;
         this.baseConfig = baseConfig;
         this.port = port;
+        this.host = host;
     }
 
     public void run() {
@@ -90,12 +104,13 @@ public class ServerMode {
         var adapter = new ReactorHttpHandlerAdapter(httpHandler);
 
         var server = HttpServer.create()
+                .host(host)
                 .port(port)
                 .handle(adapter)
                 .bindNow();
 
-        log.info("CampusClaw API server started on port {}", port);
-        System.out.println("CampusClaw API server started on http://localhost:" + port);
+        log.info("CampusClaw API server started on {}:{}", host, port);
+        System.out.println("CampusClaw API server started on http://" + host + ":" + port);
         System.out.println("Endpoints:");
         System.out.println("  GET    /api/health");
         System.out.println("  POST   /api/chat");

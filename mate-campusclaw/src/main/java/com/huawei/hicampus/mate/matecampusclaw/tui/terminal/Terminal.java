@@ -54,6 +54,11 @@ public interface Terminal {
     void exitRawMode();
 
     /**
+     * Removes all registered input and resize listeners.
+     */
+    void clearListeners();
+
+    /**
      * Releases all resources held by this terminal (streams, native handles, etc.).
      */
     void close();

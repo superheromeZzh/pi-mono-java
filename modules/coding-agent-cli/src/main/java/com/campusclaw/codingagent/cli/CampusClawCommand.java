@@ -107,6 +107,9 @@ public class CampusClawCommand implements Callable<Integer> {
     @Option(names = {"--port"}, description = "HTTP server port (for server mode)")
     Integer port;
 
+    @Option(names = {"--host"}, description = "HTTP server bind address (for server mode, default: localhost)")
+    String host;
+
     @Option(names = {"--proxy"}, description = "HTTP/SOCKS5 proxy URL (e.g. http://127.0.0.1:7890)")
     String proxy;
 
@@ -200,8 +203,9 @@ public class CampusClawCommand implements Callable<Integer> {
 
         String effectivePrompt = resolvePrompt();
 
-        // Read piped stdin if not a TTY
-        if (effectivePrompt == null && System.console() == null) {
+        // Read piped stdin if not a TTY (skip for modes that don't need a prompt)
+        if (effectivePrompt == null && System.console() == null
+                && !"server".equals(mode) && !"rpc".equals(mode) && !"print".equals(mode)) {
             try {
                 String piped = new String(System.in.readAllBytes()).trim();
                 if (!piped.isEmpty()) {
@@ -482,6 +486,7 @@ public class CampusClawCommand implements Callable<Integer> {
         if ("server".equals(mode)) {
             new ServerMode(piAiService, modelRegistry, promptBuilder,
                     effectiveTools, config, port != null ? port : 3000,
+                    host != null ? host : "localhost",
                     sandboxSkillParser, useSandbox).run();
             return 0;
         }

@@ -2,8 +2,12 @@ package com.campusclaw.codingagent.cli;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
 import java.nio.file.Path;
 
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
@@ -293,6 +297,19 @@ class CampusClawCommandTest {
 
     @Nested
     class Execution {
+
+        private InputStream originalIn;
+
+        @BeforeEach
+        void setUp() {
+            originalIn = System.in;
+            System.setIn(new ByteArrayInputStream(new byte[0]));
+        }
+
+        @AfterEach
+        void tearDown() {
+            System.setIn(originalIn);
+        }
 
         @Test
         void printModeReturnsZero() {

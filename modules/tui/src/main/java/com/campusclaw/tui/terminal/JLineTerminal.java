@@ -117,6 +117,12 @@ public class JLineTerminal implements Terminal {
     }
 
     @Override
+    public void clearListeners() {
+        inputListeners.clear();
+        resizeListeners.clear();
+    }
+
+    @Override
     public void enterRawMode() {
         savedAttributes = jline.getAttributes();
         jline.enterRawMode();

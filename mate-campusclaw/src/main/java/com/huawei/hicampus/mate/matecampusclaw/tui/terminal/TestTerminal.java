@@ -81,6 +81,12 @@ public class TestTerminal implements Terminal {
     }
 
     @Override
+    public void clearListeners() {
+        inputListeners.clear();
+        resizeListeners.clear();
+    }
+
+    @Override
     public void close() {
         closed = true;
     }
