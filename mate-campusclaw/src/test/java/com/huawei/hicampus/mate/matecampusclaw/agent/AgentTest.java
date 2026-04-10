@@ -319,7 +319,7 @@ class AgentTest {
         public AssistantMessageEventStream stream(
             Model model,
             Context context,
-            com.campusclaw.ai.types.StreamOptions options
+            com.huawei.hicampus.mate.matecampusclaw.ai.types.StreamOptions options
         ) {
             throw new UnsupportedOperationException("Agent uses streamSimple");
         }
@@ -353,7 +353,7 @@ class AgentTest {
         public AssistantMessageEventStream stream(
             Model model,
             Context context,
-            com.campusclaw.ai.types.StreamOptions options
+            com.huawei.hicampus.mate.matecampusclaw.ai.types.StreamOptions options
         ) {
             throw new UnsupportedOperationException("Agent uses streamSimple");
         }
@@ -377,7 +377,7 @@ class AgentTest {
         public AssistantMessageEventStream stream(
             Model model,
             Context context,
-            com.campusclaw.ai.types.StreamOptions options
+            com.huawei.hicampus.mate.matecampusclaw.ai.types.StreamOptions options
         ) {
             throw new UnsupportedOperationException("Agent uses streamSimple");
         }

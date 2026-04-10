@@ -142,7 +142,7 @@ public class MistralProvider implements ApiProvider {
                                             thinkingStarted[0] = true;
                                             accumulatedBlocks.add(new ThinkingContent("", null, false));
                                             int idx = accumulatedBlocks.size() - 1;
-                                            eventStream.push(new com.campusclaw.ai.stream.AssistantMessageEvent.ThinkingStartEvent(
+                                            eventStream.push(new com.huawei.hicampus.mate.matecampusclaw.ai.stream.AssistantMessageEvent.ThinkingStartEvent(
                                                 idx, buildPartial(model, accumulatedBlocks,
                                                     currentText.toString(), currentThinking.toString(),
                                                     toolCallAccs, stop[0], usage[0])));
@@ -150,7 +150,7 @@ public class MistralProvider implements ApiProvider {
                                         currentThinking.append(thinkText);
                                         int idx = accumulatedBlocks.size() - 1;
                                         accumulatedBlocks.set(idx, new ThinkingContent(currentThinking.toString(), null, false));
-                                        eventStream.push(new com.campusclaw.ai.stream.AssistantMessageEvent.ThinkingDeltaEvent(
+                                        eventStream.push(new com.huawei.hicampus.mate.matecampusclaw.ai.stream.AssistantMessageEvent.ThinkingDeltaEvent(
                                             idx, thinkText,
                                             buildPartial(model, accumulatedBlocks,
                                                 currentText.toString(), currentThinking.toString(),
@@ -201,7 +201,7 @@ public class MistralProvider implements ApiProvider {
             if (thinkingStarted[0] && !currentThinking.isEmpty()) {
                 int thinkIdx = accumulatedBlocks.size() - 1;
                 accumulatedBlocks.set(thinkIdx, new ThinkingContent(currentThinking.toString(), null, false));
-                eventStream.push(new com.campusclaw.ai.stream.AssistantMessageEvent.ThinkingEndEvent(
+                eventStream.push(new com.huawei.hicampus.mate.matecampusclaw.ai.stream.AssistantMessageEvent.ThinkingEndEvent(
                     thinkIdx, currentThinking.toString(),
                     buildPartial(model, accumulatedBlocks, currentText.toString(),
                         currentThinking.toString(), toolCallAccs, stop[0], usage[0])));

@@ -74,7 +74,7 @@ public class DebugCommand implements SlashCommand {
         }
 
         // Write to file
-        Path debugDir = com.campusclaw.codingagent.config.AppPaths.USER_AGENT_DIR;
+        Path debugDir = com.huawei.hicampus.mate.matecampusclaw.codingagent.config.AppPaths.USER_AGENT_DIR;
         try {
             Files.createDirectories(debugDir);
         } catch (IOException e) {

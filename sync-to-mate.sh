@@ -107,7 +107,22 @@ replace_package_names() {
         # 替换 import 语句
         find "$target_dir" -name "*.java" -exec sed -i '' \
             "s/import $old_pkg/import $new_pkg/g" {} \; 2>/dev/null || true
+
+        # 替换完全限定类名（如 com.campusclaw.xxx.SomeClass.method()）
+        # 注意：不使用 \b 单词边界，因为 macOS sed 不支持
+        find "$target_dir" -name "*.java" -exec sed -i '' \
+            "s/$old_pkg\./$new_pkg./g" {} \; 2>/dev/null || true
+
+        # 替换字符串字面量中的包名（如 scanBasePackages = "com.campusclaw"）
+        find "$target_dir" -name "*.java" -exec sed -i '' \
+            "s/\"$old_pkg/\"$new_pkg/g" {} \; 2>/dev/null || true
     done
+
+    # 特殊处理：替换根包 com.campusclaw（用于 scanBasePackages 等字符串）
+    find "$target_dir" -name "*.java" -exec sed -i '' \
+        's/"com\.campusclaw"/"com.huawei.hicampus.mate.matecampusclaw"/g' {} \; 2>/dev/null || true
+    find "$target_dir" -name "*.java" -exec sed -i '' \
+        's/"com\.campusclaw\./"com.huawei.hicampus.mate.matecampusclaw./g' {} \; 2>/dev/null || true
 }
 
 # 主逻辑

@@ -336,7 +336,7 @@ class AnthropicProviderTest {
         void errorsWhenNoApiKey() {
             var context = new Context(null,
                     List.of(new UserMessage("Hello", 1L)), null);
-            var eventStream = new com.campusclaw.ai.stream.AssistantMessageEventStream();
+            var eventStream = new com.huawei.hicampus.mate.matecampusclaw.ai.stream.AssistantMessageEventStream();
 
             // executeStream with null apiKey and no env var
             provider.executeStream(testModel(), context,

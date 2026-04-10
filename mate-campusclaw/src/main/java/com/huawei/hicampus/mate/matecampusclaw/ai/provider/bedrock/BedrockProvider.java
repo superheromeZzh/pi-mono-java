@@ -103,8 +103,8 @@ public class BedrockProvider implements ApiProvider {
             Model model, Context context,
             @Nullable Integer maxTokens,
             @Nullable Double temperature,
-            @Nullable com.campusclaw.ai.types.ThinkingLevel reasoning,
-            @Nullable com.campusclaw.ai.types.ThinkingBudgets thinkingBudgets) {
+            @Nullable com.huawei.hicampus.mate.matecampusclaw.ai.types.ThinkingLevel reasoning,
+            @Nullable com.huawei.hicampus.mate.matecampusclaw.ai.types.ThinkingBudgets thinkingBudgets) {
 
         var eventStream = new AssistantMessageEventStream();
 
@@ -123,8 +123,8 @@ public class BedrockProvider implements ApiProvider {
             Model model, Context context,
             @Nullable Integer maxTokens,
             @Nullable Double temperature,
-            @Nullable com.campusclaw.ai.types.ThinkingLevel reasoning,
-            @Nullable com.campusclaw.ai.types.ThinkingBudgets thinkingBudgets,
+            @Nullable com.huawei.hicampus.mate.matecampusclaw.ai.types.ThinkingLevel reasoning,
+            @Nullable com.huawei.hicampus.mate.matecampusclaw.ai.types.ThinkingBudgets thinkingBudgets,
             AssistantMessageEventStream eventStream) {
 
         BedrockRuntimeAsyncClient client = buildClient();
@@ -153,8 +153,8 @@ public class BedrockProvider implements ApiProvider {
             Model model, Context context,
             @Nullable Integer maxTokens,
             @Nullable Double temperature,
-            @Nullable com.campusclaw.ai.types.ThinkingLevel reasoning,
-            @Nullable com.campusclaw.ai.types.ThinkingBudgets thinkingBudgets) {
+            @Nullable com.huawei.hicampus.mate.matecampusclaw.ai.types.ThinkingLevel reasoning,
+            @Nullable com.huawei.hicampus.mate.matecampusclaw.ai.types.ThinkingBudgets thinkingBudgets) {
 
         int resolvedMaxTokens = maxTokens != null ? maxTokens
                 : Math.min(model.maxTokens(), 32000);
@@ -180,7 +180,7 @@ public class BedrockProvider implements ApiProvider {
         }
 
         // Thinking / reasoning configuration via additionalModelRequestFields
-        if (reasoning != null && reasoning != com.campusclaw.ai.types.ThinkingLevel.OFF
+        if (reasoning != null && reasoning != com.huawei.hicampus.mate.matecampusclaw.ai.types.ThinkingLevel.OFF
                 && model.reasoning()) {
             Document thinkingDoc = buildThinkingConfig(model, reasoning, thinkingBudgets, resolvedMaxTokens);
             if (thinkingDoc != null) {
@@ -196,8 +196,8 @@ public class BedrockProvider implements ApiProvider {
      * Supports both adaptive thinking (Claude 4.6+) and budget-based thinking (older Claude).
      */
     private static Document buildThinkingConfig(
-            Model model, com.campusclaw.ai.types.ThinkingLevel reasoning,
-            @Nullable com.campusclaw.ai.types.ThinkingBudgets thinkingBudgets,
+            Model model, com.huawei.hicampus.mate.matecampusclaw.ai.types.ThinkingLevel reasoning,
+            @Nullable com.huawei.hicampus.mate.matecampusclaw.ai.types.ThinkingBudgets thinkingBudgets,
             int maxTokens) {
 
         boolean isClaude = model.id().contains("anthropic.claude") || model.id().contains("anthropic/claude");
@@ -230,7 +230,7 @@ public class BedrockProvider implements ApiProvider {
             || lower.contains("opus4") || lower.contains("sonnet4");
     }
 
-    private static String mapBedrockThinkingEffort(com.campusclaw.ai.types.ThinkingLevel level, String modelId) {
+    private static String mapBedrockThinkingEffort(com.huawei.hicampus.mate.matecampusclaw.ai.types.ThinkingLevel level, String modelId) {
         boolean isOpus = modelId.toLowerCase().contains("opus");
         return switch (level) {
             case MINIMAL, LOW -> "low";
@@ -242,8 +242,8 @@ public class BedrockProvider implements ApiProvider {
     }
 
     private static int resolveBedrockBudget(
-            com.campusclaw.ai.types.ThinkingLevel level,
-            @Nullable com.campusclaw.ai.types.ThinkingBudgets budgets,
+            com.huawei.hicampus.mate.matecampusclaw.ai.types.ThinkingLevel level,
+            @Nullable com.huawei.hicampus.mate.matecampusclaw.ai.types.ThinkingBudgets budgets,
             int maxTokens) {
         if (budgets != null) {
             Integer custom = switch (level) {
@@ -608,7 +608,7 @@ public class BedrockProvider implements ApiProvider {
 
     // -- Tool conversion --
 
-    static List<Tool> convertTools(List<com.campusclaw.ai.types.Tool> tools) {
+    static List<Tool> convertTools(List<com.huawei.hicampus.mate.matecampusclaw.ai.types.Tool> tools) {
         List<Tool> result = new ArrayList<>();
         for (var tool : tools) {
             Document schemaDoc = tool.parameters() != null

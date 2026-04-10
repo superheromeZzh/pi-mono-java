@@ -17,7 +17,7 @@ import org.springframework.stereotype.Service;
 public class AuthStorage {
     private static final Logger log = LoggerFactory.getLogger(AuthStorage.class);
     private static final ObjectMapper MAPPER = new ObjectMapper();
-    private static final Path AUTH_FILE = com.campusclaw.codingagent.config.AppPaths.AUTH_FILE;
+    private static final Path AUTH_FILE = com.huawei.hicampus.mate.matecampusclaw.codingagent.config.AppPaths.AUTH_FILE;
     private static final Set<PosixFilePermission> OWNER_ONLY = PosixFilePermissions.fromString("rw-------");
 
     /** Get credential for a provider. */

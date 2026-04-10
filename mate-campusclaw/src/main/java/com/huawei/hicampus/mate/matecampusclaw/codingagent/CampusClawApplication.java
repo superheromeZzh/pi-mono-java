@@ -17,7 +17,7 @@ import picocli.CommandLine.IFactory;
  * CampusClaw — Spring Boot CLI application.
  * Bridges Picocli with Spring Boot via the picocli-spring-boot-starter.
  */
-@SpringBootApplication(scanBasePackages = "com.campusclaw")
+@SpringBootApplication(scanBasePackages = "com.huawei.hicampus.mate.matecampusclaw")
 @EnableConfigurationProperties(ToolExecutionProperties.class)
 public class CampusClawApplication implements CommandLineRunner, ExitCodeGenerator {
 

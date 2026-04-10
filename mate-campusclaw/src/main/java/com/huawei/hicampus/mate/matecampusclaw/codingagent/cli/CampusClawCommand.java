@@ -62,8 +62,8 @@ public class CampusClawCommand implements Callable<Integer> {
     private final SlashCommandRegistry commandRegistry;
     private final BashExecutor bashExecutor;
     private final SettingsManager settingsManager;
-    private final com.campusclaw.cron.CronService cronService;
-    private final com.campusclaw.codingagent.loop.LoopManager loopManager;
+    private final com.huawei.hicampus.mate.matecampusclaw.cron.CronService cronService;
+    private final com.huawei.hicampus.mate.matecampusclaw.codingagent.loop.LoopManager loopManager;
     private final org.springframework.context.ApplicationContext applicationContext;
     private final SandboxSkillParser sandboxSkillParser;
 
@@ -71,8 +71,8 @@ public class CampusClawCommand implements Callable<Integer> {
                      SystemPromptBuilder promptBuilder, List<AgentTool> tools,
                      SlashCommandRegistry commandRegistry, BashExecutor bashExecutor,
                      SettingsManager settingsManager,
-                     @org.springframework.lang.Nullable com.campusclaw.cron.CronService cronService,
-                     com.campusclaw.codingagent.loop.LoopManager loopManager,
+                     @org.springframework.lang.Nullable com.huawei.hicampus.mate.matecampusclaw.cron.CronService cronService,
+                     com.huawei.hicampus.mate.matecampusclaw.codingagent.loop.LoopManager loopManager,
                      org.springframework.context.ApplicationContext applicationContext,
                      @org.springframework.lang.Nullable SandboxSkillParser sandboxSkillParser) {
         this.piAiService = piAiService;
@@ -219,7 +219,7 @@ public class CampusClawCommand implements Callable<Integer> {
         Path effectiveCwd = cwd != null ? cwd : Path.of(System.getProperty("user.dir"));
 
         // Ensure user-level config directories exist
-        com.campusclaw.codingagent.config.AppPaths.ensureUserDirs();
+        com.huawei.hicampus.mate.matecampusclaw.codingagent.config.AppPaths.ensureUserDirs();
 
         // Load settings and apply defaults for model and thinking level
         Settings settings = settingsManager != null ? settingsManager.load() : Settings.empty();
@@ -289,7 +289,7 @@ public class CampusClawCommand implements Callable<Integer> {
                 return 1;
             }
 
-            String html = com.campusclaw.codingagent.export.HtmlExporter.export(
+            String html = com.huawei.hicampus.mate.matecampusclaw.codingagent.export.HtmlExporter.export(
                     messages, "CampusClaw Session", sm.getSessionId());
             try {
                 Files.writeString(outputFile, html);
@@ -425,7 +425,7 @@ public class CampusClawCommand implements Callable<Integer> {
                 }
             } else if (continueSession) {
                 // --continue: resume latest session (prefer ChatMemory, fallback to JSONL)
-                List<com.campusclaw.ai.types.Message> messages = List.of();
+                List<com.huawei.hicampus.mate.matecampusclaw.ai.types.Message> messages = List.of();
 
                 // Try ChatMemory (GaussDB) first
                 if (applicationContext != null) {
@@ -558,7 +558,7 @@ public class CampusClawCommand implements Callable<Integer> {
             System.err.println("Error: Cron service not available");
             return 1;
         }
-        var store = new com.campusclaw.cron.store.CronStore();
+        var store = new com.huawei.hicampus.mate.matecampusclaw.cron.store.CronStore();
         var processLock = store.acquireProcessLock();
         if (processLock == null) {
             System.err.println("Another cron-tick is already running, skipping");
@@ -586,7 +586,7 @@ public class CampusClawCommand implements Callable<Integer> {
      * Aligned with campusclaw's package management system.
      */
     private Integer handlePackageCommand(String command, List<String> args) {
-        com.campusclaw.codingagent.config.AppPaths.ensureUserDirs();
+        com.huawei.hicampus.mate.matecampusclaw.codingagent.config.AppPaths.ensureUserDirs();
 
         // Normalize "uninstall" → "remove"
         if ("uninstall".equals(command)) command = "remove";
@@ -663,7 +663,7 @@ public class CampusClawCommand implements Callable<Integer> {
      * Handles skill management subcommands: install, list, remove, link, update.
      */
     private Integer handleSkillCommand(List<String> args) {
-        com.campusclaw.codingagent.config.AppPaths.ensureUserDirs();
+        com.huawei.hicampus.mate.matecampusclaw.codingagent.config.AppPaths.ensureUserDirs();
 
         if (args.isEmpty() || "--help".equals(args.get(0)) || "-h".equals(args.get(0))) {
             printSkillHelp(null);
@@ -681,7 +681,7 @@ public class CampusClawCommand implements Callable<Integer> {
         // 检查是否启用沙箱 skill 解析（通过环境变量或配置）
         boolean useSandbox = Boolean.parseBoolean(System.getenv("SKILL_SANDBOX_PARSING"));
         var manager = new SkillManager(
-            com.campusclaw.codingagent.config.AppPaths.USER_SKILLS_DIR,
+            com.huawei.hicampus.mate.matecampusclaw.codingagent.config.AppPaths.USER_SKILLS_DIR,
             sandboxSkillParser,
             useSandbox
         );
@@ -700,7 +700,7 @@ public class CampusClawCommand implements Callable<Integer> {
                     // Show what was installed (使用支持沙箱的 SkillLoader)
                     var skillLoader = new SkillLoader(sandboxSkillParser, useSandbox);
                     var skills = skillLoader.loadFromDirectory(
-                            com.campusclaw.codingagent.config.AppPaths.USER_SKILLS_DIR.resolve(name), "user");
+                            com.huawei.hicampus.mate.matecampusclaw.codingagent.config.AppPaths.USER_SKILLS_DIR.resolve(name), "user");
                     for (var skill : skills) {
                         System.out.println("  - " + skill.name() + ": " + skill.description());
                     }
@@ -769,7 +769,7 @@ public class CampusClawCommand implements Callable<Integer> {
                     String name = manager.importArchive(archivePath);
                     System.out.println("Skill imported: " + name);
                     var skills = new SkillLoader().loadFromDirectory(
-                            com.campusclaw.codingagent.config.AppPaths.USER_SKILLS_DIR.resolve(name), "user");
+                            com.huawei.hicampus.mate.matecampusclaw.codingagent.config.AppPaths.USER_SKILLS_DIR.resolve(name), "user");
                     for (var skill : skills) {
                         System.out.println("  - " + skill.name() + ": " + skill.description());
                     }

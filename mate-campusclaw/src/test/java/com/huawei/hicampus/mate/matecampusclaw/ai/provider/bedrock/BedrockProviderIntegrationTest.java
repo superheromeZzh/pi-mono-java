@@ -127,7 +127,7 @@ class BedrockProviderIntegrationTest {
         @Test
         void buildsRequestWithTools() {
             var tools = List.of(
-                    new com.campusclaw.ai.types.Tool("bash", "Run commands", null));
+                    new com.huawei.hicampus.mate.matecampusclaw.ai.types.Tool("bash", "Run commands", null));
             var context = new Context(null,
                     List.of(new UserMessage("Hello", 1L)), tools);
 
@@ -195,7 +195,7 @@ class BedrockProviderIntegrationTest {
 
         @Test
         void convertsContextWithMultipleMessageTypes() {
-            List<com.campusclaw.ai.types.Message> messages = List.of(
+            List<com.huawei.hicampus.mate.matecampusclaw.ai.types.Message> messages = List.of(
                     new UserMessage("Hello", 1L),
                     new AssistantMessage(
                             List.of(new TextContent("Hi", null),

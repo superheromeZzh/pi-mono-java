@@ -229,7 +229,7 @@ class AgentLoopTest {
         }
 
         @Override
-        public AssistantMessageEventStream stream(Model model, Context context, com.campusclaw.ai.types.StreamOptions options) {
+        public AssistantMessageEventStream stream(Model model, Context context, com.huawei.hicampus.mate.matecampusclaw.ai.types.StreamOptions options) {
             throw new UnsupportedOperationException("AgentLoop uses streamSimple");
         }
 

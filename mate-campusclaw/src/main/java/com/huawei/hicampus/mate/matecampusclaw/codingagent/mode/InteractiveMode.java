@@ -56,8 +56,8 @@ public class InteractiveMode {
     private final BashExecutor bashExecutor;
     private final Compactor compactor;
     private final ModelRegistry modelRegistry;
-    private final com.campusclaw.cron.CronService cronService;
-    private final com.campusclaw.codingagent.loop.LoopManager loopManager;
+    private final com.huawei.hicampus.mate.matecampusclaw.cron.CronService cronService;
+    private final com.huawei.hicampus.mate.matecampusclaw.codingagent.loop.LoopManager loopManager;
     private final ApplicationContext applicationContext;
     private com.campusclaw.assistant.memory.ChatMemoryStore chatMemoryStore;
 
@@ -134,8 +134,8 @@ public class InteractiveMode {
                            BashExecutor bashExecutor,
                            Compactor compactor,
                            ModelRegistry modelRegistry,
-                           com.campusclaw.cron.CronService cronService,
-                           com.campusclaw.codingagent.loop.LoopManager loopManager,
+                           com.huawei.hicampus.mate.matecampusclaw.cron.CronService cronService,
+                           com.huawei.hicampus.mate.matecampusclaw.codingagent.loop.LoopManager loopManager,
                            ApplicationContext applicationContext) {
         this.commandRegistry = Objects.requireNonNull(commandRegistry, "commandRegistry");
         this.bashExecutor = bashExecutor;
@@ -245,16 +245,16 @@ public class InteractiveMode {
             cronService.addListener(event -> {
                 String cronTag = "\033[38;2;102;178;178m[cron]\033[0m ";
                 String msg = switch (event) {
-                    case com.campusclaw.cron.model.CronEvent.JobStarted e ->
+                    case com.huawei.hicampus.mate.matecampusclaw.cron.model.CronEvent.JobStarted e ->
                         cronTag + "Running: " + e.jobName();
-                    case com.campusclaw.cron.model.CronEvent.JobCompleted e -> {
+                    case com.huawei.hicampus.mate.matecampusclaw.cron.model.CronEvent.JobCompleted e -> {
                         String line = cronTag + "Completed: " + e.jobName();
                         if (e.output() != null && !e.output().isBlank()) {
                             line += "\n" + e.output();
                         }
                         yield line;
                     }
-                    case com.campusclaw.cron.model.CronEvent.JobFailed e ->
+                    case com.huawei.hicampus.mate.matecampusclaw.cron.model.CronEvent.JobFailed e ->
                         cronTag + "Failed: " + e.jobName() + " — " + e.error();
                 };
                 synchronized (tuiLock) {
@@ -594,7 +594,7 @@ public class InteractiveMode {
                         tui.render();
                         continue;
                     }
-                    } catch (com.campusclaw.codingagent.command.QuitException e) {
+                    } catch (com.huawei.hicampus.mate.matecampusclaw.codingagent.command.QuitException e) {
                         // Graceful exit requested via /quit command
                         break;
                     }
@@ -998,19 +998,19 @@ public class InteractiveMode {
                     if (msg instanceof UserMessage um) {
                         String text = "";
                         for (var block : um.content()) {
-                            if (block instanceof com.campusclaw.ai.types.TextContent tc) {
+                            if (block instanceof com.huawei.hicampus.mate.matecampusclaw.ai.types.TextContent tc) {
                                 text = tc.text();
                                 break;
                             }
                         }
                         chatContainer.addChild(new UserMessageComponent(text));
-                    } else if (msg instanceof com.campusclaw.ai.types.AssistantMessage am) {
+                    } else if (msg instanceof com.huawei.hicampus.mate.matecampusclaw.ai.types.AssistantMessage am) {
                         var comp = new AssistantMessageComponent();
                         comp.setHideThinking(hideThinkingBlock);
                         for (var block : am.content()) {
-                            if (block instanceof com.campusclaw.ai.types.TextContent tc) {
+                            if (block instanceof com.huawei.hicampus.mate.matecampusclaw.ai.types.TextContent tc) {
                                 comp.appendText(tc.text());
-                            } else if (block instanceof com.campusclaw.ai.types.ThinkingContent tc) {
+                            } else if (block instanceof com.huawei.hicampus.mate.matecampusclaw.ai.types.ThinkingContent tc) {
                                 comp.appendThinking(tc.thinking());
                             }
                         }

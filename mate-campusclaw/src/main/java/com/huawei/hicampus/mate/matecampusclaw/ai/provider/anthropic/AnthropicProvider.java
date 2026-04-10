@@ -453,11 +453,11 @@ public class AnthropicProvider implements ApiProvider {
     static List<MessageParam> convertMessages(List<Message> messages, boolean enableCaching) {
         List<MessageParam> result = new ArrayList<>();
         for (Message message : messages) {
-            if (message instanceof com.campusclaw.ai.types.UserMessage um) {
+            if (message instanceof com.huawei.hicampus.mate.matecampusclaw.ai.types.UserMessage um) {
                 result.add(convertUserMessage(um));
             } else if (message instanceof AssistantMessage am) {
                 result.add(convertAssistantMessage(am));
-            } else if (message instanceof com.campusclaw.ai.types.ToolResultMessage tr) {
+            } else if (message instanceof com.huawei.hicampus.mate.matecampusclaw.ai.types.ToolResultMessage tr) {
                 result.add(convertToolResult(tr));
             }
         }
@@ -508,7 +508,7 @@ public class AnthropicProvider implements ApiProvider {
             .build();
     }
 
-    private static MessageParam convertUserMessage(com.campusclaw.ai.types.UserMessage um) {
+    private static MessageParam convertUserMessage(com.huawei.hicampus.mate.matecampusclaw.ai.types.UserMessage um) {
         List<ContentBlockParam> blocks = new ArrayList<>();
         for (ContentBlock cb : um.content()) {
             if (cb instanceof TextContent tc) {
@@ -572,7 +572,7 @@ public class AnthropicProvider implements ApiProvider {
                 .build();
     }
 
-    private static MessageParam convertToolResult(com.campusclaw.ai.types.ToolResultMessage tr) {
+    private static MessageParam convertToolResult(com.huawei.hicampus.mate.matecampusclaw.ai.types.ToolResultMessage tr) {
         // Collect text content for the tool result
         List<ContentBlockParam> resultBlocks = new ArrayList<>();
         for (ContentBlock cb : tr.content()) {

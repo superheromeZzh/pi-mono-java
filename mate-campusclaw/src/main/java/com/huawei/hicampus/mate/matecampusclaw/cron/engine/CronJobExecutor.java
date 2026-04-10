@@ -39,11 +39,11 @@ public class CronJobExecutor {
     private final ModelRegistry modelRegistry;
     private final CronRunLog runLog;
     private final List<AgentTool> availableTools;
-    private final com.campusclaw.cron.CronService cronService;
+    private final com.huawei.hicampus.mate.matecampusclaw.cron.CronService cronService;
 
     public CronJobExecutor(CampusClawAiService aiService, ModelRegistry modelRegistry,
                            CronRunLog runLog, @Lazy List<AgentTool> availableTools,
-                           @Lazy com.campusclaw.cron.CronService cronService) {
+                           @Lazy com.huawei.hicampus.mate.matecampusclaw.cron.CronService cronService) {
         this.aiService = aiService;
         this.modelRegistry = modelRegistry;
         this.runLog = runLog;

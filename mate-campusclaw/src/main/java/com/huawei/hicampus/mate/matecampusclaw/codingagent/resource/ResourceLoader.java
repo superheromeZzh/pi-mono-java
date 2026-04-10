@@ -52,7 +52,7 @@ public class ResourceLoader {
         Map<String, Resource> byName = new LinkedHashMap<>();
 
         // Project-level
-        Path projectDir = cwd.resolve(com.campusclaw.codingagent.config.AppPaths.CONFIG_DIR_NAME).resolve(subPath);
+        Path projectDir = cwd.resolve(com.huawei.hicampus.mate.matecampusclaw.codingagent.config.AppPaths.CONFIG_DIR_NAME).resolve(subPath);
         loadFromDir(projectDir, "project", byName);
 
         // User-level
@@ -71,7 +71,7 @@ public class ResourceLoader {
      */
     public Optional<String> load(String subPath, String resourceName) {
         // Project-level first
-        Path projectFile = cwd.resolve(com.campusclaw.codingagent.config.AppPaths.CONFIG_DIR_NAME).resolve(subPath).resolve(resourceName);
+        Path projectFile = cwd.resolve(com.huawei.hicampus.mate.matecampusclaw.codingagent.config.AppPaths.CONFIG_DIR_NAME).resolve(subPath).resolve(resourceName);
         if (Files.isRegularFile(projectFile)) {
             return readFile(projectFile);
         }

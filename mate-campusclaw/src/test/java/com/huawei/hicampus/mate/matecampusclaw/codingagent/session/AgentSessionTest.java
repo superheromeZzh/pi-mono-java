@@ -188,7 +188,7 @@ class AgentSessionTest {
             session.initialize(config());
 
             var captor = ArgumentCaptor.forClass(
-                    com.campusclaw.codingagent.prompt.SystemPromptConfig.class);
+                    com.huawei.hicampus.mate.matecampusclaw.codingagent.prompt.SystemPromptConfig.class);
             verify(promptBuilder).build(captor.capture());
 
             var promptConfig = captor.getValue();
@@ -205,7 +205,7 @@ class AgentSessionTest {
             session.initialize(config);
 
             var captor = ArgumentCaptor.forClass(
-                    com.campusclaw.codingagent.prompt.SystemPromptConfig.class);
+                    com.huawei.hicampus.mate.matecampusclaw.codingagent.prompt.SystemPromptConfig.class);
             verify(promptBuilder).build(captor.capture());
 
             assertEquals("Be concise.", captor.getValue().customPrompt());
@@ -268,7 +268,7 @@ class AgentSessionTest {
             session.initialize(config());
 
             var captor = ArgumentCaptor.forClass(
-                    com.campusclaw.codingagent.prompt.SystemPromptConfig.class);
+                    com.huawei.hicampus.mate.matecampusclaw.codingagent.prompt.SystemPromptConfig.class);
             verify(promptBuilder).build(captor.capture());
 
             var skills = captor.getValue().skills();
@@ -294,7 +294,7 @@ class AgentSessionTest {
             session.initialize(config());
 
             var captor = ArgumentCaptor.forClass(
-                    com.campusclaw.codingagent.prompt.SystemPromptConfig.class);
+                    com.huawei.hicampus.mate.matecampusclaw.codingagent.prompt.SystemPromptConfig.class);
             verify(promptBuilder).build(captor.capture());
 
             // visibleSkills should be empty since the only skill is hidden
@@ -539,7 +539,7 @@ class AgentSessionTest {
         @Override
         Agent createAgent(CampusClawAiService aiService) {
             mockAgent = mock(Agent.class);
-            when(mockAgent.getState()).thenReturn(new com.campusclaw.agent.state.AgentState());
+            when(mockAgent.getState()).thenReturn(new com.huawei.hicampus.mate.matecampusclaw.agent.state.AgentState());
             return mockAgent;
         }
 

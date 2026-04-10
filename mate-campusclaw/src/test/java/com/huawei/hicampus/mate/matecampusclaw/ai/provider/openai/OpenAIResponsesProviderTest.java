@@ -185,7 +185,7 @@ class OpenAIResponsesProviderTest {
             params.set("properties", props);
             params.set("required", MAPPER.createArrayNode().add("path"));
 
-            var tool = new com.campusclaw.ai.types.Tool("read", "Read a file", params);
+            var tool = new com.huawei.hicampus.mate.matecampusclaw.ai.types.Tool("read", "Read a file", params);
             var result = OpenAIResponsesProvider.convertTools(List.of(tool));
 
             assertEquals(1, result.size());
@@ -196,8 +196,8 @@ class OpenAIResponsesProviderTest {
         void convertsMultipleTools() {
             ObjectNode params = MAPPER.createObjectNode();
             var tools = List.of(
-                    new com.campusclaw.ai.types.Tool("read", "Read file", params),
-                    new com.campusclaw.ai.types.Tool("write", "Write file", params)
+                    new com.huawei.hicampus.mate.matecampusclaw.ai.types.Tool("read", "Read file", params),
+                    new com.huawei.hicampus.mate.matecampusclaw.ai.types.Tool("write", "Write file", params)
             );
             var result = OpenAIResponsesProvider.convertTools(tools);
 
@@ -356,7 +356,7 @@ class OpenAIResponsesProviderTest {
         @Test
         void setsToolsWhenPresent() {
             ObjectNode toolParams = MAPPER.createObjectNode();
-            var tools = List.of(new com.campusclaw.ai.types.Tool("bash", "Run commands", toolParams));
+            var tools = List.of(new com.huawei.hicampus.mate.matecampusclaw.ai.types.Tool("bash", "Run commands", toolParams));
             var context = new Context(null,
                     List.of(new UserMessage("Hello", 1L)), tools);
 

@@ -386,7 +386,7 @@ public class ExecutionRouter {
         }
 
         return new AgentToolResult(
-            List.of(new com.campusclaw.ai.types.TextContent(output)),
+            List.of(new com.huawei.hicampus.mate.matecampusclaw.ai.types.TextContent(output)),
             null
         );
     }
