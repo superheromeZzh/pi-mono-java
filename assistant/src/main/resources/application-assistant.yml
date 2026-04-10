@@ -1,0 +1,16 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5433/pi_assistant
+    username: postgres
+    password: postgres
+    driver-class-name: org.postgresql.Driver
+
+mybatis:
+  configuration:
+    map-underscore-to-camel-case: true
+
+pi:
+  assistant:
+    gateway:
+      enabled: true
+      token:
