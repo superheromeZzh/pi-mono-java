@@ -5,12 +5,10 @@
                              https://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <!-- TODO: 修改为实际的父项目坐标 -->
     <parent>
         <groupId>com.huawei.hicampus</groupId>
         <artifactId>mate</artifactId>
-        <version>1.0.0-SNAPSHOT</version>
-        <relativePath>../pom.xml</relativePath>
+        <version>25.1.0</version>
     </parent>
 
     <artifactId>mate-campusclaw</artifactId>
@@ -25,7 +23,8 @@
         <start-class>com.huawei.hicampus.mate.matecampusclaw.codingagent.CampusClawApplication</start-class>
 
         <!-- Spring Boot -->
-        <spring-boot.version>3.4.1</spring-boot.version>
+        <spring-boot.version>3.4.5</spring-boot.version>
+        <!-- Spring Framework (强制使用 6.1.x 避免与 Spring Boot 3.4.x 不兼容) -->
 
         <!-- Third-party versions -->
         <anthropic-java.version>2.18.0</anthropic-java.version>
@@ -45,6 +44,14 @@
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-dependencies</artifactId>
                 <version>${spring-boot.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            <!--  强制覆盖 Spring Framework 版本，避免 6.2.x引入的不兼容问题 -->
+            <dependency>
+                <groupId>org.springframework</groupId>
+                <artifactId>spring-framework-bom</artifactId>
+                <version>${sspring-framework.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
