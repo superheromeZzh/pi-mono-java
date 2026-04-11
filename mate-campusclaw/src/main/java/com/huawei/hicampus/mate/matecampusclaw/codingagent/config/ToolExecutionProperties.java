@@ -61,6 +61,7 @@ public class ToolExecutionProperties {
 
     /**
      * 沙箱工作镜像
+     * 使用 alpine 镜像，通过启动脚本安装 bash
      */
     private String sandboxWorkerImage = "alpine:3.19";
 

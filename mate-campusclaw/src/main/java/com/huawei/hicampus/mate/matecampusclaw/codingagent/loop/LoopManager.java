@@ -7,7 +7,7 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import com.campusclaw.assistant.channel.MessageSubmitter;
+import com.huawei.hicampus.mate.matecampusclaw.codingagent.channel.MessageSubmitter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;

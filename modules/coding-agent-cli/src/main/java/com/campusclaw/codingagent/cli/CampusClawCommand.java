@@ -536,7 +536,10 @@ public class CampusClawCommand implements Callable<Integer> {
 
             interactiveMode.run(session, terminal);
         } finally {
-            terminal.close();
+            // Note: Do NOT call terminal.close() here.
+            // System terminal should not be explicitly closed by the application;
+            // it will be automatically cleaned up by the OS when the process exits.
+            // Explicitly closing it can cause the parent terminal window to exit.
             if (sessionManager != null) sessionManager.close();
         }
         return 0;

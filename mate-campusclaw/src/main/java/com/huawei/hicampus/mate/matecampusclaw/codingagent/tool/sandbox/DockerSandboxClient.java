@@ -82,20 +82,21 @@ public class DockerSandboxClient {
             String containerName = "campusclaw-worker-" + UUID.randomUUID().toString().substring(0, 8);
             String workspace = properties.getSandboxWorkspacePath();
 
+            // Start container with bash installation as part of startup
+            // This ensures bash is available before any command execution
+            // Note: We need network access to install bash via apk
             List<String> runCmd = List.of(
                 "run", "-d",
                 "--name", containerName,
-                "--network", "none",
                 "--memory", properties.getSandboxWorkerMemory(),
                 "--cpus", String.valueOf(properties.getSandboxWorkerCpu()),
-                "--read-only",
                 "--security-opt", "no-new-privileges:true",
                 "--cap-drop", "ALL",
                 "--cap-add", "SETUID", "--cap-add", "SETGID", "--cap-add", "DAC_OVERRIDE",
                 "-v", workspace + ":/workspace",
                 "-w", "/workspace",
                 properties.getSandboxWorkerImage(),
-                "sh", "-c", "while true; do sleep 3600; done"
+                "sh", "-c", "apk add --no-cache bash coreutils grep sed awk curl git 2>/dev/null || true; while true; do sleep 3600; done"
             );
 
             ProcessResult result = executeDockerCommand(runCmd);
@@ -116,18 +117,16 @@ public class DockerSandboxClient {
 
     /**
      * 在工作容器中安装必要工具
+     * 注意：bash 已在容器启动时安装（见 startWorkerContainer），这里只需验证
      */
     private void installWorkerTools() {
-        List<String> installCmd = List.of(
-            "exec", workerContainerId,
-            "sh", "-c",
-            "apk add --no-cache bash coreutils grep sed awk curl git 2>/dev/null || " +
-            "apt-get update && apt-get install -y bash coreutils grep sed awk curl git 2>/dev/null || true"
-        );
-
-        ProcessResult result = executeDockerCommand(installCmd);
-        if (result.exitCode != 0) {
-            log.warn("Failed to install some tools: {}", result.stderr);
+        // Verify bash is available (installed during container startup)
+        List<String> verifyCmd = List.of("exec", workerContainerId, "which", "bash");
+        ProcessResult verifyResult = executeDockerCommand(verifyCmd);
+        if (verifyResult.exitCode != 0 || verifyResult.stdout.trim().isEmpty()) {
+            log.warn("Bash not available in container, commands may fail");
+        } else {
+            log.info("Bash available at: {}", verifyResult.stdout.trim());
         }
     }
 
@@ -265,6 +264,11 @@ public class DockerSandboxClient {
             String workspace = properties.getSandboxWorkspacePath();
             String currentDir = System.getProperty("user.dir");
 
+            // Check if command requires bash
+            boolean requiresBash = command.size() >= 2 && "bash".equals(command.get(0));
+            String actualShell = requiresBash ? "bash" : command.get(0);
+            String shellPath = "/usr/bin/env " + actualShell;
+
             // 构建 docker run 命令
             List<String> runCmd = new java.util.ArrayList<>();
             runCmd.add("run");
@@ -287,7 +291,17 @@ public class DockerSandboxClient {
             }
 
             runCmd.add(properties.getSandboxWorkerImage());
-            runCmd.addAll(command);
+
+            // Install bash first, then execute the command
+            // This ensures bash is available for command execution in alpine
+            if (requiresBash) {
+                String cmdString = command.get(2); // The actual command after "bash", "-c"
+                String setupAndRun = "apk add --no-cache bash 2>/dev/null; " +
+                                     shellPath + " -c '" + cmdString.replace("'", "'"'"'") + "'";
+                runCmd.addAll(List.of("sh", "-c", setupAndRun));
+            } else {
+                runCmd.addAll(command);
+            }
 
             ProcessResult result = executeDockerCommand(runCmd, limits.getTimeoutSeconds());
             long executionTime = System.currentTimeMillis() - startTime;

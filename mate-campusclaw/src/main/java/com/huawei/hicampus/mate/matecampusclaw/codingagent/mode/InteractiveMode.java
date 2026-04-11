@@ -778,7 +778,7 @@ public class InteractiveMode {
                 if (replyText != null && !replyText.isEmpty()) {
                     try {
                         applicationContext.publishEvent(
-                            new com.campusclaw.assistant.channel.gateway.AgentResponseEvent(this, replyText));
+                            new com.huawei.hicampus.mate.matecampusclaw.codingagent.channel.AgentResponseEvent(this, replyText));
                     } catch (Exception e) {
                         System.err.println("[InteractiveMode] Failed to publish AgentResponseEvent: " + e.getMessage());
                     }
