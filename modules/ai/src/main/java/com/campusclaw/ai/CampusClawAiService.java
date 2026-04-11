@@ -8,7 +8,12 @@ import com.campusclaw.ai.provider.ApiProvider;
 import com.campusclaw.ai.provider.ApiProviderRegistry;
 import com.campusclaw.ai.stream.AssistantMessageEvent;
 import com.campusclaw.ai.stream.AssistantMessageEventStream;
-import com.campusclaw.ai.types.*;
+import com.campusclaw.ai.types.AssistantMessage;
+import com.campusclaw.ai.types.Context;
+import com.campusclaw.ai.types.Model;
+import com.campusclaw.ai.types.SimpleStreamOptions;
+import com.campusclaw.ai.types.StreamOptions;
+import com.campusclaw.ai.types.UserMessage;
 
 import org.springframework.stereotype.Service;
 

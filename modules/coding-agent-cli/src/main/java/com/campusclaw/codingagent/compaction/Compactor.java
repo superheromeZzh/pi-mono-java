@@ -4,7 +4,16 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.campusclaw.ai.CampusClawAiService;
-import com.campusclaw.ai.types.*;
+import com.campusclaw.ai.types.AssistantMessage;
+import com.campusclaw.ai.types.ContentBlock;
+import com.campusclaw.ai.types.Context;
+import com.campusclaw.ai.types.Message;
+import com.campusclaw.ai.types.Model;
+import com.campusclaw.ai.types.TextContent;
+import com.campusclaw.ai.types.ThinkingContent;
+import com.campusclaw.ai.types.ToolCall;
+import com.campusclaw.ai.types.ToolResultMessage;
+import com.campusclaw.ai.types.UserMessage;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

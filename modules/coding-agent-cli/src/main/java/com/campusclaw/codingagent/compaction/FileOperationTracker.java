@@ -4,7 +4,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import com.campusclaw.ai.types.*;
+import com.campusclaw.ai.types.AssistantMessage;
+import com.campusclaw.ai.types.ContentBlock;
+import com.campusclaw.ai.types.Message;
+import com.campusclaw.ai.types.ToolCall;
 import java.util.LinkedHashSet;
 
 /**

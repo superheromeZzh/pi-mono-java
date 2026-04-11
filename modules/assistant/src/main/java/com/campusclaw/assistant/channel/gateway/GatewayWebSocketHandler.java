@@ -1,6 +1,14 @@
 package com.campusclaw.assistant.channel.gateway;
 
-import com.campusclaw.assistant.channel.gateway.protocol.*;
+import com.campusclaw.assistant.channel.gateway.protocol.ChatEventPayload;
+import com.campusclaw.assistant.channel.gateway.protocol.ConnectParams;
+import com.campusclaw.assistant.channel.gateway.protocol.ErrorBody;
+import com.campusclaw.assistant.channel.gateway.protocol.FeaturesInfo;
+import com.campusclaw.assistant.channel.gateway.protocol.GatewayFrame;
+import com.campusclaw.assistant.channel.gateway.protocol.HelloOkPayload;
+import com.campusclaw.assistant.channel.gateway.protocol.PolicyInfo;
+import com.campusclaw.assistant.channel.gateway.protocol.ServerInfo;
+import com.campusclaw.assistant.channel.gateway.protocol.SessionsSendParams;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -11,12 +19,15 @@ import io.netty.handler.codec.http.websocketx.WebSocketServerProtocolHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**

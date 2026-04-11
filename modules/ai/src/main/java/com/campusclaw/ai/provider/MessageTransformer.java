@@ -5,7 +5,17 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import com.campusclaw.ai.types.*;
+import com.campusclaw.ai.types.Api;
+import com.campusclaw.ai.types.AssistantMessage;
+import com.campusclaw.ai.types.ContentBlock;
+import com.campusclaw.ai.types.Message;
+import com.campusclaw.ai.types.Model;
+import com.campusclaw.ai.types.StopReason;
+import com.campusclaw.ai.types.TextContent;
+import com.campusclaw.ai.types.ThinkingContent;
+import com.campusclaw.ai.types.ToolCall;
+import com.campusclaw.ai.types.ToolResultMessage;
+import com.campusclaw.ai.types.UserMessage;
 
 /**
  * Transforms messages for cross-provider compatibility.

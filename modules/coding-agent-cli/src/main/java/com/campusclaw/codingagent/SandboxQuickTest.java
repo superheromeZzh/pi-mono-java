@@ -1,7 +1,10 @@
 package com.campusclaw.codingagent;
 
 import com.campusclaw.codingagent.config.ToolExecutionProperties;
-import com.campusclaw.codingagent.tool.sandbox.*;
+import com.campusclaw.codingagent.tool.sandbox.DockerSandboxClient;
+import com.campusclaw.codingagent.tool.sandbox.ResourceLimits;
+import com.campusclaw.codingagent.tool.sandbox.SandboxResult;
+import com.campusclaw.codingagent.tool.sandbox.SandboxSecurityPolicy;
 
 public class SandboxQuickTest {
     public static void main(String[] args) throws Exception {

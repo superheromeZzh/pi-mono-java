@@ -275,6 +275,7 @@ public class DockerSandboxClient {
             runCmd.add("--rm");
             runCmd.add("--name");
             runCmd.add(containerName);
+            // Note: Network is needed to install bash in ephemeral containers
             runCmd.add("-v");
             runCmd.add(currentDir + ":" + workspace);
             runCmd.add("-w");
@@ -297,7 +298,7 @@ public class DockerSandboxClient {
             if (requiresBash) {
                 String cmdString = command.get(2); // The actual command after "bash", "-c"
                 String setupAndRun = "apk add --no-cache bash 2>/dev/null; " +
-                                     shellPath + " -c '" + cmdString.replace("'", "'"'"'") + "'";
+                                     shellPath + " -c '" + cmdString.replace("'", "'\"'\"'") + "'";
                 runCmd.addAll(List.of("sh", "-c", setupAndRun));
             } else {
                 runCmd.addAll(command);

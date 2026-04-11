@@ -4,7 +4,7 @@ import java.io.PrintStream;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 
-import com.campusclaw.agent.event.*;
+import com.campusclaw.agent.event.MessageUpdateEvent;
 import com.campusclaw.ai.stream.AssistantMessageEvent;
 import com.campusclaw.ai.types.AssistantMessage;
 import com.campusclaw.ai.types.ContentBlock;

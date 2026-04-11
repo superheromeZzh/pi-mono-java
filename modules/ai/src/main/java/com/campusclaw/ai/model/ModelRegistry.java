@@ -7,7 +7,13 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
-import com.campusclaw.ai.types.*;
+import com.campusclaw.ai.types.Api;
+import com.campusclaw.ai.types.Cost;
+import com.campusclaw.ai.types.InputModality;
+import com.campusclaw.ai.types.Model;
+import com.campusclaw.ai.types.ModelCost;
+import com.campusclaw.ai.types.Provider;
+import com.campusclaw.ai.types.Usage;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

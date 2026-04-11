@@ -1,6 +1,6 @@
 package com.campusclaw.codingagent.mode;
 
-import com.campusclaw.agent.event.*;
+import com.campusclaw.agent.event.MessageEndEvent;
 import com.campusclaw.ai.types.AssistantMessage;
 import com.campusclaw.ai.types.TextContent;
 import com.campusclaw.codingagent.session.AgentSession;
