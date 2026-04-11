@@ -25,6 +25,8 @@
         <!-- Spring Boot -->
         <spring-boot.version>3.4.5</spring-boot.version>
         <!-- Spring Framework (强制使用 6.1.x 避免与 Spring Boot 3.4.x 不兼容) -->
+        <spring-framework.version>6.1.18</spring-framework.version>
+        <spring-beans.version>6.1.18</spring-beans.version>
 
         <!-- Third-party versions -->
         <anthropic-java.version>2.18.0</anthropic-java.version>
@@ -51,7 +53,7 @@
             <dependency>
                 <groupId>org.springframework</groupId>
                 <artifactId>spring-framework-bom</artifactId>
-                <version>${sspring-framework.version}</version>
+                <version>${spring-framework.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
