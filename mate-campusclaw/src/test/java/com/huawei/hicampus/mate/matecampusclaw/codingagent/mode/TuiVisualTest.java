@@ -1,6 +1,7 @@
 package com.huawei.hicampus.mate.matecampusclaw.codingagent.mode;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
 import java.util.List;
 

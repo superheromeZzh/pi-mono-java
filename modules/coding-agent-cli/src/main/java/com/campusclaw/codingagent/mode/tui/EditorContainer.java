@@ -1,6 +1,8 @@
 package com.campusclaw.codingagent.mode.tui;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Consumer;
+import java.util.List;
 import java.util.function.Consumer;
 
 import com.campusclaw.tui.Component;

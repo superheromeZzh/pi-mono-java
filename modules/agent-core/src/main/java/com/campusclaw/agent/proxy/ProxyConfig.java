@@ -1,8 +1,14 @@
 package com.campusclaw.agent.proxy;
 
 import java.io.IOException;
-import java.net.*;
-import java.util.*;
+import java.net.InetSocketAddress;
+import java.net.Proxy;
+import java.net.ProxySelector;
+import java.net.URI;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

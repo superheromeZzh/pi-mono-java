@@ -1,6 +1,6 @@
 package com.huawei.hicampus.mate.matecampusclaw.ai.stream;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;

@@ -1,6 +1,8 @@
 package com.campusclaw.codingagent.compaction;
 
-import java.util.*;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import com.campusclaw.ai.types.*;
 

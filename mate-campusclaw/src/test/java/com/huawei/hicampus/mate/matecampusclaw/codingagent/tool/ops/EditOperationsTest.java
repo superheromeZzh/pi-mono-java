@@ -1,6 +1,7 @@
 package com.huawei.hicampus.mate.matecampusclaw.codingagent.tool.ops;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
