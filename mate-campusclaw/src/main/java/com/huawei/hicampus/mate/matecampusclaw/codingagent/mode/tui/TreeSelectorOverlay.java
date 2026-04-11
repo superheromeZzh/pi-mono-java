@@ -1,7 +1,6 @@
 package com.huawei.hicampus.mate.matecampusclaw.codingagent.mode.tui;
 
 import java.util.ArrayList;
-import java.util.Consumer;
 import java.util.List;
 import java.util.function.Consumer;
 

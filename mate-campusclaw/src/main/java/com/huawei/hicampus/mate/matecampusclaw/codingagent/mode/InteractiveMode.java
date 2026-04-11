@@ -11,13 +11,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import java.util.concurrent.AtomicBoolean;
-import java.util.concurrent.AtomicReference;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.Runnable;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
@@ -92,7 +89,7 @@ public class InteractiveMode {
     private final com.huawei.hicampus.mate.matecampusclaw.cron.CronService cronService;
     private final com.huawei.hicampus.mate.matecampusclaw.codingagent.loop.LoopManager loopManager;
     private final ApplicationContext applicationContext;
-    private com.campusclaw.assistant.memory.ChatMemoryStore chatMemoryStore;
+    private Object chatMemoryStore; // ChatMemoryStore from assistant module, accessed via reflection
 
     // Scoped models for Ctrl+P cycling (from --models flag)
     private List<Model> scopedModels = List.of();
@@ -190,7 +187,8 @@ public class InteractiveMode {
         // Resolve ChatMemoryStore from Spring context (optional — graceful if DB not configured)
         if (applicationContext != null) {
             try {
-                chatMemoryStore = applicationContext.getBean(com.campusclaw.assistant.memory.ChatMemoryStore.class);
+                Class<?> clazz = Class.forName("com.campusclaw.assistant.memory.ChatMemoryStore");
+                chatMemoryStore = applicationContext.getBean(clazz);
             } catch (Exception e) {
                 chatMemoryStore = null; // DB not configured, skip ChatMemory
             }
@@ -740,7 +738,7 @@ public class InteractiveMode {
         // Persist user message to ChatMemory (GaussDB)
         if (chatMemoryStore != null && sm != null) {
             try {
-                chatMemoryStore.append(sm.getSessionId(), List.of(new UserMessage(input, System.currentTimeMillis())));
+                // ChatMemory persistence disabled - no assistant module
             } catch (Exception e) {
                 System.err.println("[InteractiveMode] Failed to persist user message to ChatMemory: " + e.getMessage());
             }
@@ -1226,7 +1224,7 @@ public class InteractiveMode {
                         // Persist assistant message to ChatMemory (GaussDB)
                         if (chatMemoryStore != null) {
                             try {
-                                chatMemoryStore.append(sm.getSessionId(), List.of(msg));
+                                // ChatMemory persistence disabled - no assistant module
                             } catch (Exception ex) {
                                 System.err.println("[InteractiveMode] Failed to persist assistant message to ChatMemory: " + ex.getMessage());
                             }

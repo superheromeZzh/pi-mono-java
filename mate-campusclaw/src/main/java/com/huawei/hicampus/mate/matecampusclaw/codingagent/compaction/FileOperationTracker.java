@@ -2,6 +2,7 @@ package com.huawei.hicampus.mate.matecampusclaw.codingagent.compaction;
 
 import java.util.List;
 import java.util.Map;
+import java.util.LinkedHashSet;
 import java.util.Set;
 
 import com.huawei.hicampus.mate.matecampusclaw.ai.types.Api;

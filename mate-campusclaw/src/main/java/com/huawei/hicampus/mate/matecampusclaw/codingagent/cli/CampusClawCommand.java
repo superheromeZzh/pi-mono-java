@@ -455,8 +455,16 @@ public class CampusClawCommand implements Callable<Integer> {
                 // Try ChatMemory (GaussDB) first
                 if (applicationContext != null) {
                     try {
-                        var store = applicationContext.getBean(com.campusclaw.assistant.memory.ChatMemoryStore.class);
-                        var dbMessages = store.load(sessionManager.getSessionId());
+                        // ChatMemoryStore from assistant module - use reflection
+                        java.util.List dbMessages = new java.util.ArrayList();
+                        try {
+                            Class<?> clazz = Class.forName("com.campusclaw.assistant.memory.ChatMemoryStore");
+                            Object store = applicationContext.getBean(clazz);
+                            java.lang.reflect.Method loadMethod = clazz.getMethod("load", String.class);
+                            dbMessages = (java.util.List) loadMethod.invoke(store, sessionManager.getSessionId());
+                        } catch (Exception e) {
+                            // ChatMemoryStore not available
+                        }
                         if (!dbMessages.isEmpty()) {
                             messages = dbMessages;
                         }
