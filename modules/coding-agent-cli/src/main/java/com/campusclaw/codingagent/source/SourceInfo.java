@@ -12,6 +12,7 @@ import java.util.Optional;
 import java.util.Set;
 
 import jakarta.annotation.Nullable;
+import java.util.Collection;
 
 /**
  * Tracks the origin and provenance of resources (skills, tools, commands, settings).

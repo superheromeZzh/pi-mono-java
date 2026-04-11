@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.Set;
 
 import com.campusclaw.ai.types.*;
+import java.util.LinkedHashSet;
 
 /**
  * Extracts file read/write operations from tool call history.

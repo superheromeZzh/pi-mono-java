@@ -5,14 +5,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.when;
-import static org.mockito.Mockito.thenReturn;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.contains;
-import static org.mockito.Mockito.Mock;
-import static org.mockito.Mockito.BeforeEach;
-import static org.mockito.Mockito.Test;
-import static org.mockito.Mockito.ExtendWith;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
