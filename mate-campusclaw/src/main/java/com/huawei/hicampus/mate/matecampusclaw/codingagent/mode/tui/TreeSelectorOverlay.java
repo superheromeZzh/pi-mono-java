@@ -1,6 +1,8 @@
 package com.huawei.hicampus.mate.matecampusclaw.codingagent.mode.tui;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Consumer;
+import java.util.List;
 import java.util.function.Consumer;
 
 import com.huawei.hicampus.mate.matecampusclaw.ai.types.AssistantMessage;

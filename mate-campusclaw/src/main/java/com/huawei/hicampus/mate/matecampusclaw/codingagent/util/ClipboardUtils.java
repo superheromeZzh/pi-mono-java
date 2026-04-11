@@ -1,6 +1,7 @@
 package com.huawei.hicampus.mate.matecampusclaw.codingagent.util;
 
-import java.io.*;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Optional;
 

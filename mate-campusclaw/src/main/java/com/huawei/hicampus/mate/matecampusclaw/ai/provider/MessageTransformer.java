@@ -5,7 +5,32 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import com.huawei.hicampus.mate.matecampusclaw.ai.types.*;
+import com.huawei.hicampus.mate.matecampusclaw.ai.types.Api;
+import com.huawei.hicampus.mate.matecampusclaw.ai.types.AssistantMessage;
+import com.huawei.hicampus.mate.matecampusclaw.ai.types.CacheRetention;
+import com.huawei.hicampus.mate.matecampusclaw.ai.types.ContentBlock;
+import com.huawei.hicampus.mate.matecampusclaw.ai.types.Context;
+import com.huawei.hicampus.mate.matecampusclaw.ai.types.Cost;
+import com.huawei.hicampus.mate.matecampusclaw.ai.types.ImageContent;
+import com.huawei.hicampus.mate.matecampusclaw.ai.types.InputModality;
+import com.huawei.hicampus.mate.matecampusclaw.ai.types.Message;
+import com.huawei.hicampus.mate.matecampusclaw.ai.types.Model;
+import com.huawei.hicampus.mate.matecampusclaw.ai.types.ModelCost;
+import com.huawei.hicampus.mate.matecampusclaw.ai.types.Provider;
+import com.huawei.hicampus.mate.matecampusclaw.ai.types.SimpleStreamOptions;
+import com.huawei.hicampus.mate.matecampusclaw.ai.types.SimpleStreamOptionsFactory;
+import com.huawei.hicampus.mate.matecampusclaw.ai.types.StopReason;
+import com.huawei.hicampus.mate.matecampusclaw.ai.types.StreamOptions;
+import com.huawei.hicampus.mate.matecampusclaw.ai.types.TextContent;
+import com.huawei.hicampus.mate.matecampusclaw.ai.types.ThinkingBudgets;
+import com.huawei.hicampus.mate.matecampusclaw.ai.types.ThinkingContent;
+import com.huawei.hicampus.mate.matecampusclaw.ai.types.ThinkingLevel;
+import com.huawei.hicampus.mate.matecampusclaw.ai.types.Tool;
+import com.huawei.hicampus.mate.matecampusclaw.ai.types.ToolCall;
+import com.huawei.hicampus.mate.matecampusclaw.ai.types.ToolResultMessage;
+import com.huawei.hicampus.mate.matecampusclaw.ai.types.Transport;
+import com.huawei.hicampus.mate.matecampusclaw.ai.types.Usage;
+import com.huawei.hicampus.mate.matecampusclaw.ai.types.UserMessage;
 
 /**
  * Transforms messages for cross-provider compatibility.

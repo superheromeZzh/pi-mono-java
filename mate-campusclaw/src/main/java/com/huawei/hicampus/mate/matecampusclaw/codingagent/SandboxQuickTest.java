@@ -1,7 +1,10 @@
 package com.huawei.hicampus.mate.matecampusclaw.codingagent;
 
 import com.huawei.hicampus.mate.matecampusclaw.codingagent.config.ToolExecutionProperties;
-import com.huawei.hicampus.mate.matecampusclaw.codingagent.tool.sandbox.*;
+import com.huawei.hicampus.mate.matecampusclaw.codingagent.tool.sandbox.DockerSandboxClient;
+import com.huawei.hicampus.mate.matecampusclaw.codingagent.tool.sandbox.ResourceLimits;
+import com.huawei.hicampus.mate.matecampusclaw.codingagent.tool.sandbox.SandboxResult;
+import com.huawei.hicampus.mate.matecampusclaw.codingagent.tool.sandbox.SandboxSecurityPolicy;
 
 public class SandboxQuickTest {
     public static void main(String[] args) throws Exception {
