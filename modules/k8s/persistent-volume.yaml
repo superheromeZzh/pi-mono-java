@@ -1,0 +1,97 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: campusclaw-code-pv
+  namespace: campusclaw
+  labels:
+    app.kubernetes.io/name: campusclaw
+    app.kubernetes.io/component: storage
+spec:
+  capacity:
+    storage: 10Gi
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: local-storage
+  local:
+    path: /Users/simon/01.code/pi-mono-java
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+        - matchExpressions:
+            - key: kubernetes.io/hostname
+              operator: In
+              values:
+                - minikube
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: campusclaw-code-pvc
+  namespace: campusclaw
+  labels:
+    app.kubernetes.io/name: campusclaw
+    app.kubernetes.io/component: storage
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: local-storage
+  resources:
+    requests:
+      storage: 10Gi
+  volumeName: campusclaw-code-pv
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: campusclaw-data-pv
+  namespace: campusclaw
+  labels:
+    app.kubernetes.io/name: campusclaw
+    app.kubernetes.io/component: storage
+spec:
+  capacity:
+    storage: 5Gi
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: local-storage
+  local:
+    path: /Users/simon/.campusclaw
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+        - matchExpressions:
+            - key: kubernetes.io/hostname
+              operator: In
+              values:
+                - minikube
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: campusclaw-data-pvc
+  namespace: campusclaw
+  labels:
+    app.kubernetes.io/name: campusclaw
+    app.kubernetes.io/component: storage
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: local-storage
+  resources:
+    requests:
+      storage: 5Gi
+  volumeName: campusclaw-data-pv
+---
+# StorageClass for local volumes
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: local-storage
+  labels:
+    app.kubernetes.io/name: campusclaw
+provisioner: kubernetes.io/no-provisioner
+volumeBindingMode: WaitForFirstConsumer

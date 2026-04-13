@@ -1,0 +1,19 @@
+# 使用本地已有的 alpine 镜像构建 Docker-in-Docker
+FROM alpine:3.19
+
+# 配置使用代理（构建时）
+ENV HTTP_PROXY=http://host.docker.internal:7890
+ENV HTTPS_PROXY=http://host.docker.internal:7890
+
+# 安装 Docker
+RUN apk add --no-cache docker iptables
+
+# 清理代理环境变量
+ENV HTTP_PROXY=""
+ENV HTTPS_PROXY=""
+
+# 暴露 Docker API 端口
+EXPOSE 2375
+
+# 启动 Docker daemon
+CMD ["dockerd", "--host=tcp://0.0.0.0:2375", "--tls=false"]

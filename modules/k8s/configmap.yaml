@@ -1,0 +1,56 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: campusclaw-config
+  namespace: campusclaw
+  labels:
+    app.kubernetes.io/name: campusclaw
+    app.kubernetes.io/component: config
+data:
+  # 应用配置
+  application.properties: |
+    # Spring Boot 配置
+    server.port=8080
+
+    # 日志配置
+    logging.level.root=INFO
+    logging.level.com.campusclaw=DEBUG
+
+    # 沙箱配置
+    tool.execution.default-mode=SANDBOX
+    tool.execution.sandbox.enabled=true
+    tool.execution.local.enabled=true
+    tool.execution.sandbox.ephemeral=true
+
+    # 模型配置
+    campusclaw.model.default=k2p5
+
+  # 启动脚本
+  entrypoint.sh: |
+    #!/bin/sh
+    set -e
+
+    echo "=== CampusClaw Kubernetes Pod ==="
+    echo "Waiting for Docker sandbox..."
+
+    # 等待沙箱容器就绪
+    until docker -H tcp://localhost:2375 version > /dev/null 2>&1; do
+      echo "Waiting for Docker..."
+      sleep 2
+    done
+
+    echo "Docker sandbox is ready!"
+
+    # 设置环境变量
+    export DOCKER_HOST=tcp://localhost:2375
+
+    # 检查 JAR 文件是否存在
+    if [ ! -f "/workspace/modules/coding-agent-cli/target/campusclaw-agent.jar" ]; then
+      echo "ERROR: campusclaw-agent.jar not found!"
+      echo "Please build the project first: ./mvnw package -DskipTests"
+      exit 1
+    fi
+
+    # 运行 CampusClaw
+    echo "Starting CampusClaw..."
+    exec java -jar /workspace/modules/coding-agent-cli/target/campusclaw-agent.jar "$@"

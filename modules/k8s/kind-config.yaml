@@ -1,0 +1,28 @@
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+name: campusclaw-cluster
+nodes:
+  - role: control-plane
+    image: kindest/node:v1.28.0
+    extraMounts:
+      - hostPath: /Users/simon/01.code/pi-mono-java
+        containerPath: /Users/simon/01.code/pi-mono-java
+      - hostPath: /Users/simon/.campusclaw
+        containerPath: /Users/simon/.campusclaw
+    kubeadmConfigPatches:
+      - |
+        kind: InitConfiguration
+        nodeRegistration:
+          kubeletExtraArgs:
+            node-labels: "ingress-ready=true"
+    extraPortMappings:
+      - containerPort: 30080
+        hostPort: 8080
+        protocol: TCP
+  - role: worker
+    image: kindest/node:v1.28.0
+    extraMounts:
+      - hostPath: /Users/simon/01.code/pi-mono-java
+        containerPath: /Users/simon/01.code/pi-mono-java
+      - hostPath: /Users/simon/.campusclaw
+        containerPath: /Users/simon/.campusclaw

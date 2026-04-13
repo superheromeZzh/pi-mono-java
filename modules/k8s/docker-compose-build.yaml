@@ -1,0 +1,58 @@
+name: campusclaw
+
+services:
+  campusclaw:
+    build:
+      context: .
+      dockerfile: Dockerfile.campusclaw-local
+      args:
+        HTTP_PROXY: http://host.docker.internal:7890
+        HTTPS_PROXY: http://host.docker.internal:7890
+    container_name: campusclaw-app
+    working_dir: /workspace
+    volumes:
+      - /Users/simon/01.code/pi-mono-java:/workspace
+      - /Users/simon/.campusclaw:/data
+      - maven-cache:/root/.m2
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - TOOL_EXECUTION_DEFAULT_MODE=SANDBOX
+      - TOOL_EXECUTION_SANDBOX_ENABLED=true
+      - TOOL_EXECUTION_LOCAL_ENABLED=true
+      - DOCKER_HOST=tcp://sandbox:2375
+      - CAMPUSCLAW_HOME=/data
+    ports:
+      - "8080:8080"
+    depends_on:
+      sandbox:
+        condition: service_healthy
+    networks:
+      - campusclaw-network
+
+  sandbox:
+    build:
+      context: .
+      dockerfile: Dockerfile.sandbox-local
+    container_name: campusclaw-sandbox
+    privileged: true
+    volumes:
+      - /Users/simon/01.code/pi-mono-java:/workspace
+      - docker-data:/var/lib/docker
+    networks:
+      - campusclaw-network
+    healthcheck:
+      test: ["CMD", "sh", "-c", "docker -H tcp://localhost:2375 version > /dev/null 2>&1"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
+
+volumes:
+  maven-cache:
+    driver: local
+  docker-data:
+    driver: local
+
+networks:
+  campusclaw-network:
+    driver: bridge

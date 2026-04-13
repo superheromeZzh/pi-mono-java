@@ -1,0 +1,83 @@
+name: campusclaw
+
+services:
+  campusclaw:
+    image: eclipse-temurin:21-jdk-alpine
+    container_name: campusclaw-app
+    working_dir: /workspace
+    command:
+      - /bin/sh
+      - -c
+      - |
+        apk add --no-cache bash curl git 2>/dev/null || true
+        export DOCKER_HOST=tcp://sandbox:2375
+        until docker -H tcp://sandbox:2375 version > /dev/null 2>&1; do
+          echo "Waiting for Docker sandbox..."
+          sleep 2
+        done
+        echo "Docker sandbox is ready!"
+        java -jar modules/coding-agent-cli/target/campusclaw-agent.jar -m k2p5
+    volumes:
+      - /Users/simon/01.code/pi-mono-java:/workspace
+      - /Users/simon/.campusclaw:/data
+      - maven-cache:/root/.m2
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - TOOL_EXECUTION_DEFAULT_MODE=SANDBOX
+      - TOOL_EXECUTION_SANDBOX_ENABLED=true
+      - TOOL_EXECUTION_LOCAL_ENABLED=true
+      - DOCKER_HOST=tcp://sandbox:2375
+      - CAMPUSCLAW_HOME=/data
+      - HTTP_PROXY=http://host.docker.internal:7890
+      - HTTPS_PROXY=http://host.docker.internal:7890
+      - http_proxy=http://host.docker.internal:7890
+      - https_proxy=http://host.docker.internal:7890
+    ports:
+      - "8080:8080"
+    depends_on:
+      sandbox:
+        condition: service_healthy
+    networks:
+      - campusclaw-network
+    healthcheck:
+      test: ["CMD", "sh", "-c", "pgrep -f 'java.*campusclaw' || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
+  sandbox:
+    image: docker:27-dind
+    container_name: campusclaw-sandbox
+    privileged: true
+    command:
+      - dockerd
+      - --host=tcp://0.0.0.0:2375
+      - --tls=false
+    volumes:
+      - /Users/simon/01.code/pi-mono-java:/workspace
+      - docker-data:/var/lib/docker
+    environment:
+      - DOCKER_TLS_CERTDIR=
+      - HTTP_PROXY=http://host.docker.internal:7890
+      - HTTPS_PROXY=http://host.docker.internal:7890
+      - http_proxy=http://host.docker.internal:7890
+      - https_proxy=http://host.docker.internal:7890
+    networks:
+      - campusclaw-network
+    healthcheck:
+      test: ["CMD", "sh", "-c", "docker -H tcp://localhost:2375 version > /dev/null 2>&1"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
+
+volumes:
+  maven-cache:
+    driver: local
+  docker-data:
+    driver: local
+
+networks:
+  campusclaw-network:
+    driver: bridge

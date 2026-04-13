@@ -1,0 +1,180 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: campusclaw
+  namespace: campusclaw
+  labels:
+    app.kubernetes.io/name: campusclaw
+    app.kubernetes.io/component: application
+    app.kubernetes.io/version: "25.1.0"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: campusclaw
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: campusclaw
+        app.kubernetes.io/component: application
+    spec:
+      containers:
+        # CampusClaw 主应用容器
+        - name: campusclaw
+          image: eclipse-temurin:21-jdk-alpine
+          imagePullPolicy: IfNotPresent
+          workingDir: /workspace
+          command:
+            - /bin/sh
+            - -c
+            - |
+              # 安装必要的工具
+              apk add --no-cache bash curl git 2>/dev/null || true
+
+              # 等待沙箱容器就绪
+              until docker -H tcp://localhost:2375 version >/dev/null 2>&1; do
+                echo "Waiting for Docker sandbox..."
+                sleep 2
+              done
+
+              # 设置 Docker 主机指向 sidecar 容器
+              export DOCKER_HOST=tcp://localhost:2375
+
+              # 运行 CampusClaw
+              exec java -jar modules/coding-agent-cli/target/campusclaw-agent.jar -m k2p5
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+          env:
+            - name: SPRING_PROFILES_ACTIVE
+              value: "k8s"
+            - name: TOOL_EXECUTION_DEFAULT_MODE
+              value: "SANDBOX"
+            - name: TOOL_EXECUTION_SANDBOX_ENABLED
+              value: "true"
+            - name: TOOL_EXECUTION_LOCAL_ENABLED
+              value: "true"
+            - name: DOCKER_HOST
+              value: "tcp://localhost:2375"
+            - name: CAMPUSCLAW_HOME
+              value: "/data"
+          resources:
+            requests:
+              memory: "1Gi"
+              cpu: "500m"
+            limits:
+              memory: "4Gi"
+              cpu: "2000m"
+          volumeMounts:
+            # 挂载代码目录
+            - name: code-volume
+              mountPath: /workspace
+            # 挂载数据目录
+            - name: data-volume
+              mountPath: /data
+            # 挂载 Maven 缓存（加速构建）
+            - name: m2-cache
+              mountPath: /root/.m2
+            # 临时目录
+            - name: tmp-volume
+              mountPath: /tmp
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: false
+            runAsNonRoot: false
+          livenessProbe:
+            exec:
+              command:
+                - /bin/sh
+                - -c
+                - "pgrep -f 'java.*campusclaw' || exit 1"
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            exec:
+              command:
+                - /bin/sh
+                - -c
+                - "docker -H tcp://localhost:2375 version >/dev/null 2>&1"
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 3
+
+        # Docker 沙箱容器 (DinD)
+        - name: sandbox
+          image: docker:27-dind
+          imagePullPolicy: IfNotPresent
+          args:
+            - --host=tcp://0.0.0.0:2375
+            - --tls=false
+          ports:
+            - name: docker
+              containerPort: 2375
+              protocol: TCP
+          env:
+            - name: DOCKER_TLS_CERTDIR
+              value: ""
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "250m"
+            limits:
+              memory: "2Gi"
+              cpu: "1000m"
+          volumeMounts:
+            # 挂载代码目录用于沙箱执行
+            - name: code-volume
+              mountPath: /workspace
+            # Docker 存储目录
+            - name: docker-storage
+              mountPath: /var/lib/docker
+            # 临时目录
+            - name: tmp-volume
+              mountPath: /tmp
+          securityContext:
+            privileged: true  # DinD 需要特权模式
+          livenessProbe:
+            tcpSocket:
+              port: 2375
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            tcpSocket:
+              port: 2375
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 3
+
+      volumes:
+        # 代码目录 - Docker Desktop 特殊路径
+        - name: code-volume
+          hostPath:
+            path: /run/desktop/mnt/host/Users/simon/01.code/pi-mono-java
+            type: DirectoryOrCreate
+        # 数据目录
+        - name: data-volume
+          hostPath:
+            path: /run/desktop/mnt/host/Users/simon/.campusclaw
+            type: DirectoryOrCreate
+        # Maven 缓存
+        - name: m2-cache
+          emptyDir:
+            sizeLimit: 2Gi
+        # Docker 存储
+        - name: docker-storage
+          emptyDir:
+            sizeLimit: 10Gi
+        # 临时目录
+        - name: tmp-volume
+          emptyDir:
+            sizeLimit: 1Gi
+
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
