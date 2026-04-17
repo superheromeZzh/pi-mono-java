@@ -39,10 +39,6 @@
         </dependency>
         <dependency>
             <groupId>com.campusclaw</groupId>
-            <artifactId>campusclaw-assistant</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.campusclaw</groupId>
             <artifactId>campusclaw-tui</artifactId>
         </dependency>
 
