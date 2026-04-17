@@ -725,7 +725,11 @@ public class InteractiveMode {
     }
 
     private void executePrompt(AgentSession session, String input, AtomicBoolean aborted) {
-        chatContainer.addChild(new UserMessageComponent(input));
+        var userMessageComponent = new UserMessageComponent(input);
+        chatContainer.addChild(userMessageComponent);
+
+        // Snapshot agent history size so we can roll the turn back on abort.
+        int agentMessageCountBefore = session.getAgent().getState().getMessages().size();
 
         // Persist user message to session file
         var sm = session.getSessionManager();
@@ -771,23 +775,31 @@ public class InteractiveMode {
 
         CompletableFuture<Void> future = session.prompt(input);
 
-        boolean showedAbort = false;
         try {
             future.join();
         } catch (Exception e) {
-            String error = session.getAgent().getState().getError();
-            if (aborted.get()) {
-                chatContainer.addChild(new Text("\033[38;2;204;102;102m Operation aborted\033[0m"));
-                showedAbort = true;
-            } else {
+            if (!aborted.get()) {
+                String error = session.getAgent().getState().getError();
                 chatContainer.addChild(new Text(
                         "\033[38;2;204;102;102m Error: " + (error != null ? error : e.getMessage()) + "\033[0m"));
             }
         }
 
-        // Show abort message if cancellation completed without exception
-        if (aborted.get() && !showedAbort) {
-            chatContainer.addChild(new Text("\033[38;2;204;102;102m Operation aborted\033[0m"));
+        // On abort: remove the turn's chat display, roll back agent history, and
+        // restore the user's input into the editor so they can amend and resubmit.
+        if (aborted.get()) {
+            chatContainer.removeChild(userMessageComponent);
+            if (currentAssistantMessage != null) {
+                chatContainer.removeChild(currentAssistantMessage);
+                currentAssistantMessage = null;
+            }
+            var agentState = session.getAgent().getState();
+            var trimmed = new ArrayList<>(agentState.getMessages());
+            while (trimmed.size() > agentMessageCountBefore) {
+                trimmed.remove(trimmed.size() - 1);
+            }
+            agentState.replaceMessages(trimmed);
+            editorContainer.getEditor().setText(input);
         }
 
         String error = session.getAgent().getState().getError();
