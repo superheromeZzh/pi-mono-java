@@ -177,11 +177,18 @@ public class JLineTerminal implements Terminal {
                     }
                     buf.setLength(0);
                     buf.append((char) c);
-                    // Drain any immediately available characters (escape sequences)
-                    while (reader.peek(10) > 0) {
-                        int next = reader.read();
-                        if (next < 0) break;
-                        buf.append((char) next);
+                    // Only drain for escape sequences — the rest of the sequence may
+                    // still be arriving and must be delivered together (otherwise a
+                    // standalone ESC fires the abort handler). Regular keystrokes
+                    // dispatch immediately so typing feels responsive.
+                    // NB: peek(0) in JLine treats timeout=0 as infinite wait, so we
+                    // must use a positive timeout here.
+                    if (c == '\033') {
+                        while (reader.peek(10) > 0) {
+                            int next = reader.read();
+                            if (next < 0) break;
+                            buf.append((char) next);
+                        }
                     }
                     String data = buf.toString();
                     for (Consumer<String> listener : inputListeners) {
