@@ -1,0 +1,16 @@
+# 默认 owner：所有改动都由你 review
+*                               @superheromeZzh
+
+# 核心模块
+/modules/agent-core/            @superheromeZzh
+/modules/ai/                    @superheromeZzh
+/modules/coding-agent-cli/      @superheromeZzh
+/modules/assistant/             @superheromeZzh
+/modules/cron/                  @superheromeZzh
+/modules/tui/                   @superheromeZzh
+
+# CI 与根级配置
+/.github/                       @superheromeZzh
+/pom.xml                        @superheromeZzh
+/application.yml                @superheromeZzh
+/campusclaw.sh                  @superheromeZzh
