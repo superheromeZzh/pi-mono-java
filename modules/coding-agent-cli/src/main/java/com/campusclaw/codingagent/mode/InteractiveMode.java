@@ -60,6 +60,8 @@ import com.campusclaw.tui.component.Container;
 import com.campusclaw.tui.component.Text;
 import com.campusclaw.tui.terminal.Terminal;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
 
 /**
@@ -76,6 +78,8 @@ import org.springframework.context.ApplicationContext;
  * updates and synchronized output for flicker-free display.
  */
 public class InteractiveMode {
+
+    private static final Logger log = LoggerFactory.getLogger(InteractiveMode.class);
 
     private final SlashCommandRegistry commandRegistry;
     private final BashExecutor bashExecutor;
@@ -734,7 +738,7 @@ public class InteractiveMode {
             try {
                 chatMemoryStore.append(sm.getSessionId(), List.of(new UserMessage(input, System.currentTimeMillis())));
             } catch (Exception e) {
-                System.err.println("[InteractiveMode] Failed to persist user message to ChatMemory: " + e.getMessage());
+                log.debug("Failed to persist user message to ChatMemory (DB unavailable?): {}", e.getMessage());
             }
         }
 
@@ -1220,7 +1224,7 @@ public class InteractiveMode {
                             try {
                                 chatMemoryStore.append(sm.getSessionId(), List.of(msg));
                             } catch (Exception ex) {
-                                System.err.println("[InteractiveMode] Failed to persist assistant message to ChatMemory: " + ex.getMessage());
+                                log.debug("Failed to persist assistant message to ChatMemory (DB unavailable?): {}", ex.getMessage());
                             }
                         }
                     }

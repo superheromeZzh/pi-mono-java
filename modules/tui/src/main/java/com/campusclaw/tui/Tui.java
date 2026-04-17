@@ -1,5 +1,6 @@
 package com.campusclaw.tui;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
@@ -13,9 +14,18 @@ import com.campusclaw.tui.terminal.TerminalSize;
  * Full-screen TUI renderer. Manages a component tree, renders it to terminal lines,
  * and uses synchronized output for flicker-free display.
  *
- * <p>Rendering strategy: always clear-and-redraw the visible viewport.
- * This is simple, correct, and matches how campusclaw TS handles structural changes.
- * The synchronized output escape sequences prevent flicker.
+ * <p>Rendering strategy: differential rendering with relative cursor movement.
+ * Only lines that actually changed are rewritten; when content grows past the
+ * viewport, a single burst of {@code \r\n} pushes the old lines into the terminal's
+ * scrollback so the user can still scroll up. A full redraw is issued only on the
+ * first frame, on width/height changes, or when content shrinks below the
+ * high-water mark.
+ *
+ * <p>This approach mirrors the reference TypeScript implementation and avoids
+ * flooding the terminal with absolute cursor positioning + clear-line sequences
+ * on every frame — which, on macOS Terminal.app, triggers the
+ * {@code NSPersistentUIManager} heap-corruption bug when window state is
+ * serialized.
  */
 public class Tui {
 
@@ -34,8 +44,15 @@ public class Tui {
     private Container root;
     private Consumer<String> inputHandler;
     private volatile boolean running = false;
-    private int prevStartLine = 0;
-    private int prevHeight = 0;
+
+    // Differential render state (all in buffer coordinates — row 0 is the topmost
+    // line ever rendered for the current session, never re-numbered after scroll).
+    private List<String> previousLines = Collections.emptyList();
+    private int hardwareCursorRow = 0;
+    private int previousViewportTop = 0;
+    private int previousWidth = 0;
+    private int previousHeight = 0;
+    private int maxLinesRendered = 0;
 
     public Tui(Terminal terminal) {
         this.terminal = Objects.requireNonNull(terminal);
@@ -72,6 +89,15 @@ public class Tui {
         terminal.enterRawMode();
         terminal.write(HIDE_CURSOR + ERASE_SCROLLBACK + ERASE_SCREEN + HOME);
 
+        // Reset differential state so the first render is a clean append from
+        // the top of an (assumed-empty) viewport.
+        previousLines = Collections.emptyList();
+        hardwareCursorRow = 0;
+        previousViewportTop = 0;
+        previousWidth = 0;
+        previousHeight = 0;
+        maxLinesRendered = 0;
+
         terminal.onInput(data -> {
             if (inputHandler != null) {
                 inputHandler.accept(data);
@@ -91,8 +117,11 @@ public class Tui {
     }
 
     /**
-     * Synchronously render the component tree to the terminal.
-     * Always redraws the full viewport — simple, correct, flicker-free with sync output.
+     * Synchronously render the component tree to the terminal using a
+     * differential strategy: only lines that changed are rewritten, using
+     * relative cursor movement. When the rendered content exceeds the viewport,
+     * a single burst of {@code \r\n} at the bottom lets the terminal scroll
+     * old content into scrollback (preserving history for the user).
      */
     public synchronized void render() {
         if (!running || root == null) return;
@@ -102,55 +131,149 @@ public class Tui {
         int height = size.height();
         if (width <= 0 || height <= 0) return;
 
-        // Render component tree
-        List<String> allLines = root.render(width);
+        List<String> newLines = root.render(width);
 
-        // Show only the last `height` lines (viewport scrolling)
-        int startLine = Math.max(0, allLines.size() - height);
-        int visibleCount = Math.min(allLines.size(), height);
+        boolean widthChanged = previousWidth != 0 && previousWidth != width;
+        boolean heightChanged = previousHeight != 0 && previousHeight != height;
 
-        // Build output buffer with synchronized output
-        var sb = new StringBuilder(allLines.size() * (width + 20));
-        if (syncOutputSupported) {
-            sb.append(SYNC_START);
+        // First frame — output directly; start() already cleared the screen.
+        if (previousLines.isEmpty() && !widthChanged && !heightChanged) {
+            fullRender(newLines, width, height, false);
+            return;
         }
 
-        // When viewport shifts down (new content pushes old off-screen),
-        // scroll the terminal to push old lines into scrollback buffer.
-        // This lets users scroll up in their terminal to see earlier content
-        // (matching campusclaw's behavior).
-        int shift = startLine - prevStartLine;
-        if (shift > 0 && prevHeight == height && prevHeight > 0) {
-            // Clamp shift to terminal height to avoid overwhelming the terminal
-            // with an enormous number of newlines when content grows rapidly.
-            int clampedShift = Math.min(shift, height);
-            // Move cursor to bottom of screen, emit newlines to scroll
-            sb.append("\033[").append(height).append(";1H");
-            sb.append("\r\n".repeat(clampedShift));
+        // Width change invalidates line wrapping; height change invalidates the
+        // viewport alignment. Both require a full clear + redraw.
+        if (widthChanged || heightChanged) {
+            fullRender(newLines, width, height, true);
+            return;
         }
 
-        // Use explicit cursor positioning for each row instead of \r\n.
-        // This prevents line duplication when a line with CJK double-width
-        // characters overflows the terminal width — \r\n would jump to the
-        // wrong row after overflow, but \033[row;1H always goes to the right place.
-        for (int i = 0; i < height; i++) {
-            sb.append("\033[").append(i + 1).append(";1H");
-            sb.append(CLEAR_LINE);
-            if (i < visibleCount) {
-                String line = allLines.get(startLine + i);
-                if (AnsiUtils.visibleWidth(line) > width) {
-                    line = AnsiUtils.sliceByColumn(line, 0, width);
-                }
-                sb.append(line);
+        // Content shrunk below the high-water mark: old rows would linger as
+        // orphans, so do a full clear + redraw.
+        if (newLines.size() < maxLinesRendered) {
+            fullRender(newLines, width, height, true);
+            return;
+        }
+
+        // Find first and last changed lines.
+        int firstChanged = -1;
+        int lastChanged = -1;
+        int maxLen = Math.max(newLines.size(), previousLines.size());
+        for (int i = 0; i < maxLen; i++) {
+            String oldLine = i < previousLines.size() ? previousLines.get(i) : "";
+            String newLine = i < newLines.size() ? newLines.get(i) : "";
+            if (!oldLine.equals(newLine)) {
+                if (firstChanged == -1) firstChanged = i;
+                lastChanged = i;
             }
         }
-
-        if (syncOutputSupported) {
-            sb.append(SYNC_END);
+        boolean appendedLines = newLines.size() > previousLines.size();
+        if (appendedLines) {
+            if (firstChanged == -1) firstChanged = previousLines.size();
+            lastChanged = newLines.size() - 1;
         }
+        boolean appendStart = appendedLines
+                && firstChanged == previousLines.size()
+                && firstChanged > 0;
+
+        // Nothing changed.
+        if (firstChanged == -1) {
+            return;
+        }
+
+        // Change is above the current viewport (scrolled out of reach): we
+        // can't reach it with relative movement, so full redraw.
+        if (firstChanged < previousViewportTop) {
+            fullRender(newLines, width, height, true);
+            return;
+        }
+
+        int viewportTop = previousViewportTop;
+        int hwCursor = hardwareCursorRow;
+        StringBuilder sb = new StringBuilder();
+        if (syncOutputSupported) sb.append(SYNC_START);
+
+        // If the first line we need to rewrite sits below the current viewport,
+        // scroll the terminal down — this is the ONLY place where lines get
+        // pushed into the terminal's scrollback.
+        int prevViewportBottom = viewportTop + height - 1;
+        int moveTargetRow = appendStart ? firstChanged - 1 : firstChanged;
+        if (moveTargetRow > prevViewportBottom) {
+            int currentScreenRow = Math.max(0, Math.min(height - 1, hwCursor - viewportTop));
+            int moveToBottom = height - 1 - currentScreenRow;
+            if (moveToBottom > 0) sb.append("\033[").append(moveToBottom).append('B');
+            int scroll = moveTargetRow - prevViewportBottom;
+            sb.append("\r\n".repeat(scroll));
+            viewportTop += scroll;
+            hwCursor = moveTargetRow;
+        }
+
+        // Relative cursor move to the first line we need to rewrite.
+        int targetScreenRow = moveTargetRow - viewportTop;
+        int currentScreenRow = hwCursor - viewportTop;
+        int lineDiff = targetScreenRow - currentScreenRow;
+        if (lineDiff > 0) sb.append("\033[").append(lineDiff).append('B');
+        else if (lineDiff < 0) sb.append("\033[").append(-lineDiff).append('A');
+
+        // Column 0. For an append-at-end case we also step down one row.
+        sb.append(appendStart ? "\r\n" : "\r");
+
+        // Rewrite only the changed range [firstChanged .. lastChanged].
+        int renderEnd = Math.min(lastChanged, newLines.size() - 1);
+        for (int i = firstChanged; i <= renderEnd; i++) {
+            if (i > firstChanged) sb.append("\r\n");
+            sb.append(CLEAR_LINE);
+            String line = newLines.get(i);
+            if (AnsiUtils.visibleWidth(line) > width) {
+                line = AnsiUtils.sliceByColumn(line, 0, width);
+            }
+            sb.append(line);
+        }
+
+        if (syncOutputSupported) sb.append(SYNC_END);
         terminal.write(sb.toString());
-        prevStartLine = startLine;
-        prevHeight = height;
+
+        hardwareCursorRow = renderEnd;
+        previousLines = newLines;
+        previousWidth = width;
+        previousHeight = height;
+        previousViewportTop = Math.max(viewportTop, renderEnd - height + 1);
+        maxLinesRendered = Math.max(maxLinesRendered, newLines.size());
+    }
+
+    /**
+     * Emit every line of the current frame, optionally preceded by a full
+     * clear (used for width/height changes and shrink-below-high-water-mark).
+     * On the first frame {@code clear} is false — {@link #start()} has already
+     * cleared the screen.
+     */
+    private void fullRender(List<String> newLines, int width, int height, boolean clear) {
+        StringBuilder sb = new StringBuilder();
+        if (syncOutputSupported) sb.append(SYNC_START);
+        if (clear) sb.append(ERASE_SCREEN).append(HOME).append(ERASE_SCROLLBACK);
+        for (int i = 0; i < newLines.size(); i++) {
+            if (i > 0) sb.append("\r\n");
+            String line = newLines.get(i);
+            if (AnsiUtils.visibleWidth(line) > width) {
+                line = AnsiUtils.sliceByColumn(line, 0, width);
+            }
+            sb.append(line);
+        }
+        if (syncOutputSupported) sb.append(SYNC_END);
+        terminal.write(sb.toString());
+
+        hardwareCursorRow = Math.max(0, newLines.size() - 1);
+        if (clear) {
+            maxLinesRendered = newLines.size();
+        } else {
+            maxLinesRendered = Math.max(maxLinesRendered, newLines.size());
+        }
+        int bufferLength = Math.max(height, newLines.size());
+        previousViewportTop = Math.max(0, bufferLength - height);
+        previousLines = newLines;
+        previousWidth = width;
+        previousHeight = height;
     }
 
     public Terminal getTerminal() {

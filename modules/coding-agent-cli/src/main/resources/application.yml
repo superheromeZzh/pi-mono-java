@@ -39,12 +39,12 @@ tool:
     # SANDBOX = 强制所有工具在沙箱中执行
     # AUTO = 根据风险评估自动选择
     # LOCAL = 强制本地执行
-    default-mode: SANDBOX
+    default-mode: LOCAL
 
     # 启用混合路由
-    # 注意：启用混合工具会替换原工具，但两者不能同时存在
-    # 当前设置为 true，使用混合工具执行（支持沙箱模式）
-    hybrid-enabled: true
+    # 注意：启用混合工具会替换原工具，两者不能同时存在
+    # 默认 false：直接使用本地工具；改为 true 会启用 hybrid 路由并要求 Docker 可用
+    hybrid-enabled: false
 
     # 允许本地执行
     local-execution-enabled: true
