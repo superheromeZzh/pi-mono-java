@@ -1,4 +1,4 @@
-package com.campusclaw.codingagent.channel;
+package com.huawei.hicampus.mate.matecampusclaw.assistant.channel.gateway;
 
 import org.springframework.context.ApplicationEvent;
 

@@ -1,8 +1,9 @@
+# Optional: merge via spring.config.import=optional:classpath:application-assistant.yml
 spring:
   datasource:
-    url: jdbc:postgresql://localhost:5432/pi_assistant
+    url: jdbc:postgresql://localhost:5433/pi_assistant
     username: postgres
-    password: 123456
+    password: postgres
     driver-class-name: org.postgresql.Driver
 
 mybatis:

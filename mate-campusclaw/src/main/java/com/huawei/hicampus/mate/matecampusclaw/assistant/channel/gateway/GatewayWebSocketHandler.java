@@ -1,8 +1,7 @@
-package com.campusclaw.assistant.channel.gateway;
+package com.huawei.hicampus.mate.matecampusclaw.assistant.channel.gateway;
 
-import com.campusclaw.assistant.channel.gateway.protocol.*;
+import com.huawei.hicampus.mate.matecampusclaw.assistant.channel.gateway.protocol.*;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
