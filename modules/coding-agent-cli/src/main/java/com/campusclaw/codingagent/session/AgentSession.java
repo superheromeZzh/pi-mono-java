@@ -435,13 +435,17 @@ public class AgentSession {
         skillRegistry.clear();
 
         // User-level skills: ~/.campusclaw/agent/skills/
-        List<Skill> userSkills = skillLoader.loadFromDirectory(USER_SKILLS_DIR, "user");
+        List<Skill> userSkills = skillLoader.loadFromDirectory(userSkillsDir(), "user");
         skillRegistry.registerAll(userSkills);
 
         // Project-level skills: {cwd}/.campusclaw/skills/
         Path projectSkillsDir = cwd.resolve(PROJECT_SKILLS_SUBDIR);
         List<Skill> projectSkills = skillLoader.loadFromDirectory(projectSkillsDir, "project");
         skillRegistry.registerAll(projectSkills);
+    }
+
+    protected Path userSkillsDir() {
+        return USER_SKILLS_DIR;
     }
 
     static Map<String, String> buildEnvironmentMap() {

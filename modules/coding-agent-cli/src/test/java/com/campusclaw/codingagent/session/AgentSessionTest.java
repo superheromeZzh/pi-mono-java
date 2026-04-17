@@ -35,7 +35,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -97,7 +96,8 @@ class AgentSessionTest {
     private AgentSession createSession() {
         return new TestableAgentSession(
                 piAiService, modelRegistry, promptBuilder,
-                skillLoader, skillExpander, tools
+                skillLoader, skillExpander, tools,
+                tempDir.resolve(".user-skills-isolated")
         );
     }
 
@@ -239,7 +239,6 @@ class AgentSessionTest {
     // -------------------------------------------------------------------
 
     @Nested
-    @Disabled("TODO: re-enable after validating skill loader behavior against new skill registry changes")
     class SkillLoading {
 
         @Test
@@ -536,6 +535,7 @@ class AgentSessionTest {
      */
     private static class TestableAgentSession extends AgentSession {
         private Agent mockAgent;
+        private final Path userSkillsDir;
 
         TestableAgentSession(
                 CampusClawAiService piAiService,
@@ -543,9 +543,11 @@ class AgentSessionTest {
                 SystemPromptBuilder promptBuilder,
                 SkillLoader skillLoader,
                 SkillExpander skillExpander,
-                List<AgentTool> tools
+                List<AgentTool> tools,
+                Path userSkillsDir
         ) {
             super(piAiService, modelRegistry, promptBuilder, skillLoader, skillExpander, tools);
+            this.userSkillsDir = userSkillsDir;
         }
 
         @Override
@@ -553,6 +555,11 @@ class AgentSessionTest {
             mockAgent = mock(Agent.class);
             when(mockAgent.getState()).thenReturn(new com.campusclaw.agent.state.AgentState());
             return mockAgent;
+        }
+
+        @Override
+        protected Path userSkillsDir() {
+            return userSkillsDir;
         }
 
         Agent getMockAgent() {
