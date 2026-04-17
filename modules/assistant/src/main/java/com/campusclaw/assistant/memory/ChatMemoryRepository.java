@@ -1,8 +1,8 @@
 package com.campusclaw.assistant.memory;
 
-import com.campusclaw.ai.types.Message;
-
 import java.util.List;
+
+import com.campusclaw.ai.types.Message;
 
 public interface ChatMemoryRepository {
 

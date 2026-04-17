@@ -10,7 +10,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executors;
@@ -19,17 +18,12 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
-import com.campusclaw.agent.event.AgentEndEvent;
 import com.campusclaw.agent.event.AgentEvent;
-import com.campusclaw.agent.event.AgentEventListener;
-import com.campusclaw.agent.event.AgentStartEvent;
 import com.campusclaw.agent.event.MessageEndEvent;
-import com.campusclaw.agent.event.MessageStartEvent;
 import com.campusclaw.agent.event.MessageUpdateEvent;
 import com.campusclaw.agent.event.ToolExecutionEndEvent;
 import com.campusclaw.agent.event.ToolExecutionStartEvent;
 import com.campusclaw.agent.event.ToolExecutionUpdateEvent;
-import com.campusclaw.agent.event.TurnEndEvent;
 import com.campusclaw.agent.event.TurnStartEvent;
 import com.campusclaw.agent.tool.CancellationToken;
 import com.campusclaw.ai.model.ModelRegistry;
@@ -47,13 +41,13 @@ import com.campusclaw.codingagent.mode.tui.AssistantMessageComponent;
 import com.campusclaw.codingagent.mode.tui.BashExecutionComponent;
 import com.campusclaw.codingagent.mode.tui.CommandOutputComponent;
 import com.campusclaw.codingagent.mode.tui.EditorContainer;
+import com.campusclaw.codingagent.mode.tui.EditorContainer.CommandSuggestion;
 import com.campusclaw.codingagent.mode.tui.FooterComponent;
 import com.campusclaw.codingagent.mode.tui.ModelSelectorOverlay;
 import com.campusclaw.codingagent.mode.tui.SessionSelectorOverlay;
 import com.campusclaw.codingagent.mode.tui.ToolStatusComponent;
 import com.campusclaw.codingagent.mode.tui.TreeSelectorOverlay;
 import com.campusclaw.codingagent.mode.tui.UserMessageComponent;
-import com.campusclaw.codingagent.mode.tui.EditorContainer.CommandSuggestion;
 import com.campusclaw.codingagent.prompt.PromptTemplateEntry;
 import com.campusclaw.codingagent.session.AgentSession;
 import com.campusclaw.codingagent.skill.Skill;
@@ -65,6 +59,7 @@ import com.campusclaw.tui.Tui;
 import com.campusclaw.tui.component.Container;
 import com.campusclaw.tui.component.Text;
 import com.campusclaw.tui.terminal.Terminal;
+
 import org.springframework.context.ApplicationContext;
 
 /**
@@ -808,7 +803,7 @@ public class InteractiveMode {
                 if (replyText != null && !replyText.isEmpty()) {
                     try {
                         applicationContext.publishEvent(
-                            new com.campusclaw.codingagent.channel.AgentResponseEvent(this, replyText));
+                            new com.campusclaw.assistant.channel.gateway.AgentResponseEvent(this, replyText));
                     } catch (Exception e) {
                         System.err.println("[InteractiveMode] Failed to publish AgentResponseEvent: " + e.getMessage());
                     }

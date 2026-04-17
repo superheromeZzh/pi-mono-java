@@ -3,6 +3,7 @@ package com.campusclaw.codingagent.source;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
@@ -12,7 +13,6 @@ import java.util.Optional;
 import java.util.Set;
 
 import jakarta.annotation.Nullable;
-import java.util.Collection;
 
 /**
  * Tracks the origin and provenance of resources (skills, tools, commands, settings).

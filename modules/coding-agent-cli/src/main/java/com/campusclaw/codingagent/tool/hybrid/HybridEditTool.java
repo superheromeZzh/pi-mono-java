@@ -1,5 +1,7 @@
 package com.campusclaw.codingagent.tool.hybrid;
 
+import java.util.Map;
+
 import com.campusclaw.agent.tool.AgentTool;
 import com.campusclaw.agent.tool.AgentToolResult;
 import com.campusclaw.agent.tool.AgentToolUpdateCallback;
@@ -10,12 +12,10 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
-
-import java.util.List;
-import java.util.Map;
 
 /**
  * 混合模式 Edit 工具 - 统一入口，智能路由

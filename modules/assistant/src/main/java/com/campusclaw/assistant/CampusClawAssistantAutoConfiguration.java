@@ -1,12 +1,13 @@
 package com.campusclaw.assistant;
 
+import com.campusclaw.assistant.channel.gateway.WebSocketGatewayProperties;
 import com.campusclaw.assistant.mapper.ChatMemoryMapper;
 import com.campusclaw.assistant.memory.ChatMemoryRepository;
 import com.campusclaw.assistant.memory.MyBatisChatMemoryRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import com.campusclaw.assistant.channel.gateway.WebSocketGatewayProperties;
+
 import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;

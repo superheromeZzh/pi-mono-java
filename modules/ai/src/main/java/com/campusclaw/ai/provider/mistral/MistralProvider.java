@@ -10,7 +10,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.UUID;
 
 import com.campusclaw.ai.provider.ApiProvider;
@@ -25,9 +24,8 @@ import com.campusclaw.ai.types.SimpleStreamOptions;
 import com.campusclaw.ai.types.StopReason;
 import com.campusclaw.ai.types.StreamOptions;
 import com.campusclaw.ai.types.TextContent;
-import com.campusclaw.ai.types.ThinkingLevel;
 import com.campusclaw.ai.types.ThinkingContent;
-import com.campusclaw.ai.types.Tool;
+import com.campusclaw.ai.types.ThinkingLevel;
 import com.campusclaw.ai.types.ToolCall;
 import com.campusclaw.ai.types.ToolResultMessage;
 import com.campusclaw.ai.types.Usage;

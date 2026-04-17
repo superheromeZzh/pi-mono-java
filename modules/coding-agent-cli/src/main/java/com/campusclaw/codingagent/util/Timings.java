@@ -1,12 +1,12 @@
 package com.campusclaw.codingagent.util;
 
 import java.util.ArrayList;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.Deque;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedDeque;
 
@@ -14,9 +14,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import jakarta.annotation.Nullable;
-import java.util.function.Supplier;
-import java.util.Deque;
-import java.util.LinkedHashSet;
 
 /**
  * Performance timing tracker for measuring execution durations.

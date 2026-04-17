@@ -1,14 +1,15 @@
 package com.campusclaw.codingagent.config;
 
+import java.util.List;
+import java.util.Set;
+
 import com.campusclaw.codingagent.tool.execution.ExecutionMode;
+
+import org.springframework.boot.context.properties.ConfigurationProperties;
+
 import jakarta.annotation.PostConstruct;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.stereotype.Component;
-
-import java.util.List;
-import java.util.Set;
 
 /**
  * 工具执行配置属性

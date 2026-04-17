@@ -1,14 +1,13 @@
 package com.campusclaw.agent.proxy;
 
 import java.io.IOException;
+import java.net.Authenticator;
 import java.net.InetSocketAddress;
+import java.net.PasswordAuthentication;
 import java.net.Proxy;
 import java.net.ProxySelector;
-import java.net.URI;
-import java.net.URL;
 import java.net.SocketAddress;
-import java.net.Authenticator;
-import java.net.PasswordAuthentication;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;

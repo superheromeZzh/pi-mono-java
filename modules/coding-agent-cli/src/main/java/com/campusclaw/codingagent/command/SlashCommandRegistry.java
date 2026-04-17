@@ -1,12 +1,12 @@
 package com.campusclaw.codingagent.command;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
 
 import org.springframework.stereotype.Service;
-import java.util.Collection;
 
 @Service
 public class SlashCommandRegistry {
