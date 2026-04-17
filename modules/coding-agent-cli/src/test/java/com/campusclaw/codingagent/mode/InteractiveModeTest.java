@@ -24,7 +24,6 @@ import com.campusclaw.codingagent.tool.bash.BashExecutor;
 import com.campusclaw.tui.terminal.TestTerminal;
 
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -155,11 +154,10 @@ class InteractiveModeTest {
         }
 
         @Test
-        @Disabled("TODO: footer pwd assertion is environment-dependent (assumes cwd under user home); make assertion CI-safe")
         void rendersPwdAndStatsLines() {
             var footer = new com.campusclaw.codingagent.mode.tui.FooterComponent();
             footer.setModel("zai", "glm-5", 200000, false);
-            footer.setCwd("/Users/z/project");
+            footer.setCwd(System.getProperty("user.home") + "/project");
             var lines = footer.render(80);
             assertEquals(2, lines.size()); // pwd + stats
             assertTrue(lines.get(0).contains("~")); // pwd with ~ substitution

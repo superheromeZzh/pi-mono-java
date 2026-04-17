@@ -19,11 +19,9 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
-@Disabled("TODO: prompt template changed; update expected assertions to match current SystemPromptBuilder output")
 class SystemPromptBuilderTest {
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
@@ -57,14 +55,14 @@ class SystemPromptBuilderTest {
         @Test
         void includesBaseRoleDefinition() {
             String result = builder.build(minimalConfig());
-            assertTrue(result.contains("expert coding assistant"));
-            assertTrue(result.contains("coding agent"));
+            assertTrue(result.contains("CampusClaw"));
+            assertTrue(result.contains("智能园区管理助手"));
         }
 
         @Test
         void alwaysIncludesEnvironmentSection() {
             String result = builder.build(minimalConfig());
-            assertTrue(result.contains("# Environment"));
+            assertTrue(result.contains("# 环境信息"));
             assertTrue(result.contains("/test/project"));
         }
     }
@@ -86,7 +84,7 @@ class SystemPromptBuilderTest {
 
             String result = builder.build(config);
 
-            assertTrue(result.contains("Available tools:"));
+            assertTrue(result.contains("可用工具:"));
             assertTrue(result.contains("- bash: Execute bash commands"));
         }
 
@@ -108,7 +106,7 @@ class SystemPromptBuilderTest {
         @Test
         void noToolSectionWhenEmpty() {
             String result = builder.build(minimalConfig());
-            assertFalse(result.contains("Available tools:"));
+            assertFalse(result.contains("可用工具:"));
         }
     }
 
@@ -129,7 +127,7 @@ class SystemPromptBuilderTest {
 
             String result = builder.build(config);
 
-            assertTrue(result.contains("# Skills"));
+            assertTrue(result.contains("# 技能"));
             assertTrue(result.contains("<available_skills>"));
             assertTrue(result.contains("<name>commit</name>"));
             assertTrue(result.contains("Create git commits"));
@@ -154,7 +152,7 @@ class SystemPromptBuilderTest {
         @Test
         void noSkillsSectionWhenEmpty() {
             String result = builder.build(minimalConfig());
-            assertFalse(result.contains("# Skills"));
+            assertFalse(result.contains("# 技能"));
             assertFalse(result.contains("<available_skills>"));
         }
 
@@ -183,7 +181,7 @@ class SystemPromptBuilderTest {
         @Test
         void includesWorkingDirectory() {
             String result = builder.build(minimalConfig());
-            assertTrue(result.contains("Working directory: /test/project"));
+            assertTrue(result.contains("工作目录: /test/project"));
         }
 
         @Test
@@ -195,7 +193,7 @@ class SystemPromptBuilderTest {
             );
 
             String result = builder.build(config);
-            assertTrue(result.contains("Operating system: Linux"));
+            assertTrue(result.contains("操作系统: Linux"));
         }
 
         @Test
@@ -207,13 +205,13 @@ class SystemPromptBuilderTest {
             );
 
             String result = builder.build(config);
-            assertTrue(result.contains("Git branch: feature/test"));
+            assertTrue(result.contains("Git 分支: feature/test"));
         }
 
         @Test
         void omitsGitBranchWhenAbsent() {
             String result = builder.build(minimalConfig());
-            assertFalse(result.contains("Git branch"));
+            assertFalse(result.contains("Git 分支"));
         }
 
         @Test
@@ -225,7 +223,7 @@ class SystemPromptBuilderTest {
             );
 
             String result = builder.build(config);
-            assertTrue(result.contains("Java version: 21.0.1"));
+            assertTrue(result.contains("Java 版本: 21.0.1"));
         }
     }
 
@@ -247,14 +245,14 @@ class SystemPromptBuilderTest {
 
             String result = builder.build(config);
 
-            assertTrue(result.contains("# User Instructions"));
+            assertTrue(result.contains("# 用户指令"));
             assertTrue(result.contains("Always use TypeScript strict mode."));
         }
 
         @Test
         void noCustomSectionWhenNull() {
             String result = builder.build(minimalConfig());
-            assertFalse(result.contains("# User Instructions"));
+            assertFalse(result.contains("# 用户指令"));
         }
 
         @Test
@@ -264,8 +262,8 @@ class SystemPromptBuilderTest {
                     Path.of("/cwd"), "   ", Map.of()
             );
 
-            String result = builder.build(minimalConfig());
-            assertFalse(result.contains("# User Instructions"));
+            String result = builder.build(config);
+            assertFalse(result.contains("# 用户指令"));
         }
     }
 
@@ -291,11 +289,11 @@ class SystemPromptBuilderTest {
             String result = builder.build(config);
 
             // Verify section ordering: base -> tools -> skills -> env -> custom
-            int baseIdx = result.indexOf("coding agent");
-            int toolsIdx = result.indexOf("Available tools:");
-            int skillsIdx = result.indexOf("# Skills");
-            int envIdx = result.indexOf("# Environment");
-            int customIdx = result.indexOf("# User Instructions");
+            int baseIdx = result.indexOf("智能园区管理助手");
+            int toolsIdx = result.indexOf("可用工具:");
+            int skillsIdx = result.indexOf("# 技能");
+            int envIdx = result.indexOf("# 环境信息");
+            int customIdx = result.indexOf("# 用户指令");
 
             assertTrue(baseIdx >= 0, "base prompt not found");
             assertTrue(toolsIdx >= 0, "tools section not found");
