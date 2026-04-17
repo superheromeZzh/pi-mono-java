@@ -14,7 +14,6 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 
-import com.campusclaw.cron.engine.CronEventListener;
 import com.campusclaw.cron.model.CronEvent;
 import com.campusclaw.cron.model.CronJob;
 import com.campusclaw.cron.model.CronJobState;

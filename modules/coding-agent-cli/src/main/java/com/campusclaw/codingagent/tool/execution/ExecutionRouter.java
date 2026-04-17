@@ -1,12 +1,16 @@
 package com.campusclaw.codingagent.tool.execution;
 
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.regex.Pattern;
+
 import com.campusclaw.agent.tool.AgentToolResult;
-import com.campusclaw.agent.tool.CancellationToken;
 import com.campusclaw.agent.tool.AgentToolUpdateCallback;
+import com.campusclaw.agent.tool.CancellationToken;
 import com.campusclaw.codingagent.config.ToolExecutionProperties;
 import com.campusclaw.codingagent.tool.bash.BashTool;
 import com.campusclaw.codingagent.tool.edit.EditTool;
-import com.campusclaw.codingagent.tool.execution.ExecutionMode;
 import com.campusclaw.codingagent.tool.glob.GlobTool;
 import com.campusclaw.codingagent.tool.grep.GrepTool;
 import com.campusclaw.codingagent.tool.read.ReadTool;
@@ -15,17 +19,11 @@ import com.campusclaw.codingagent.tool.sandbox.ResourceLimits;
 import com.campusclaw.codingagent.tool.sandbox.SandboxResult;
 import com.campusclaw.codingagent.tool.sandbox.SandboxSecurityPolicy;
 import com.campusclaw.codingagent.tool.write.WriteTool;
-import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.regex.Pattern;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * 执行路由器 - 根据配置和策略路由到本地或沙箱执行

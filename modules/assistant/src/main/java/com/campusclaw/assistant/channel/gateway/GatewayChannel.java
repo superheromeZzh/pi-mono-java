@@ -1,10 +1,13 @@
 package com.campusclaw.assistant.channel.gateway;
 
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+
 import com.campusclaw.assistant.channel.Channel;
 import com.campusclaw.assistant.channel.ChannelRegistry;
 import com.campusclaw.assistant.channel.MessageSubmitter;
-import io.netty.channel.ChannelHandlerContext;
-import jakarta.annotation.PostConstruct;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,9 +16,8 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 
-import java.util.Map;
-import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
+import io.netty.channel.ChannelHandlerContext;
+import jakarta.annotation.PostConstruct;
 
 /**
  * Gateway Channel implementation.

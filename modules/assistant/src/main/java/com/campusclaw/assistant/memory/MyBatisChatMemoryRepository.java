@@ -1,16 +1,16 @@
 package com.campusclaw.assistant.memory;
 
+import java.io.UncheckedIOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+
 import com.campusclaw.ai.types.AssistantMessage;
 import com.campusclaw.ai.types.Message;
 import com.campusclaw.ai.types.ToolResultMessage;
 import com.campusclaw.ai.types.UserMessage;
 import com.campusclaw.assistant.mapper.ChatMemoryMapper;
 import com.fasterxml.jackson.databind.ObjectMapper;
-
-import java.io.UncheckedIOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
 
 public class MyBatisChatMemoryRepository implements ChatMemoryRepository {
 

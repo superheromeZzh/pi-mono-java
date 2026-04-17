@@ -1,9 +1,10 @@
 package com.campusclaw.assistant.memory;
 
-import com.campusclaw.ai.types.Message;
-import org.springframework.stereotype.Service;
-
 import java.util.List;
+
+import com.campusclaw.ai.types.Message;
+
+import org.springframework.stereotype.Service;
 
 @Service
 public class ChatMemoryStore {

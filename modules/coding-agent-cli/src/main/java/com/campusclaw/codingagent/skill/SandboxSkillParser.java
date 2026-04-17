@@ -1,18 +1,19 @@
 package com.campusclaw.codingagent.skill;
 
-import com.campusclaw.codingagent.tool.sandbox.DockerSandboxClient;
-import com.campusclaw.codingagent.tool.sandbox.ResourceLimits;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
-
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Base64;
 import java.util.List;
-import java.util.UUID;
+
+import com.campusclaw.codingagent.tool.sandbox.DockerSandboxClient;
+import com.campusclaw.codingagent.tool.sandbox.ResourceLimits;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * 沙箱内的 Skill 解析器

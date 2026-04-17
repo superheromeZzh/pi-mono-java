@@ -1,12 +1,13 @@
 package com.campusclaw.assistant.mapper;
 
+import java.util.List;
+
 import com.campusclaw.assistant.memory.ChatMemoryEntity;
+
 import org.apache.ibatis.annotations.Delete;
 import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Select;
-
-import java.util.List;
 
 @Mapper
 public interface ChatMemoryMapper {

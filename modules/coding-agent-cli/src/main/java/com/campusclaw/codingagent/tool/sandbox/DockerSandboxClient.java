@@ -1,10 +1,5 @@
 package com.campusclaw.codingagent.tool.sandbox;
 
-import com.campusclaw.codingagent.config.ToolExecutionProperties;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
-
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -12,6 +7,13 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+
+import com.campusclaw.codingagent.config.ToolExecutionProperties;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Docker 沙箱客户端 - 使用系统 docker 命令
