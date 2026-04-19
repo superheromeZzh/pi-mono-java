@@ -289,7 +289,7 @@ public class GrepTool implements AgentTool {
         if (typeExtensions != null) {
             String fileName = file.getFileName().toString();
             int dot = fileName.lastIndexOf('.');
-            if (dot < 0) return false;
+            if (dot < 0) { return false; }
             String ext = fileName.substring(dot);
             return typeExtensions.contains(ext);
         }

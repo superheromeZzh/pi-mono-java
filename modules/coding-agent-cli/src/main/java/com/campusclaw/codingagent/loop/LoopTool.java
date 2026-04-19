@@ -150,9 +150,9 @@ public class LoopTool implements AgentTool {
     }
 
     private static String formatInterval(long ms) {
-        if (ms >= 3_600_000 && ms % 3_600_000 == 0) return (ms / 3_600_000) + "h";
-        if (ms >= 60_000 && ms % 60_000 == 0) return (ms / 60_000) + "m";
-        if (ms >= 1000 && ms % 1000 == 0) return (ms / 1000) + "s";
+        if (ms >= 3_600_000 && ms % 3_600_000 == 0) { return (ms / 3_600_000) + "h"; }
+        if (ms >= 60_000 && ms % 60_000 == 0) { return (ms / 60_000) + "m"; }
+        if (ms >= 1000 && ms % 1000 == 0) { return (ms / 1000) + "s"; }
         return ms + "ms";
     }
 

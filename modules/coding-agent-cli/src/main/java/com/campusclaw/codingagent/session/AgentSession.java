@@ -326,7 +326,7 @@ public class AgentSession {
      * Expands a prompt template command like "/templatename arg1 arg2".
      */
     String expandPromptTemplate(String input) {
-        if (!input.startsWith("/")) return input;
+        if (!input.startsWith("/")) { return input; }
 
         int spaceIdx = input.indexOf(' ');
         String name = spaceIdx >= 0 ? input.substring(1, spaceIdx) : input.substring(1);
@@ -406,16 +406,16 @@ public class AgentSession {
 
         // 1. Exact match
         for (Provider provider : modelRegistry.getProviders()) {
-            if (targetProvider != null && provider != targetProvider) continue;
+            if (targetProvider != null && provider != targetProvider) { continue; }
             var model = modelRegistry.getModel(provider, pattern);
-            if (model.isPresent()) return model.get();
+            if (model.isPresent()) { return model.get(); }
         }
 
         // 2. Fuzzy substring match on id and name
         String lowerPattern = pattern.toLowerCase();
         Model bestMatch = null;
         for (Provider provider : modelRegistry.getProviders()) {
-            if (targetProvider != null && provider != targetProvider) continue;
+            if (targetProvider != null && provider != targetProvider) { continue; }
             for (Model m : modelRegistry.getModels(provider)) {
                 if (m.id().toLowerCase().contains(lowerPattern)
                         || m.name().toLowerCase().contains(lowerPattern)) {
@@ -425,7 +425,7 @@ public class AgentSession {
                 }
             }
         }
-        if (bestMatch != null) return bestMatch;
+        if (bestMatch != null) { return bestMatch; }
 
         throw new IllegalArgumentException("Unknown model: " + modelId
                 + ". Use --list-models to see available models.");

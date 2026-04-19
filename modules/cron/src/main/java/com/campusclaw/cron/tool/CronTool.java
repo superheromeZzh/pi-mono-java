@@ -310,7 +310,7 @@ public class CronTool implements AgentTool {
             case "every" -> {
                 try {
                     long ms = Long.parseLong(value);
-                    if (ms <= 0) throw new IllegalArgumentException("Interval must be positive");
+                    if (ms <= 0) { throw new IllegalArgumentException("Interval must be positive"); }
                     yield new CronSchedule.Every(ms);
                 } catch (NumberFormatException e) {
                     throw new IllegalArgumentException(
@@ -335,9 +335,9 @@ public class CronTool implements AgentTool {
                 "once at " + TIME_FMT.format(Instant.ofEpochMilli(at.timestampMs()));
             case CronSchedule.Every every -> {
                 long ms = every.intervalMs();
-                if (ms >= 3_600_000) yield "every " + (ms / 3_600_000) + "h";
-                if (ms >= 60_000) yield "every " + (ms / 60_000) + "m";
-                if (ms >= 1_000) yield "every " + (ms / 1_000) + "s";
+                if (ms >= 3_600_000) { yield "every " + (ms / 3_600_000) + "h"; }
+                if (ms >= 60_000) { yield "every " + (ms / 60_000) + "m"; }
+                if (ms >= 1_000) { yield "every " + (ms / 1_000) + "s"; }
                 yield "every " + ms + "ms";
             }
             case CronSchedule.CronExpr cron -> {

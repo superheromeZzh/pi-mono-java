@@ -41,7 +41,7 @@ public class MyBatisChatMemoryRepository implements ChatMemoryRepository {
     public void append(String conversationId, List<Message> messages) {
         Objects.requireNonNull(conversationId, "conversationId");
         Objects.requireNonNull(messages, "messages");
-        if (messages.isEmpty()) return;
+        if (messages.isEmpty()) { return; }
 
         List<ChatMemoryEntity> existing = mapper.selectByConversationId(conversationId);
         int nextSequence = existing.isEmpty() ? 0 : existing.getLast().sequence() + 1;

@@ -25,8 +25,8 @@ public class FileOperationTracker {
                 for (ContentBlock cb : am.content()) {
                     if (cb instanceof ToolCall tc) {
                         String path = getStringArg(tc.arguments(), "path");
-                        if (path == null) path = getStringArg(tc.arguments(), "file_path");
-                        if (path == null) continue;
+                        if (path == null) { path = getStringArg(tc.arguments(), "file_path"); }
+                        if (path == null) { continue; }
 
                         switch (tc.name()) {
                             case "Read", "read" -> filesRead.add(path);
@@ -46,7 +46,7 @@ public class FileOperationTracker {
     }
 
     private static String getStringArg(Map<String, Object> args, String key) {
-        if (args == null) return null;
+        if (args == null) { return null; }
         Object val = args.get(key);
         return val instanceof String s ? s : null;
     }

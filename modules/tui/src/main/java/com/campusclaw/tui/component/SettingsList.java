@@ -109,7 +109,7 @@ public class SettingsList<T> implements Component, Focusable {
     }
 
     public Entry<T> getSelectedEntry() {
-        if (entries.isEmpty()) return null;
+        if (entries.isEmpty()) { return null; }
         return entries.get(selectedIndex);
     }
 
@@ -178,7 +178,7 @@ public class SettingsList<T> implements Component, Focusable {
 
     @Override
     public void handleInput(String data) {
-        if (entries.isEmpty()) return;
+        if (entries.isEmpty()) { return; }
 
         if (KEY_UP.equals(data)) {
             selectedIndex = selectedIndex == 0 ? entries.size() - 1 : selectedIndex - 1;

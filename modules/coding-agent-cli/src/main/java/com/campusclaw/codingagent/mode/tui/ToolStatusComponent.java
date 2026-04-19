@@ -192,11 +192,11 @@ public class ToolStatusComponent implements Component {
     }
 
     private String extractTitleDetail() {
-        if (!(args instanceof Map<?, ?> map)) return null;
+        if (!(args instanceof Map<?, ?> map)) { return null; }
         return switch (toolName) {
             case "read", "write", "edit", "ls" -> {
                 Object p = map.get("file_path");
-                if (p == null) p = map.get("path");
+                if (p == null) { p = map.get("path"); }
                 yield p != null ? shortenPath(p.toString()) : null;
             }
             case "bash" -> {
@@ -207,19 +207,19 @@ public class ToolStatusComponent implements Component {
                 Object pattern = map.get("pattern");
                 Object path = map.get("path");
                 String s = pattern != null ? pattern.toString() : "";
-                if (path != null) s += " in " + shortenPath(path.toString());
+                if (path != null) { s += " in " + shortenPath(path.toString()); }
                 yield s.isEmpty() ? null : s;
             }
             case "grep" -> {
                 Object pattern = map.get("pattern");
                 Object path = map.get("path");
                 String s = pattern != null ? "/" + pattern + "/" : "";
-                if (path != null) s += " in " + shortenPath(path.toString());
+                if (path != null) { s += " in " + shortenPath(path.toString()); }
                 yield s.isEmpty() ? null : s;
             }
             default -> {
                 Object p = map.get("file_path");
-                if (p == null) p = map.get("path");
+                if (p == null) { p = map.get("path"); }
                 yield p != null ? shortenPath(p.toString()) : null;
             }
         };
@@ -228,23 +228,23 @@ public class ToolStatusComponent implements Component {
     private String getDisplayContent() {
         if ("write".equals(toolName) && args instanceof Map<?, ?> map) {
             Object content = map.get("content");
-            if (content != null) return colorizeContent(content.toString());
+            if (content != null) { return colorizeContent(content.toString()); }
         }
         // Bash: command is in the title, content is just the output
         if ("bash".equals(toolName)) {
-            if (complete && resultSummary != null) return resultSummary;
-            if (!complete && partialResultSummary != null) return partialResultSummary;
+            if (complete && resultSummary != null) { return resultSummary; }
+            if (!complete && partialResultSummary != null) { return partialResultSummary; }
             return null;
         }
-        if (complete && resultSummary != null) return colorizeContent(resultSummary);
-        if (!complete && partialResultSummary != null) return colorizeContent(partialResultSummary);
+        if (complete && resultSummary != null) { return colorizeContent(resultSummary); }
+        if (!complete && partialResultSummary != null) { return colorizeContent(partialResultSummary); }
         return null;
     }
 
     private String colorizeContent(String content) {
         var sb = new StringBuilder();
         for (String line : content.replace("\t", "    ").split("\n", -1)) {
-            if (!sb.isEmpty()) sb.append("\n");
+            if (!sb.isEmpty()) { sb.append("\n"); }
             if (line.startsWith("\033[")) {
                 sb.append(line);
             } else {
@@ -288,45 +288,45 @@ public class ToolStatusComponent implements Component {
     }
 
     private static String summarizeResult(Object result) {
-        if (result == null) return null;
+        if (result == null) { return null; }
         String s;
         if (result instanceof AgentToolResult atr && atr.content() != null) {
             var sb = new StringBuilder();
             for (ContentBlock block : atr.content()) {
                 if (block instanceof TextContent tc) {
-                    if (!sb.isEmpty()) sb.append('\n');
+                    if (!sb.isEmpty()) { sb.append('\n'); }
                     sb.append(tc.text());
                 }
             }
             if (atr.details() instanceof EditToolDetails details && details.diff() != null) {
-                if (!sb.isEmpty()) sb.append('\n');
+                if (!sb.isEmpty()) { sb.append('\n'); }
                 sb.append(formatDiff(details.diff()));
             }
             s = sb.toString();
         } else {
             s = result.toString();
         }
-        if (s.isBlank()) return null;
-        if (s.length() > 5000) return s.substring(0, 5000) + "...";
+        if (s.isBlank()) { return null; }
+        if (s.length() > 5000) { return s.substring(0, 5000) + "..."; }
         return s;
     }
 
     private static String formatDiff(String diff) {
         var sb = new StringBuilder();
         for (String line : diff.split("\n")) {
-            if (line.startsWith("---") || line.startsWith("+++") || line.startsWith("@@")) continue;
-            if (!sb.isEmpty()) sb.append('\n');
-            if (line.startsWith("-")) sb.append(ANSI_RED).append(line).append(ANSI_RESET);
-            else if (line.startsWith("+")) sb.append(ANSI_GREEN).append(line).append(ANSI_RESET);
-            else sb.append(ANSI_TOOL_OUTPUT).append(line).append(ANSI_RESET);
+            if (line.startsWith("---") || line.startsWith("+++") || line.startsWith("@@")) { continue; }
+            if (!sb.isEmpty()) { sb.append('\n'); }
+            if (line.startsWith("-")) { sb.append(ANSI_RED).append(line).append(ANSI_RESET); }
+            else if (line.startsWith("+")) { sb.append(ANSI_GREEN).append(line).append(ANSI_RESET); }
+            else { sb.append(ANSI_TOOL_OUTPUT).append(line).append(ANSI_RESET); }
         }
         return sb.toString();
     }
 
     private static String truncateText(String text, int maxWidth) {
-        if (text == null) return "";
+        if (text == null) { return ""; }
         int visWidth = AnsiUtils.visibleWidth(text);
-        if (visWidth <= maxWidth) return text;
+        if (visWidth <= maxWidth) { return text; }
         return AnsiUtils.sliceByColumn(text, 0, Math.max(1, maxWidth - 3)) + "...";
     }
 }

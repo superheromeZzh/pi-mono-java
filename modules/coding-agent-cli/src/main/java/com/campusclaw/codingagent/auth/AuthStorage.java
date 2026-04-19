@@ -63,7 +63,7 @@ public class AuthStorage {
     }
 
     private Optional<Map<String, Credential>> load() {
-        if (!Files.exists(AUTH_FILE)) return Optional.empty();
+        if (!Files.exists(AUTH_FILE)) { return Optional.empty(); }
         try {
             String json = Files.readString(AUTH_FILE);
             Map<String, Credential> map = MAPPER.readValue(json, new TypeReference<>() {});

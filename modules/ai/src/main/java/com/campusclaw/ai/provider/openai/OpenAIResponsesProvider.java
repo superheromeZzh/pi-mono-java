@@ -250,7 +250,7 @@ public class OpenAIResponsesProvider implements ApiProvider {
                 event.outputTextDelta().ifPresent(e -> {
                     int outputIdx = (int) e.outputIndex();
                     Integer contentIdx = outputIndexToContentIndex.get(outputIdx);
-                    if (contentIdx == null) return;
+                    if (contentIdx == null) { return; }
                     var acc = textAccumulators.get(outputIdx);
                     if (acc != null) {
                         acc.append(e.delta());
@@ -267,7 +267,7 @@ public class OpenAIResponsesProvider implements ApiProvider {
                 event.reasoningSummaryTextDelta().ifPresent(e -> {
                     int outputIdx = (int) e.outputIndex();
                     Integer contentIdx = outputIndexToContentIndex.get(outputIdx);
-                    if (contentIdx == null) return;
+                    if (contentIdx == null) { return; }
                     var acc = thinkingAccumulators.get(outputIdx);
                     if (acc != null) {
                         acc.append(e.delta());
@@ -284,7 +284,7 @@ public class OpenAIResponsesProvider implements ApiProvider {
                 event.functionCallArgumentsDelta().ifPresent(e -> {
                     int outputIdx = (int) e.outputIndex();
                     Integer contentIdx = outputIndexToContentIndex.get(outputIdx);
-                    if (contentIdx == null) return;
+                    if (contentIdx == null) { return; }
                     var acc = toolAccumulators.get(outputIdx);
                     if (acc != null) {
                         acc.arguments.append(e.delta());
@@ -391,7 +391,7 @@ public class OpenAIResponsesProvider implements ApiProvider {
 
         int outputIdx = (int) e.outputIndex();
         Integer contentIdx = outputIndexToContentIndex.get(outputIdx);
-        if (contentIdx == null) return;
+        if (contentIdx == null) { return; }
         var item = e.item();
 
         if (item.isMessage()) {
@@ -537,7 +537,7 @@ public class OpenAIResponsesProvider implements ApiProvider {
 
     private static boolean hasToolCalls(List<ContentBlock> blocks) {
         for (ContentBlock block : blocks) {
-            if (block instanceof ToolCall) return true;
+            if (block instanceof ToolCall) { return true; }
         }
         return false;
     }
@@ -589,7 +589,7 @@ public class OpenAIResponsesProvider implements ApiProvider {
 
     @SuppressWarnings("unchecked")
     private static Map<String, Object> parseToolArguments(String json) {
-        if (json == null || json.isBlank()) return Map.of();
+        if (json == null || json.isBlank()) { return Map.of(); }
         try {
             return MAPPER.readValue(json, new TypeReference<Map<String, Object>>() {});
         } catch (Exception e) {
@@ -598,7 +598,7 @@ public class OpenAIResponsesProvider implements ApiProvider {
     }
 
     private static String serializeArguments(Map<String, Object> args) {
-        if (args == null || args.isEmpty()) return "{}";
+        if (args == null || args.isEmpty()) { return "{}"; }
         try {
             return MAPPER.writeValueAsString(args);
         } catch (Exception e) {

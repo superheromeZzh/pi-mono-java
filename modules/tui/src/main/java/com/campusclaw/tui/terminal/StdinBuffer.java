@@ -121,7 +121,7 @@ public class StdinBuffer {
 
         // SS3 sequence: \033O + one byte
         if (second == 'O') {
-            if (len < 3) return null; // wait for final byte
+            if (len < 3) { return null; } // wait for final byte
             String seq = buffer.substring(0, 3);
             buffer.delete(0, 3);
             return seq;
@@ -148,7 +148,7 @@ public class StdinBuffer {
         int len = buffer.length();
 
         // Need at least \033[ + final byte
-        if (len < 3) return null;
+        if (len < 3) { return null; }
 
         int pos = 2;
 
@@ -173,7 +173,7 @@ public class StdinBuffer {
         }
 
         // Need final byte
-        if (pos >= len) return null;
+        if (pos >= len) { return null; }
 
         char finalByte = buffer.charAt(pos);
         if (finalByte >= 0x40 && finalByte <= 0x7E) {

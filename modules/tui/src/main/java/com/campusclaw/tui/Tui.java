@@ -124,12 +124,12 @@ public class Tui {
      * old content into scrollback (preserving history for the user).
      */
     public synchronized void render() {
-        if (!running || root == null) return;
+        if (!running || root == null) { return; }
 
         TerminalSize size = terminal.getSize();
         int width = size.width();
         int height = size.height();
-        if (width <= 0 || height <= 0) return;
+        if (width <= 0 || height <= 0) { return; }
 
         List<String> newLines = root.render(width);
 
@@ -164,13 +164,13 @@ public class Tui {
             String oldLine = i < previousLines.size() ? previousLines.get(i) : "";
             String newLine = i < newLines.size() ? newLines.get(i) : "";
             if (!oldLine.equals(newLine)) {
-                if (firstChanged == -1) firstChanged = i;
+                if (firstChanged == -1) { firstChanged = i; }
                 lastChanged = i;
             }
         }
         boolean appendedLines = newLines.size() > previousLines.size();
         if (appendedLines) {
-            if (firstChanged == -1) firstChanged = previousLines.size();
+            if (firstChanged == -1) { firstChanged = previousLines.size(); }
             lastChanged = newLines.size() - 1;
         }
         boolean appendStart = appendedLines
@@ -192,7 +192,7 @@ public class Tui {
         int viewportTop = previousViewportTop;
         int hwCursor = hardwareCursorRow;
         StringBuilder sb = new StringBuilder();
-        if (syncOutputSupported) sb.append(SYNC_START);
+        if (syncOutputSupported) { sb.append(SYNC_START); }
 
         // If the first line we need to rewrite sits below the current viewport,
         // scroll the terminal down — this is the ONLY place where lines get
@@ -202,7 +202,7 @@ public class Tui {
         if (moveTargetRow > prevViewportBottom) {
             int currentScreenRow = Math.max(0, Math.min(height - 1, hwCursor - viewportTop));
             int moveToBottom = height - 1 - currentScreenRow;
-            if (moveToBottom > 0) sb.append("\033[").append(moveToBottom).append('B');
+            if (moveToBottom > 0) { sb.append("\033[").append(moveToBottom).append('B'); }
             int scroll = moveTargetRow - prevViewportBottom;
             sb.append("\r\n".repeat(scroll));
             viewportTop += scroll;
@@ -213,8 +213,8 @@ public class Tui {
         int targetScreenRow = moveTargetRow - viewportTop;
         int currentScreenRow = hwCursor - viewportTop;
         int lineDiff = targetScreenRow - currentScreenRow;
-        if (lineDiff > 0) sb.append("\033[").append(lineDiff).append('B');
-        else if (lineDiff < 0) sb.append("\033[").append(-lineDiff).append('A');
+        if (lineDiff > 0) { sb.append("\033[").append(lineDiff).append('B'); }
+        else if (lineDiff < 0) { sb.append("\033[").append(-lineDiff).append('A'); }
 
         // Column 0. For an append-at-end case we also step down one row.
         sb.append(appendStart ? "\r\n" : "\r");
@@ -222,7 +222,7 @@ public class Tui {
         // Rewrite only the changed range [firstChanged .. lastChanged].
         int renderEnd = Math.min(lastChanged, newLines.size() - 1);
         for (int i = firstChanged; i <= renderEnd; i++) {
-            if (i > firstChanged) sb.append("\r\n");
+            if (i > firstChanged) { sb.append("\r\n"); }
             sb.append(CLEAR_LINE);
             String line = newLines.get(i);
             if (AnsiUtils.visibleWidth(line) > width) {
@@ -231,7 +231,7 @@ public class Tui {
             sb.append(line);
         }
 
-        if (syncOutputSupported) sb.append(SYNC_END);
+        if (syncOutputSupported) { sb.append(SYNC_END); }
         terminal.write(sb.toString());
 
         hardwareCursorRow = renderEnd;
@@ -250,17 +250,17 @@ public class Tui {
      */
     private void fullRender(List<String> newLines, int width, int height, boolean clear) {
         StringBuilder sb = new StringBuilder();
-        if (syncOutputSupported) sb.append(SYNC_START);
-        if (clear) sb.append(ERASE_SCREEN).append(HOME).append(ERASE_SCROLLBACK);
+        if (syncOutputSupported) { sb.append(SYNC_START); }
+        if (clear) { sb.append(ERASE_SCREEN).append(HOME).append(ERASE_SCROLLBACK); }
         for (int i = 0; i < newLines.size(); i++) {
-            if (i > 0) sb.append("\r\n");
+            if (i > 0) { sb.append("\r\n"); }
             String line = newLines.get(i);
             if (AnsiUtils.visibleWidth(line) > width) {
                 line = AnsiUtils.sliceByColumn(line, 0, width);
             }
             sb.append(line);
         }
-        if (syncOutputSupported) sb.append(SYNC_END);
+        if (syncOutputSupported) { sb.append(SYNC_END); }
         terminal.write(sb.toString());
 
         hardwareCursorRow = Math.max(0, newLines.size() - 1);

@@ -55,7 +55,7 @@ public class SourceInfo {
     /** Get the effective source (highest priority) for a resource. */
     public Optional<ResourceSource> getEffective(String resourceId) {
         List<ResourceSource> sources = registry.get(resourceId);
-        if (sources == null || sources.isEmpty()) return Optional.empty();
+        if (sources == null || sources.isEmpty()) { return Optional.empty(); }
         return sources.stream().min(Comparator.naturalOrder()); // highest priority first
     }
 

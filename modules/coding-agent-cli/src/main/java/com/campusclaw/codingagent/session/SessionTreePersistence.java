@@ -62,13 +62,13 @@ public class SessionTreePersistence {
     public SessionTree load(String sessionName) {
         Path file = sessionDir.resolve(sessionName + ".jsonl");
         SessionTree tree = new SessionTree();
-        if (!Files.exists(file)) return tree;
+        if (!Files.exists(file)) { return tree; }
 
         try (var reader = Files.newBufferedReader(file)) {
             String line;
             while ((line = reader.readLine()) != null) {
                 line = line.trim();
-                if (line.isEmpty()) continue;
+                if (line.isEmpty()) { continue; }
                 try {
                     SessionEntry entry = MAPPER.readValue(line, SessionEntry.class);
                     tree.addEntry(entry);
@@ -85,7 +85,7 @@ public class SessionTreePersistence {
 
     /** List all available session names. */
     public java.util.List<String> listSessions() {
-        if (!Files.isDirectory(sessionDir)) return java.util.List.of();
+        if (!Files.isDirectory(sessionDir)) { return java.util.List.of(); }
         try (var stream = Files.list(sessionDir)) {
             return stream
                 .filter(p -> p.toString().endsWith(".jsonl"))

@@ -128,10 +128,10 @@ public class ProxyConfig {
     public boolean shouldBypass(String host) {
         String lowerHost = host.toLowerCase();
         for (String pattern : noProxy) {
-            if (pattern.equals("*")) return true;
-            if (pattern.startsWith(".") && lowerHost.endsWith(pattern)) return true;
-            if (lowerHost.equals(pattern)) return true;
-            if (lowerHost.endsWith("." + pattern)) return true;
+            if (pattern.equals("*")) { return true; }
+            if (pattern.startsWith(".") && lowerHost.endsWith(pattern)) { return true; }
+            if (lowerHost.equals(pattern)) { return true; }
+            if (lowerHost.endsWith("." + pattern)) { return true; }
         }
         return false;
     }
@@ -186,7 +186,7 @@ public class ProxyConfig {
 
     /** Parse a proxy URL string like http://user:pass@host:port */
     static ProxyEntry parseProxyUrl(String url) {
-        if (url == null || url.isBlank()) return null;
+        if (url == null || url.isBlank()) { return null; }
         try {
             // Handle socks5:// prefix
             ProxyType type = ProxyType.HTTP;
@@ -198,8 +198,8 @@ public class ProxyConfig {
             URI uri = URI.create(parseUrl);
             String host = uri.getHost();
             int port = uri.getPort();
-            if (host == null) return null;
-            if (port < 0) port = 8080;
+            if (host == null) { return null; }
+            if (port < 0) { port = 8080; }
             String username = null;
             String password = null;
             String userInfo = uri.getUserInfo();
@@ -284,9 +284,9 @@ public class ProxyConfig {
     }
 
     private static ProxyEntry parseHostPort(String hostPort) {
-        if (hostPort == null || hostPort.isBlank()) return null;
+        if (hostPort == null || hostPort.isBlank()) { return null; }
         // If it already looks like a URL, delegate to parseProxyUrl
-        if (hostPort.contains("://")) return parseProxyUrl(hostPort);
+        if (hostPort.contains("://")) { return parseProxyUrl(hostPort); }
         int colon = hostPort.lastIndexOf(':');
         if (colon > 0) {
             String host = hostPort.substring(0, colon);
@@ -306,7 +306,7 @@ public class ProxyConfig {
 
     private static String coalesce(String... values) {
         for (String v : values) {
-            if (v != null && !v.isBlank()) return v;
+            if (v != null && !v.isBlank()) { return v; }
         }
         return null;
     }

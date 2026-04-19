@@ -64,7 +64,7 @@ public record Theme(
     /** Get an ANSI color escape for a theme color key. */
     public String ansi(String key) {
         String color = colors.getOrDefault(key, null);
-        if (color == null) return "";
+        if (color == null) { return ""; }
         return toAnsi(color);
     }
 

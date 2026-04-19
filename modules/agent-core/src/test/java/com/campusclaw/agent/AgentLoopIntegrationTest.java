@@ -653,7 +653,7 @@ class AgentLoopIntegrationTest {
 
     private <T> int indexOfFirst(Class<T> type) {
         for (int i = 0; i < events.size(); i++) {
-            if (type.isInstance(events.get(i))) return i;
+            if (type.isInstance(events.get(i))) { return i; }
         }
         return -1;
     }

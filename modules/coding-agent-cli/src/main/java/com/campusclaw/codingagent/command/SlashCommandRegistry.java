@@ -27,7 +27,7 @@ public class SlashCommandRegistry {
     /** Parse and execute a slash command string like "/model gpt-4o".
      *  Returns false if no matching registered command is found. */
     public boolean execute(String input, SlashCommandContext context) {
-        if (!input.startsWith("/")) return false;
+        if (!input.startsWith("/")) { return false; }
         String stripped = input.substring(1).trim();
         int spaceIdx = stripped.indexOf(' ');
         String name = spaceIdx >= 0 ? stripped.substring(0, spaceIdx) : stripped;

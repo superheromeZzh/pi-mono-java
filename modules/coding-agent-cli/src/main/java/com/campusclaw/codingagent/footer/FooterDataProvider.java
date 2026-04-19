@@ -38,14 +38,14 @@ public class FooterDataProvider {
         }
 
         public String formatTokens() {
-            if (totalTokens < 1000) return totalTokens + " tok";
-            if (totalTokens < 1_000_000) return String.format("%.1fK tok", totalTokens / 1000.0);
+            if (totalTokens < 1000) { return totalTokens + " tok"; }
+            if (totalTokens < 1_000_000) { return String.format("%.1fK tok", totalTokens / 1000.0); }
             return String.format("%.1fM tok", totalTokens / 1_000_000.0);
         }
 
         public String formatCost() {
-            if (totalCostUsd < 0.01) return String.format("$%.4f", totalCostUsd);
-            if (totalCostUsd < 1.0) return String.format("$%.3f", totalCostUsd);
+            if (totalCostUsd < 0.01) { return String.format("$%.4f", totalCostUsd); }
+            if (totalCostUsd < 1.0) { return String.format("$%.3f", totalCostUsd); }
             return String.format("$%.2f", totalCostUsd);
         }
     }
@@ -57,9 +57,9 @@ public class FooterDataProvider {
     ) {
         public String formatDuration() {
             long seconds = sessionDurationMs / 1000;
-            if (seconds < 60) return seconds + "s";
+            if (seconds < 60) { return seconds + "s"; }
             long minutes = seconds / 60;
-            if (minutes < 60) return minutes + "m " + (seconds % 60) + "s";
+            if (minutes < 60) { return minutes + "m " + (seconds % 60) + "s"; }
             long hours = minutes / 60;
             return hours + "h " + (minutes % 60) + "m";
         }

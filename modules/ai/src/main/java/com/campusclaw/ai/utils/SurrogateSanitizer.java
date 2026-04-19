@@ -22,7 +22,7 @@ public final class SurrogateSanitizer {
      * @return sanitized text with unpaired surrogates removed, or null if input is null
      */
     public static String sanitize(String text) {
-        if (text == null) return null;
+        if (text == null) { return null; }
 
         int len = text.length();
         StringBuilder sb = null; // Lazily initialized only if surrogates found

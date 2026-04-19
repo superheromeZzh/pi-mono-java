@@ -180,10 +180,10 @@ public class GatewayChannel implements Channel {
      */
     public void sendDeltaToSession(String channelId, String sessionKey, String delta) {
         ChannelHandlerContext ctx = sessionContexts.get(channelId);
-        if (ctx == null) return;
+        if (ctx == null) { return; }
 
         GatewayWebSocketHandler handler = getHandler(channelId);
-        if (handler == null) return;
+        if (handler == null) { return; }
 
         String runId = UUID.randomUUID().toString();
         handler.sendEvent(ctx, "chat", runId, sessionKey, "delta", delta);
@@ -244,7 +244,7 @@ public class GatewayChannel implements Channel {
 
     private GatewayWebSocketHandler getHandler(String channelId) {
         ChannelHandlerContext ctx = sessionContexts.get(channelId);
-        if (ctx == null) return null;
+        if (ctx == null) { return null; }
         try {
             return (GatewayWebSocketHandler) ctx.pipeline().get("messageHandler");
         } catch (Exception e) {

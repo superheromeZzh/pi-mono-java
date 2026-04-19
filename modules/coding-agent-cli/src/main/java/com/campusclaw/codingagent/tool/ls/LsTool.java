@@ -127,7 +127,7 @@ public class LsTool implements AgentTool {
 
         var sb = new StringBuilder();
         for (int i = 0; i < entries.size(); i++) {
-            if (i > 0) sb.append('\n');
+            if (i > 0) { sb.append('\n'); }
             LsEntry entry = entries.get(i);
             String typeFlag = switch (entry.type()) {
                 case "directory" -> "drw-";

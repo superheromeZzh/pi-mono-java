@@ -31,7 +31,7 @@ public final class PromptTemplate {
      * @return the expanded string
      */
     public static String expand(String template, List<String> args) {
-        if (template == null || template.isEmpty()) return template;
+        if (template == null || template.isEmpty()) { return template; }
         if (args == null || args.isEmpty()) {
             // Remove unfilled placeholders
             return PARAM_PATTERN.matcher(template).replaceAll("");
