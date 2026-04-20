@@ -52,7 +52,7 @@ public class Compactor {
      * Check if compaction is needed based on estimated token count.
      */
     public boolean needsCompaction(List<Message> messages, int contextWindow) {
-        if (!config.enabled()) return false;
+        if (!config.enabled()) { return false; }
         int estimatedTokens = estimateTokens(messages);
         int threshold = contextWindow - config.reserveTokens();
         return estimatedTokens > threshold;
@@ -136,14 +136,14 @@ public class Compactor {
         if (msg instanceof UserMessage um) {
             var sb = new StringBuilder("User: ");
             for (var cb : um.content()) {
-                if (cb instanceof TextContent tc) sb.append(tc.text());
+                if (cb instanceof TextContent tc) { sb.append(tc.text()); }
             }
             return sb.toString();
         } else if (msg instanceof AssistantMessage am) {
             var sb = new StringBuilder("Assistant: ");
             for (var cb : am.content()) {
-                if (cb instanceof TextContent tc) sb.append(tc.text());
-                else if (cb instanceof ToolCall tc) sb.append("[Tool: ").append(tc.name()).append("]");
+                if (cb instanceof TextContent tc) { sb.append(tc.text()); }
+                else if (cb instanceof ToolCall tc) { sb.append("[Tool: ").append(tc.name()).append("]"); }
             }
             return sb.toString();
         } else if (msg instanceof ToolResultMessage tr) {
@@ -152,7 +152,7 @@ public class Compactor {
                 if (cb instanceof TextContent tc) {
                     String text = tc.text();
                     sb.append(text, 0, Math.min(text.length(), 200));
-                    if (text.length() > 200) sb.append("...");
+                    if (text.length() > 200) { sb.append("..."); }
                 }
             }
             return sb.toString();
@@ -172,17 +172,17 @@ public class Compactor {
     static int estimateMessageTokens(Message msg) {
         int chars = 0;
         List<ContentBlock> content;
-        if (msg instanceof UserMessage um) content = um.content();
-        else if (msg instanceof AssistantMessage am) content = am.content();
-        else if (msg instanceof ToolResultMessage tr) content = tr.content();
-        else return 0;
+        if (msg instanceof UserMessage um) { content = um.content(); }
+        else if (msg instanceof AssistantMessage am) { content = am.content(); }
+        else if (msg instanceof ToolResultMessage tr) { content = tr.content(); }
+        else { return 0; }
 
         for (ContentBlock cb : content) {
-            if (cb instanceof TextContent tc) chars += tc.text().length();
-            else if (cb instanceof ThinkingContent tc) chars += tc.thinking().length();
+            if (cb instanceof TextContent tc) { chars += tc.text().length(); }
+            else if (cb instanceof ThinkingContent tc) { chars += tc.thinking().length(); }
             else if (cb instanceof ToolCall tc) {
                 chars += tc.name().length();
-                if (tc.arguments() != null) chars += tc.arguments().toString().length();
+                if (tc.arguments() != null) { chars += tc.arguments().toString().length(); }
             }
         }
         return Math.max(chars / 4, 1);

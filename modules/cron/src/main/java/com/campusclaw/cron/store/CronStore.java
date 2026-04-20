@@ -169,7 +169,7 @@ public class CronStore {
      * Release a previously acquired process lock.
      */
     public void releaseProcessLock(FileLock fileLock) {
-        if (fileLock == null) return;
+        if (fileLock == null) { return; }
         try {
             var channel = fileLock.channel();
             fileLock.release();

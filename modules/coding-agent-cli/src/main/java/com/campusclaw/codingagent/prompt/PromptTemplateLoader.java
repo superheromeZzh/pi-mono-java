@@ -57,7 +57,7 @@ public class PromptTemplateLoader {
     }
 
     private void loadFromDir(Path dir, String source, Map<String, PromptTemplateEntry> byName) {
-        if (!Files.isDirectory(dir)) return;
+        if (!Files.isDirectory(dir)) { return; }
 
         try (Stream<Path> paths = Files.walk(dir)) {
             paths.filter(p -> Files.isRegularFile(p) && p.toString().endsWith(".md"))

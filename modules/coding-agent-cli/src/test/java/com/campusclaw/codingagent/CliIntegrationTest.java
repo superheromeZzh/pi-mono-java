@@ -482,10 +482,10 @@ class CliIntegrationTest {
 
     private String contentText(Message message) {
         List<ContentBlock> content;
-        if (message instanceof UserMessage um) content = um.content();
-        else if (message instanceof AssistantMessage am) content = am.content();
-        else if (message instanceof ToolResultMessage tr) content = tr.content();
-        else return "";
+        if (message instanceof UserMessage um) { content = um.content(); }
+        else if (message instanceof AssistantMessage am) { content = am.content(); }
+        else if (message instanceof ToolResultMessage tr) { content = tr.content(); }
+        else { return ""; }
 
         return content.stream()
                 .filter(TextContent.class::isInstance)

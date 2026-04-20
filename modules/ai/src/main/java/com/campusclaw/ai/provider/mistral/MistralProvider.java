@@ -116,13 +116,13 @@ public class MistralProvider implements ApiProvider {
             try (var reader = new BufferedReader(new InputStreamReader(response.body()))) {
                 String line;
                 while ((line = reader.readLine()) != null) {
-                    if (line.isBlank() || !line.startsWith("data: ")) continue;
+                    if (line.isBlank() || !line.startsWith("data: ")) { continue; }
                     String data = line.substring(6).trim();
-                    if (data.equals("[DONE]")) break;
+                    if (data.equals("[DONE]")) { break; }
 
                     JsonNode chunk = MAPPER.readTree(data);
                     var choices = chunk.path("choices");
-                    if (!choices.isArray() || choices.isEmpty()) continue;
+                    if (!choices.isArray() || choices.isEmpty()) { continue; }
 
                     var choice = choices.get(0);
                     var delta = choice.path("delta");
@@ -194,10 +194,10 @@ public class MistralProvider implements ApiProvider {
                         for (var tc : delta.get("tool_calls")) {
                             int idx = tc.path("index").asInt(0);
                             var acc = toolCallAccs.computeIfAbsent(idx, k -> new ToolCallAccumulator());
-                            if (tc.has("id")) acc.id = tc.get("id").asText();
+                            if (tc.has("id")) { acc.id = tc.get("id").asText(); }
                             var fn = tc.path("function");
-                            if (fn.has("name")) acc.name = fn.get("name").asText();
-                            if (fn.has("arguments")) acc.arguments.append(fn.get("arguments").asText());
+                            if (fn.has("name")) { acc.name = fn.get("name").asText(); }
+                            if (fn.has("arguments")) { acc.arguments.append(fn.get("arguments").asText()); }
                         }
                     }
 
@@ -258,9 +258,9 @@ public class MistralProvider implements ApiProvider {
         StopReason stop, Usage usage
     ) {
         var blocks = new ArrayList<ContentBlock>(accumulatedBlocks);
-        if (!currentText.isEmpty()) blocks.add(new TextContent(currentText));
+        if (!currentText.isEmpty()) { blocks.add(new TextContent(currentText)); }
         for (var acc : toolCallAccs.values()) {
-            if (acc.name != null) blocks.add(acc.toToolCall());
+            if (acc.name != null) { blocks.add(acc.toToolCall()); }
         }
         return new AssistantMessage(
             blocks, Api.MISTRAL_CONVERSATIONS.value(), model.provider().value(),
@@ -310,7 +310,7 @@ public class MistralProvider implements ApiProvider {
                                 thinkingItem.set("thinking", thinkingParts);
                                 contentArray.add(thinkingItem);
                             }
-                        } else if (block instanceof TextContent tc) text.append(tc.text());
+                        } else if (block instanceof TextContent tc) { text.append(tc.text()); }
                         else if (block instanceof ToolCall tc) {
                             var tcNode = MAPPER.createObjectNode();
                             tcNode.put("id", tc.id());
@@ -336,7 +336,7 @@ public class MistralProvider implements ApiProvider {
                     } else if (!text.isEmpty()) {
                         m.put("content", text.toString());
                     }
-                    if (!toolCalls.isEmpty()) m.set("tool_calls", toolCalls);
+                    if (!toolCalls.isEmpty()) { m.set("tool_calls", toolCalls); }
                     messages.add(m);
                 }
                 case ToolResultMessage trm -> {
@@ -369,8 +369,8 @@ public class MistralProvider implements ApiProvider {
         }
 
         if (options != null) {
-            if (options.maxTokens() != null) body.put("max_tokens", options.maxTokens());
-            if (options.temperature() != null) body.put("temperature", options.temperature());
+            if (options.maxTokens() != null) { body.put("max_tokens", options.maxTokens()); }
+            if (options.temperature() != null) { body.put("temperature", options.temperature()); }
 
             // Reasoning / thinking mode
             if (options.reasoning() != null && options.reasoning() != ThinkingLevel.OFF
@@ -385,8 +385,8 @@ public class MistralProvider implements ApiProvider {
     }
 
     private String resolveApiKey(Model model, @Nullable SimpleStreamOptions options) {
-        if (options != null && options.apiKey() != null) return options.apiKey();
-        if (model.apiKey() != null && !model.apiKey().isBlank()) return model.apiKey();
+        if (options != null && options.apiKey() != null) { return options.apiKey(); }
+        if (model.apiKey() != null && !model.apiKey().isBlank()) { return model.apiKey(); }
         return System.getenv(ENV_API_KEY);
     }
 
@@ -400,7 +400,7 @@ public class MistralProvider implements ApiProvider {
     }
 
     private Cost computeCost(Model model, Usage usage) {
-        if (model.cost() == null) return Cost.empty();
+        if (model.cost() == null) { return Cost.empty(); }
         var mc = model.cost();
         double input = usage.input() * mc.input() / 1_000_000.0;
         double output = usage.output() * mc.output() / 1_000_000.0;
@@ -410,7 +410,7 @@ public class MistralProvider implements ApiProvider {
     private static String extractText(List<ContentBlock> content) {
         var sb = new StringBuilder();
         for (var block : content) {
-            if (block instanceof TextContent tc) sb.append(tc.text());
+            if (block instanceof TextContent tc) { sb.append(tc.text()); }
         }
         return sb.toString();
     }

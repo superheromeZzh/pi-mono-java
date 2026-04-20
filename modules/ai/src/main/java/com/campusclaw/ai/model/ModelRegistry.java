@@ -121,7 +121,7 @@ public class ModelRegistry {
      * Returns a new Cost with computed values.
      */
     public static Cost calculateCost(Model model, Usage usage) {
-        if (model.cost() == null) return Cost.empty();
+        if (model.cost() == null) { return Cost.empty(); }
         var mc = model.cost();
         double input = usage.input() * mc.input() / 1_000_000.0;
         double output = usage.output() * mc.output() / 1_000_000.0;
@@ -145,7 +145,7 @@ public class ModelRegistry {
      * Check if two models are equal by comparing both id and provider.
      */
     public static boolean modelsAreEqual(Model a, Model b) {
-        if (a == null || b == null) return false;
+        if (a == null || b == null) { return false; }
         return a.id().equals(b.id()) && a.provider() == b.provider();
     }
 

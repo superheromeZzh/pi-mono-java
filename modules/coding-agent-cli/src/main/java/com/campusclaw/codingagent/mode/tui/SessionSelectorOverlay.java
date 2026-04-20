@@ -40,10 +40,10 @@ public class SessionSelectorOverlay implements Component, Focusable {
 
         this.selectList = new SelectList<>(sessions, this::renderItem, 15);
         selectList.setOnSelect(item -> {
-            if (onSelect != null) onSelect.accept(item);
+            if (onSelect != null) { onSelect.accept(item); }
         });
         selectList.setOnCancel(() -> {
-            if (onCancel != null) onCancel.run();
+            if (onCancel != null) { onCancel.run(); }
         });
     }
 
@@ -68,7 +68,7 @@ public class SessionSelectorOverlay implements Component, Focusable {
         String safePath = "--" + cwd.replaceFirst("^[/\\\\]", "").replaceAll("[/\\\\:]", "-") + "--";
         Path sessionDir = AppPaths.SESSIONS_DIR.resolve(safePath);
 
-        if (!Files.isDirectory(sessionDir)) return List.of();
+        if (!Files.isDirectory(sessionDir)) { return List.of(); }
 
         try (var stream = Files.list(sessionDir)) {
             return stream
@@ -99,7 +99,7 @@ public class SessionSelectorOverlay implements Component, Focusable {
     public void handleInput(String data) {
         // Escape / Ctrl+C → cancel
         if ("\033".equals(data) || "\003".equals(data)) {
-            if (onCancel != null) onCancel.run();
+            if (onCancel != null) { onCancel.run(); }
             return;
         }
         selectList.handleInput(data);

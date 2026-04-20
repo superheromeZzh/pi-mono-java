@@ -25,8 +25,8 @@ public final class AnsiUtils {
      * @return the escape code and its length, or null if no escape sequence starts at pos
      */
     static AnsiCode extractAnsiCode(String str, int pos) {
-        if (pos >= str.length() || str.charAt(pos) != '\033') return null;
-        if (pos + 1 >= str.length()) return null;
+        if (pos >= str.length() || str.charAt(pos) != '\033') { return null; }
+        if (pos + 1 >= str.length()) { return null; }
 
         char next = str.charAt(pos + 1);
 
@@ -119,54 +119,54 @@ public final class AnsiUtils {
      */
     private static boolean isEastAsianWide(int cp) {
         // CJK Unified Ideographs
-        if (cp >= 0x4E00 && cp <= 0x9FFF) return true;
+        if (cp >= 0x4E00 && cp <= 0x9FFF) { return true; }
         // CJK Unified Ideographs Extension A
-        if (cp >= 0x3400 && cp <= 0x4DBF) return true;
+        if (cp >= 0x3400 && cp <= 0x4DBF) { return true; }
         // CJK Unified Ideographs Extension B
-        if (cp >= 0x20000 && cp <= 0x2A6DF) return true;
+        if (cp >= 0x20000 && cp <= 0x2A6DF) { return true; }
         // CJK Unified Ideographs Extension C-H
-        if (cp >= 0x2A700 && cp <= 0x323AF) return true;
+        if (cp >= 0x2A700 && cp <= 0x323AF) { return true; }
         // CJK Compatibility Ideographs
-        if (cp >= 0xF900 && cp <= 0xFAFF) return true;
+        if (cp >= 0xF900 && cp <= 0xFAFF) { return true; }
         // CJK Compatibility Ideographs Supplement
-        if (cp >= 0x2F800 && cp <= 0x2FA1F) return true;
+        if (cp >= 0x2F800 && cp <= 0x2FA1F) { return true; }
         // Fullwidth Forms (Fullwidth ASCII, Fullwidth punctuation)
-        if (cp >= 0xFF01 && cp <= 0xFF60) return true;
-        if (cp >= 0xFFE0 && cp <= 0xFFE6) return true;
+        if (cp >= 0xFF01 && cp <= 0xFF60) { return true; }
+        if (cp >= 0xFFE0 && cp <= 0xFFE6) { return true; }
         // CJK Radicals Supplement
-        if (cp >= 0x2E80 && cp <= 0x2EFF) return true;
+        if (cp >= 0x2E80 && cp <= 0x2EFF) { return true; }
         // Kangxi Radicals
-        if (cp >= 0x2F00 && cp <= 0x2FDF) return true;
+        if (cp >= 0x2F00 && cp <= 0x2FDF) { return true; }
         // CJK Symbols and Punctuation
-        if (cp >= 0x3000 && cp <= 0x303F) return true;
+        if (cp >= 0x3000 && cp <= 0x303F) { return true; }
         // Hiragana
-        if (cp >= 0x3040 && cp <= 0x309F) return true;
+        if (cp >= 0x3040 && cp <= 0x309F) { return true; }
         // Katakana
-        if (cp >= 0x30A0 && cp <= 0x30FF) return true;
+        if (cp >= 0x30A0 && cp <= 0x30FF) { return true; }
         // Bopomofo
-        if (cp >= 0x3100 && cp <= 0x312F) return true;
+        if (cp >= 0x3100 && cp <= 0x312F) { return true; }
         // Hangul Compatibility Jamo
-        if (cp >= 0x3130 && cp <= 0x318F) return true;
+        if (cp >= 0x3130 && cp <= 0x318F) { return true; }
         // Kanbun
-        if (cp >= 0x3190 && cp <= 0x319F) return true;
+        if (cp >= 0x3190 && cp <= 0x319F) { return true; }
         // Bopomofo Extended
-        if (cp >= 0x31A0 && cp <= 0x31BF) return true;
+        if (cp >= 0x31A0 && cp <= 0x31BF) { return true; }
         // CJK Strokes
-        if (cp >= 0x31C0 && cp <= 0x31EF) return true;
+        if (cp >= 0x31C0 && cp <= 0x31EF) { return true; }
         // Katakana Phonetic Extensions
-        if (cp >= 0x31F0 && cp <= 0x31FF) return true;
+        if (cp >= 0x31F0 && cp <= 0x31FF) { return true; }
         // Enclosed CJK Letters and Months
-        if (cp >= 0x3200 && cp <= 0x32FF) return true;
+        if (cp >= 0x3200 && cp <= 0x32FF) { return true; }
         // CJK Compatibility
-        if (cp >= 0x3300 && cp <= 0x33FF) return true;
+        if (cp >= 0x3300 && cp <= 0x33FF) { return true; }
         // Hangul Syllables
-        if (cp >= 0xAC00 && cp <= 0xD7AF) return true;
+        if (cp >= 0xAC00 && cp <= 0xD7AF) { return true; }
         // Hangul Jamo Extended-B
-        if (cp >= 0xD7B0 && cp <= 0xD7FF) return true;
+        if (cp >= 0xD7B0 && cp <= 0xD7FF) { return true; }
         // Emoji that are typically rendered as wide
-        if (cp >= 0x1F000 && cp <= 0x1FBFF) return true;
+        if (cp >= 0x1F000 && cp <= 0x1FBFF) { return true; }
         // Regional indicator symbols
-        if (cp >= 0x1F1E6 && cp <= 0x1F1FF) return true;
+        if (cp >= 0x1F1E6 && cp <= 0x1F1FF) { return true; }
         return false;
     }
 
@@ -174,7 +174,7 @@ public final class AnsiUtils {
      * Returns the display width of a grapheme cluster (a string segment from BreakIterator).
      */
     private static int graphemeWidth(String grapheme) {
-        if (grapheme.isEmpty()) return 0;
+        if (grapheme.isEmpty()) { return 0; }
         int width = 0;
         int i = 0;
         while (i < grapheme.length()) {
@@ -198,7 +198,7 @@ public final class AnsiUtils {
      * @return the visible column width
      */
     public static int visibleWidth(String text) {
-        if (text == null || text.isEmpty()) return 0;
+        if (text == null || text.isEmpty()) { return 0; }
 
         // Fast path: pure ASCII printable (no ANSI, no wide chars)
         if (isPureAscii(text)) {
@@ -250,7 +250,7 @@ public final class AnsiUtils {
     private static boolean isPureAscii(String str) {
         for (int i = 0; i < str.length(); i++) {
             char c = str.charAt(i);
-            if (c < 0x20 || c > 0x7E) return false;
+            if (c < 0x20 || c > 0x7E) { return false; }
         }
         return true;
     }
@@ -265,7 +265,7 @@ public final class AnsiUtils {
      * @return the sliced text with ANSI codes preserved
      */
     public static String sliceByColumn(String text, int startCol, int endCol) {
-        if (text == null || text.isEmpty() || endCol <= startCol) return "";
+        if (text == null || text.isEmpty() || endCol <= startCol) { return ""; }
 
         StringBuilder result = new StringBuilder();
         StringBuilder pendingAnsi = new StringBuilder();
@@ -311,13 +311,13 @@ public final class AnsiUtils {
                 }
 
                 currentCol += w;
-                if (currentCol > endCol) break;
+                if (currentCol > endCol) { break; }
 
                 start = boundary;
                 boundary = bi.next();
             }
             i = textEnd;
-            if (currentCol >= endCol) break;
+            if (currentCol >= endCol) { break; }
         }
 
         return result.toString();
@@ -330,7 +330,7 @@ public final class AnsiUtils {
      * @return a list of segments, each marked as ANSI or visible text
      */
     public static List<AnsiSegment> extractSegments(String text) {
-        if (text == null || text.isEmpty()) return List.of();
+        if (text == null || text.isEmpty()) { return List.of(); }
 
         List<AnsiSegment> segments = new ArrayList<>();
         StringBuilder currentText = new StringBuilder();

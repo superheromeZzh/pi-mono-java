@@ -47,10 +47,10 @@ public class ModelSelectorOverlay implements Component, Focusable {
         // Select list
         this.selectList = new SelectList<>(allModels, this::renderModelItem, 15);
         selectList.setOnSelect(model -> {
-            if (onSelect != null) onSelect.accept(model);
+            if (onSelect != null) { onSelect.accept(model); }
         });
         selectList.setOnCancel(() -> {
-            if (onCancel != null) onCancel.run();
+            if (onCancel != null) { onCancel.run(); }
         });
 
         // Pre-select current model
@@ -97,7 +97,7 @@ public class ModelSelectorOverlay implements Component, Focusable {
     public void handleInput(String data) {
         // Escape / Ctrl+C → cancel
         if ("\033".equals(data) || "\003".equals(data)) {
-            if (onCancel != null) onCancel.run();
+            if (onCancel != null) { onCancel.run(); }
             return;
         }
         // Enter → select

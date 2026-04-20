@@ -60,9 +60,9 @@ public class ContextFileLoader {
                     seen.add(normalized);
                 }
             }
-            if (current.equals(root)) break;
+            if (current.equals(root)) { break; }
             Path parent = current.getParent();
-            if (parent == null || parent.equals(current)) break;
+            if (parent == null || parent.equals(current)) { break; }
             current = parent;
         }
 
@@ -81,7 +81,7 @@ public class ContextFileLoader {
         // Project-level first
         Path projectPath = cwd.resolve(com.campusclaw.codingagent.config.AppPaths.CONFIG_DIR_NAME).resolve("SYSTEM.md");
         String content = readIfExists(projectPath);
-        if (content != null) return content;
+        if (content != null) { return content; }
 
         // Global
         Path globalPath = agentDir.resolve("SYSTEM.md");
@@ -98,14 +98,14 @@ public class ContextFileLoader {
     public String loadAppendSystemPrompt(Path cwd, Path agentDir) {
         Path projectPath = cwd.resolve(com.campusclaw.codingagent.config.AppPaths.CONFIG_DIR_NAME).resolve("APPEND_SYSTEM.md");
         String content = readIfExists(projectPath);
-        if (content != null) return content;
+        if (content != null) { return content; }
 
         Path globalPath = agentDir.resolve("APPEND_SYSTEM.md");
         return readIfExists(globalPath);
     }
 
     private ContextFile loadFromDir(Path dir) {
-        if (dir == null || !Files.isDirectory(dir)) return null;
+        if (dir == null || !Files.isDirectory(dir)) { return null; }
         for (String candidate : CANDIDATES) {
             Path filePath = dir.resolve(candidate);
             if (Files.isRegularFile(filePath)) {

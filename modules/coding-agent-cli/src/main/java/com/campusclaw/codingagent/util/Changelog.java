@@ -86,10 +86,10 @@ public class Changelog {
 
     /** Get entries newer than the last read version. */
     public List<ChangelogEntry> getUnread() {
-        if (lastReadVersion == null) return List.copyOf(entries);
+        if (lastReadVersion == null) { return List.copyOf(entries); }
         List<ChangelogEntry> unread = new ArrayList<>();
         for (ChangelogEntry entry : entries) {
-            if (entry.version().equals(lastReadVersion)) break;
+            if (entry.version().equals(lastReadVersion)) { break; }
             unread.add(entry);
         }
         return unread;
@@ -150,7 +150,7 @@ public class Changelog {
     }
 
     private void saveReadState() {
-        if (lastReadVersion == null) return;
+        if (lastReadVersion == null) { return; }
         try {
             Files.createDirectories(stateFile.getParent());
             Files.writeString(stateFile, lastReadVersion);

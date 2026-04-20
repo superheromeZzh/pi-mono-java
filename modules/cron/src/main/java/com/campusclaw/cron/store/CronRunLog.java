@@ -69,7 +69,7 @@ public class CronRunLog {
             int start = Math.max(0, lines.size() - limit);
             for (int i = start; i < lines.size(); i++) {
                 String line = lines.get(i).trim();
-                if (line.isEmpty()) continue;
+                if (line.isEmpty()) { continue; }
                 try {
                     records.add(mapper.readValue(line, CronRunRecord.class));
                 } catch (IOException e) {

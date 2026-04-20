@@ -80,7 +80,7 @@ public class SettingsManager {
     }
 
     private JsonNode loadJsonFile(Path path) {
-        if (!Files.exists(path)) return MAPPER.createObjectNode();
+        if (!Files.exists(path)) { return MAPPER.createObjectNode(); }
         try {
             return MAPPER.readTree(Files.readString(path));
         } catch (Exception e) {
@@ -91,7 +91,7 @@ public class SettingsManager {
 
     /** Deep merge: project values override global values. */
     static JsonNode deepMerge(JsonNode base, JsonNode override) {
-        if (!base.isObject() || !override.isObject()) return override;
+        if (!base.isObject() || !override.isObject()) { return override; }
         ObjectNode result = base.deepCopy();
         Iterator<String> fieldNames = ((ObjectNode) override).fieldNames();
         while (fieldNames.hasNext()) {

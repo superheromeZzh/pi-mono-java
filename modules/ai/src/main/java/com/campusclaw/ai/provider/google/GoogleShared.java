@@ -102,7 +102,7 @@ public final class GoogleShared {
                     var response = MAPPER.createObjectNode();
                     var sb = new StringBuilder();
                     for (var block : trm.content()) {
-                        if (block instanceof TextContent tc) sb.append(tc.text());
+                        if (block instanceof TextContent tc) { sb.append(tc.text()); }
                     }
                     String resultText = sb.toString();
                     if (trm.isError()) {
@@ -126,7 +126,7 @@ public final class GoogleShared {
      * Converts unified Tool definitions to Google function declarations.
      */
     public static ArrayNode convertTools(@Nullable List<Tool> tools) {
-        if (tools == null || tools.isEmpty()) return null;
+        if (tools == null || tools.isEmpty()) { return null; }
         var toolsArray = MAPPER.createArrayNode();
         var toolObj = MAPPER.createObjectNode();
         var functionDeclarations = MAPPER.createArrayNode();
@@ -206,7 +206,7 @@ public final class GoogleShared {
      * Maps Google finish reason to unified StopReason.
      */
     public static StopReason mapFinishReason(@Nullable String reason) {
-        if (reason == null) return StopReason.STOP;
+        if (reason == null) { return StopReason.STOP; }
         return switch (reason) {
             case "STOP" -> StopReason.STOP;
             case "MAX_TOKENS" -> StopReason.LENGTH;

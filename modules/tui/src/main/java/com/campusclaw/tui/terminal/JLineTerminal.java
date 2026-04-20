@@ -186,7 +186,7 @@ public class JLineTerminal implements Terminal {
                     if (c == '\033') {
                         while (reader.peek(10) > 0) {
                             int next = reader.read();
-                            if (next < 0) break;
+                            if (next < 0) { break; }
                             buf.append((char) next);
                         }
                     }

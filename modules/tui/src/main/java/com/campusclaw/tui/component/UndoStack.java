@@ -33,7 +33,7 @@ public class UndoStack<S> {
 
     /** Pop and return the most recent snapshot, or null if empty. */
     public S pop() {
-        if (stack.isEmpty()) return null;
+        if (stack.isEmpty()) { return null; }
         return stack.remove(stack.size() - 1);
     }
 

@@ -339,7 +339,7 @@ public class GatewayWebSocketHandler extends SimpleChannelInboundHandler<TextWeb
     }
 
     private void sendTickEvent(ChannelHandlerContext ctx) {
-        if (!ctx.channel().isActive()) return;
+        if (!ctx.channel().isActive()) { return; }
 
         String channelId = ctx.channel().id().asShortText();
         int seq = sessionSeqCounters.computeIfAbsent(channelId, k -> new AtomicInteger(0)).getAndIncrement();

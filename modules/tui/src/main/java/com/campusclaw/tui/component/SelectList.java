@@ -101,7 +101,7 @@ public class SelectList<T> implements Component, Focusable {
 
     /** Returns the currently selected item, or null if the list is empty. */
     public T getSelectedItem() {
-        if (items.isEmpty()) return null;
+        if (items.isEmpty()) { return null; }
         return items.get(selectedIndex);
     }
 
@@ -197,7 +197,7 @@ public class SelectList<T> implements Component, Focusable {
 
     @Override
     public void handleInput(String data) {
-        if (items.isEmpty()) return;
+        if (items.isEmpty()) { return; }
 
         // Up arrow — wrap to bottom when at top
         if (KEY_UP.equals(data)) {
@@ -282,7 +282,7 @@ public class SelectList<T> implements Component, Focusable {
      * Calculates the start index of the visible window, centering the selected item.
      */
     private int calculateStartIndex(int visibleCount) {
-        if (visibleCount >= items.size()) return 0;
+        if (visibleCount >= items.size()) { return 0; }
 
         // Try to center the selected item in the visible window
         int start = selectedIndex - visibleCount / 2;
@@ -316,9 +316,9 @@ public class SelectList<T> implements Component, Focusable {
      * Truncates a string to fit within maxWidth visible columns.
      */
     private static String truncateToWidth(String text, int maxWidth) {
-        if (text == null || text.isEmpty()) return "";
+        if (text == null || text.isEmpty()) { return ""; }
         int visWidth = AnsiUtils.visibleWidth(text);
-        if (visWidth <= maxWidth) return text;
+        if (visWidth <= maxWidth) { return text; }
 
         // Truncate by visible characters — strip ANSI, iterate, and rebuild
         // For simplicity, use sliceByColumn which handles ANSI correctly

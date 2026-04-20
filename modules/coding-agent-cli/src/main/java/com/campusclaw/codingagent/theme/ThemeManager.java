@@ -39,7 +39,7 @@ public class ThemeManager {
     /** Set active theme by name. */
     public boolean setActiveTheme(String name) {
         Theme theme = themes.get(name);
-        if (theme == null) return false;
+        if (theme == null) { return false; }
         activeTheme = theme;
         return true;
     }
@@ -61,7 +61,7 @@ public class ThemeManager {
 
     /** Load custom themes from a directory. */
     public void loadFromDirectory(Path dir) {
-        if (!Files.isDirectory(dir)) return;
+        if (!Files.isDirectory(dir)) { return; }
         try (var stream = Files.list(dir)) {
             stream.filter(p -> p.toString().endsWith(".json"))
                 .forEach(p -> {

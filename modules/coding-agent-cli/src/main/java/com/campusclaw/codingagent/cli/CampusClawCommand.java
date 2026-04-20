@@ -349,8 +349,8 @@ public class CampusClawCommand implements Callable<Integer> {
             System.out.println("Mode: " + mode);
             System.out.println("CWD: " + effectiveCwd);
             System.out.println("Prompt: " + effectivePrompt);
-            if (effectiveThinking != null) System.out.println("Thinking: " + effectiveThinking);
-            if (toolsFilter != null) System.out.println("Tools: " + toolsFilter);
+            if (effectiveThinking != null) { System.out.println("Thinking: " + effectiveThinking); }
+            if (toolsFilter != null) { System.out.println("Tools: " + toolsFilter); }
             return 0;
         }
 
@@ -545,7 +545,7 @@ public class CampusClawCommand implements Callable<Integer> {
             // System terminal should not be explicitly closed by the application;
             // it will be automatically cleaned up by the OS when the process exits.
             // Explicitly closing it can cause the parent terminal window to exit.
-            if (sessionManager != null) sessionManager.close();
+            if (sessionManager != null) { sessionManager.close(); }
         }
         return 0;
     }
@@ -597,7 +597,7 @@ public class CampusClawCommand implements Callable<Integer> {
         com.campusclaw.codingagent.config.AppPaths.ensureUserDirs();
 
         // Normalize "uninstall" → "remove"
-        if ("uninstall".equals(command)) command = "remove";
+        if ("uninstall".equals(command)) { command = "remove"; }
 
         boolean local = args.contains("-l") || args.contains("--local");
         var filteredArgs = args.stream()
@@ -927,7 +927,7 @@ public class CampusClawCommand implements Callable<Integer> {
         // Provider/id format: "zai/glm-5"
         if (p.contains("/")) {
             String[] parts = p.split("/", 2);
-            if (!provider.contains(parts[0])) return false;
+            if (!provider.contains(parts[0])) { return false; }
             p = parts[1];
         }
 

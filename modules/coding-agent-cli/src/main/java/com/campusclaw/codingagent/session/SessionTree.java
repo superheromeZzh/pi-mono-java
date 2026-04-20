@@ -34,12 +34,12 @@ public class SessionTree {
 
     /** Get the current branch (path from root to current entry). */
     public List<SessionEntry> getCurrentBranch() {
-        if (currentEntryId == null) return List.of();
+        if (currentEntryId == null) { return List.of(); }
         List<SessionEntry> branch = new ArrayList<>();
         String id = currentEntryId;
         while (id != null) {
             SessionEntry entry = entriesById.get(id);
-            if (entry == null) break;
+            if (entry == null) { break; }
             branch.add(0, entry);
             id = entry.parentId();
         }
@@ -78,7 +78,7 @@ public class SessionTree {
     public List<SessionEntry> getLeaves() {
         Set<String> parents = new HashSet<>();
         for (SessionEntry e : entries) {
-            if (e.parentId() != null) parents.add(e.parentId());
+            if (e.parentId() != null) { parents.add(e.parentId()); }
         }
         List<SessionEntry> leaves = new ArrayList<>();
         for (SessionEntry e : entries) {
@@ -95,7 +95,7 @@ public class SessionTree {
         List<SessionEntry> children = new ArrayList<>();
         for (String id : childIds) {
             SessionEntry e = entriesById.get(id);
-            if (e != null) children.add(e);
+            if (e != null) { children.add(e); }
         }
         return children;
     }

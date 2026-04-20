@@ -53,7 +53,7 @@ public class ModelResolver {
         // 1. If modelId given, try exact match
         if (modelId != null && !modelId.isBlank()) {
             var model = findModel(modelId);
-            if (model.isPresent()) return model.get();
+            if (model.isPresent()) { return model.get(); }
             log.warn("Model '{}' not found, trying fallbacks", modelId);
         }
 
@@ -62,19 +62,19 @@ public class ModelResolver {
             String override = scopedOverrides.get(modelId);
             if (override != null) {
                 var model = findModel(override);
-                if (model.isPresent()) return model.get();
+                if (model.isPresent()) { return model.get(); }
             }
         }
 
         // 3. Default from settings
         if (settings != null && settings.defaultModel() != null) {
             var model = findModel(settings.defaultModel());
-            if (model.isPresent()) return model.get();
+            if (model.isPresent()) { return model.get(); }
         }
 
         // 4. Safe default
         var model = findModel(SAFE_DEFAULT);
-        if (model.isPresent()) return model.get();
+        if (model.isPresent()) { return model.get(); }
 
         throw new IllegalArgumentException("Cannot resolve model: " + modelId);
     }
@@ -107,7 +107,7 @@ public class ModelResolver {
     public Optional<Model> findModel(String modelId) {
         for (Provider provider : modelRegistry.getProviders()) {
             var model = modelRegistry.getModel(provider, modelId);
-            if (model.isPresent()) return model;
+            if (model.isPresent()) { return model; }
         }
         return Optional.empty();
     }

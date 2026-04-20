@@ -76,7 +76,7 @@ public class MessageTransformer {
                     if (cb instanceof ThinkingContent tc) {
                         // Redacted thinking: only valid for same model
                         if (tc.redacted()) {
-                            if (isSameModel) transformedContent.add(cb);
+                            if (isSameModel) { transformedContent.add(cb); }
                             continue;
                         }
                         // Same model with signature: keep for replay
@@ -86,7 +86,7 @@ public class MessageTransformer {
                             continue;
                         }
                         // Skip empty thinking blocks
-                        if (tc.thinking() == null || tc.thinking().isBlank()) continue;
+                        if (tc.thinking() == null || tc.thinking().isBlank()) { continue; }
                         // Same model: keep as-is
                         if (isSameModel) {
                             transformedContent.add(cb);

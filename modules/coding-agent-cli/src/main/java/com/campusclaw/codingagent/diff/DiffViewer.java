@@ -119,7 +119,7 @@ public class DiffViewer {
     }
 
     private static String truncate(String s, int maxLen) {
-        if (s.length() <= maxLen) return s;
+        if (s.length() <= maxLen) { return s; }
         return s.substring(0, maxLen - 1) + "…";
     }
 
@@ -129,8 +129,8 @@ public class DiffViewer {
      * Matching campusclaw's diffWords() intra-line highlighting behavior.
      */
     static String highlightWordDiff(String line, String other, String baseColor) {
-        if (line == null || line.isEmpty()) return "";
-        if (other == null || other.isEmpty()) return line;
+        if (line == null || line.isEmpty()) { return ""; }
+        if (other == null || other.isEmpty()) { return line; }
 
         // Split into words (preserving whitespace as separate tokens)
         var lineTokens = tokenize(line);
@@ -180,13 +180,13 @@ public class DiffViewer {
                 current.setLength(0);
                 inWord = false;
             } else if (!inWord && !isWs) {
-                if (!current.isEmpty()) tokens.add(current.toString());
+                if (!current.isEmpty()) { tokens.add(current.toString()); }
                 current.setLength(0);
                 inWord = true;
             }
             current.append(ch);
         }
-        if (!current.isEmpty()) tokens.add(current.toString());
+        if (!current.isEmpty()) { tokens.add(current.toString()); }
         return tokens;
     }
 

@@ -56,16 +56,16 @@ public final class ContextOverflowDetector {
         if (message.stopReason() == StopReason.ERROR && message.errorMessage() != null) {
             String error = message.errorMessage();
             for (Pattern p : OVERFLOW_PATTERNS) {
-                if (p.matcher(error).find()) return true;
+                if (p.matcher(error).find()) { return true; }
             }
             // Cerebras: 400/413 with no body
-            if (CEREBRAS_PATTERN.matcher(error).find()) return true;
+            if (CEREBRAS_PATTERN.matcher(error).find()) { return true; }
         }
 
         // Case 2: Silent overflow (z.ai style)
         if (contextWindow > 0 && message.stopReason() == StopReason.STOP) {
             int inputTokens = message.usage().input() + message.usage().cacheRead();
-            if (inputTokens > contextWindow) return true;
+            if (inputTokens > contextWindow) { return true; }
         }
 
         return false;
