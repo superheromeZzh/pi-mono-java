@@ -26,11 +26,14 @@ public class BashExecutor {
      * @throws IOException if the process cannot be started
      */
     public BashExecutionResult execute(String command, Path cwd, BashExecutorOptions options) throws IOException {
-        ProcessBuilder pb = new ProcessBuilder("/bin/bash", "-c", command);
+        boolean windows = System.getProperty("os.name", "").toLowerCase().contains("win");
+        String bashCmd = windows ? "bash" : "/bin/bash";
+        String nullDevice = windows ? "NUL" : "/dev/null";
+        ProcessBuilder pb = new ProcessBuilder(bashCmd, "-c", command);
         pb.directory(cwd.toFile());
-        // Redirect stdin from /dev/null so the child bash doesn't steal
+        // Redirect stdin from the null device so the child bash doesn't steal
         // the parent's terminal input, which can break JLine's reader.
-        pb.redirectInput(ProcessBuilder.Redirect.from(new java.io.File("/dev/null")));
+        pb.redirectInput(ProcessBuilder.Redirect.from(new java.io.File(nullDevice)));
 
         if (!options.env().isEmpty()) {
             pb.environment().putAll(options.env());
