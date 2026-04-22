@@ -7,13 +7,15 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * Local shell implementation of {@link BashOperations}.
- * Executes commands via {@code /bin/bash -c}.
+ * Executes commands via {@code bash -c}; resolves {@code bash} from PATH on Windows.
  */
 public class LocalBashOperations implements BashOperations {
 
     @Override
     public BashResult exec(String command, Path cwd, BashExecOptions options) throws IOException {
-        ProcessBuilder pb = new ProcessBuilder("/bin/bash", "-c", command);
+        boolean windows = System.getProperty("os.name", "").toLowerCase().contains("win");
+        String bashCmd = windows ? "bash" : "/bin/bash";
+        ProcessBuilder pb = new ProcessBuilder(bashCmd, "-c", command);
         pb.directory(cwd.toFile());
         pb.redirectErrorStream(true);
 
