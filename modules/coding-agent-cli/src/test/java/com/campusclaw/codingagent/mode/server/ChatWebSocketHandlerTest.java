@@ -168,6 +168,37 @@ class ChatWebSocketHandlerTest {
     }
 
     @Test
+    void messageFramesCarryRoleDiscriminator() throws Exception {
+        // Regression: when an AssistantMessage is put into a Map<String, Object>
+        // and serialized, Jackson loses the @JsonTypeInfo discriminator and omits
+        // "role":"assistant". Frontends filter by role, so losing it means the
+        // assistant bubble never renders. The fix routes Messages through
+        // MESSAGE_WRITER (writerFor(Message.class)) before embedding.
+        AssistantMessage assistantFinal = new AssistantMessage(
+                List.<ContentBlock>of(new TextContent("hi back", null)),
+                "messages", "anthropic", "sonnet",
+                null, Usage.empty(), StopReason.STOP, null, 123L
+        );
+        promptScript = listener -> {
+            listener.onEvent(new MessageStartEvent(assistantFinal));
+            listener.onEvent(new MessageUpdateEvent(assistantFinal, null));
+            listener.onEvent(new MessageEndEvent(assistantFinal));
+            listener.onEvent(new AgentEndEvent(List.<Message>of(assistantFinal)));
+        };
+
+        List<JsonNode> frames = runPromptRoundTrip("{\"type\":\"prompt\",\"id\":\"role1\",\"message\":\"hi\"}");
+
+        for (String ft : List.of("message_start", "message_update", "message_end")) {
+            int i = indexOfType(frames, ft);
+            assertTrue(i >= 0, ft + " frame must be present");
+            JsonNode msg = frames.get(i).path("message");
+            assertTrue(!msg.isMissingNode(), ft + " frame must carry a message field");
+            assertEquals("assistant", msg.path("role").asText(),
+                    ft + " frame's message must include role discriminator");
+        }
+    }
+
+    @Test
     void modelLevelErrorEmitsErrorFrameBeforeDone() throws Exception {
         AssistantMessage errorMsg = new AssistantMessage(
                 List.<ContentBlock>of(),

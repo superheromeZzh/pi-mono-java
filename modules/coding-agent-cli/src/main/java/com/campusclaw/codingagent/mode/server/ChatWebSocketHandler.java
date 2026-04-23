@@ -24,6 +24,7 @@ import com.campusclaw.ai.types.ThinkingLevel;
 import com.campusclaw.codingagent.session.AgentSession;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectWriter;
 
 import org.reactivestreams.Publisher;
 import org.slf4j.Logger;
@@ -49,6 +50,17 @@ public class ChatWebSocketHandler {
 
     private static final Logger log = LoggerFactory.getLogger(ChatWebSocketHandler.class);
     private static final ObjectMapper MAPPER = new ObjectMapper();
+
+    /**
+     * Explicitly-typed writer for {@link Message}. Required because {@link Message}
+     * uses {@link com.fasterxml.jackson.annotation.JsonTypeInfo} on the sealed
+     * interface to emit {@code "role":"..."}. When we put a Message into a
+     * {@code Map<String, Object>} and serialize the map, Jackson sees the element's
+     * declared type as {@code Object} and skips the discriminator. Pre-serializing
+     * the Message with this writer and embedding the resulting JsonNode preserves
+     * {@code role}, which frontends depend on to render assistant bubbles.
+     */
+    private static final ObjectWriter MESSAGE_WRITER = MAPPER.writerFor(Message.class);
 
     /**
      * Busy-loop retry on emit contention for up to 50ms. Three concurrent producers
@@ -154,7 +166,7 @@ public class ChatWebSocketHandler {
                 case "set_model" -> handleSetModel(cmd, id, session, out);
                 case "set_thinking_level" -> handleSetThinkingLevel(cmd, id, session, out);
                 case "get_state" -> handleGetState(id, session, conversationId, out);
-                case "get_history" -> emitResponse(out, id, true, Map.of("messages", session.getHistory()));
+                case "get_history" -> emitResponse(out, id, true, Map.of("messages", messagesToNode(session.getHistory())));
                 case "get_prompt_templates" -> handleGetPromptTemplates(id, session, out);
                 case "list_skills" -> handleListSkills(id, session, out);
                 case "ping" -> out.emitNext(PONG_FRAME, BUSY_LOOP);
@@ -275,21 +287,22 @@ public class ChatWebSocketHandler {
                 m.put("type", "message_start");
                 m.put("conversation_id", conversationId);
                 if (ms.message() != null) {
-                    m.put("message", ms.message());
+                    m.put("message", messageToNode(ms.message()));
                 }
                 return MAPPER.writeValueAsString(m);
             } else if (event instanceof MessageUpdateEvent mu) {
                 if (mu.message() == null) {
                     return null;
                 }
-                return MAPPER.writeValueAsString(Map.of(
-                        "type", "message_update",
-                        "message", mu.message()));
+                var m = new LinkedHashMap<String, Object>();
+                m.put("type", "message_update");
+                m.put("message", messageToNode(mu.message()));
+                return MAPPER.writeValueAsString(m);
             } else if (event instanceof MessageEndEvent me) {
                 var m = new LinkedHashMap<String, Object>();
                 m.put("type", "message_end");
                 if (me.message() != null) {
-                    m.put("message", me.message());
+                    m.put("message", messageToNode(me.message()));
                 }
                 return MAPPER.writeValueAsString(m);
             } else if (event instanceof ToolExecutionStartEvent te) {
@@ -436,5 +449,37 @@ public class ChatWebSocketHandler {
             }
         }
         return sb.toString();
+    }
+
+    /**
+     * Serializes a {@link Message} to a {@link JsonNode} using the typed writer
+     * so that the {@code "role":"user|assistant|toolResult"} discriminator is
+     * preserved. Returns {@code null} on failure (caller should skip emission).
+     */
+    private static JsonNode messageToNode(Message msg) {
+        if (msg == null) {
+            return null;
+        }
+        try {
+            return MAPPER.readTree(MESSAGE_WRITER.writeValueAsString(msg));
+        } catch (Exception e) {
+            log.warn("Failed to serialize Message to JsonNode", e);
+            return null;
+        }
+    }
+
+    /** Maps a list of messages through {@link #messageToNode} into a JSON array. */
+    private static JsonNode messagesToNode(List<Message> msgs) {
+        var arr = MAPPER.createArrayNode();
+        if (msgs == null) {
+            return arr;
+        }
+        for (Message m : msgs) {
+            JsonNode node = messageToNode(m);
+            if (node != null) {
+                arr.add(node);
+            }
+        }
+        return arr;
     }
 }
