@@ -43,6 +43,9 @@ data/
 node_modules/
 package.json
 package-lock.json
+# Allow the Vue frontend to track its package manifest
+!frontend/package.json
+!frontend/package-lock.json
 
 # CampusClaw runtime data
 .campusclaw/
