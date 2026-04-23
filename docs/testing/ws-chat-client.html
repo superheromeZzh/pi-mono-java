@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<title>CampusClaw WS Chat</title>
+<!--
+  Single-file WebSocket test client for /api/ws/chat.
+  Open directly in the browser (file://) — no build, no server.
+  Renders assistant content blocks in TUI-like style:
+    - thinking   (collapsible)
+    - text       (plain paragraphs)
+    - toolCall   (card with args + live result, status: pending → running → done|error)
+  Sidebar: connect / resume by conversation_id, switch model, switch thinking level,
+           event log, refresh state, new session.
+-->
+<style>
+  :root {
+    --bg:       #0f1115;
+    --panel:    #171a21;
+    --border:   #2a2f3a;
+    --text:     #e5e7eb;
+    --muted:    #9aa4b2;
+    --accent:   #6ee7b7;
+    --warn:     #fbbf24;
+    --err:      #f87171;
+    --user:     #60a5fa;
+    --thinking: #7c7c8c;
+    --tool:     #a78bfa;
+    --tool-bg:  #1f1b2e;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; font-family: -apple-system, "PingFang SC", Segoe UI, sans-serif; background: var(--bg); color: var(--text); }
+  body { display: grid; grid-template-columns: 1fr 320px; grid-template-rows: auto 1fr auto; height: 100vh; }
+
+  header { grid-column: 1 / 3; padding: 10px 16px; background: var(--panel); border-bottom: 1px solid var(--border); display: flex; gap: 12px; align-items: center; font-size: 13px; }
+  header .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--err); }
+  header .dot.on { background: var(--accent); }
+  header .sep { color: var(--muted); }
+  header .status { color: var(--muted); }
+
+  #messages { overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+  .bubble { border: 1px solid var(--border); border-radius: 8px; padding: 12px; background: var(--panel); }
+  .bubble .role { font-size: 11px; color: var(--muted); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.08em; }
+  .bubble.user      { border-left: 3px solid var(--user); }
+  .bubble.user      .role { color: var(--user); }
+  .bubble.assistant { border-left: 3px solid var(--accent); }
+  .bubble.assistant .role { color: var(--accent); }
+  .bubble.meta      { border-left: 3px solid var(--warn); }
+  .bubble.meta      .role { color: var(--warn); }
+  .bubble.error     { border-left: 3px solid var(--err); }
+  .bubble.error     .role { color: var(--err); }
+  .content { font-size: 14px; line-height: 1.55; white-space: pre-wrap; word-wrap: break-word; }
+
+  .thinking { background: rgba(255,255,255,0.04); border: 1px solid var(--border); border-radius: 6px; margin: 8px 0; padding: 8px 12px; color: var(--thinking); font-size: 12px; font-style: italic; white-space: pre-wrap; word-wrap: break-word; }
+  .thinking summary { cursor: pointer; color: var(--muted); font-style: normal; outline: none; }
+  .thinking summary::-webkit-details-marker { color: var(--muted); }
+  .thinking div { margin-top: 6px; }
+
+  .toolcall { background: var(--tool-bg); border: 1px solid var(--border); border-radius: 6px; margin: 8px 0; padding: 8px 12px; font-family: ui-monospace, SFMono-Regular, monospace; font-size: 12px; }
+  .toolcall .header { display: flex; align-items: center; gap: 6px; color: var(--tool); font-weight: 600; }
+  .toolcall .header .status { margin-left: auto; font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); padding: 1px 6px; border: 1px solid var(--border); border-radius: 3px; }
+  .toolcall .header .status.pending { color: var(--muted); }
+  .toolcall .header .status.running { color: var(--warn); border-color: var(--warn); }
+  .toolcall .header .status.done    { color: var(--accent); border-color: var(--accent); }
+  .toolcall .header .status.error   { color: var(--err); border-color: var(--err); }
+  .toolcall pre { margin: 6px 0 0; white-space: pre-wrap; word-break: break-word; color: var(--text); background: rgba(0,0,0,0.25); padding: 6px 8px; border-radius: 4px; }
+  .toolcall .result { margin-top: 6px; padding-top: 6px; border-top: 1px dashed var(--border); color: var(--text); }
+
+  #controls { padding: 10px 16px; background: var(--panel); border-top: 1px solid var(--border); display: flex; gap: 8px; align-items: stretch; }
+  #prompt { flex: 1; background: var(--bg); color: var(--text); border: 1px solid var(--border); border-radius: 6px; padding: 10px; font-family: inherit; font-size: 14px; resize: none; min-height: 56px; max-height: 180px; line-height: 1.45; }
+  .btn-col { display: flex; flex-direction: column; gap: 6px; }
+
+  button { background: var(--panel); border: 1px solid var(--border); color: var(--text); border-radius: 6px; padding: 8px 14px; font-size: 13px; cursor: pointer; font-family: inherit; transition: border-color 0.15s; }
+  button:hover { border-color: var(--accent); }
+  button.primary { background: var(--accent); color: #000; border-color: var(--accent); font-weight: 600; }
+  button.primary:hover { filter: brightness(1.1); }
+  button.danger:hover { border-color: var(--err); color: var(--err); }
+
+  aside { grid-row: 2 / 4; background: var(--panel); border-left: 1px solid var(--border); padding: 16px; display: flex; flex-direction: column; gap: 10px; overflow-y: auto; font-size: 13px; }
+  aside h3 { margin: 0; font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
+  aside label { display: block; font-size: 11px; color: var(--muted); margin-bottom: 4px; }
+  aside input, aside select { width: 100%; background: var(--bg); color: var(--text); border: 1px solid var(--border); border-radius: 4px; padding: 6px 8px; font-size: 13px; font-family: inherit; }
+  aside input:focus, aside select:focus { outline: none; border-color: var(--accent); }
+
+  #log { flex: 1; min-height: 120px; overflow-y: auto; font-family: ui-monospace, monospace; font-size: 11px; background: var(--bg); border: 1px solid var(--border); border-radius: 4px; padding: 8px; white-space: pre-wrap; word-break: break-all; color: var(--muted); }
+  #log .sent { color: var(--user); }
+  #log .recv { color: var(--accent); }
+  #log .err  { color: var(--err); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="dot" id="conn-dot"></div>
+  <strong>CampusClaw WS</strong>
+  <span class="sep">|</span>
+  <span class="status" id="status-conv">conv: -</span>
+  <span class="sep">|</span>
+  <span class="status" id="status-model">model: -</span>
+  <span class="sep">|</span>
+  <span class="status" id="status-thinking">thinking: -</span>
+  <span class="sep">|</span>
+  <span class="status" id="status-stream">idle</span>
+  <span style="margin-left:auto"></span>
+  <button onclick="cmdGetState()">Refresh</button>
+  <button onclick="cmdNewSession()" class="danger">New session</button>
+</header>
+
+<main id="messages"></main>
+
+<aside id="sidebar">
+  <h3>Connection</h3>
+  <div>
+    <label>WS URL</label>
+    <input id="url" value="ws://localhost:3000/api/ws/chat">
+  </div>
+  <div>
+    <label>conversation_id (resume)</label>
+    <input id="conv-input" placeholder="(空 = 新建)">
+  </div>
+  <div style="display:flex;gap:6px">
+    <button onclick="connect()" style="flex:1">Connect</button>
+    <button onclick="disconnect()" style="flex:1" class="danger">Disconnect</button>
+  </div>
+
+  <h3 style="margin-top:8px">Model / Thinking</h3>
+  <div>
+    <label>Model</label>
+    <input id="model-input" placeholder="e.g. glm-5 / sonnet">
+  </div>
+  <button onclick="cmdSetModel()">Apply model</button>
+  <div style="margin-top:4px">
+    <label>Thinking level</label>
+    <select id="level-input">
+      <option>off</option>
+      <option>minimal</option>
+      <option>low</option>
+      <option selected>medium</option>
+      <option>high</option>
+      <option>xhigh</option>
+    </select>
+  </div>
+  <button onclick="cmdSetThinking()">Apply thinking</button>
+
+  <h3 style="margin-top:8px">Event log</h3>
+  <div id="log"></div>
+</aside>
+
+<div id="controls">
+  <textarea id="prompt" placeholder="输入消息，Cmd/Ctrl+Enter 发送；运行中点 Steer 调整方向"></textarea>
+  <div class="btn-col">
+    <button class="primary" onclick="cmdPrompt()">Prompt</button>
+    <button onclick="cmdSteer()">Steer</button>
+    <button onclick="cmdAbort()" class="danger">Abort</button>
+  </div>
+</div>
+
+<script>
+// ============================================================================
+// State
+// ============================================================================
+let ws = null;
+let reqSeq = 0;
+const pending = new Map();         // id -> { resolve, reject, timer }
+let currentAssistantEl = null;     // assistant bubble body DOM currently being updated
+const toolCards = new Map();       // toolCallId -> card DOM (survives bubble re-renders)
+let convId = null;
+
+// ============================================================================
+// Status bar helpers
+// ============================================================================
+function setDot(on) { document.getElementById('conn-dot').classList.toggle('on', on); }
+function setStatus(key, v) { document.getElementById('status-' + key).textContent = key + ': ' + (v ?? '-'); }
+function log(cls, txt) {
+  const el = document.getElementById('log');
+  const row = document.createElement('div');
+  row.className = cls;
+  row.textContent = txt;
+  el.appendChild(row);
+  el.scrollTop = el.scrollHeight;
+}
+
+// ============================================================================
+// Connection
+// ============================================================================
+function connect() {
+  if (ws && ws.readyState === WebSocket.OPEN) { log('err', '[already connected]'); return; }
+  const base = document.getElementById('url').value.trim();
+  const c = document.getElementById('conv-input').value.trim();
+  const url = c ? base + '?conversation_id=' + encodeURIComponent(c) : base;
+  log('sent', '[connect] ' + url);
+  try { ws = new WebSocket(url); } catch (e) { log('err', '[connect failed] ' + e); return; }
+  ws.onopen = () => { setDot(true); log('recv', '[open]'); cmdGetState(); };
+  ws.onclose = (e) => { setDot(false); log('err', '[close code=' + e.code + ' reason=' + (e.reason || '') + ']'); };
+  ws.onerror = () => log('err', '[error]');
+  ws.onmessage = (e) => onFrame(e.data);
+}
+function disconnect() {
+  if (ws) ws.close();
+  ws = null;
+}
+
+// ============================================================================
+// Send helpers
+// ============================================================================
+function send(obj, awaitResponse = false) {
+  if (!ws || ws.readyState !== WebSocket.OPEN) {
+    log('err', '[not connected]');
+    return Promise.reject(new Error('not connected'));
+  }
+  if (awaitResponse) obj.id = 'req-' + (++reqSeq);
+  const raw = JSON.stringify(obj);
+  ws.send(raw);
+  log('sent', '▶ ' + raw);
+  if (!awaitResponse) return Promise.resolve();
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => {
+      if (pending.delete(obj.id)) reject(new Error('response timeout'));
+    }, 30000);
+    pending.set(obj.id, { resolve, reject, timer });
+  });
+}
+
+// ============================================================================
+// Command handlers (UI → wire)
+// ============================================================================
+function cmdPrompt() {
+  const msg = document.getElementById('prompt').value.trim();
+  if (!msg) return;
+  document.getElementById('prompt').value = '';
+  addUserBubble(msg);
+  setStatus('stream', 'streaming');
+  send({ type: 'prompt', message: msg }, true)
+    .catch(e => { addErrorBubble('prompt rejected: ' + e.message); setStatus('stream', 'idle'); });
+}
+function cmdSteer() {
+  const msg = document.getElementById('prompt').value.trim();
+  if (!msg) return;
+  document.getElementById('prompt').value = '';
+  addMetaBubble('Steer', msg);
+  send({ type: 'steer', message: msg }, true).catch(e => log('err', '[steer rejected] ' + e.message));
+}
+function cmdAbort() {
+  send({ type: 'abort' }, true).catch(e => log('err', '[abort rejected] ' + e.message));
+}
+async function cmdNewSession() {
+  try {
+    await send({ type: 'new_session' }, true);
+    document.getElementById('messages').innerHTML = '';
+    currentAssistantEl = null;
+    toolCards.clear();
+    await cmdGetState();
+  } catch (e) { log('err', '[new_session] ' + e.message); }
+}
+async function cmdGetState() {
+  try {
+    const data = await send({ type: 'get_state' }, true);
+    if (data) {
+      convId = data.conversation_id;
+      setStatus('conv', data.conversation_id);
+      setStatus('model', data.model);
+      setStatus('thinking', data.thinkingLevel);
+      setStatus('stream', data.isStreaming ? 'streaming' : 'idle');
+    }
+  } catch (e) { log('err', '[get_state] ' + e.message); }
+}
+function cmdSetModel() {
+  const m = document.getElementById('model-input').value.trim();
+  if (!m) return;
+  send({ type: 'set_model', model: m }, true)
+    .then(cmdGetState)
+    .catch(e => log('err', '[set_model] ' + e.message));
+}
+function cmdSetThinking() {
+  const l = document.getElementById('level-input').value;
+  send({ type: 'set_thinking_level', level: l }, true)
+    .then(cmdGetState)
+    .catch(e => log('err', '[set_thinking_level] ' + e.message));
+}
+
+// ============================================================================
+// Frame dispatch (wire → UI)
+// ============================================================================
+function onFrame(raw) {
+  log('recv', '◀ ' + raw);
+  let f;
+  try { f = JSON.parse(raw); } catch { return; }
+
+  // Response to a command with id
+  if (f.type === 'response') {
+    const p = pending.get(f.id);
+    if (p) {
+      clearTimeout(p.timer);
+      pending.delete(f.id);
+      f.success ? p.resolve(f.data) : p.reject(new Error(f.error || 'unknown error'));
+    }
+    return;
+  }
+
+  switch (f.type) {
+    case 'agent_start':    return onAgentStart(f);
+    case 'message_start':  return onMessageStart(f);
+    case 'message_update': return onMessageUpdate(f);
+    case 'message_end':    return onMessageEnd(f);
+    case 'tool_start':     return onToolStart(f);
+    case 'tool_update':    return onToolUpdate(f);
+    case 'tool_end':       return onToolEnd(f);
+    case 'done':           return onDone(f);
+    case 'error':          return onError(f);
+    case 'pong':           return; // heartbeat, ignore
+  }
+}
+
+function onAgentStart(f) {
+  if (f.conversation_id) { convId = f.conversation_id; setStatus('conv', convId); }
+  setStatus('stream', 'streaming');
+}
+function onMessageStart(f) {
+  if (f.message && f.message.role === 'assistant') {
+    currentAssistantEl = makeAssistantBubble();
+  }
+  // Tool-result messages (role === 'toolResult') are handled via tool_end events
+}
+function onMessageUpdate(f) {
+  if (!f.message) return;
+  if (f.message.role === 'assistant') {
+    if (!currentAssistantEl) currentAssistantEl = makeAssistantBubble();
+    renderAssistant(currentAssistantEl, f.message);
+  }
+}
+function onMessageEnd(f) {
+  if (f.message && f.message.role === 'assistant' && currentAssistantEl) {
+    renderAssistant(currentAssistantEl, f.message);
+    currentAssistantEl = null;
+  }
+}
+function onToolStart(f) {
+  const card = findOrMakeToolCard(f.toolCallId, f.toolName, f.args);
+  setToolStatus(card, 'running');
+}
+function onToolUpdate(f) {
+  const card = findOrMakeToolCard(f.toolCallId, f.toolName, f.args);
+  setToolPartial(card, f.partialResult);
+}
+function onToolEnd(f) {
+  const card = findOrMakeToolCard(f.toolCallId, f.toolName, null);
+  setToolStatus(card, f.isError ? 'error' : 'done');
+  setToolResult(card, f.result, f.isError);
+}
+function onDone(f) {
+  setStatus('stream', 'idle');
+  currentAssistantEl = null;
+  // Surface the enriched done fields (finalText / usage / stopReason)
+  // as a small meta bubble so testing is obvious.
+  const parts = [];
+  if (f.stopReason) parts.push('stop: ' + f.stopReason);
+  if (f.usage) {
+    const u = f.usage;
+    const t = [];
+    if (u.inputTokens != null)  t.push('in=' + u.inputTokens);
+    if (u.outputTokens != null) t.push('out=' + u.outputTokens);
+    if (u.cost != null)         t.push('cost=' + u.cost);
+    if (t.length) parts.push('usage(' + t.join(', ') + ')');
+  }
+  if (parts.length) addMetaBubble('done', parts.join(' · '));
+  // finalText 已经通过 message_end 渲染在 assistant bubble 里，不重复展示。
+}
+function onError(f) {
+  addErrorBubble(f.error || 'unknown error');
+  setStatus('stream', 'idle');
+}
+
+// ============================================================================
+// Render primitives
+// ============================================================================
+const root = () => document.getElementById('messages');
+const scroll = () => { const el = root(); el.scrollTop = el.scrollHeight; };
+
+function el(tag, cls, text) {
+  const n = document.createElement(tag);
+  if (cls) n.className = cls;
+  if (text != null) n.textContent = text;
+  return n;
+}
+
+function addUserBubble(text) {
+  const b = el('div', 'bubble user');
+  b.appendChild(el('div', 'role', 'User'));
+  b.appendChild(el('div', 'content', text));
+  root().appendChild(b);
+  scroll();
+}
+function addMetaBubble(kind, text) {
+  const b = el('div', 'bubble meta');
+  b.appendChild(el('div', 'role', kind));
+  b.appendChild(el('div', 'content', text));
+  root().appendChild(b);
+  scroll();
+}
+function addErrorBubble(text) {
+  const b = el('div', 'bubble error');
+  b.appendChild(el('div', 'role', 'Error'));
+  b.appendChild(el('div', 'content', text));
+  root().appendChild(b);
+  scroll();
+}
+function makeAssistantBubble() {
+  const b = el('div', 'bubble assistant');
+  b.appendChild(el('div', 'role', 'Assistant'));
+  const body = el('div', 'body');
+  b.appendChild(body);
+  root().appendChild(b);
+  scroll();
+  return body;
+}
+
+// ============================================================================
+// Assistant message rendering
+// Each message_update carries the FULL current AssistantMessage (not a delta),
+// so we clear the body and rebuild. Tool cards survive via `toolCards` cache so
+// their result panels (populated by tool_end) aren't lost on re-render.
+// ============================================================================
+function renderAssistant(body, msg) {
+  body.innerHTML = '';
+  const content = msg.content || [];
+  for (const block of content) {
+    if (!block || !block.type) continue;
+    if (block.type === 'thinking') {
+      body.appendChild(renderThinking(block));
+    } else if (block.type === 'text') {
+      body.appendChild(el('div', 'content', block.text || ''));
+    } else if (block.type === 'toolCall') {
+      body.appendChild(renderToolCall(block));
+    }
+    // image / other types are ignored in this minimal client
+  }
+  scroll();
+}
+
+function renderThinking(block) {
+  const d = el('details', 'thinking');
+  d.open = true;
+  const s = el('summary', null, '💭 Thinking' + (block.redacted ? ' (redacted)' : ''));
+  d.appendChild(s);
+  d.appendChild(el('div', null, block.thinking || ''));
+  return d;
+}
+
+function renderToolCall(block) {
+  // Reuse cached card if we've already built one (from tool_start or previous update),
+  // so its status / result state survives the body.innerHTML = '' rebuild above.
+  const existing = toolCards.get(block.id);
+  if (existing) {
+    setToolArgs(existing, block.arguments);
+    return existing;
+  }
+  const card = makeToolCard(block.id, block.name, block.arguments);
+  toolCards.set(block.id, card);
+  return card;
+}
+
+function makeToolCard(id, name, args) {
+  const c = el('div', 'toolcall');
+  c.dataset.toolId = id;
+
+  const h = el('div', 'header');
+  h.appendChild(el('span', null, '🔧 ' + (name || 'tool')));
+  const status = el('span', 'status pending', 'pending');
+  status.dataset.role = 'status';
+  h.appendChild(status);
+  c.appendChild(h);
+
+  const argsPre = el('pre', null, args != null ? safeJson(args) : '');
+  argsPre.dataset.role = 'args';
+  c.appendChild(argsPre);
+
+  const result = el('div', 'result');
+  result.dataset.role = 'result';
+  result.style.display = 'none';
+  c.appendChild(result);
+
+  return c;
+}
+
+function findOrMakeToolCard(id, name, args) {
+  let card = toolCards.get(id);
+  if (card) {
+    if (name) {
+      const h = card.querySelector('.header span:first-child');
+      if (h) h.textContent = '🔧 ' + name;
+    }
+    setToolArgs(card, args);
+    return card;
+  }
+  card = makeToolCard(id, name, args);
+  toolCards.set(id, card);
+  // If the tool_start fires before the assistant message even contains a
+  // toolCall content block, attach the card to the current assistant bubble
+  // directly so the user sees activity. When the matching toolCall block
+  // finally appears in message_update, renderToolCall reuses this same card.
+  if (currentAssistantEl) {
+    currentAssistantEl.appendChild(card);
+    scroll();
+  }
+  return card;
+}
+
+function setToolStatus(card, state) {
+  const s = card.querySelector('[data-role="status"]');
+  s.textContent = state;
+  s.className = 'status ' + state;
+}
+function setToolArgs(card, args) {
+  if (args == null) return;
+  const p = card.querySelector('[data-role="args"]');
+  p.textContent = safeJson(args);
+}
+function setToolPartial(card, partial) {
+  const r = card.querySelector('[data-role="result"]');
+  r.style.display = '';
+  r.textContent = '(streaming) ' + formatResult(partial);
+}
+function setToolResult(card, result, isError) {
+  const r = card.querySelector('[data-role="result"]');
+  r.style.display = '';
+  r.textContent = (isError ? '✖ ' : '✓ ') + formatResult(result);
+}
+
+function formatResult(v) {
+  if (v == null) return '';
+  if (typeof v === 'string') return v;
+  return safeJson(v);
+}
+function safeJson(v) {
+  try { return JSON.stringify(v, null, 2); }
+  catch { return String(v); }
+}
+
+// ============================================================================
+// Keyboard shortcut: Cmd/Ctrl + Enter to send
+// ============================================================================
+document.getElementById('prompt').addEventListener('keydown', e => {
+  if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+    e.preventDefault();
+    cmdPrompt();
+  }
+});
+</script>
+</body>
+</html>

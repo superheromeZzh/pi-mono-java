@@ -85,6 +85,7 @@ public class ServerMode {
     public void run() {
         var sessionPool = new SessionPool(aiService, modelRegistry, promptBuilder, tools, baseConfig, sandboxParser, useSandbox);
         var chatHandler = new ChatHandler(sessionPool);
+        var wsHandler = new ChatWebSocketHandler(sessionPool);
 
         var skillHandler = new SkillHandler(
                 new SkillManager(AppPaths.USER_SKILLS_DIR, sandboxParser, useSandbox),
@@ -114,7 +115,12 @@ public class ServerMode {
         var server = HttpServer.create()
                 .host(host)
                 .port(port)
-                .handle(adapter)
+                .route(r -> r
+                        .get("/api/ws/chat", (req, res) -> {
+                            String convId = extractQueryParam(req.uri(), "conversation_id");
+                            return res.sendWebsocket((in, out) -> wsHandler.handle(in, out, convId));
+                        })
+                        .route(req -> true, adapter))
                 .bindNow();
 
         log.info("CampusClaw API server started on {}:{}", host, port);
@@ -126,8 +132,35 @@ public class ServerMode {
         System.out.println("  POST   /api/skills");
         System.out.println("  GET    /api/skills");
         System.out.println("  DELETE /api/skills/{name}");
+        System.out.println("  WS     /api/ws/chat");
 
         server.onDispose().block();
         sessionPool.shutdown();
+    }
+
+    /**
+     * Extracts a query parameter value from a request URI.
+     * Returns null if the parameter is absent or empty.
+     */
+    static String extractQueryParam(String uri, String name) {
+        if (uri == null) {
+            return null;
+        }
+        int qIdx = uri.indexOf('?');
+        if (qIdx < 0 || qIdx == uri.length() - 1) {
+            return null;
+        }
+        String query = uri.substring(qIdx + 1);
+        String prefix = name + "=";
+        for (String pair : query.split("&")) {
+            if (pair.startsWith(prefix)) {
+                String value = pair.substring(prefix.length());
+                if (value.isEmpty()) {
+                    return null;
+                }
+                return java.net.URLDecoder.decode(value, java.nio.charset.StandardCharsets.UTF_8);
+            }
+        }
+        return null;
     }
 }

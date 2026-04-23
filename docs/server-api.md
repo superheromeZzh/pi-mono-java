@@ -32,6 +32,7 @@ Endpoints:
   POST   /api/skills
   GET    /api/skills
   DELETE /api/skills/{name}
+  WS     /api/ws/chat
 ```
 
 ---
@@ -266,6 +267,76 @@ curl -X DELETE http://localhost:3000/api/skills/my-skill
 
 ---
 
+### 7. 对话 WebSocket
+
+```
+WS /api/ws/chat
+```
+
+提供一条长连接上的双向对话通道，相比 `POST /api/chat` 的单次 SSE 多出：**中途 steer / 切模型 / 重置历史 / 优雅中止**，适合需要交互的前端。
+
+**完整协议契约**：[`docs/asyncapi/chat-ws.yaml`](./asyncapi/chat-ws.yaml)（AsyncAPI 3.0）。下表仅做快速索引。
+
+**连接**
+
+- URL: `ws://host:port/api/ws/chat`
+- Query:
+  - `conversation_id` — 可选，传已有会话 ID 续聊；不传则新建
+  - `token` — 生产环境的 bearer token（开发模式可省）
+- 关闭码：`1000` 正常 · `4400` 协议错误 · `4401` 未鉴权 · `4409` 会话忙
+
+**客户端命令（C→S）**
+
+| type | 必填字段 | 说明 |
+|---|---|---|
+| `prompt` | `message` | 发送用户消息，开启新 turn |
+| `steer` | `message` | 运行中 steer |
+| `abort` | — | 中止当前 turn |
+| `new_session` | — | 清空历史（保留模型/工具） |
+| `set_model` | `model` | 切换模型 |
+| `set_thinking_level` | `level` | `off` / `minimal` / `low` / `medium` / `high` / `xhigh` |
+| `get_state` | — | 查询 streaming 标志、model、thinkingLevel、messageCount |
+| `get_history` | — | 返回完整消息历史 |
+| `get_prompt_templates` | — | 列已装载的 prompt 模板 |
+| `list_skills` | — | 列已装载的 skills |
+| `ping` | — | 客户端心跳 |
+
+所有命令可带 `id`；服务端在处理完成时以 `{"type":"response","id":...,"success":bool,"data"|"error":...}` 回复。
+
+**服务端事件（S→C）**
+
+| type | 说明 |
+|---|---|
+| `agent_start` | 一轮开始 |
+| `message_start` / `message_update` / `message_end` | assistant 消息生命周期 |
+| `tool_start` / `tool_update` / `tool_end` | 工具调用生命周期 |
+| `done` | 本轮结束。带 `finalText`（末条 assistant 的所有 text 拼接）、`usage`、`stopReason` |
+| `error` | 运行时错误 **或** 模型级错误（`stopReason=error` 时伴随 `done` 同时发出，连接不断开） |
+| `pong` | 服务端每 20s 主动 `pong`；客户端收到 `ping` 也回 |
+
+**请求示例**
+
+```bash
+# 建连 + 发一条 prompt（用 wscat）
+wscat -c ws://localhost:3000/api/ws/chat
+
+> {"type":"prompt","id":"1","message":"用 Java 写快排"}
+< {"type":"response","id":"1","success":true,"data":{"conversation_id":"abc"}}
+< {"type":"agent_start","conversation_id":"abc"}
+< {"type":"message_start","conversation_id":"abc","message":{...}}
+< {"type":"message_update","message":{...}}
+< {"type":"tool_start","toolCallId":"tc_01","toolName":"write"}
+< {"type":"tool_end","toolCallId":"tc_01","toolName":"write","isError":false,"result":{...}}
+< {"type":"message_end","message":{...}}
+< {"type":"done","conversation_id":"abc"}
+```
+
+**续聊 / 重连**
+
+客户端在 `done` 后可以断开再重连，只要握手时带上同一个 `conversation_id`，服务端会命中 `SessionPool` 中同一个 `AgentSession`。空闲 30 分钟后会话被淘汰。
+
+---
+
 ## RPC 模式
 
 除 HTTP Server 外，CampusClaw 也支持基于 stdin/stdout 的 JSONL RPC 协议，适合进程间通信（如 IDE 插件直接拉起子进程）。
@@ -335,5 +406,5 @@ campusclaw --mode rpc -m glm-5
 |------|----------|----------|----------|
 | interactive（默认） | `--mode interactive` | 全屏 TUI | 开发者日常使用 |
 | one-shot | `-p "prompt"` | 单次输出到 stdout | 脚本/CI 集成 |
-| server | `--mode server --port 3000` | HTTP REST + SSE | Web 前端、远程调用 |
+| server | `--mode server --port 3000` | HTTP REST + SSE + WebSocket | Web 前端、远程调用 |
 | rpc | `--mode rpc` | stdin/stdout JSONL | IDE 插件、进程间通信 |
