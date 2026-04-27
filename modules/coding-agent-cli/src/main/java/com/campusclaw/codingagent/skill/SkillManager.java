@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -46,6 +47,7 @@ public class SkillManager {
 
     private final Path skillsDir;
     private final SkillLoader skillLoader;
+    private final SkillStateStore stateStore;
 
     /**
      * Creates a SkillManager with direct skill parsing (no sandbox).
@@ -64,9 +66,15 @@ public class SkillManager {
     public SkillManager(Path skillsDir, SandboxSkillParser sandboxParser, boolean useSandbox) {
         this.skillsDir = skillsDir;
         this.skillLoader = new SkillLoader(sandboxParser, useSandbox);
+        this.stateStore = new SkillStateStore(skillsDir);
         if (skillLoader.isSandboxEnabled()) {
             log.info("SkillManager initialized with sandbox parsing enabled");
         }
+    }
+
+    /** Returns the shared enabled/disabled state store. */
+    public SkillStateStore stateStore() {
+        return stateStore;
     }
 
     // -- Install from git --------------------------------------------------
@@ -273,6 +281,12 @@ public class SkillManager {
                                 + "\nThe archive must contain at least one SKILL.md file.");
             }
 
+            // Check for skill name conflicts against already-installed skills
+            List<SkillConflictException.Conflict> conflicts = findConflicts(skills);
+            if (!conflicts.isEmpty()) {
+                throw new SkillConflictException(conflicts);
+            }
+
             // Move to skills directory
             Files.createDirectories(skillsDir);
             Files.move(extractRoot, targetDir);
@@ -341,6 +355,34 @@ public class SkillManager {
     }
 
     /**
+     * Finds skill name conflicts between the incoming skills and the ones already
+     * installed on disk. Returns an empty list when there are no conflicts.
+     */
+    private List<SkillConflictException.Conflict> findConflicts(List<Skill> incoming) {
+        if (incoming.isEmpty()) {
+            return List.of();
+        }
+        List<Skill> existing = skillLoader.loadFromDirectory(skillsDir, "user");
+        if (existing.isEmpty()) {
+            return List.of();
+        }
+
+        java.util.Map<String, String> existingByName = new java.util.HashMap<>();
+        for (Skill s : existing) {
+            existingByName.putIfAbsent(s.name(), resolveTopDir(s.baseDir()));
+        }
+
+        List<SkillConflictException.Conflict> conflicts = new ArrayList<>();
+        for (Skill s : incoming) {
+            String pkg = existingByName.get(s.name());
+            if (pkg != null) {
+                conflicts.add(new SkillConflictException.Conflict(s.name(), pkg));
+            }
+        }
+        return conflicts;
+    }
+
+    /**
      * If the extracted directory contains exactly one subdirectory and no files,
      * return that subdirectory (common pattern: archive has a single root folder).
      * Otherwise return the directory itself.
@@ -364,7 +406,8 @@ public class SkillManager {
             String name,
             String sourceType,
             String source,
-            String description
+            String description,
+            boolean enabled
     ) {}
 
     /**
@@ -372,6 +415,7 @@ public class SkillManager {
      */
     public List<SkillInfo> list() {
         List<InstalledSkillRecord> manifest = loadManifest();
+        Set<String> disabled = stateStore.loadDisabled();
         List<SkillInfo> result = new ArrayList<>();
 
         // Load skills from disk
@@ -410,7 +454,8 @@ public class SkillManager {
                 }
             }
 
-            result.add(new SkillInfo(skill.name(), sourceType, source, skill.description()));
+            boolean enabled = !disabled.contains(skill.name());
+            result.add(new SkillInfo(skill.name(), sourceType, source, skill.description(), enabled));
         }
 
         // Sort by name

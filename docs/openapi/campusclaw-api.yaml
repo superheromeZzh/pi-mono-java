@@ -1,0 +1,535 @@
+openapi: 3.0.3
+
+info:
+  title: CampusClaw HTTP API
+  version: 1.0.0
+  description: |
+    `campusclaw --mode server` 模式下暴露的 REST + SSE + WebSocket 接口。
+
+    CampusClaw 的 HTTP Server 模式对外提供一组 REST 端点，用于流式对话、会话
+    管理以及技能（skill）包管理。
+
+    **当前覆盖范围**：本文档只正式收录 **skill 管理** 相关端点
+    （`/api/skills`、`/api/skills/{name}`、`/api/skills/{name}/enable`、
+    `/api/skills/{name}/disable`）。WebSocket 通道（`/api/ws/chat`）定义
+    在 `docs/asyncapi/chat-ws.yaml` 中；其他对话端点（`POST /api/chat`、
+    `DELETE /api/conversations/{id}`）尚未规范化，后续会迁移到本文件。
+
+    **实现说明**：服务端是一个 Reactor Netty 实例，通过
+    `modules/coding-agent-cli/.../ServerMode.java` 中的 `RouterFunctions`
+    注册路由。**不是** 基于 `@RestController` 的 Spring MVC 应用，所以 URL
+    路径才是权威契约，而不是某个 controller 类。
+  contact:
+    name: CampusClaw
+    url: https://github.com/mariozechner/pi-mono-java
+  license:
+    name: MIT
+
+servers:
+  - url: http://localhost:3000
+    description: 默认本地服务（端口可通过 `--port` 调整）
+  - url: http://{host}:{port}
+    description: 自定义 host / port
+    variables:
+      host:
+        default: localhost
+      port:
+        default: "3000"
+
+tags:
+  - name: skills
+    description: |
+      管理用户安装的技能（skill）包。每个 skill 是
+      `~/.campusclaw/packages/` 下的一个自包含目录，其中必须包含一个
+      `SKILL.md` 文件（可选带 YAML frontmatter）。
+
+      REST 层面暴露 **上传归档**、**列举**、**删除**、**启用**、**禁用**
+      五个操作。基于 Git 的安装（`campusclaw skill install <url>`）和本地
+      目录链接（`campusclaw skill link <path>`）仅在 CLI 中可用 —— 但通过
+      这两种方式安装的 skill 仍会出现在 `GET /api/skills` 的返回中，并
+      带上对应的 `sourceType`。
+
+      **启用/禁用语义**：被禁用的 skill 不会进入新会话的 `SkillRegistry`，
+      也不会出现在系统提示词或 `/skill` 触发逻辑中。状态全局持久，落盘到
+      `~/.campusclaw/packages/.disabled.json`。**已存在的活跃会话不会受
+      影响**，需要在该会话内执行 `/reload` 才会生效。注意：禁用清单不会
+      因 `DELETE /api/skills/{name}` 而清理，删除后再以同名重装的 skill
+      会沿用之前的禁用状态。
+
+paths:
+  /api/skills:
+    post:
+      tags: [skills]
+      summary: 上传 skill 归档包
+      operationId: uploadSkill
+      description: |
+        上传一个 `.zip`、`.tar.gz` 或 `.tgz` 归档，包内至少需包含一个
+        `SKILL.md`。服务端处理流程如下：
+
+        1. 根据**上传文件的原始 filename** 推导 skill 目录名 —— 去扩展名、
+           转小写、将非 `[a-z0-9-]` 字符替换为 `-`、合并连续 `-`、去首尾
+           `-`。结果为空则返回 **400**。
+        2. 将归档解压到临时目录。对会逃逸出目标目录的 zip entry（zip-slip）
+           直接拒绝。
+        3. 若解压后恰好只有一个顶层子目录，则自动"拆壳" —— 该子目录的内容
+           成为 skill 根目录。
+        4. 校验至少存在一个 `SKILL.md`（根目录或一级子目录中），否则返回
+           **400**。
+        5. 将解压后的目录树移动到 `~/.campusclaw/packages/<派生名>`，并在
+           `.installed.json` 清单中登记，`sourceType` 标记为 `archive`。
+
+        **单个归档包可以包含多个 `SKILL.md`**（每个子目录一个）。响应中
+        `skills` 数组会列出 loader 发现的全部 skill。
+
+        **格式识别基于 filename 扩展名，而不是 MIME 类型。** 客户端需保证
+        `filename` 拥有支持的扩展名 —— Content-Type 用
+        `application/octet-stream` 也可以。
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: |
+                    归档文件。原始 filename 必须以下列扩展名之一结尾：
+                    `.zip`、`.tar.gz`、`.tgz`。
+            encoding:
+              file:
+                contentType: application/zip, application/gzip, application/x-tar, application/octet-stream
+      responses:
+        "200":
+          description: Skill 安装成功。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SkillUploadResult"
+              examples:
+                singleSkill:
+                  summary: 归档内只有单个顶层 skill
+                  value:
+                    name: my-skill
+                    skills:
+                      - name: code-review
+                        description: 自动代码审查工作流
+                multipleSkills:
+                  summary: 归档是一个含多个 SKILL.md 的 skill 包
+                  value:
+                    name: document-skills
+                    skills:
+                      - name: docx
+                        description: 创建、读取、编辑 Word 文档
+                      - name: pdf
+                        description: 读取、合并、拆分 PDF
+                      - name: xlsx
+                        description: 电子表格处理
+        "400":
+          description: |
+            客户端错误。`error` 字段指明具体校验失败原因：
+            - `Missing 'file' field in multipart request`
+            - `Unsupported format: <filename>. Supported: .zip, .tar.gz, .tgz`
+            - `No SKILL.md found in archive: ...`
+            - `Directory already exists: ...`（派生出的目录名已存在）
+            - `Cannot derive a valid skill name from: <filename>`
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              examples:
+                missingFile:
+                  summary: 请求中缺少 file 字段
+                  value:
+                    error: Missing 'file' field in multipart request
+                unsupportedFormat:
+                  summary: 扩展名不支持
+                  value:
+                    error: "Unsupported format: my-skill.rar. Supported: .zip, .tar.gz, .tgz"
+                noSkillMd:
+                  summary: 归档内缺少 SKILL.md
+                  value:
+                    error: "No SKILL.md found in archive: /tmp/skill-upload-1234.tmp\nThe archive must contain at least one SKILL.md file."
+                alreadyExists:
+                  summary: 同名 skill 已存在
+                  value:
+                    error: "Directory already exists: /Users/me/.campusclaw/packages/my-skill\nUse 'campusclaw skill remove my-skill' first."
+        "409":
+          description: |
+            归档内的某个 skill `name` 与已安装 skill 重名。**整包安装会回滚**
+            （不写入 packages 目录、不修改清单），客户端需自行决定先卸载已有
+            skill 还是重命名归档内的 skill。`conflicts` 数组列出全部冲突项。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SkillConflict"
+              example:
+                error: Skill name conflict
+                conflicts:
+                  - skill: code-review
+                    existingPackage: my-skill
+        "500":
+          description: 服务端意外错误（如文件系统错误或解压失败）。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: "Internal error: tar extraction failed: ..."
+
+    get:
+      tags: [skills]
+      summary: 列出已安装的 skill
+      operationId: listSkills
+      description: |
+        返回 packages 目录下 loader 能发现的全部 skill，按 `name` 升序
+        排序。`sourceType` / `source` 字段会与 `.installed.json` 清单
+        交叉核对 —— 如果某 skill 在磁盘上存在但不在清单中，`sourceType`
+        退化为 `local`；若顶层目录是一个符号链接，则退化为 `link`。
+      responses:
+        "200":
+          description: skill 列表（可能为空数组）。
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SkillInfo"
+              example:
+                - name: code-review
+                  sourceType: archive
+                  source: /tmp/my-skill.zip
+                  description: 自动代码审查工作流
+                  enabled: true
+                - name: deploy-helper
+                  sourceType: git
+                  source: https://github.com/user/deploy-helper
+                  description: 部署辅助工具
+                  enabled: false
+                - name: local-proto
+                  sourceType: link
+                  source: /Users/me/work/my-skill-dev
+                  description: 开发中的 skill
+                  enabled: true
+                - name: orphan
+                  sourceType: local
+                  source: /Users/me/.campusclaw/packages/orphan
+                  description: 手动放进来、未登记到清单的 skill
+                  enabled: true
+        "500":
+          description: 服务端意外错误。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /api/skills/{name}:
+    delete:
+      tags: [skills]
+      summary: 删除已安装的 skill
+      operationId: deleteSkill
+      description: |
+        删除对应的 skill 目录或符号链接，并同步从 `.installed.json` 清单中
+        移除对应条目。
+
+        **状态码特例**：当 skill 不存在时，服务端返回的是 **`400`** 而不是
+        更符合 REST 约定的 `404`。这是当前刻意保留的行为 —— DELETE 端点上
+        的 `SkillInstallException` 统一映射到 400（与之相对，`POST /api/skills`
+        的命名冲突 `SkillConflictException` 单独映射到 409，
+        `POST /api/skills/{name}/{enable|disable}` 的 not-found 映射到 404）。
+      parameters:
+        - name: name
+          in: path
+          required: true
+          description: skill 目录名，必须与 `GET /api/skills` 返回的 `name` 完全一致。
+          schema:
+            type: string
+            pattern: "^[a-z0-9-]+$"
+            maxLength: 64
+          example: my-skill
+      responses:
+        "200":
+          description: 删除成功。
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [message]
+                properties:
+                  message:
+                    type: string
+                    description: 人类可读的操作结果描述。
+              example:
+                message: "Removed skill: my-skill"
+        "400":
+          description: |
+            skill 不存在，或 skill manager 拒绝执行删除。可能的情况：
+            - `Skill not found: <name>` —— 对应目录/符号链接不存在。
+            - `Failed to remove symlink: ...` —— 删除符号链接时文件系统出错。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: "Skill not found: my-skill\nUse 'campusclaw skill list' to see installed skills."
+        "500":
+          description: 递归删除时发生意外文件系统错误。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /api/skills/{name}/enable:
+    post:
+      tags: [skills]
+      summary: 启用一个已安装的 skill
+      operationId: enableSkill
+      description: |
+        把指定 skill 从 `~/.campusclaw/packages/.disabled.json` 中移除（如有），
+        使其在新会话中重新出现在 `SkillRegistry`。
+
+        **幂等**：对一个本就处于启用状态的 skill 再次调用同样返回 200。
+
+        **注意**：路径参数是 **skill 名**（即 `GET /api/skills` 返回的 `name`，
+        来自 `SKILL.md` frontmatter），**不是** `DELETE /api/skills/{name}` 中
+        的包目录名。两者大多数情况下相同，但当一个包内含多个 SKILL.md 时不同。
+      parameters:
+        - $ref: "#/components/parameters/SkillNamePath"
+      responses:
+        "200":
+          description: 启用成功（含已是启用状态的幂等场景）。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SkillToggleResult"
+              example:
+                name: code-review
+                enabled: true
+                hint: "Affects new sessions; run /reload in existing sessions."
+        "404":
+          description: 找不到指定 skill 名（磁盘上没有任何已加载 skill 与之对应）。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: "Skill not found: code-review"
+        "500":
+          description: 写入 `.disabled.json` 时发生意外文件系统错误。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /api/skills/{name}/disable:
+    post:
+      tags: [skills]
+      summary: 禁用一个已安装的 skill
+      operationId: disableSkill
+      description: |
+        把指定 skill 加入 `~/.campusclaw/packages/.disabled.json`。新会话加载
+        skill 时会跳过该 skill —— 它不会进入 `SkillRegistry`、不会进入系统
+        提示词、也不会被 `/skill` 触发。
+
+        **幂等**：对一个本就处于禁用状态的 skill 再次调用同样返回 200。
+
+        **作用范围**：仅影响 user-level skill（`~/.campusclaw/packages/`）。
+        project-level skill（`<cwd>/.campusclaw/skills/`）不受此 API 影响。
+
+        **不影响活跃会话**：已经初始化的 `AgentSession` 内的 `SkillRegistry`
+        不会被修改，需要在该会话内执行 `/reload` 才会重新加载并应用禁用清单。
+      parameters:
+        - $ref: "#/components/parameters/SkillNamePath"
+      responses:
+        "200":
+          description: 禁用成功（含已是禁用状态的幂等场景）。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SkillToggleResult"
+              example:
+                name: code-review
+                enabled: false
+                hint: "Affects new sessions; run /reload in existing sessions."
+        "404":
+          description: 找不到指定 skill 名。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: "Skill not found: code-review"
+        "500":
+          description: 写入 `.disabled.json` 时发生意外文件系统错误。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+components:
+  schemas:
+    SkillInfo:
+      type: object
+      description: "`GET /api/skills` 返回的单个已安装 skill 条目。"
+      required: [name, sourceType, source, description, enabled]
+      properties:
+        name:
+          type: string
+          description: |
+            skill 标识符，取自 `SKILL.md` frontmatter（或从目录名推导）。
+            仅允许 `[a-z0-9-]`，最长 64 字符。
+          pattern: "^[a-z0-9-]+$"
+          maxLength: 64
+          example: code-review
+        sourceType:
+          type: string
+          description: |
+            该 skill 的安装来源：
+            - `git` —— 通过 `campusclaw skill install <url>` 克隆
+            - `link` —— 通过 `campusclaw skill link <path>` 创建的符号链接
+              （或磁盘上是 symlink 但清单里无记录的情况）
+            - `archive` —— 通过 `POST /api/skills` 上传
+            - `local` —— 磁盘上存在、清单中无记录且非符号链接的"裸"目录
+          enum: [git, link, archive, local]
+          example: archive
+        source:
+          type: string
+          description: |
+            来源标识，含义取决于 `sourceType`：
+            - `git` —— 克隆 URL
+            - `link` —— 符号链接指向的绝对路径
+            - `archive` —— 安装时的归档文件路径（当前可能已不存在）
+            - `local` —— skill 在磁盘上的目录路径
+          example: /tmp/my-skill.zip
+        description:
+          type: string
+          description: |
+            skill 的人类可读描述，来自 `SKILL.md` frontmatter。
+            最长 1024 字符。
+          maxLength: 1024
+          example: 自动代码审查工作流
+        enabled:
+          type: boolean
+          description: |
+            是否参与新会话的 skill 加载。`false` 表示该 skill 名出现在
+            `~/.campusclaw/packages/.disabled.json` 中。新装的 skill 默认
+            为 `true`。仅 user-level skill 受 `.disabled.json` 影响。
+          example: true
+
+    SkillUploadResult:
+      type: object
+      description: "`POST /api/skills` 成功时的响应体。"
+      required: [name, skills]
+      properties:
+        name:
+          type: string
+          description: |
+            归档安装后的目录名，根据上传 filename 派生（小写、仅
+            `[a-z0-9-]`）。
+          pattern: "^[a-z0-9-]+$"
+          maxLength: 64
+          example: my-skill
+        skills:
+          type: array
+          description: |
+            loader 在该归档中发现的所有 skill。通常只有一个；若归档是
+            一个包含多个 `SKILL.md`（每个子目录一个）的 skill 包，则
+            会有多个条目。
+          items:
+            type: object
+            required: [name, description]
+            properties:
+              name:
+                type: string
+                description: skill 标识符。
+                pattern: "^[a-z0-9-]+$"
+                maxLength: 64
+              description:
+                type: string
+                description: skill 的人类可读描述。
+                maxLength: 1024
+
+    SkillToggleResult:
+      type: object
+      description: "`POST /api/skills/{name}/{enable|disable}` 成功时的响应体。"
+      required: [name, enabled, hint]
+      properties:
+        name:
+          type: string
+          description: 被启用/禁用的 skill 名（即请求路径中的 `name`）。
+          pattern: "^[a-z0-9-]+$"
+          maxLength: 64
+          example: code-review
+        enabled:
+          type: boolean
+          description: 操作完成后该 skill 的状态。enable 接口固定为 `true`，disable 固定为 `false`。
+          example: true
+        hint:
+          type: string
+          description: |
+            人类可读提示，固定为
+            `Affects new sessions; run /reload in existing sessions.`，提醒
+            调用方此操作不会改动已存在 `AgentSession` 的 `SkillRegistry`。
+          example: "Affects new sessions; run /reload in existing sessions."
+
+    SkillConflict:
+      type: object
+      description: |
+        `POST /api/skills` 的 409 响应体。归档内出现一个或多个与已安装
+        skill 重名的项时返回；服务端不会写入 packages 目录、不会修改
+        清单（整包回滚）。
+      required: [error, conflicts]
+      properties:
+        error:
+          type: string
+          description: 固定为 `Skill name conflict`。
+          example: Skill name conflict
+        conflicts:
+          type: array
+          description: 全部冲突项的列表。
+          items:
+            type: object
+            required: [skill, existingPackage]
+            properties:
+              skill:
+                type: string
+                description: 归档内冲突的 skill 名。
+                pattern: "^[a-z0-9-]+$"
+                maxLength: 64
+                example: code-review
+              existingPackage:
+                type: string
+                description: |
+                  已存在该 skill 名的包目录（即 `~/.campusclaw/packages/`
+                  下的顶层目录名）。
+                pattern: "^[a-z0-9-]+$"
+                maxLength: 64
+                example: my-skill
+
+    Error:
+      type: object
+      description: |
+        所有 skill 端点的非 2xx 响应共用的错误包装。`error` 字段为人类
+        可读消息，可能包含换行符。`POST /api/skills` 的 409 响应使用更
+        具体的 `SkillConflict` schema，但仍包含相同的 `error` 字段。
+      required: [error]
+      properties:
+        error:
+          type: string
+          description: 错误描述文本。
+          example: "Missing 'file' field in multipart request"
+
+  parameters:
+    SkillNamePath:
+      name: name
+      in: path
+      required: true
+      description: |
+        启用/禁用接口下的 skill 名（即 `GET /api/skills` 返回的 `name`）。
+      schema:
+        type: string
+        pattern: "^[a-z0-9-]+$"
+        maxLength: 64
+      example: code-review
