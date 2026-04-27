@@ -186,7 +186,7 @@ campusclaw [OPTIONS] [PROMPT...]
 
 > Windows 用户将上述 `./campusclaw.sh` 替换为 `campusclaw.bat`。
 >
-> Server / RPC 模式的详细接口文档见 [docs/server-api.md](docs/server-api.md)。
+> Server 模式的接口文档见 [docs/openapi/campusclaw-api.yaml](docs/openapi/campusclaw-api.yaml)（REST，OpenAPI 3）与 [docs/asyncapi/chat-ws.yaml](docs/asyncapi/chat-ws.yaml)（WebSocket）。`docs/server-api.md` 已停止维护，仅作历史快照保留。
 
 ## 内置工具
 

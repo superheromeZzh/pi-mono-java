@@ -28,6 +28,7 @@ import com.campusclaw.codingagent.skill.Skill;
 import com.campusclaw.codingagent.skill.SkillExpander;
 import com.campusclaw.codingagent.skill.SkillLoader;
 import com.campusclaw.codingagent.skill.SkillRegistry;
+import com.campusclaw.codingagent.skill.SkillStateStore;
 
 /**
  * Manages a single agent session lifecycle: initialization, prompt handling,
@@ -435,7 +436,11 @@ public class AgentSession {
         skillRegistry.clear();
 
         // User-level skills: ~/.campusclaw/agent/skills/
-        List<Skill> userSkills = skillLoader.loadFromDirectory(userSkillsDir(), "user");
+        // Filter out skills explicitly disabled via the REST API.
+        java.util.Set<String> disabled = new SkillStateStore(userSkillsDir()).loadDisabled();
+        List<Skill> userSkills = skillLoader.loadFromDirectory(userSkillsDir(), "user").stream()
+                .filter(s -> !disabled.contains(s.name()))
+                .toList();
         skillRegistry.registerAll(userSkills);
 
         // Project-level skills: {cwd}/.campusclaw/skills/

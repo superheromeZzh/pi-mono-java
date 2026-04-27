@@ -1,5 +1,17 @@
 # CampusClaw Server API 文档
 
+> ⚠️ **本文档已停止维护（2026-04）**
+>
+> Skill 管理相关端点（`/api/skills`、`/api/skills/{name}`、
+> `/api/skills/{name}/enable`、`/api/skills/{name}/disable`）的权威定义现在
+> 位于 [`docs/openapi/campusclaw-api.yaml`](./openapi/campusclaw-api.yaml)。
+> WebSocket 通道（`/api/ws/chat`）的定义位于
+> [`docs/asyncapi/chat-ws.yaml`](./asyncapi/chat-ws.yaml)。
+>
+> 本文档对话端点（`POST /api/chat`、`DELETE /api/conversations/{id}`）尚未
+> 迁移，但请视其内容为**只读历史快照**：不再随实现更新。新增/修改 API 时
+> 请直接更新 OpenAPI 规范，不要回填到这里。
+
 CampusClaw 支持以 HTTP Server 模式运行，暴露 REST + SSE 接口，供外部应用（Web 前端、IDE 插件等）集成调用。
 
 ## 启动方式

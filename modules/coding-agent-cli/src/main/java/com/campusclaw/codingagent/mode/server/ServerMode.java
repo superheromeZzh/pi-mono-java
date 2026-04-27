@@ -33,6 +33,8 @@ import reactor.netty.http.server.HttpServer;
  *   <li>POST   /api/skills                — upload skill archive</li>
  *   <li>GET    /api/skills                — list installed skills</li>
  *   <li>DELETE /api/skills/{name}         — remove a skill</li>
+ *   <li>POST   /api/skills/{name}/enable  — enable a skill</li>
+ *   <li>POST   /api/skills/{name}/disable — disable a skill</li>
  * </ul>
  */
 public class ServerMode {
@@ -107,6 +109,8 @@ public class ServerMode {
                 .POST("/api/skills", skillHandler::upload)
                 .GET("/api/skills", skillHandler::list)
                 .DELETE("/api/skills/{name}", skillHandler::delete)
+                .POST("/api/skills/{name}/enable", skillHandler::enable)
+                .POST("/api/skills/{name}/disable", skillHandler::disable)
                 .build();
 
         var httpHandler = RouterFunctions.toHttpHandler(routes);
@@ -132,6 +136,8 @@ public class ServerMode {
         System.out.println("  POST   /api/skills");
         System.out.println("  GET    /api/skills");
         System.out.println("  DELETE /api/skills/{name}");
+        System.out.println("  POST   /api/skills/{name}/enable");
+        System.out.println("  POST   /api/skills/{name}/disable");
         System.out.println("  WS     /api/ws/chat");
 
         server.onDispose().block();
