@@ -1,0 +1,64 @@
+{
+  "version": 1,
+  "rules": [
+    {
+      "id": "ahu_supply_air_pressure_anomaly_e5f6a7b8",
+      "name": "送风压力异常",
+      "meta": {
+        "deviceType": "AHU",
+        "component": "送风压力传感器",
+        "points": [
+          "supply_air_pressure",
+          "supply_air_pressure_sp",
+          "supply_fan_status"
+        ]
+      },
+      "window": {
+        "type": "rolling",
+        "durationSeconds": 900
+      },
+      "trigger": {
+        "delaySeconds": 600,
+        "expr": {
+          "op": "and",
+          "left": {
+            "op": "==",
+            "left": {
+              "fact": "supply_fan_status"
+            },
+            "right": {
+              "const": 1
+            }
+          },
+          "right": {
+            "op": ">",
+            "left": {
+              "func": "abs",
+              "args": [
+                {
+                  "op": "-",
+                  "left": {
+                    "fact": "supply_air_pressure"
+                  },
+                  "right": {
+                    "fact": "supply_air_pressure_sp"
+                  }
+                }
+              ]
+            },
+            "right": {
+              "const": 20
+            }
+          }
+        }
+      },
+      "effective": {
+        "metric": "ratio_true",
+        "source": "trigger",
+        "threshold": 0.9
+      },
+      "原因分析": "",
+      "专家处理建议": ""
+    }
+  ]
+}
