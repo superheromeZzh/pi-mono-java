@@ -47,6 +47,14 @@ package-lock.json
 !frontend/package.json
 !frontend/package-lock.json
 
-# CampusClaw runtime data
-.campusclaw/
+# CampusClaw
+# - ignore runtime data
+# - keep skills in-repo for distribution
+.campusclaw/*
+!.campusclaw/skills/
+!.campusclaw/skills/**
+
+# Python bytecode (skills/scripts may include python helpers)
+__pycache__/
+*.pyc
 
