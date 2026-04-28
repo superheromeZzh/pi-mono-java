@@ -1,0 +1,140 @@
+{
+  "devices": [
+    {
+      "deviceId": "VAV_004",
+      "data": [
+        {
+          "ts": 1777304528.256211,
+          "points": {
+            "damper_opening": 60.0,
+            "damper_opening_30min_ago": 60.0,
+            "room_co2": 800.0,
+            "room_co2_2h_ago": 800.0,
+            "room_co2_30min_ago": 800.0
+          }
+        },
+        {
+          "ts": 1777304828.256211,
+          "points": {
+            "damper_opening": 58.0,
+            "damper_opening_30min_ago": 60.0,
+            "room_co2": 800.0,
+            "room_co2_2h_ago": 800.0,
+            "room_co2_30min_ago": 800.0
+          }
+        },
+        {
+          "ts": 1777305128.256211,
+          "points": {
+            "damper_opening": 56.0,
+            "damper_opening_30min_ago": 60.0,
+            "room_co2": 800.0,
+            "room_co2_2h_ago": 800.0,
+            "room_co2_30min_ago": 800.0
+          }
+        },
+        {
+          "ts": 1777305428.256211,
+          "points": {
+            "damper_opening": 54.0,
+            "damper_opening_30min_ago": 60.0,
+            "room_co2": 800.0,
+            "room_co2_2h_ago": 800.0,
+            "room_co2_30min_ago": 800.0
+          }
+        },
+        {
+          "ts": 1777305728.256211,
+          "points": {
+            "damper_opening": 52.0,
+            "damper_opening_30min_ago": 60.0,
+            "room_co2": 800.0,
+            "room_co2_2h_ago": 800.0,
+            "room_co2_30min_ago": 800.0
+          }
+        },
+        {
+          "ts": 1777306028.256211,
+          "points": {
+            "damper_opening": 50.0,
+            "damper_opening_30min_ago": 60.0,
+            "room_co2": 800.0,
+            "room_co2_2h_ago": 800.0,
+            "room_co2_30min_ago": 800.0
+          }
+        },
+        {
+          "ts": 1777306328.256211,
+          "points": {
+            "damper_opening": 48.0,
+            "damper_opening_30min_ago": 60.0,
+            "room_co2": 800.0,
+            "room_co2_2h_ago": 800.0,
+            "room_co2_30min_ago": 800.0
+          }
+        },
+        {
+          "ts": 1777306628.256211,
+          "points": {
+            "damper_opening": 46.0,
+            "damper_opening_30min_ago": 58.0,
+            "room_co2": 800.0,
+            "room_co2_2h_ago": 800.0,
+            "room_co2_30min_ago": 800.0
+          }
+        },
+        {
+          "ts": 1777306928.256211,
+          "points": {
+            "damper_opening": 44.0,
+            "damper_opening_30min_ago": 56.0,
+            "room_co2": 800.0,
+            "room_co2_2h_ago": 800.0,
+            "room_co2_30min_ago": 800.0
+          }
+        },
+        {
+          "ts": 1777307228.256211,
+          "points": {
+            "damper_opening": 42.0,
+            "damper_opening_30min_ago": 54.0,
+            "room_co2": 800.0,
+            "room_co2_2h_ago": 800.0,
+            "room_co2_30min_ago": 800.0
+          }
+        },
+        {
+          "ts": 1777307528.256211,
+          "points": {
+            "damper_opening": 40.0,
+            "damper_opening_30min_ago": 52.0,
+            "room_co2": 800.0,
+            "room_co2_2h_ago": 800.0,
+            "room_co2_30min_ago": 800.0
+          }
+        },
+        {
+          "ts": 1777307828.256211,
+          "points": {
+            "damper_opening": 38.0,
+            "damper_opening_30min_ago": 50.0,
+            "room_co2": 800.0,
+            "room_co2_2h_ago": 800.0,
+            "room_co2_30min_ago": 800.0
+          }
+        },
+        {
+          "ts": 1777308128.256211,
+          "points": {
+            "damper_opening": 36.0,
+            "damper_opening_30min_ago": 48.0,
+            "room_co2": 800.0,
+            "room_co2_2h_ago": 800.0,
+            "room_co2_30min_ago": 800.0
+          }
+        }
+      ]
+    }
+  ]
+}
+

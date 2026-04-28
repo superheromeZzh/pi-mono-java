@@ -1,0 +1,34 @@
+{
+  "devices": [
+    {
+      "deviceId": "AHU_001",
+      "data": [
+        {
+          "ts": 1777308068.256211,
+          "points": {
+            "SupplyFanInverterFaultAlarm": 0.0
+          }
+        },
+        {
+          "ts": 1777308128.256211,
+          "points": {
+            "SupplyFanInverterFaultAlarm": 0.0
+          }
+        },
+        {
+          "ts": 1777308188.256211,
+          "points": {
+            "SupplyFanInverterFaultAlarm": 0.0
+          }
+        },
+        {
+          "ts": 1777308248.256211,
+          "points": {
+            "SupplyFanInverterFaultAlarm": 0.0
+          }
+        }
+      ]
+    }
+  ]
+}
+

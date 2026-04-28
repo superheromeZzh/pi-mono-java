@@ -1,0 +1,375 @@
+{
+  "version": 1,
+  "rules": [
+    {
+      "id": "vav_co2_static_dead_value_4f8e1a2b",
+      "name": "CO2传感器数值呆滞/响应异常",
+      "meta": {
+        "deviceType": "VAV",
+        "component": "CO2传感器",
+        "points": [
+          "room_co2",
+          "damper_opening"
+        ]
+      },
+      "window": {
+        "type": "rolling",
+        "durationSeconds": 3600
+      },
+      "trigger": {
+        "expr": {
+          "op": "or",
+          "left": {
+            "comment": "静态死值：2小时内CO2变动率 < 1%",
+            "op": "<",
+            "left": {
+              "func": "abs",
+              "args": [
+                {
+                  "op": "-",
+                  "left": {
+                    "fact": "room_co2"
+                  },
+                  "right": {
+                    "fact": "room_co2_2h_ago"
+                  }
+                }
+              ]
+            },
+            "right": {
+              "func": "*",
+              "args": [
+                {
+                  "fact": "room_co2_2h_ago"
+                },
+                {
+                  "const": 0.01
+                }
+              ]
+            }
+          },
+          "right": {
+            "comment": "逻辑背离：新风阀开度减小（人员密度增加）但CO2读数持续下降或无变化",
+            "op": "and",
+            "left": {
+              "op": "<",
+              "left": {
+                "fact": "damper_opening"
+              },
+              "right": {
+                "fact": "damper_opening_30min_ago"
+              }
+            },
+            "right": {
+              "op": "<",
+              "left": {
+                "func": "abs",
+                "args": [
+                  {
+                    "op": "-",
+                    "left": {
+                      "fact": "room_co2"
+                    },
+                    "right": {
+                      "fact": "room_co2_30min_ago"
+                    }
+                  }
+                ]
+              },
+              "right": {
+                "func": "*",
+                "args": [
+                  {
+                    "fact": "room_co2_30min_ago"
+                  },
+                  {
+                    "const": 0.001
+                  }
+                ]
+              }
+            }
+          }
+        }
+      },
+      "effective": {
+        "metric": "ratio_true",
+        "source": "trigger",
+        "threshold": 0.95
+      },
+      "原因分析": "1. 物理性遮蔽：传感器探头被灰尘严重覆盖，或采样风道被异物堵塞，导致内部气室无法实时交换新鲜空气。\n2. 传感器中毒/老化：敏感元件长期暴露在恶劣环境导致化学活性下降，输出电信号被“锁定”或变化极其缓慢。\n3. 电路/通信故障：模数转换器（A/D）死机，或控制系统读取到了上一次的“缓存数据”而非实时数据。",
+      "专家处理建议": "1. 动态压力测试：现场对传感器进气口人工呼气，观察读数是否在10s内迅速飙升至1000PPM以上。若读数无反应，则确认为死值故障。\n2. 硬件维护与复位：使用压缩空气清理传感器滤膜；对传感器进行断电重启，强制清除通信缓存。\n3. 若重启后在人员密集时段读数依然保持恒定，需更换CO2感测核心模块。"
+    },
+    {
+      "id": "vav_co2_drift_anomaly_a1b2c3d5",
+      "name": "CO2传感器读数异常漂移",
+      "meta": {
+        "deviceType": "VAV",
+        "component": "CO2传感器",
+        "points": [
+          "room_co2"
+        ]
+      },
+      "window": {
+        "type": "rolling",
+        "durationSeconds": 1800
+      },
+      "trigger": {
+        "expr": {
+          "op": "or",
+          "left": {
+            "op": "<",
+            "left": {
+              "fact": "room_co2"
+            },
+            "right": {
+              "const": 300
+            }
+          },
+          "right": {
+            "op": ">",
+            "left": {
+              "fact": "room_co2"
+            },
+            "right": {
+              "const": 5000
+            }
+          }
+        }
+      },
+      "effective": {
+        "metric": "ratio_true",
+        "source": "trigger",
+        "threshold": 0.9
+      },
+      "原因分析": "1. 传感器零点/量程漂移：长期运行导致校准偏移，出现持续偏低或偏高读数。\n2. 采样与气路问题：采样口堵塞、滤网污染或采样泵异常，导致测量滞后或失真。",
+      "专家处理建议": "1. 现场复核：使用手持式 CO2 仪对同位置进行比对，确认偏差范围与趋势。\n2. 维护校准：清洁采样口/滤网，检查采样泵与气路密封性，按厂家流程进行零点与跨度校准或更换传感器。"
+    },
+    {
+      "id": "vav_damper_control_error_70d3c8a2",
+      "name": "风阀控制误差超限",
+      "meta": {
+        "deviceType": "VAV",
+        "component": "风阀",
+        "points": [
+          "damper_opening",
+          "damper_opening_sp"
+        ]
+      },
+      "window": {
+        "type": "rolling",
+        "durationSeconds": 1800
+      },
+      "trigger": {
+        "expr": {
+          "op": ">",
+          "left": {
+            "func": "abs",
+            "args": [
+              {
+                "op": "-",
+                "left": {
+                  "fact": "damper_opening"
+                },
+                "right": {
+                  "fact": "damper_opening_sp"
+                }
+              }
+            ]
+          },
+          "right": {
+            "const": 5
+          }
+        }
+      },
+      "effective": {
+        "metric": "ratio_true",
+        "source": "trigger",
+        "threshold": 0.95
+      },
+      "原因分析": "",
+      "专家处理建议": ""
+    },
+    {
+      "id": "vav_temp_sensor_over_range_4a7e9c1d",
+      "name": "检测温度超限",
+      "meta": {
+        "deviceType": "VAV",
+        "component": "温度传感器",
+        "points": [
+          "room_temp"
+        ]
+      },
+      "window": {
+        "type": "rolling",
+        "durationSeconds": 900
+      },
+      "trigger": {
+        "expr": {
+          "op": "or",
+          "left": {
+            "op": "<",
+            "left": {
+              "fact": "room_temp"
+            },
+            "right": {
+              "const": -5
+            }
+          },
+          "right": {
+            "op": ">",
+            "left": {
+              "fact": "room_temp"
+            },
+            "right": {
+              "const": 40
+            }
+          }
+        }
+      },
+      "effective": {
+        "metric": "ratio_true",
+        "source": "trigger",
+        "threshold": 0.9
+      },
+      "原因分析": "",
+      "专家处理建议": ""
+    },
+    {
+      "id": "vav_co2_sensor_fault_8b3f2d41",
+      "name": "CO2传感器故障",
+      "meta": {
+        "deviceType": "VAV",
+        "component": "CO2传感器",
+        "points": [
+          "room_co2"
+        ]
+      },
+      "window": {
+        "type": "rolling",
+        "durationSeconds": 1800
+      },
+      "trigger": {
+        "expr": {
+          "op": "or",
+          "left": {
+            "op": "<",
+            "left": {
+              "fact": "room_co2"
+            },
+            "right": {
+              "const": 0
+            }
+          },
+          "right": {
+            "op": ">",
+            "left": {
+              "fact": "room_co2"
+            },
+            "right": {
+              "const": 2000
+            }
+          }
+        }
+      },
+      "effective": {
+        "metric": "ratio_true",
+        "source": "trigger",
+        "threshold": 0.9
+      },
+      "原因分析": "1. 硬件性能故障：传感器感测元件老化、漂移或损坏，导致输出信号超出量程（如出现负值）。\n2.线路及供电问题：接线松动、短路或电源电压（通常为 24V DC）不稳定，导致信号传输异常。",
+      "专家处理建议": "1.现场核实：使用手持式 CO2 检测仪进行实地比对，确认是传感器误报还是环境真实超标。\n2.检查电气连接：紧固传感器接线端子，测量供电电压是否处于正常范围，排除线路干扰。"
+    },
+    {
+      "id": "pahuan_vav_supply_fan_inverter_fault_a1b2c3d4",
+      "name": "新风机组送风机变频器故障",
+      "meta": {
+        "deviceType": "新风机",
+        "component": "送风机变频器",
+        "points": [
+          "SupplyFanInverterFaultAlarm"
+        ]
+      },
+      "window": {
+        "type": "rolling",
+        "durationSeconds": 60
+      },
+      "trigger": {
+        "expr": {
+          "op": "==",
+          "left": {
+            "fact": "SupplyFanInverterFaultAlarm"
+          },
+          "right": {
+            "const": 0
+          }
+        }
+      },
+      "effective": {
+        "metric": "ratio_true",
+        "source": "trigger",
+        "threshold": 1
+      },
+      "原因分析": "",
+      "专家处理建议": ""
+    },
+    {
+      "id": "ahu_supply_air_pressure_anomaly_e5f6a7b8",
+      "name": "送风压力异常",
+      "meta": {
+        "deviceType": "AHU",
+        "component": "送风压力传感器",
+        "points": [
+          "supply_air_pressure",
+          "supply_air_pressure_sp",
+          "supply_fan_status"
+        ]
+      },
+      "window": {
+        "type": "rolling",
+        "durationSeconds": 900
+      },
+      "trigger": {
+        "delaySeconds": 600,
+        "expr": {
+          "op": "and",
+          "left": {
+            "op": "==",
+            "left": {
+              "fact": "supply_fan_status"
+            },
+            "right": {
+              "const": 1
+            }
+          },
+          "right": {
+            "op": ">",
+            "left": {
+              "func": "abs",
+              "args": [
+                {
+                  "op": "-",
+                  "left": {
+                    "fact": "supply_air_pressure"
+                  },
+                  "right": {
+                    "fact": "supply_air_pressure_sp"
+                  }
+                }
+              ]
+            },
+            "right": {
+              "const": 20
+            }
+          }
+        }
+      },
+      "effective": {
+        "metric": "ratio_true",
+        "source": "trigger",
+        "threshold": 0.9
+      },
+      "原因分析": "",
+      "专家处理建议": ""
+    }
+  ]
+}
