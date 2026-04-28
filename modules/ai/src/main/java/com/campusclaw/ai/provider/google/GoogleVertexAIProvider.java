@@ -45,6 +45,12 @@ public class GoogleVertexAIProvider implements ApiProvider {
     private static final Logger log = LoggerFactory.getLogger(GoogleVertexAIProvider.class);
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
+    private final com.campusclaw.ai.env.ProviderConfigResolver providerConfigResolver;
+
+    public GoogleVertexAIProvider(com.campusclaw.ai.env.ProviderConfigResolver providerConfigResolver) {
+        this.providerConfigResolver = providerConfigResolver;
+    }
+
     @Override
     public Api getApi() {
         return Api.GOOGLE_VERTEX;
@@ -72,7 +78,8 @@ public class GoogleVertexAIProvider implements ApiProvider {
 
     private void executeStream(Model model, Context context, @Nullable SimpleStreamOptions options,
                                AssistantMessageEventStream eventStream) {
-        String apiKey = resolveApiKey(model, options);
+        var providerConfig = providerConfigResolver.resolve(model.provider(), model);
+        String apiKey = resolveApiKey(providerConfig, options);
         String projectId = System.getenv("GOOGLE_CLOUD_PROJECT");
         String location = System.getenv("GOOGLE_CLOUD_LOCATION");
         if (location == null || location.isBlank()) { location = "us-central1"; }
@@ -242,12 +249,10 @@ public class GoogleVertexAIProvider implements ApiProvider {
         return body;
     }
 
-    private String resolveApiKey(Model model, @Nullable SimpleStreamOptions options) {
+    private String resolveApiKey(com.campusclaw.ai.env.ResolvedProviderConfig providerConfig,
+                                 @Nullable SimpleStreamOptions options) {
         if (options != null && options.apiKey() != null) { return options.apiKey(); }
-        if (model.apiKey() != null && !model.apiKey().isBlank()) { return model.apiKey(); }
-        String key = System.getenv("GOOGLE_CLOUD_API_KEY");
-        if (key != null && !key.isBlank()) { return key; }
-        return System.getenv("GOOGLE_API_KEY");
+        return providerConfig.apiKey();
     }
 
     private void finishCurrentBlock(

@@ -20,7 +20,7 @@ class AnthropicProviderTest {
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
-    AnthropicProvider provider = new AnthropicProvider();
+    AnthropicProvider provider = new AnthropicProvider(new com.campusclaw.ai.env.EnvProviderConfigResolver(new com.campusclaw.ai.env.EnvApiKeyResolver()));
 
     private Model testModel() {
         return new Model(

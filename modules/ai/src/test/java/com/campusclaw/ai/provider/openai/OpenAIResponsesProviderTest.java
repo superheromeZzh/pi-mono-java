@@ -22,7 +22,7 @@ class OpenAIResponsesProviderTest {
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
-    OpenAIResponsesProvider provider = new OpenAIResponsesProvider();
+    OpenAIResponsesProvider provider = new OpenAIResponsesProvider(new com.campusclaw.ai.env.EnvProviderConfigResolver(new com.campusclaw.ai.env.EnvApiKeyResolver()));
 
     private Model testModel() {
         return new Model(

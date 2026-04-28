@@ -582,6 +582,11 @@ public class InteractiveMode {
                     tui.render();
                     continue;
                 }
+                if ("/model".equals(trimmed) || "/models".equals(trimmed)) {
+                    showModelSelector(session);
+                    tui.render();
+                    continue;
+                }
 
                 // Slash commands — skip if it's a /skill: invocation or prompt template
                 if (trimmed.startsWith("/") && !isSkillOrTemplate(trimmed, session)) {

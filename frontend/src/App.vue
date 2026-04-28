@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { useChatWs } from './composables/useChatWs';
 import MessageList from './components/MessageList.vue';
 import type { ThinkingLevel } from './types/ws';
@@ -9,8 +9,36 @@ const chat = useChatWs();
 // ----- sidebar state (local) -----
 const wsUrl = ref('ws://localhost:3000/api/ws/chat');
 const convInput = ref('');
-const modelInput = ref('');
 const levelInput = ref<ThinkingLevel>('medium');
+
+// Sentinel value in the model <select> that opens a free-text input —
+// for switching to ids the catalogue doesn't surface (custom endpoints,
+// bypassing enabledModels, etc).
+const CUSTOM_MODEL = '__custom__';
+const modelSelected = ref<string>('');
+const modelManual = ref('');
+
+// Keep <select> in sync with the live model id reported by the server.
+// If the current model isn't in availableModels we fall through to the
+// custom-input option so the user can still see what's active.
+watch(
+  [() => chat.model.value, () => chat.availableModels.value.length],
+  ([current]) => {
+    if (!current) {
+      if (modelSelected.value !== CUSTOM_MODEL) modelSelected.value = '';
+      return;
+    }
+    const found = chat.availableModels.value.some((m) => m.id === current);
+    if (found) {
+      modelSelected.value = current;
+    } else if (modelSelected.value !== CUSTOM_MODEL) {
+      // Server reports a model that isn't in our catalogue → expose a manual entry.
+      modelSelected.value = CUSTOM_MODEL;
+      if (!modelManual.value) modelManual.value = current;
+    }
+  },
+  { immediate: true },
+);
 
 // ----- input controls -----
 const promptText = ref('');
@@ -18,6 +46,24 @@ const thinkingLevels: ThinkingLevel[] = ['off', 'minimal', 'low', 'medium', 'hig
 
 const connStatus = computed(() => (chat.connected.value ? 'connected' : 'disconnected'));
 const streamStatus = computed(() => (chat.isStreaming.value ? 'streaming' : 'idle'));
+const isCustomModel = computed(() => modelSelected.value === CUSTOM_MODEL);
+
+const usableModelsCount = computed(
+  () => chat.availableModels.value.filter((m) => m.hasCredentials !== false).length,
+);
+const totalModelsCount = computed(() => chat.availableModels.value.length);
+
+function modelLabel(m: {
+  name: string;
+  provider: string;
+  reasoning?: boolean;
+  hasCredentials?: boolean;
+}) {
+  const reasoning = m.reasoning ? ' ✦' : '';
+  // Older servers may omit hasCredentials → treat absence as true (back-compat).
+  const lock = m.hasCredentials === false ? '🔒 ' : '';
+  return `${lock}${m.name} (${m.provider})${reasoning}`;
+}
 
 function onConnect() {
   chat.connect(wsUrl.value, convInput.value.trim() || null);
@@ -45,7 +91,12 @@ function onPromptKeydown(e: KeyboardEvent) {
 }
 
 function onApplyModel() {
-  void chat.setModel(modelInput.value.trim());
+  const target = isCustomModel.value ? modelManual.value.trim() : modelSelected.value.trim();
+  if (!target) return;
+  void chat.setModel(target);
+}
+function onRefreshModels(all = false) {
+  void chat.listModels(all);
 }
 function onApplyThinking() {
   void chat.setThinking(levelInput.value);
@@ -101,11 +152,57 @@ function logPrefix(dir: 'in' | 'out' | 'err' | 'info') {
       </div>
 
       <h3>Model / Thinking</h3>
-      <label
-        >Model
-        <input v-model="modelInput" type="text" placeholder="e.g. glm-5 / sonnet" />
+      <label>
+        Model
+        <select v-model="modelSelected" :disabled="!chat.connected.value">
+          <option v-if="!chat.availableModels.value.length" value="" disabled>
+            (no catalog yet)
+          </option>
+          <option
+            v-for="m in chat.availableModels.value"
+            :key="`${m.provider}/${m.id}`"
+            :value="m.id"
+            :disabled="m.hasCredentials === false"
+            :title="
+              m.hasCredentials === false
+                ? `No API key resolvable for ${m.provider}. Run /auth login ${m.provider} <key> in the CLI, set provider.${m.provider}.apiKey in settings.json, or export the matching env var.`
+                : ''
+            "
+          >
+            {{ modelLabel(m) }}
+          </option>
+          <option :value="CUSTOM_MODEL">Custom id…</option>
+        </select>
       </label>
-      <button @click="onApplyModel" :disabled="!chat.connected.value">Apply model</button>
+      <label v-if="isCustomModel">
+        Custom model id
+        <input v-model="modelManual" type="text" placeholder="e.g. glm-5 / sonnet" />
+      </label>
+      <div class="row">
+        <button style="flex: 1" @click="onApplyModel" :disabled="!chat.connected.value">
+          Apply model
+        </button>
+        <button
+          style="flex: 0 0 auto"
+          @click="onRefreshModels(false)"
+          :disabled="!chat.connected.value"
+          :title="chat.modelsFiltered.value ? 'Refresh (filtered by enabledModels)' : 'Refresh catalog'"
+        >
+          ↻
+        </button>
+      </div>
+      <label v-if="totalModelsCount" class="hint">
+        <template v-if="chat.modelsFiltered.value">
+          Showing {{ totalModelsCount }} models filtered by
+          <code>settings.enabledModels</code>;
+          <a href="#" @click.prevent="onRefreshModels(true)">show all</a>.
+        </template>
+        <template v-if="usableModelsCount < totalModelsCount">
+          🔒 {{ totalModelsCount - usableModelsCount }} of {{ totalModelsCount }} need an
+          API key — set one via <code>/auth login &lt;provider&gt; &lt;key&gt;</code> in
+          the CLI, or export the matching env var.
+        </template>
+      </label>
 
       <label
         >Thinking level
@@ -212,6 +309,20 @@ aside label select {
   width: 100%;
   margin-top: 4px;
   display: block;
+}
+aside label.hint {
+  font-size: 11px;
+  color: var(--muted);
+  line-height: 1.5;
+}
+aside label.hint a {
+  color: var(--accent);
+}
+aside label.hint code {
+  font-family: ui-monospace, monospace;
+  background: var(--bg);
+  padding: 1px 4px;
+  border-radius: 3px;
 }
 .row {
   display: flex;

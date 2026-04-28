@@ -68,7 +68,12 @@ import jakarta.annotation.Nullable;
 public class OpenAIResponsesProvider implements ApiProvider {
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
-    private static final String ENV_API_KEY = "OPENAI_API_KEY";
+
+    private final com.campusclaw.ai.env.ProviderConfigResolver providerConfigResolver;
+
+    public OpenAIResponsesProvider(com.campusclaw.ai.env.ProviderConfigResolver providerConfigResolver) {
+        this.providerConfigResolver = providerConfigResolver;
+    }
 
     @Override
     public Api getApi() {
@@ -123,16 +128,16 @@ public class OpenAIResponsesProvider implements ApiProvider {
             @Nullable com.campusclaw.ai.types.ThinkingLevel reasoning,
             AssistantMessageEventStream eventStream) {
 
-        String resolvedApiKey = apiKey != null ? apiKey
-                : (model.apiKey() != null && !model.apiKey().isBlank()) ? model.apiKey()
-                : System.getenv(ENV_API_KEY);
+        var providerConfig = providerConfigResolver.resolve(model.provider(), model);
+        String resolvedApiKey = apiKey != null ? apiKey : providerConfig.apiKey();
         if (resolvedApiKey == null || resolvedApiKey.isBlank()) {
             eventStream.error(new IllegalStateException(
-                    "OpenAI API key not found. Set OPENAI_API_KEY or pass via StreamOptions."));
+                    "OpenAI API key not found. Set OPENAI_API_KEY, configure provider."
+                            + model.provider().value() + ".apiKey in settings.json, or run /auth login."));
             return;
         }
 
-        OpenAIClient client = buildClient(resolvedApiKey, model.baseUrl());
+        OpenAIClient client = buildClient(resolvedApiKey, providerConfig.resolveBaseUrl(model));
 
         try {
             ResponseCreateParams params = buildParams(model, context, maxTokens, temperature, reasoning);

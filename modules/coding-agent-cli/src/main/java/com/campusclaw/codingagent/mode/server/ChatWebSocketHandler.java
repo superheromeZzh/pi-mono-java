@@ -18,9 +18,11 @@ import com.campusclaw.agent.event.ToolExecutionUpdateEvent;
 import com.campusclaw.ai.types.AssistantMessage;
 import com.campusclaw.ai.types.ContentBlock;
 import com.campusclaw.ai.types.Message;
+import com.campusclaw.ai.types.Model;
 import com.campusclaw.ai.types.StopReason;
 import com.campusclaw.ai.types.TextContent;
 import com.campusclaw.ai.types.ThinkingLevel;
+import com.campusclaw.codingagent.model.ModelCatalogService;
 import com.campusclaw.codingagent.session.AgentSession;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -74,9 +76,16 @@ public class ChatWebSocketHandler {
     private static final Duration HEARTBEAT_INTERVAL = Duration.ofSeconds(20);
 
     private final SessionPool pool;
+    private final ModelCatalogService modelCatalog;
 
-    public ChatWebSocketHandler(SessionPool pool) {
+    public ChatWebSocketHandler(SessionPool pool, ModelCatalogService modelCatalog) {
         this.pool = pool;
+        this.modelCatalog = modelCatalog;
+    }
+
+    /** Convenience for tests / call sites that don't need the catalogue. */
+    public ChatWebSocketHandler(SessionPool pool) {
+        this(pool, null);
     }
 
     /**
@@ -164,6 +173,7 @@ public class ChatWebSocketHandler {
                     emitResponse(out, id, true, null);
                 }
                 case "set_model" -> handleSetModel(cmd, id, session, out);
+                case "list_models" -> handleListModels(cmd, id, session, out);
                 case "set_thinking_level" -> handleSetThinkingLevel(cmd, id, session, out);
                 case "get_state" -> handleGetState(id, session, conversationId, out);
                 case "get_history" -> emitResponse(out, id, true, Map.of("messages", messagesToNode(session.getHistory())));
@@ -218,6 +228,46 @@ public class ChatWebSocketHandler {
         } catch (Exception e) {
             emitResponse(out, id, false, "Invalid model: " + e.getMessage());
         }
+    }
+
+    private void handleListModels(JsonNode cmd, String id, AgentSession session, Sinks.Many<String> out) {
+        if (modelCatalog == null) {
+            emitResponse(out, id, false, "model catalog service is not wired up");
+            return;
+        }
+        boolean all = cmd.path("all").asBoolean(false);
+        List<Model> models = all ? modelCatalog.getAllModels() : modelCatalog.getAvailableModels();
+
+        var entries = new java.util.ArrayList<Map<String, Object>>(models.size());
+        for (Model m : models) {
+            entries.add(modelToWireFormat(m, modelCatalog.hasCredentials(m)));
+        }
+
+        var data = new LinkedHashMap<String, Object>();
+        data.put("current", session.isInitialized() ? session.getModelId() : null);
+        data.put("filtered", !all && modelCatalog.isFiltered());
+        data.put("models", entries);
+        emitResponse(out, id, true, data);
+    }
+
+    private static Map<String, Object> modelToWireFormat(Model m, boolean hasCredentials) {
+        var entry = new LinkedHashMap<String, Object>();
+        entry.put("id", m.id());
+        entry.put("name", m.name());
+        entry.put("provider", m.provider().value());
+        entry.put("contextWindow", m.contextWindow());
+        entry.put("maxTokens", m.maxTokens());
+        entry.put("reasoning", m.reasoning());
+        entry.put("hasCredentials", hasCredentials);
+        if (m.cost() != null) {
+            var cost = new LinkedHashMap<String, Object>();
+            cost.put("input", m.cost().input());
+            cost.put("output", m.cost().output());
+            cost.put("cacheRead", m.cost().cacheRead());
+            cost.put("cacheWrite", m.cost().cacheWrite());
+            entry.put("cost", cost);
+        }
+        return entry;
     }
 
     private void handleSetThinkingLevel(JsonNode cmd, String id, AgentSession session, Sinks.Many<String> out) {

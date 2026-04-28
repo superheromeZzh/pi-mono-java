@@ -28,6 +28,8 @@ import com.anthropic.models.messages.ThinkingConfigParam;
 import com.anthropic.models.messages.ToolResultBlockParam;
 import com.anthropic.models.messages.ToolUnion;
 import com.anthropic.models.messages.ToolUseBlockParam;
+import com.campusclaw.ai.env.ProviderConfigResolver;
+import com.campusclaw.ai.env.ResolvedProviderConfig;
 import com.campusclaw.ai.provider.ApiProvider;
 import com.campusclaw.ai.stream.AssistantMessageEvent;
 import com.campusclaw.ai.stream.AssistantMessageEventStream;
@@ -69,22 +71,11 @@ import jakarta.annotation.Nullable;
 public class AnthropicProvider implements ApiProvider {
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
-    private static final String ENV_API_KEY = "ANTHROPIC_API_KEY";
 
-    /** Resolve API key based on the model's provider. */
-    private static String resolveApiKeyForProvider(Model model) {
-        // Check model-embedded API key first (for custom models)
-        if (model.apiKey() != null && !model.apiKey().isBlank()) { return model.apiKey(); }
-        String providerKey = switch (model.provider()) {
-            case KIMI_CODING -> System.getenv("KIMI_API_KEY");
-            case MINIMAX -> System.getenv("MINIMAX_API_KEY");
-            case MINIMAX_CN -> System.getenv("MINIMAX_CN_API_KEY");
-            case GITHUB_COPILOT -> System.getenv("COPILOT_GITHUB_TOKEN");
-            case AZURE_OPENAI -> System.getenv("AZURE_OPENAI_API_KEY");
-            default -> null;
-        };
-        if (providerKey != null && !providerKey.isBlank()) { return providerKey; }
-        return System.getenv(ENV_API_KEY);
+    private final ProviderConfigResolver providerConfigResolver;
+
+    public AnthropicProvider(ProviderConfigResolver providerConfigResolver) {
+        this.providerConfigResolver = providerConfigResolver;
     }
 
     @Override
@@ -144,7 +135,8 @@ public class AnthropicProvider implements ApiProvider {
             @Nullable ThinkingBudgets thinkingBudgets,
             AssistantMessageEventStream eventStream) {
 
-        String resolvedApiKey = apiKey != null ? apiKey : resolveApiKeyForProvider(model);
+        ResolvedProviderConfig providerConfig = providerConfigResolver.resolve(model.provider(), model);
+        String resolvedApiKey = apiKey != null ? apiKey : providerConfig.apiKey();
         if (resolvedApiKey == null || resolvedApiKey.isBlank()) {
             String envHint = switch (model.provider()) {
                 case KIMI_CODING -> "KIMI_API_KEY";
@@ -155,11 +147,13 @@ public class AnthropicProvider implements ApiProvider {
                 default -> "ANTHROPIC_API_KEY";
             };
             eventStream.error(new IllegalStateException(
-                    "API key not found for " + model.provider().value() + ". Set " + envHint + " or pass via StreamOptions."));
+                    "API key not found for " + model.provider().value()
+                            + ". Set " + envHint + ", configure provider." + model.provider().value()
+                            + ".apiKey in settings.json, or run /auth login."));
             return;
         }
 
-        AnthropicClient client = buildClient(resolvedApiKey, model.baseUrl());
+        AnthropicClient client = buildClient(resolvedApiKey, providerConfig.resolveBaseUrl(model));
 
         try {
             MessageCreateParams params = buildParams(model, context, maxTokens, temperature,

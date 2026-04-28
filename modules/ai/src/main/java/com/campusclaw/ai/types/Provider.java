@@ -1,5 +1,7 @@
 package com.campusclaw.ai.types;
 
+import java.util.Optional;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
 
@@ -51,5 +53,23 @@ public enum Provider {
             }
         }
         throw new IllegalArgumentException("Unknown Provider: " + value);
+    }
+
+    /**
+     * Lenient variant of {@link #fromValue(String)} for user-supplied input.
+     * Returns empty for unknown / null / blank values instead of throwing.
+     * Matching is also case-insensitive and treats {@code _} and {@code -} as
+     * equivalent so {@code AZURE_OPENAI} matches {@code "azure-openai"} and
+     * {@code "azure_openai"}.
+     */
+    public static Optional<Provider> tryFromValue(String value) {
+        if (value == null || value.isBlank()) { return Optional.empty(); }
+        String normalized = value.toLowerCase().replace('_', '-');
+        for (var p : values()) {
+            if (p.value.toLowerCase().replace('_', '-').equals(normalized)) {
+                return Optional.of(p);
+            }
+        }
+        return Optional.empty();
     }
 }
