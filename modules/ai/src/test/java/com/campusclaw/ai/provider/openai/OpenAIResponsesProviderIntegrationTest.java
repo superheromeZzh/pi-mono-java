@@ -51,7 +51,7 @@ class OpenAIResponsesProviderIntegrationTest {
     void setUp() throws IOException {
         server = new MockWebServer();
         server.start();
-        provider = new OpenAIResponsesProvider();
+        provider = new OpenAIResponsesProvider(new com.campusclaw.ai.env.EnvProviderConfigResolver(new com.campusclaw.ai.env.EnvApiKeyResolver()));
     }
 
     @AfterEach

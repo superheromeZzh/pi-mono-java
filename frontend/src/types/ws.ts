@@ -99,6 +99,7 @@ export type ClientCommand =
   | { type: 'abort'; id?: string }
   | { type: 'new_session'; id?: string }
   | { type: 'set_model'; id?: string; model: string }
+  | { type: 'list_models'; id?: string; all?: boolean }
   | { type: 'set_thinking_level'; id?: string; level: ThinkingLevel }
   | { type: 'get_state'; id?: string }
   | { type: 'get_history'; id?: string }
@@ -128,6 +129,37 @@ export interface GetStateData {
   model: string;
   thinkingLevel: ThinkingLevel;
   messageCount: number;
+}
+
+/** Per-model entry returned by `list_models`. Mirrors `ModelInfo` in chat-ws.yaml. */
+export interface ModelInfo {
+  id: string;
+  name: string;
+  provider: string;
+  contextWindow: number;
+  maxTokens: number;
+  reasoning: boolean;
+  /**
+   * True when the server can resolve an API key for this model. Frontends
+   * should disable / annotate options where this is false. Optional for
+   * back-compat — older servers may omit it (treat absence as true).
+   */
+  hasCredentials?: boolean;
+  cost?: {
+    input?: number;
+    output?: number;
+    cacheRead?: number;
+    cacheWrite?: number;
+  };
+}
+
+/** Data shape for `response` to `list_models`. */
+export interface ListModelsData {
+  /** Currently active model id, or null before initialization. */
+  current: string | null;
+  /** True when settings.enabledModels filtered the result. */
+  filtered: boolean;
+  models: ModelInfo[];
 }
 
 // Event frames (asynchronous, pushed during an agent turn)

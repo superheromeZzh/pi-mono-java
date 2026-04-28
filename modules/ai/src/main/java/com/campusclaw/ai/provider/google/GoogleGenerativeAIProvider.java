@@ -47,6 +47,12 @@ public class GoogleGenerativeAIProvider implements ApiProvider {
     private static final ObjectMapper MAPPER = new ObjectMapper();
     private static final String DEFAULT_BASE_URL = "https://generativelanguage.googleapis.com/v1beta";
 
+    private final com.campusclaw.ai.env.ProviderConfigResolver providerConfigResolver;
+
+    public GoogleGenerativeAIProvider(com.campusclaw.ai.env.ProviderConfigResolver providerConfigResolver) {
+        this.providerConfigResolver = providerConfigResolver;
+    }
+
     @Override
     public Api getApi() {
         return Api.GOOGLE_GENERATIVE_AI;
@@ -74,14 +80,17 @@ public class GoogleGenerativeAIProvider implements ApiProvider {
 
     private void executeStream(Model model, Context context, @Nullable SimpleStreamOptions options,
                                AssistantMessageEventStream eventStream) {
-        String apiKey = resolveApiKey(model, options);
+        var providerConfig = providerConfigResolver.resolve(model.provider(), model);
+        String apiKey = resolveApiKey(providerConfig, options);
         if (apiKey == null || apiKey.isBlank()) {
             eventStream.error(new IllegalStateException(
-                "Google API key not found. Set GOOGLE_API_KEY or GOOGLE_CLOUD_API_KEY."));
+                "Google API key not found. Set GOOGLE_API_KEY or GOOGLE_CLOUD_API_KEY, "
+                    + "configure provider.google.apiKey in settings.json, or run /auth login."));
             return;
         }
 
-        String baseUrl = model.baseUrl() != null ? model.baseUrl() : DEFAULT_BASE_URL;
+        String overrideBaseUrl = providerConfig.resolveBaseUrl(model);
+        String baseUrl = overrideBaseUrl != null ? overrideBaseUrl : DEFAULT_BASE_URL;
         String url = baseUrl + "/models/" + model.id() + ":streamGenerateContent?alt=sse&key=" + apiKey;
 
         ObjectNode requestBody = buildRequestBody(model, context, options);
@@ -239,12 +248,10 @@ public class GoogleGenerativeAIProvider implements ApiProvider {
         return body;
     }
 
-    private String resolveApiKey(Model model, @Nullable SimpleStreamOptions options) {
+    private String resolveApiKey(com.campusclaw.ai.env.ResolvedProviderConfig providerConfig,
+                                 @Nullable SimpleStreamOptions options) {
         if (options != null && options.apiKey() != null) { return options.apiKey(); }
-        if (model.apiKey() != null && !model.apiKey().isBlank()) { return model.apiKey(); }
-        String key = System.getenv("GOOGLE_API_KEY");
-        if (key != null && !key.isBlank()) { return key; }
-        return System.getenv("GOOGLE_CLOUD_API_KEY");
+        return providerConfig.apiKey();
     }
 
     private void finishCurrentBlock(

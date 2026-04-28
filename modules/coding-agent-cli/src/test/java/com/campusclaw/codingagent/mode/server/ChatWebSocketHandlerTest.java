@@ -226,9 +226,109 @@ class ChatWebSocketHandlerTest {
         assertEquals("error", frames.get(doneIdx).path("stopReason").asText());
     }
 
+    @Test
+    void listModelsReturnsAvailableModelsWithCurrent() throws Exception {
+        // Stand up a fresh server wired with a real ModelCatalogService so we
+        // exercise the actual filtering logic, not a mock.
+        var modelRegistry = new com.campusclaw.ai.model.ModelRegistry();
+        // The registry's @PostConstruct doesn't run outside Spring, so seed it manually.
+        modelRegistry.register(new com.campusclaw.ai.types.Model(
+                "test-a", "Test A",
+                com.campusclaw.ai.types.Api.OPENAI_COMPLETIONS,
+                com.campusclaw.ai.types.Provider.OPENAI,
+                "https://example.com", false,
+                List.of(com.campusclaw.ai.types.InputModality.TEXT),
+                new com.campusclaw.ai.types.ModelCost(1, 2, 0, 0),
+                128000, 4096, null, null, null));
+        modelRegistry.register(new com.campusclaw.ai.types.Model(
+                "test-b", "Test B",
+                com.campusclaw.ai.types.Api.OPENAI_COMPLETIONS,
+                com.campusclaw.ai.types.Provider.OPENAI,
+                "https://example.com", true,
+                List.of(com.campusclaw.ai.types.InputModality.TEXT),
+                new com.campusclaw.ai.types.ModelCost(0, 0, 0, 0),
+                128000, 4096, null, null, null));
+
+        var settingsManager = mock(com.campusclaw.codingagent.settings.SettingsManager.class);
+        when(settingsManager.load()).thenReturn(com.campusclaw.codingagent.settings.Settings.empty());
+        var catalog = new com.campusclaw.codingagent.model.ModelCatalogService(modelRegistry, settingsManager);
+
+        when(session.getModelId()).thenReturn("test-a");
+        ChatWebSocketHandler handler = new ChatWebSocketHandler(pool, catalog);
+
+        // Replace the no-catalog server from setUp() with one wired up.
+        if (server != null) { server.disposeNow(); }
+        server = HttpServer.create()
+                .host("127.0.0.1")
+                .port(0)
+                .route(r -> r.get("/api/ws/chat",
+                        (req, res) -> res.sendWebsocket((in, out) -> handler.handle(in, out, null))))
+                .bindNow();
+
+        JsonNode response = runRequestResponse(
+                "{\"type\":\"list_models\",\"id\":\"lm1\"}", "lm1");
+
+        assertEquals("response", response.path("type").asText());
+        assertTrue(response.path("success").asBoolean(), "list_models should succeed");
+        JsonNode data = response.path("data");
+        assertEquals("test-a", data.path("current").asText());
+        assertEquals(false, data.path("filtered").asBoolean(), "no enabledModels → not filtered");
+        JsonNode models = data.path("models");
+        assertTrue(models.isArray(), "models should be an array");
+        assertEquals(2, models.size());
+        // Sorted by provider then id, so test-a comes before test-b.
+        assertEquals("test-a", models.get(0).path("id").asText());
+        assertEquals("openai", models.get(0).path("provider").asText());
+        assertTrue(models.get(0).has("contextWindow"));
+        assertTrue(models.get(0).has("cost"));
+    }
+
     // =========================================================================
     // Helpers
     // =========================================================================
+
+    private JsonNode runRequestResponse(String cmd, String expectedId) throws Exception {
+        Queue<String> raws = new ConcurrentLinkedQueue<>();
+        AtomicReference<JsonNode> matched = new AtomicReference<>();
+        CountDownLatch latch = new CountDownLatch(1);
+
+        HttpClient.create()
+                .websocket()
+                .uri("ws://" + server.host() + ":" + server.port() + "/api/ws/chat")
+                .handle((in, out) -> {
+                    Mono<Void> send = out.sendString(Mono.just(cmd)).then();
+                    Mono<Void> recv = in.receive()
+                            .asString()
+                            .doOnNext(frame -> {
+                                raws.add(frame);
+                                try {
+                                    JsonNode node = MAPPER.readTree(frame);
+                                    if ("response".equals(node.path("type").asText())
+                                            && expectedId.equals(node.path("id").asText())) {
+                                        matched.set(node);
+                                        latch.countDown();
+                                    }
+                                } catch (Exception ignored) { }
+                            })
+                            .takeUntil(frame -> {
+                                try {
+                                    JsonNode node = MAPPER.readTree(frame);
+                                    return "response".equals(node.path("type").asText())
+                                            && expectedId.equals(node.path("id").asText());
+                                } catch (Exception e) {
+                                    return false;
+                                }
+                            })
+                            .then();
+                    return Flux.merge(send, recv).then();
+                })
+                .timeout(Duration.ofSeconds(5))
+                .blockLast();
+
+        assertTrue(latch.await(5, TimeUnit.SECONDS),
+                "Expected a response with id=" + expectedId + " within 5s. Frames seen: " + raws);
+        return matched.get();
+    }
 
     private List<JsonNode> runPromptRoundTrip(String cmd) throws Exception {
         Queue<String> raws = new ConcurrentLinkedQueue<>();

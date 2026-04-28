@@ -62,6 +62,7 @@ channels:
       Abort: { $ref: '#/components/messages/Abort' }
       NewSession: { $ref: '#/components/messages/NewSession' }
       SetModel: { $ref: '#/components/messages/SetModel' }
+      ListModels: { $ref: '#/components/messages/ListModels' }
       SetThinkingLevel: { $ref: '#/components/messages/SetThinkingLevel' }
       GetState: { $ref: '#/components/messages/GetState' }
       GetHistory: { $ref: '#/components/messages/GetHistory' }
@@ -92,6 +93,7 @@ operations:
       - $ref: '#/channels/chat/messages/Abort'
       - $ref: '#/channels/chat/messages/NewSession'
       - $ref: '#/channels/chat/messages/SetModel'
+      - $ref: '#/channels/chat/messages/ListModels'
       - $ref: '#/channels/chat/messages/SetThinkingLevel'
       - $ref: '#/channels/chat/messages/GetState'
       - $ref: '#/channels/chat/messages/GetHistory'
@@ -170,6 +172,19 @@ components:
       payload: { $ref: '#/components/schemas/SetModelCmd' }
       examples:
         - payload: { type: set_model, id: req-5, model: "claude-sonnet-4" }
+
+    ListModels:
+      name: ListModels
+      title: List available models
+      summary: |
+        Returns the catalogue of models the client may switch to. By default
+        only models that pass `settings.enabledModels` filtering are returned;
+        send `all: true` to bypass the filter. Custom-provider models from
+        `settings.customModels` are always included regardless of filtering.
+      payload: { $ref: '#/components/schemas/ListModelsCmd' }
+      examples:
+        - payload: { type: list_models, id: req-9 }
+        - payload: { type: list_models, id: req-10, all: true }
 
     SetThinkingLevel:
       name: SetThinkingLevel
@@ -335,6 +350,65 @@ components:
         model:
           type: string
           description: Model identifier. Accepts exact id (`glm-5`), provider-qualified (`zai/glm-5`), or fuzzy substring (`sonnet`).
+
+    ListModelsCmd:
+      type: object
+      required: [type]
+      properties:
+        type: { const: list_models }
+        id: { type: string }
+        all:
+          type: boolean
+          default: false
+          description: |
+            When `true`, return every model registered in the registry. When
+            `false` (default), return only models that pass
+            `settings.enabledModels` filtering plus all custom-provider models.
+
+    ListModelsResponseData:
+      type: object
+      description: |
+        `data` payload of a successful `list_models` response.
+      required: [models]
+      properties:
+        current:
+          type: string
+          nullable: true
+          description: Currently active model id, or null before the session is initialised.
+        filtered:
+          type: boolean
+          description: True when `settings.enabledModels` narrowed the result; false when `all: true` or no filter is configured.
+        models:
+          type: array
+          items: { $ref: '#/components/schemas/ModelInfo' }
+
+    ModelInfo:
+      type: object
+      required: [id, name, provider, contextWindow, maxTokens, reasoning, hasCredentials]
+      properties:
+        id: { type: string }
+        name: { type: string }
+        provider:
+          type: string
+          description: Provider value as serialised by the `Provider` enum (e.g. `anthropic`, `zai`, `openai`).
+        contextWindow: { type: integer }
+        maxTokens: { type: integer }
+        reasoning: { type: boolean }
+        hasCredentials:
+          type: boolean
+          description: |
+            True when the server can resolve an API key for this model from any
+            source (auth.json, settings.provider.&lt;id&gt;.apiKey, env vars, or
+            embedded). Frontends should disable / annotate options where this
+            is false to avoid users selecting models that will fail at runtime.
+            Custom-provider models are always reported as `true`.
+        cost:
+          type: object
+          properties:
+            input: { type: number }
+            output: { type: number }
+            cacheRead: { type: number }
+            cacheWrite: { type: number }
 
     SetThinkingLevelCmd:
       type: object

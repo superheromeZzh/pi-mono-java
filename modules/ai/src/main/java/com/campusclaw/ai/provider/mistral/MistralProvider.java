@@ -51,7 +51,12 @@ public class MistralProvider implements ApiProvider {
     private static final Logger log = LoggerFactory.getLogger(MistralProvider.class);
     private static final ObjectMapper MAPPER = new ObjectMapper();
     private static final String DEFAULT_BASE_URL = "https://api.mistral.ai/v1";
-    private static final String ENV_API_KEY = "MISTRAL_API_KEY";
+
+    private final com.campusclaw.ai.env.ProviderConfigResolver providerConfigResolver;
+
+    public MistralProvider(com.campusclaw.ai.env.ProviderConfigResolver providerConfigResolver) {
+        this.providerConfigResolver = providerConfigResolver;
+    }
 
     @Override
     public Api getApi() {
@@ -80,13 +85,16 @@ public class MistralProvider implements ApiProvider {
 
     private void executeStream(Model model, Context context, @Nullable SimpleStreamOptions options,
                                AssistantMessageEventStream eventStream) {
-        String apiKey = resolveApiKey(model, options);
+        var providerConfig = providerConfigResolver.resolve(model.provider(), model);
+        String apiKey = resolveApiKey(providerConfig, options);
         if (apiKey == null || apiKey.isBlank()) {
-            eventStream.error(new IllegalStateException("Mistral API key not found. Set MISTRAL_API_KEY."));
+            eventStream.error(new IllegalStateException(
+                    "Mistral API key not found. Set MISTRAL_API_KEY, configure provider.mistral.apiKey in settings.json, or run /auth login."));
             return;
         }
 
-        String baseUrl = model.baseUrl() != null ? model.baseUrl() : DEFAULT_BASE_URL;
+        String overrideBaseUrl = providerConfig.resolveBaseUrl(model);
+        String baseUrl = overrideBaseUrl != null ? overrideBaseUrl : DEFAULT_BASE_URL;
         String url = baseUrl + "/chat/completions";
 
         ObjectNode requestBody = buildRequestBody(model, context, options);
@@ -384,10 +392,10 @@ public class MistralProvider implements ApiProvider {
         return body;
     }
 
-    private String resolveApiKey(Model model, @Nullable SimpleStreamOptions options) {
+    private String resolveApiKey(com.campusclaw.ai.env.ResolvedProviderConfig providerConfig,
+                                 @Nullable SimpleStreamOptions options) {
         if (options != null && options.apiKey() != null) { return options.apiKey(); }
-        if (model.apiKey() != null && !model.apiKey().isBlank()) { return model.apiKey(); }
-        return System.getenv(ENV_API_KEY);
+        return providerConfig.apiKey();
     }
 
     private StopReason mapFinishReason(String reason) {

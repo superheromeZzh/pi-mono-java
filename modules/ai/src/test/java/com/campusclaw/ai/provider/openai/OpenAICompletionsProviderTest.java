@@ -20,7 +20,7 @@ class OpenAICompletionsProviderTest {
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
-    OpenAICompletionsProvider provider = new OpenAICompletionsProvider();
+    OpenAICompletionsProvider provider = new OpenAICompletionsProvider(new com.campusclaw.ai.env.EnvProviderConfigResolver(new com.campusclaw.ai.env.EnvApiKeyResolver()));
 
     private Model testModel() {
         return new Model(

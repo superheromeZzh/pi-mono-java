@@ -71,6 +71,8 @@ public class CampusClawCommand implements Callable<Integer> {
     private final com.campusclaw.codingagent.loop.LoopManager loopManager;
     private final org.springframework.context.ApplicationContext applicationContext;
     private final SandboxSkillParser sandboxSkillParser;
+    private final com.campusclaw.codingagent.resolver.AgentModelResolver agentModelResolver;
+    private final com.campusclaw.codingagent.model.ModelCatalogService modelCatalogService;
 
     public CampusClawCommand(CampusClawAiService piAiService, ModelRegistry modelRegistry,
                      SystemPromptBuilder promptBuilder, List<AgentTool> tools,
@@ -79,7 +81,9 @@ public class CampusClawCommand implements Callable<Integer> {
                      @org.springframework.lang.Nullable com.campusclaw.cron.CronService cronService,
                      com.campusclaw.codingagent.loop.LoopManager loopManager,
                      org.springframework.context.ApplicationContext applicationContext,
-                     @org.springframework.lang.Nullable SandboxSkillParser sandboxSkillParser) {
+                     @org.springframework.lang.Nullable SandboxSkillParser sandboxSkillParser,
+                     com.campusclaw.codingagent.resolver.AgentModelResolver agentModelResolver,
+                     com.campusclaw.codingagent.model.ModelCatalogService modelCatalogService) {
         this.piAiService = piAiService;
         this.modelRegistry = modelRegistry;
         this.promptBuilder = promptBuilder;
@@ -91,6 +95,8 @@ public class CampusClawCommand implements Callable<Integer> {
         this.loopManager = loopManager;
         this.applicationContext = applicationContext;
         this.sandboxSkillParser = sandboxSkillParser;
+        this.agentModelResolver = agentModelResolver;
+        this.modelCatalogService = modelCatalogService;
     }
 
     @Option(names = {"--provider"}, description = "Provider name (e.g. anthropic, openai, zai, google)")
@@ -229,8 +235,8 @@ public class CampusClawCommand implements Callable<Integer> {
         // Load settings and apply defaults for model and thinking level
         Settings settings = settingsManager != null ? settingsManager.load() : Settings.empty();
         String effectiveModel = model;
-        if (effectiveModel == null && settings.defaultModel() != null) {
-            effectiveModel = settings.defaultModel();
+        if (effectiveModel == null && settings.resolvedDefaultModel() != null) {
+            effectiveModel = settings.resolvedDefaultModel();
         }
         String effectiveThinking = thinking;
         if (effectiveThinking == null && settings.defaultThinkingLevel() != null) {
@@ -492,24 +498,31 @@ public class CampusClawCommand implements Callable<Integer> {
             new ServerMode(piAiService, modelRegistry, promptBuilder,
                     effectiveTools, config, port != null ? port : 3000,
                     host != null ? host : "localhost",
-                    sandboxSkillParser, useSandbox).run();
+                    sandboxSkillParser, useSandbox,
+                    modelCatalogService).run();
             return 0;
         }
 
         // Interactive mode (default)
         Terminal terminal = new JLineTerminal();
         try {
-            var interactiveMode = new InteractiveMode(commandRegistry, bashExecutor, new Compactor(piAiService), modelRegistry, cronService, loopManager, applicationContext);
+            var interactiveMode = new InteractiveMode(commandRegistry, bashExecutor,
+                    new Compactor(piAiService,
+                            com.campusclaw.codingagent.compaction.CompactionConfig.defaults(),
+                            agentModelResolver),
+                    modelRegistry, cronService, loopManager, applicationContext);
 
-            // Resolve --models scoped models for Ctrl+P cycling
+            // Resolve --models scoped models for Ctrl+P cycling.
+            // Precedence: --models flag overrides settings.enabledModels.
             if (modelsFilter != null && !modelsFilter.isBlank()) {
-                var patterns = List.of(modelsFilter.split(","));
                 var scoped = new ArrayList<Model>();
                 var allRegistered = modelRegistry.getAllModels();
-                for (String pattern : patterns) {
+                for (String pattern : modelsFilter.split(",")) {
                     String p = pattern.trim().toLowerCase();
+                    if (p.isEmpty()) { continue; }
                     for (var m : allRegistered) {
-                        if (matchesModelPattern(p, m) && scoped.stream().noneMatch(s -> ModelRegistry.modelsAreEqual(s, m))) {
+                        if (com.campusclaw.codingagent.model.ModelCatalogService.matchesPattern(p, m)
+                                && scoped.stream().noneMatch(s -> ModelRegistry.modelsAreEqual(s, m))) {
                             scoped.add(m);
                         }
                     }
@@ -517,18 +530,9 @@ public class CampusClawCommand implements Callable<Integer> {
                 if (!scoped.isEmpty()) {
                     interactiveMode.setScopedModels(scoped);
                 }
-            } else if (settings.enabledModels() != null && !settings.enabledModels().isEmpty()) {
-                // Also support enabledModels from settings
-                var scoped = new ArrayList<Model>();
-                var allRegistered = modelRegistry.getAllModels();
-                for (String pattern : settings.enabledModels()) {
-                    String p = pattern.trim().toLowerCase();
-                    for (var m : allRegistered) {
-                        if (matchesModelPattern(p, m) && scoped.stream().noneMatch(s -> ModelRegistry.modelsAreEqual(s, m))) {
-                            scoped.add(m);
-                        }
-                    }
-                }
+            } else if (modelCatalogService != null && modelCatalogService.isFiltered()) {
+                // settings.enabledModels: same filtered list the WS list_models returns.
+                var scoped = modelCatalogService.getAvailableModels();
                 if (!scoped.isEmpty()) {
                     interactiveMode.setScopedModels(scoped);
                 }

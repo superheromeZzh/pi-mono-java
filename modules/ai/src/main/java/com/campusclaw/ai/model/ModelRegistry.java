@@ -1,5 +1,8 @@
 package com.campusclaw.ai.model;
 
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -14,6 +17,8 @@ import com.campusclaw.ai.types.Model;
 import com.campusclaw.ai.types.ModelCost;
 import com.campusclaw.ai.types.Provider;
 import com.campusclaw.ai.types.Usage;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -174,11 +179,65 @@ public class ModelRegistry {
 
     /**
      * Pre-registers commonly used models after bean construction.
+     *
+     * <p>Order:
+     * <ol>
+     *   <li>Built-in models from {@link #builtInModels()} (compiled-in defaults)</li>
+     *   <li>Optional classpath resource {@code /campusclaw-models.json} (override / add)</li>
+     *   <li>Optional user file {@code ~/.campusclaw/agent/models.json} (override / add)</li>
+     * </ol>
      */
     @PostConstruct
     void init() {
         registerAll(builtInModels());
-        log.info("ModelRegistry initialized with {} built-in model(s)", builtInModels().size());
+        int builtIn = builtInModels().size();
+        int fromClasspath = loadFromClasspathResource("/campusclaw-models.json");
+        int fromUser = loadFromUserFile();
+        log.info("ModelRegistry initialized: {} built-in + {} classpath + {} user override(s)",
+                builtIn, fromClasspath, fromUser);
+    }
+
+    /**
+     * Loads additional models from a JSON file. The file should contain a
+     * top-level array of Model objects (matching the {@link Model} record
+     * shape). Existing entries with the same provider+id are overwritten.
+     *
+     * @return number of models loaded, or 0 on missing file / parse error
+     */
+    public int loadFromJsonFile(Path file) {
+        if (file == null || !Files.exists(file)) { return 0; }
+        try (var in = Files.newInputStream(file)) {
+            return loadFromJsonStream(in, file.toString());
+        } catch (Exception e) {
+            log.warn("Failed to load models from {}: {}", file, e.getMessage());
+            return 0;
+        }
+    }
+
+    private int loadFromClasspathResource(String resource) {
+        try (InputStream in = ModelRegistry.class.getResourceAsStream(resource)) {
+            if (in == null) { return 0; }
+            return loadFromJsonStream(in, "classpath:" + resource);
+        } catch (Exception e) {
+            log.warn("Failed to load models from {}: {}", resource, e.getMessage());
+            return 0;
+        }
+    }
+
+    private int loadFromUserFile() {
+        String home = System.getProperty("user.home");
+        if (home == null || home.isBlank()) { return 0; }
+        Path file = Path.of(home, ".campusclaw", "agent", "models.json");
+        return loadFromJsonFile(file);
+    }
+
+    private int loadFromJsonStream(InputStream in, String source) throws java.io.IOException {
+        var mapper = new ObjectMapper();
+        var models = mapper.readValue(in, new TypeReference<List<Model>>() {});
+        if (models == null || models.isEmpty()) { return 0; }
+        registerAll(models);
+        log.debug("Loaded {} model(s) from {}", models.size(), source);
+        return models.size();
     }
 
     /**

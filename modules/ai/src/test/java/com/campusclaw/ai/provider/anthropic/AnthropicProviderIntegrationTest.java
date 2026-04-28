@@ -51,7 +51,7 @@ class AnthropicProviderIntegrationTest {
     void setUp() throws IOException {
         server = new MockWebServer();
         server.start();
-        provider = new AnthropicProvider();
+        provider = new AnthropicProvider(new com.campusclaw.ai.env.EnvProviderConfigResolver(new com.campusclaw.ai.env.EnvApiKeyResolver()));
     }
 
     @AfterEach

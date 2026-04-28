@@ -67,8 +67,8 @@ public class ModelResolver {
         }
 
         // 3. Default from settings
-        if (settings != null && settings.defaultModel() != null) {
-            var model = findModel(settings.defaultModel());
+        if (settings != null && settings.resolvedDefaultModel() != null) {
+            var model = findModel(settings.resolvedDefaultModel());
             if (model.isPresent()) { return model.get(); }
         }
 

@@ -5,14 +5,20 @@ import com.campusclaw.codingagent.command.SlashCommandContext;
 
 public class ModelCommand implements SlashCommand {
 
+    private final String name;
+
+    public ModelCommand() { this("model"); }
+
+    public ModelCommand(String name) { this.name = name; }
+
     @Override
     public String name() {
-        return "model";
+        return name;
     }
 
     @Override
     public String description() {
-        return "Print or switch the current model";
+        return "Print or switch the current model (no args opens the picker)";
     }
 
     @Override

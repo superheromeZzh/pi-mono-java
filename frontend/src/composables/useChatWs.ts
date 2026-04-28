@@ -3,8 +3,10 @@ import type {
   AssistantMessage,
   ClientCommand,
   GetStateData,
+  ListModelsData,
   LogEntry,
   Message,
+  ModelInfo,
   ServerFrame,
   ThinkingLevel,
   ToolCallBlock,
@@ -40,6 +42,11 @@ const isStreaming = ref(false);
 const messages = ref<UiMessage[]>([]);
 const tools = reactive<Record<string, ToolState>>({});
 const eventLog = ref<LogEntry[]>([]);
+
+// Catalogue of models the user may switch to. Populated by listModels(),
+// which is called automatically once after each successful connect.
+const availableModels = ref<ModelInfo[]>([]);
+const modelsFiltered = ref(false);
 
 // Index into `messages` for the assistant bubble currently being updated by
 // message_update frames. -1 means no active assistant bubble.
@@ -87,8 +94,10 @@ function connect(url: string, convId?: string | null) {
   socket.onopen = () => {
     connected.value = true;
     logEntry('info', '[open]');
-    // Pull fresh state so UI shows model / thinking / conv immediately.
+    // Pull fresh state so UI shows model / thinking / conv immediately,
+    // then ask for the available-model catalogue so the picker can render.
     void getState();
+    void listModels();
   };
   socket.onclose = (ev) => {
     connected.value = false;
@@ -191,6 +200,25 @@ async function setModel(m: string) {
     await getState();
   } catch (e) {
     logEntry('err', `[set_model rejected] ${(e as Error).message}`);
+  }
+}
+
+/**
+ * Pull the catalogue of models the server is willing to expose.
+ * Defaults to the filtered subset (settings.enabledModels) — pass {@code all}
+ * to bypass and see every registered model.
+ */
+async function listModels(all = false) {
+  try {
+    const data = await send<ListModelsData>({ type: 'list_models', all }, true);
+    if (data) {
+      availableModels.value = Array.isArray(data.models) ? data.models : [];
+      modelsFiltered.value = !!data.filtered;
+      // The server's `current` is authoritative; sync it in case state drifted.
+      if (data.current) model.value = data.current;
+    }
+  } catch (e) {
+    logEntry('err', `[list_models failed] ${(e as Error).message}`);
   }
 }
 
@@ -392,6 +420,8 @@ export function useChatWs() {
     messages,
     eventLog,
     tools, // reactive; components read by id
+    availableModels,
+    modelsFiltered,
 
     // actions
     connect,
@@ -403,5 +433,6 @@ export function useChatWs() {
     setModel,
     setThinking,
     getState,
+    listModels,
   };
 }

@@ -7,6 +7,7 @@ import com.campusclaw.agent.tool.AgentTool;
 import com.campusclaw.ai.CampusClawAiService;
 import com.campusclaw.ai.model.ModelRegistry;
 import com.campusclaw.codingagent.config.AppPaths;
+import com.campusclaw.codingagent.model.ModelCatalogService;
 import com.campusclaw.codingagent.prompt.SystemPromptBuilder;
 import com.campusclaw.codingagent.session.SessionConfig;
 import com.campusclaw.codingagent.skill.SandboxSkillParser;
@@ -50,6 +51,7 @@ public class ServerMode {
     private final String host;
     private final SandboxSkillParser sandboxParser;
     private final boolean useSandbox;
+    private final ModelCatalogService modelCatalog;
 
     public ServerMode(
             CampusClawAiService aiService,
@@ -59,7 +61,7 @@ public class ServerMode {
             SessionConfig baseConfig,
             int port
     ) {
-        this(aiService, modelRegistry, promptBuilder, tools, baseConfig, port, "localhost", null, false);
+        this(aiService, modelRegistry, promptBuilder, tools, baseConfig, port, "localhost", null, false, null);
     }
 
     public ServerMode(
@@ -71,7 +73,8 @@ public class ServerMode {
             int port,
             String host,
             SandboxSkillParser sandboxParser,
-            boolean useSandbox
+            boolean useSandbox,
+            ModelCatalogService modelCatalog
     ) {
         this.aiService = aiService;
         this.modelRegistry = modelRegistry;
@@ -82,12 +85,13 @@ public class ServerMode {
         this.host = host;
         this.sandboxParser = sandboxParser;
         this.useSandbox = useSandbox;
+        this.modelCatalog = modelCatalog;
     }
 
     public void run() {
         var sessionPool = new SessionPool(aiService, modelRegistry, promptBuilder, tools, baseConfig, sandboxParser, useSandbox);
         var chatHandler = new ChatHandler(sessionPool);
-        var wsHandler = new ChatWebSocketHandler(sessionPool);
+        var wsHandler = new ChatWebSocketHandler(sessionPool, modelCatalog);
 
         var skillHandler = new SkillHandler(
                 new SkillManager(AppPaths.USER_SKILLS_DIR, sandboxParser, useSandbox),

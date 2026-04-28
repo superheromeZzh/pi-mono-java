@@ -36,16 +36,26 @@ public class Compactor {
         Be concise but thorough. Focus on information that would be needed to continue the conversation.
         """;
 
+    /** Agent role name used to look up {@code settings.agent.<name>.model} overrides. */
+    public static final String AGENT_NAME = "summarizer";
+
     private final CampusClawAiService aiService;
     private final CompactionConfig config;
+    private final com.campusclaw.codingagent.resolver.AgentModelResolver agentModelResolver;
 
-    public Compactor(CampusClawAiService aiService, CompactionConfig config) {
+    public Compactor(CampusClawAiService aiService, CompactionConfig config,
+                     com.campusclaw.codingagent.resolver.AgentModelResolver agentModelResolver) {
         this.aiService = aiService;
         this.config = config;
+        this.agentModelResolver = agentModelResolver;
+    }
+
+    public Compactor(CampusClawAiService aiService, CompactionConfig config) {
+        this(aiService, config, null);
     }
 
     public Compactor(CampusClawAiService aiService) {
-        this(aiService, CompactionConfig.defaults());
+        this(aiService, CompactionConfig.defaults(), null);
     }
 
     /**
@@ -89,8 +99,14 @@ public class Compactor {
             return new CompactionResult("", recentMessages, fileOps.filesRead(), fileOps.filesModified());
         }
 
+        // Per-agent override: settings.agent.summarizer.model can route compaction
+        // to a cheaper / faster model than the foreground chat.
+        Model summarizationModel = agentModelResolver != null
+                ? agentModelResolver.resolve(AGENT_NAME, model)
+                : model;
+
         // Generate summary of old messages
-        String summary = generateSummary(oldMessages, fileOps, model);
+        String summary = generateSummary(oldMessages, fileOps, summarizationModel);
 
         log.info("Compacted {} messages into summary ({} chars), keeping {} recent messages",
             oldMessages.size(), summary.length(), recentMessages.size());

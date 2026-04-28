@@ -1,6 +1,7 @@
 package com.campusclaw.codingagent.settings;
 
 import java.util.List;
+import java.util.Map;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -11,6 +12,8 @@ import jakarta.annotation.Nullable;
 public record Settings(
     @JsonProperty("defaultProvider") @Nullable String defaultProvider,
     @JsonProperty("defaultModel") @Nullable String defaultModel,
+    /** opencode-style alias for defaultModel (e.g. "anthropic/claude-sonnet-4"). */
+    @JsonProperty("model") @Nullable String model,
     @JsonProperty("defaultThinkingLevel") @Nullable String defaultThinkingLevel,
     @JsonProperty("transport") @Nullable String transport,
     @JsonProperty("steeringMode") @Nullable String steeringMode,
@@ -33,11 +36,23 @@ public record Settings(
     @JsonProperty("collapseChangelog") @Nullable Boolean collapseChangelog,
     @JsonProperty("branchSummary") @Nullable BranchSummarySettings branchSummary,
     @JsonProperty("terminal") @Nullable TerminalSettings terminal,
-    @JsonProperty("images") @Nullable ImageSettings images
+    @JsonProperty("images") @Nullable ImageSettings images,
+    /** Per-provider config: API key / base URL / headers (opencode-style). */
+    @JsonProperty("provider") @Nullable Map<String, ProviderConfig> provider,
+    /** Per-agent overrides: e.g. {"summarizer": {"model": "..."}}. */
+    @JsonProperty("agent") @Nullable Map<String, AgentConfig> agent
 ) {
     public static Settings empty() {
         return new Settings(null, null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null, null, null, null, null);
+                null, null, null, null, null, null, null, null, null, null, null, null, null, null,
+                null, null, null);
+    }
+
+    /** Returns the resolved default model id. opencode-style "model" wins over "defaultModel". */
+    @Nullable
+    public String resolvedDefaultModel() {
+        if (model != null && !model.isBlank()) { return model; }
+        return defaultModel;
     }
 
     public record BranchSummarySettings(
@@ -80,5 +95,37 @@ public record Settings(
         @JsonProperty("reasoning") @Nullable Boolean reasoning,
         @JsonProperty("inputModalities") @Nullable List<String> inputModalities,
         @JsonProperty("thinkingFormat") @Nullable String thinkingFormat
+    ) {}
+
+    /**
+     * opencode-style provider config block:
+     * {"provider": {"zai": {"apiKey": "${ZAI_API_KEY}", "baseURL": "..."}}}
+     *
+     * Values are run through {@code ConfigValueResolver} so {@code ${ENV}} and
+     * {@code ${ENV:-default}} placeholders expand at read time.
+     */
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record ProviderConfig(
+        @JsonProperty("apiKey") @Nullable String apiKey,
+        /** Both {@code baseURL} (opencode) and {@code baseUrl} are accepted. */
+        @JsonProperty("baseURL") @Nullable String baseURL,
+        @JsonProperty("baseUrl") @Nullable String baseUrlAlt,
+        @JsonProperty("headers") @Nullable Map<String, String> headers
+    ) {
+        /** Returns the effective base URL — {@code baseURL} preferred, falls back to {@code baseUrl}. */
+        @Nullable
+        public String effectiveBaseUrl() {
+            if (baseURL != null && !baseURL.isBlank()) { return baseURL; }
+            return baseUrlAlt;
+        }
+    }
+
+    /**
+     * Per-agent config: scopes a model to a named role like "summarizer" or
+     * "subagent". opencode-equivalent: {@code agent.<name>.model}.
+     */
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record AgentConfig(
+        @JsonProperty("model") @Nullable String model
     ) {}
 }

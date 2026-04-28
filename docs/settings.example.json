@@ -1,0 +1,55 @@
+{
+  "// ─── Default model ─────────────────────────────────": "",
+  "// opencode-style 'model' wins; legacy 'defaultModel' still works.": "",
+  "model": "anthropic/claude-sonnet-4-20250514",
+
+  "// ─── Per-provider config (Phase 1) ─────────────────": "",
+  "// apiKey supports ${ENV} and ${ENV:-default} expansion.": "",
+  "// baseURL overrides the model's hardcoded endpoint (useful for proxies).": "",
+  "provider": {
+    "anthropic": {
+      "apiKey": "${ANTHROPIC_API_KEY}"
+    },
+    "zai": {
+      "apiKey": "${ZAI_API_KEY}",
+      "baseURL": "https://api.z.ai/api/coding/paas/v4"
+    },
+    "openai": {
+      "apiKey": "${OPENAI_API_KEY}",
+      "baseURL": "${OPENAI_BASE_URL:-https://api.openai.com}"
+    }
+  },
+
+  "// ─── Per-agent model override (Phase 3) ────────────": "",
+  "// 'summarizer' is consumed by Compactor — route summarisation": "",
+  "// to a cheaper / faster model than the foreground chat.": "",
+  "agent": {
+    "summarizer": {
+      "model": "zai/glm-5-turbo"
+    },
+    "subagent": {
+      "model": "anthropic/claude-haiku-3-5"
+    }
+  },
+
+  "// ─── Custom OpenAI-compatible endpoints (Phase 4) ──": "",
+  "// These get registered under Provider.CUSTOM and route via the": "",
+  "// chosen api transport. apiKey expands ${ENV}.": "",
+  "customModels": [
+    {
+      "id": "my-corp-llm",
+      "name": "My Corp LLM",
+      "api": "openai-completions",
+      "baseUrl": "https://llm.mycorp.internal/v1",
+      "apiKey": "${MY_CORP_LLM_KEY}",
+      "contextWindow": 128000,
+      "maxTokens": 8192,
+      "reasoning": false
+    }
+  ],
+
+  "// ─── Auth ──────────────────────────────────────────": "",
+  "// Prefer storing API keys in ~/.campusclaw/agent/auth.json": "",
+  "// (mode 0600) via /auth login <provider> <key>. The auth file is": "",
+  "// consulted first, then this settings file, then env vars.": ""
+}

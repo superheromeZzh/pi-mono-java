@@ -5,6 +5,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.campusclaw.ai.env.ProviderConfigResolver;
+import com.campusclaw.ai.env.ResolvedProviderConfig;
 import com.campusclaw.ai.provider.ApiProvider;
 import com.campusclaw.ai.stream.AssistantMessageEvent;
 import com.campusclaw.ai.stream.AssistantMessageEventStream;
@@ -69,26 +71,11 @@ import jakarta.annotation.Nullable;
 public class OpenAICompletionsProvider implements ApiProvider {
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
-    private static final String ENV_API_KEY = "OPENAI_API_KEY";
 
-    /** Resolve API key based on the model's provider. */
-    private static String resolveApiKeyForProvider(Model model) {
-        // Check model-embedded API key first (for custom models)
-        if (model.apiKey() != null && !model.apiKey().isBlank()) { return model.apiKey(); }
-        // Check provider-specific env var first
-        String providerKey = switch (model.provider()) {
-            case ZAI -> System.getenv("ZAI_API_KEY");
-            case XAI -> System.getenv("XAI_API_KEY");
-            case GROQ -> System.getenv("GROQ_API_KEY");
-            case CEREBRAS -> System.getenv("CEREBRAS_API_KEY");
-            case OPENROUTER -> System.getenv("OPENROUTER_API_KEY");
-            case HUGGINGFACE -> System.getenv("HF_TOKEN");
-            case GITHUB_COPILOT -> System.getenv("COPILOT_GITHUB_TOKEN");
-            default -> null;
-        };
-        if (providerKey != null && !providerKey.isBlank()) { return providerKey; }
-        // Fallback to OPENAI_API_KEY
-        return System.getenv(ENV_API_KEY);
+    private final ProviderConfigResolver providerConfigResolver;
+
+    public OpenAICompletionsProvider(ProviderConfigResolver providerConfigResolver) {
+        this.providerConfigResolver = providerConfigResolver;
     }
 
     @Override
@@ -144,7 +131,8 @@ public class OpenAICompletionsProvider implements ApiProvider {
             @Nullable ThinkingLevel reasoning,
             AssistantMessageEventStream eventStream) {
 
-        String resolvedApiKey = apiKey != null ? apiKey : resolveApiKeyForProvider(model);
+        ResolvedProviderConfig providerConfig = providerConfigResolver.resolve(model.provider(), model);
+        String resolvedApiKey = apiKey != null ? apiKey : providerConfig.apiKey();
         if (resolvedApiKey == null || resolvedApiKey.isBlank()) {
             String envHint = switch (model.provider()) {
                 case ZAI -> "ZAI_API_KEY";
@@ -157,11 +145,13 @@ public class OpenAICompletionsProvider implements ApiProvider {
                 default -> "OPENAI_API_KEY";
             };
             eventStream.error(new IllegalStateException(
-                    "API key not found for " + model.provider().value() + ". Set " + envHint + " or pass via StreamOptions."));
+                    "API key not found for " + model.provider().value()
+                            + ". Set " + envHint + ", configure provider." + model.provider().value()
+                            + ".apiKey in settings.json, or run /auth login."));
             return;
         }
 
-        OpenAIClient client = buildClient(resolvedApiKey, model.baseUrl());
+        OpenAIClient client = buildClient(resolvedApiKey, providerConfig.resolveBaseUrl(model));
 
         try {
             ChatCompletionCreateParams params = buildParams(model, context, maxTokens, temperature, reasoning);
