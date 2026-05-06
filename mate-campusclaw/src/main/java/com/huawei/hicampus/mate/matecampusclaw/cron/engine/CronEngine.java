@@ -41,7 +41,7 @@ import org.springframework.stereotype.Service;
 public class CronEngine {
 
     private static final Logger log = LoggerFactory.getLogger(CronEngine.class);
-    private static final long MAX_TICK_INTERVAL_MS = 60_000;
+    private static final long MAX_TICK_INTERVAL_MS = 60_000L;
     private static final long STALE_THRESHOLD_MS = 2 * 60 * 60 * 1000; // 2 hours
     private static final int MAX_CONSECUTIVE_ERRORS = 3;
 

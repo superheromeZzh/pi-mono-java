@@ -119,7 +119,7 @@ public class LoopTool implements AgentTool {
             return text("Error: prompt is required for start");
         }
 
-        long intervalMs = 600_000; // default 10 minutes
+        long intervalMs = 600_000L; // default 10 minutes
         if (params.get("interval_ms") instanceof Number n) {
             intervalMs = n.longValue();
         }

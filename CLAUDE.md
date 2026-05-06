@@ -88,6 +88,11 @@ Key runtime concepts:
 
 机器可读字符串（HTTP header、env var、路径、数字格式）默认 `Locale.ROOT`，仅在确有用户语言场景才换其他 Locale。背景：`"I".toLowerCase()` 在土耳其 locale 下 == `"ı"`。
 
+### 数字字面量后缀
+- **long 类型变量赋值的整数字面量必须以 `L` 结尾**（大写）。`60_000` → `60_000L`。避免静默的 int→long 转换。
+- 已经是 long 字面量的，必须用大写 `L` 而非小写 `l`（`UpperEll` 强制；小写 `l` 易与数字 `1` 混淆）。
+- float 字面量必须以 `f` 或 `F` 结尾（Java 编译器本身就强制）。
+
 ### Imports（Spotless 自动处理）
 分组顺序 `java`, `javax`, `com`, `org`, *，未使用的 import 会被自动删除。
 

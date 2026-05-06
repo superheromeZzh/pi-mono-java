@@ -94,5 +94,19 @@
         <module name="AvoidStarImport">
             <property name="id" value="java_component_order_no_star_import"/>
         </module>
+
+        <!-- UpperEllRule (1/2): long 字面量必须用大写 L 后缀（避免小写 l 与数字 1 混淆）。 -->
+        <module name="UpperEll">
+            <property name="id" value="upper_ell_rule_l_suffix"/>
+        </module>
+        <!-- UpperEllRule (2/2): long 类型变量赋值整数字面量时，字面量必须以 L 结尾。
+             正则匹配 `long <ident> = <digits>(_<digits>)*[ ;,)]`（无 L 后缀）。
+             注意：Long 包装类型的拆箱赋值同样适用。 -->
+        <module name="RegexpSinglelineJava">
+            <property name="id" value="upper_ell_rule_long_assignment"/>
+            <property name="format" value="\b(?:long|Long)\s+\w+\s*=\s*-?\d+(?:_\d+)*\s*[;,)]"/>
+            <property name="message" value="long 类型变量赋值的整数字面量必须以 L 结尾（如 60_000L），避免静默的 int→long 转换。"/>
+            <property name="ignoreComments" value="true"/>
+        </module>
     </module>
 </module>

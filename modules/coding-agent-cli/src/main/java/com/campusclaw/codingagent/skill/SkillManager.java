@@ -44,7 +44,7 @@ public class SkillManager {
     private static final Logger log = LoggerFactory.getLogger(SkillManager.class);
     private static final ObjectMapper MAPPER = new ObjectMapper();
     private static final String MANIFEST_FILE = ".installed.json";
-    private static final long GIT_TIMEOUT_SECONDS = 120;
+    private static final long GIT_TIMEOUT_SECONDS = 120L;
 
     /**
      * Pattern to extract repository name from a git URL.

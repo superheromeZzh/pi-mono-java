@@ -23,7 +23,7 @@ import org.slf4j.LoggerFactory;
 public final class GitUtils {
 
     private static final Logger log = LoggerFactory.getLogger(GitUtils.class);
-    private static final long TIMEOUT_SECONDS = 5;
+    private static final long TIMEOUT_SECONDS = 5L;
 
     private GitUtils() {}
 
