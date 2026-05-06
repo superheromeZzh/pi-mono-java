@@ -44,7 +44,7 @@ final class FuzzyMatch {
      * Counts occurrences of needle in haystack (exact match).
      */
     static int countOccurrences(String haystack, String needle) {
-        if (needle.isEmpty()) return 0;
+        if (needle.isEmpty()) { return 0; }
         int count = 0;
         int idx = 0;
         while ((idx = haystack.indexOf(needle, idx)) >= 0) {

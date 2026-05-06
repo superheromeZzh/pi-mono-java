@@ -170,7 +170,7 @@ public class GlobTool implements AgentTool {
 
         var sb = new StringBuilder();
         for (int i = 0; i < matches.size(); i++) {
-            if (i > 0) sb.append('\n');
+            if (i > 0) { sb.append('\n'); }
             sb.append(matches.get(i).relativePath());
         }
 

@@ -28,6 +28,8 @@ import com.anthropic.models.messages.ThinkingConfigParam;
 import com.anthropic.models.messages.ToolResultBlockParam;
 import com.anthropic.models.messages.ToolUnion;
 import com.anthropic.models.messages.ToolUseBlockParam;
+import com.huawei.hicampus.mate.matecampusclaw.ai.env.ProviderConfigResolver;
+import com.huawei.hicampus.mate.matecampusclaw.ai.env.ResolvedProviderConfig;
 import com.huawei.hicampus.mate.matecampusclaw.ai.provider.ApiProvider;
 import com.huawei.hicampus.mate.matecampusclaw.ai.stream.AssistantMessageEvent;
 import com.huawei.hicampus.mate.matecampusclaw.ai.stream.AssistantMessageEventStream;
@@ -69,22 +71,11 @@ import jakarta.annotation.Nullable;
 public class AnthropicProvider implements ApiProvider {
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
-    private static final String ENV_API_KEY = "ANTHROPIC_API_KEY";
 
-    /** Resolve API key based on the model's provider. */
-    private static String resolveApiKeyForProvider(Model model) {
-        // Check model-embedded API key first (for custom models)
-        if (model.apiKey() != null && !model.apiKey().isBlank()) return model.apiKey();
-        String providerKey = switch (model.provider()) {
-            case KIMI_CODING -> System.getenv("KIMI_API_KEY");
-            case MINIMAX -> System.getenv("MINIMAX_API_KEY");
-            case MINIMAX_CN -> System.getenv("MINIMAX_CN_API_KEY");
-            case GITHUB_COPILOT -> System.getenv("COPILOT_GITHUB_TOKEN");
-            case AZURE_OPENAI -> System.getenv("AZURE_OPENAI_API_KEY");
-            default -> null;
-        };
-        if (providerKey != null && !providerKey.isBlank()) return providerKey;
-        return System.getenv(ENV_API_KEY);
+    private final ProviderConfigResolver providerConfigResolver;
+
+    public AnthropicProvider(ProviderConfigResolver providerConfigResolver) {
+        this.providerConfigResolver = providerConfigResolver;
     }
 
     @Override
@@ -144,7 +135,8 @@ public class AnthropicProvider implements ApiProvider {
             @Nullable ThinkingBudgets thinkingBudgets,
             AssistantMessageEventStream eventStream) {
 
-        String resolvedApiKey = apiKey != null ? apiKey : resolveApiKeyForProvider(model);
+        ResolvedProviderConfig providerConfig = providerConfigResolver.resolve(model.provider(), model);
+        String resolvedApiKey = apiKey != null ? apiKey : providerConfig.apiKey();
         if (resolvedApiKey == null || resolvedApiKey.isBlank()) {
             String envHint = switch (model.provider()) {
                 case KIMI_CODING -> "KIMI_API_KEY";
@@ -155,11 +147,13 @@ public class AnthropicProvider implements ApiProvider {
                 default -> "ANTHROPIC_API_KEY";
             };
             eventStream.error(new IllegalStateException(
-                    "API key not found for " + model.provider().value() + ". Set " + envHint + " or pass via StreamOptions."));
+                    "API key not found for " + model.provider().value()
+                            + ". Set " + envHint + ", configure provider." + model.provider().value()
+                            + ".apiKey in settings.json, or run /auth login."));
             return;
         }
 
-        AnthropicClient client = buildClient(resolvedApiKey, model.baseUrl());
+        AnthropicClient client = buildClient(resolvedApiKey, providerConfig.resolveBaseUrl(model));
 
         try {
             MessageCreateParams params = buildParams(model, context, maxTokens, temperature,
@@ -366,7 +360,7 @@ public class AnthropicProvider implements ApiProvider {
         if (delta.isText()) {
             String text = delta.asText().text();
             var acc = textAcc.get(idx);
-            if (acc != null) acc.append(text);
+            if (acc != null) { acc.append(text); }
             if (idx < contentBlocks.size()) {
                 contentBlocks.set(idx, new TextContent(acc != null ? acc.toString() : text, null));
             }
@@ -376,7 +370,7 @@ public class AnthropicProvider implements ApiProvider {
         } else if (delta.isThinking()) {
             String text = delta.asThinking().thinking();
             var acc = thinkingAcc.get(idx);
-            if (acc != null) acc.append(text);
+            if (acc != null) { acc.append(text); }
             if (idx < contentBlocks.size()) {
                 String sig = signatureAcc.containsKey(idx) ? signatureAcc.get(idx).toString() : null;
                 contentBlocks.set(idx, new ThinkingContent(acc != null ? acc.toString() : text, sig, false));
@@ -397,7 +391,7 @@ public class AnthropicProvider implements ApiProvider {
         } else if (delta.isInputJson()) {
             String json = delta.asInputJson().partialJson();
             var acc = toolJsonAcc.get(idx);
-            if (acc != null) acc.append(json);
+            if (acc != null) { acc.append(json); }
             eventStream.push(new AssistantMessageEvent.ToolCallDeltaEvent(idx, json,
                     buildPartialMessage(model, responseId, contentBlocks, usage, null)));
         }
@@ -481,7 +475,7 @@ public class AnthropicProvider implements ApiProvider {
      */
     private static MessageParam addCacheControlToLastBlock(MessageParam msg) {
         var blockParams = msg.content().blockParams();
-        if (blockParams.isEmpty() || blockParams.get().isEmpty()) return msg;
+        if (blockParams.isEmpty() || blockParams.get().isEmpty()) { return msg; }
 
         var blocks = new ArrayList<>(blockParams.get());
         int lastIdx = blocks.size() - 1;
@@ -724,7 +718,7 @@ public class AnthropicProvider implements ApiProvider {
                 case HIGH -> budgets.high();
                 default -> null;
             };
-            if (budget != null) return budget;
+            if (budget != null) { return budget; }
         }
         return switch (level) {
             case MINIMAL -> 1024;

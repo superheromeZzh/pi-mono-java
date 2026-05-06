@@ -48,7 +48,7 @@ public class KeyBindingRegistry {
     }
 
     private void loadCustomBindings() {
-        if (!Files.exists(KEYBINDINGS_FILE)) return;
+        if (!Files.exists(KEYBINDINGS_FILE)) { return; }
         try {
             Map<String, String> custom = MAPPER.readValue(
                 Files.readString(KEYBINDINGS_FILE), new TypeReference<>() {});

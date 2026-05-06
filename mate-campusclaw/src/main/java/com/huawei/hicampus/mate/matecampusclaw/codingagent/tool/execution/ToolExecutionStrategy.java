@@ -1,10 +1,10 @@
 package com.huawei.hicampus.mate.matecampusclaw.codingagent.tool.execution;
 
-import com.huawei.hicampus.mate.matecampusclaw.agent.tool.AgentToolResult;
-import com.huawei.hicampus.mate.matecampusclaw.agent.tool.CancellationToken;
-import com.huawei.hicampus.mate.matecampusclaw.agent.tool.AgentToolUpdateCallback;
-
 import java.util.Map;
+
+import com.huawei.hicampus.mate.matecampusclaw.agent.tool.AgentToolResult;
+import com.huawei.hicampus.mate.matecampusclaw.agent.tool.AgentToolUpdateCallback;
+import com.huawei.hicampus.mate.matecampusclaw.agent.tool.CancellationToken;
 
 /**
  * 工具执行策略接口

@@ -5,17 +5,11 @@ import java.io.InputStreamReader;
 import java.util.Map;
 
 import com.huawei.hicampus.mate.matecampusclaw.agent.event.AgentEndEvent;
-import com.huawei.hicampus.mate.matecampusclaw.agent.event.AgentEvent;
-import com.huawei.hicampus.mate.matecampusclaw.agent.event.AgentEventListener;
-import com.huawei.hicampus.mate.matecampusclaw.agent.event.AgentStartEvent;
 import com.huawei.hicampus.mate.matecampusclaw.agent.event.MessageEndEvent;
 import com.huawei.hicampus.mate.matecampusclaw.agent.event.MessageStartEvent;
 import com.huawei.hicampus.mate.matecampusclaw.agent.event.MessageUpdateEvent;
 import com.huawei.hicampus.mate.matecampusclaw.agent.event.ToolExecutionEndEvent;
 import com.huawei.hicampus.mate.matecampusclaw.agent.event.ToolExecutionStartEvent;
-import com.huawei.hicampus.mate.matecampusclaw.agent.event.ToolExecutionUpdateEvent;
-import com.huawei.hicampus.mate.matecampusclaw.agent.event.TurnEndEvent;
-import com.huawei.hicampus.mate.matecampusclaw.agent.event.TurnStartEvent;
 import com.huawei.hicampus.mate.matecampusclaw.codingagent.session.AgentSession;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -62,7 +56,7 @@ public class RpcMode {
             String line;
             while ((line = reader.readLine()) != null) {
                 line = line.trim();
-                if (line.isEmpty()) continue;
+                if (line.isEmpty()) { continue; }
                 try {
                     var cmd = MAPPER.readValue(line, RpcCommand.class);
                     handleCommand(cmd);

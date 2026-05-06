@@ -13,7 +13,6 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import com.huawei.hicampus.mate.matecampusclaw.cron.model.CronJob;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -170,7 +169,7 @@ public class CronStore {
      * Release a previously acquired process lock.
      */
     public void releaseProcessLock(FileLock fileLock) {
-        if (fileLock == null) return;
+        if (fileLock == null) { return; }
         try {
             var channel = fileLock.channel();
             fileLock.release();

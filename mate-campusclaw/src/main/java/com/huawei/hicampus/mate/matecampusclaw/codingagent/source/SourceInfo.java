@@ -3,13 +3,13 @@ package com.huawei.hicampus.mate.matecampusclaw.codingagent.source;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Collection;
 import java.util.Set;
 
 import jakarta.annotation.Nullable;
@@ -55,7 +55,7 @@ public class SourceInfo {
     /** Get the effective source (highest priority) for a resource. */
     public Optional<ResourceSource> getEffective(String resourceId) {
         List<ResourceSource> sources = registry.get(resourceId);
-        if (sources == null || sources.isEmpty()) return Optional.empty();
+        if (sources == null || sources.isEmpty()) { return Optional.empty(); }
         return sources.stream().min(Comparator.naturalOrder()); // highest priority first
     }
 

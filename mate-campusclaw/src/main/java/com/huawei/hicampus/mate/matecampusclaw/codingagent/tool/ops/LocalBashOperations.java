@@ -3,17 +3,28 @@ package com.huawei.hicampus.mate.matecampusclaw.codingagent.tool.ops;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
+
+import com.huawei.hicampus.mate.matecampusclaw.codingagent.tool.bash.ShellResolver;
 
 /**
  * Local shell implementation of {@link BashOperations}.
- * Executes commands via {@code /bin/bash -c}.
+ * Executes commands via {@code bash -c}; shell discovery is delegated to
+ * {@link ShellResolver} so that Git Bash on Windows is found even when
+ * {@code bash.exe} is not on PATH.
  */
 public class LocalBashOperations implements BashOperations {
 
     @Override
     public BashResult exec(String command, Path cwd, BashExecOptions options) throws IOException {
-        ProcessBuilder pb = new ProcessBuilder("/bin/bash", "-c", command);
+        ShellResolver.ShellConfig shell = ShellResolver.resolve();
+        List<String> argv = new ArrayList<>(shell.args().size() + 2);
+        argv.add(shell.shell());
+        argv.addAll(shell.args());
+        argv.add(command);
+        ProcessBuilder pb = new ProcessBuilder(argv);
         pb.directory(cwd.toFile());
         pb.redirectErrorStream(true);
 
@@ -23,9 +34,9 @@ public class LocalBashOperations implements BashOperations {
 
         Process process = pb.start();
 
-        // Register cancellation callback to destroy the process
+        // Register cancellation callback to destroy the entire process tree
         if (options.signal() != null) {
-            options.signal().onCancel(process::destroyForcibly);
+            options.signal().onCancel(() -> killProcessTree(process));
         }
 
         // Drain stdout/stderr in a background thread so waitFor timeout can fire
@@ -51,7 +62,7 @@ public class LocalBashOperations implements BashOperations {
             if (options.timeout() != null) {
                 boolean finished = process.waitFor(options.timeout().toMillis(), TimeUnit.MILLISECONDS);
                 if (!finished) {
-                    process.destroyForcibly();
+                    killProcessTree(process);
                     process.waitFor(5, TimeUnit.SECONDS);
                     return new BashResult(null);
                 }
@@ -59,7 +70,7 @@ public class LocalBashOperations implements BashOperations {
                 process.waitFor();
             }
         } catch (InterruptedException e) {
-            process.destroyForcibly();
+            killProcessTree(process);
             Thread.currentThread().interrupt();
             return new BashResult(null);
         }
@@ -72,5 +83,10 @@ public class LocalBashOperations implements BashOperations {
         }
 
         return new BashResult(process.exitValue());
+    }
+
+    private static void killProcessTree(Process process) {
+        process.descendants().forEach(ProcessHandle::destroyForcibly);
+        process.destroyForcibly();
     }
 }

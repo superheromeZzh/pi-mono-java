@@ -105,7 +105,7 @@ public final class HtmlExporter {
      * Converts ANSI escape codes to HTML span elements with CSS classes.
      */
     public static String ansiToHtml(String text) {
-        if (text == null) return "";
+        if (text == null) { return ""; }
         Matcher matcher = ANSI_PATTERN.matcher(text);
         StringBuilder sb = new StringBuilder();
         boolean inSpan = false;
@@ -126,7 +126,7 @@ public final class HtmlExporter {
             }
         }
         matcher.appendTail(sb);
-        if (inSpan) sb.append("</span>");
+        if (inSpan) { sb.append("</span>"); }
         return sb.toString();
     }
 
@@ -158,13 +158,13 @@ public final class HtmlExporter {
     private static String extractText(List<ContentBlock> content) {
         var sb = new StringBuilder();
         for (var block : content) {
-            if (block instanceof TextContent tc) sb.append(tc.text());
+            if (block instanceof TextContent tc) { sb.append(tc.text()); }
         }
         return sb.toString();
     }
 
     private static String escapeHtml(String text) {
-        if (text == null) return "";
+        if (text == null) { return ""; }
         return text.replace("&", "&amp;").replace("<", "&lt;")
             .replace(">", "&gt;").replace("\"", "&quot;")
             .replace("\n", "<br>");

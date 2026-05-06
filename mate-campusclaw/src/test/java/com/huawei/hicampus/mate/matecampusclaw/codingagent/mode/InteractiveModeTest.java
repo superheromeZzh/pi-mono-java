@@ -1,17 +1,11 @@
 package com.huawei.hicampus.mate.matecampusclaw.codingagent.mode;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.when;
-import static org.mockito.Mockito.thenReturn;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.contains;
-import static org.mockito.Mockito.Mock;
-import static org.mockito.Mockito.BeforeEach;
-import static org.mockito.Mockito.Test;
-import static org.mockito.Mockito.ExtendWith;
+import static org.mockito.Mockito.when;
 
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -163,7 +157,7 @@ class InteractiveModeTest {
         void rendersPwdAndStatsLines() {
             var footer = new com.huawei.hicampus.mate.matecampusclaw.codingagent.mode.tui.FooterComponent();
             footer.setModel("zai", "glm-5", 200000, false);
-            footer.setCwd("/Users/z/project");
+            footer.setCwd(System.getProperty("user.home") + "/project");
             var lines = footer.render(80);
             assertEquals(2, lines.size()); // pwd + stats
             assertTrue(lines.get(0).contains("~")); // pwd with ~ substitution

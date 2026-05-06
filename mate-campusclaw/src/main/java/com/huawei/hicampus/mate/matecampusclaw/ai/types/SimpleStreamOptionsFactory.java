@@ -82,8 +82,8 @@ public final class SimpleStreamOptionsFactory {
      * Merges base options with overrides. Override fields take precedence.
      */
     public static SimpleStreamOptions merge(SimpleStreamOptions base, SimpleStreamOptions overrides) {
-        if (base == null) return overrides;
-        if (overrides == null) return base;
+        if (base == null) { return overrides; }
+        if (overrides == null) { return base; }
 
         return SimpleStreamOptions.builder()
             .temperature(overrides.temperature() != null ? overrides.temperature() : base.temperature())

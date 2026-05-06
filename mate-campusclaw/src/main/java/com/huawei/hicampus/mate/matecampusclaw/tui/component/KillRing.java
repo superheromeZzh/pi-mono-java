@@ -22,7 +22,7 @@ public class KillRing {
      * @param accumulate merge with the most recent entry instead of creating a new one
      */
     public void push(String text, boolean prepend, boolean accumulate) {
-        if (text == null || text.isEmpty()) return;
+        if (text == null || text.isEmpty()) { return; }
 
         if (accumulate && !ring.isEmpty()) {
             String last = ring.remove(ring.size() - 1);

@@ -13,30 +13,18 @@ import com.huawei.hicampus.mate.matecampusclaw.ai.provider.ApiProvider;
 import com.huawei.hicampus.mate.matecampusclaw.ai.stream.AssistantMessageEventStream;
 import com.huawei.hicampus.mate.matecampusclaw.ai.types.Api;
 import com.huawei.hicampus.mate.matecampusclaw.ai.types.AssistantMessage;
-import com.huawei.hicampus.mate.matecampusclaw.ai.types.CacheRetention;
 import com.huawei.hicampus.mate.matecampusclaw.ai.types.ContentBlock;
 import com.huawei.hicampus.mate.matecampusclaw.ai.types.Context;
 import com.huawei.hicampus.mate.matecampusclaw.ai.types.Cost;
-import com.huawei.hicampus.mate.matecampusclaw.ai.types.ImageContent;
-import com.huawei.hicampus.mate.matecampusclaw.ai.types.InputModality;
-import com.huawei.hicampus.mate.matecampusclaw.ai.types.Message;
 import com.huawei.hicampus.mate.matecampusclaw.ai.types.Model;
-import com.huawei.hicampus.mate.matecampusclaw.ai.types.ModelCost;
-import com.huawei.hicampus.mate.matecampusclaw.ai.types.Provider;
 import com.huawei.hicampus.mate.matecampusclaw.ai.types.SimpleStreamOptions;
-import com.huawei.hicampus.mate.matecampusclaw.ai.types.SimpleStreamOptionsFactory;
 import com.huawei.hicampus.mate.matecampusclaw.ai.types.StopReason;
 import com.huawei.hicampus.mate.matecampusclaw.ai.types.StreamOptions;
 import com.huawei.hicampus.mate.matecampusclaw.ai.types.TextContent;
-import com.huawei.hicampus.mate.matecampusclaw.ai.types.ThinkingBudgets;
 import com.huawei.hicampus.mate.matecampusclaw.ai.types.ThinkingContent;
 import com.huawei.hicampus.mate.matecampusclaw.ai.types.ThinkingLevel;
-import com.huawei.hicampus.mate.matecampusclaw.ai.types.Tool;
 import com.huawei.hicampus.mate.matecampusclaw.ai.types.ToolCall;
-import com.huawei.hicampus.mate.matecampusclaw.ai.types.ToolResultMessage;
-import com.huawei.hicampus.mate.matecampusclaw.ai.types.Transport;
 import com.huawei.hicampus.mate.matecampusclaw.ai.types.Usage;
-import com.huawei.hicampus.mate.matecampusclaw.ai.types.UserMessage;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -56,6 +44,12 @@ public class GoogleVertexAIProvider implements ApiProvider {
 
     private static final Logger log = LoggerFactory.getLogger(GoogleVertexAIProvider.class);
     private static final ObjectMapper MAPPER = new ObjectMapper();
+
+    private final com.huawei.hicampus.mate.matecampusclaw.ai.env.ProviderConfigResolver providerConfigResolver;
+
+    public GoogleVertexAIProvider(com.huawei.hicampus.mate.matecampusclaw.ai.env.ProviderConfigResolver providerConfigResolver) {
+        this.providerConfigResolver = providerConfigResolver;
+    }
 
     @Override
     public Api getApi() {
@@ -84,10 +78,11 @@ public class GoogleVertexAIProvider implements ApiProvider {
 
     private void executeStream(Model model, Context context, @Nullable SimpleStreamOptions options,
                                AssistantMessageEventStream eventStream) {
-        String apiKey = resolveApiKey(model, options);
+        var providerConfig = providerConfigResolver.resolve(model.provider(), model);
+        String apiKey = resolveApiKey(providerConfig, options);
         String projectId = System.getenv("GOOGLE_CLOUD_PROJECT");
         String location = System.getenv("GOOGLE_CLOUD_LOCATION");
-        if (location == null || location.isBlank()) location = "us-central1";
+        if (location == null || location.isBlank()) { location = "us-central1"; }
 
         String endpoint;
         if (model.baseUrl() != null) {
@@ -130,9 +125,9 @@ public class GoogleVertexAIProvider implements ApiProvider {
             try (var reader = new BufferedReader(new InputStreamReader(response.body()))) {
                 String line;
                 while ((line = reader.readLine()) != null) {
-                    if (line.isBlank() || !line.startsWith("data: ")) continue;
+                    if (line.isBlank() || !line.startsWith("data: ")) { continue; }
                     String data = line.substring(6).trim();
-                    if (data.equals("[DONE]")) break;
+                    if (data.equals("[DONE]")) { break; }
 
                     JsonNode chunk = MAPPER.readTree(data);
                     var parsed = GoogleShared.parseChunk(chunk);
@@ -149,7 +144,7 @@ public class GoogleVertexAIProvider implements ApiProvider {
                                     blocks.size() - 1, buildMessage(model, blocks, usage[0], stop[0])));
                             }
                             thinkingAcc.append(tc.thinking());
-                            if (tc.thinkingSignature() != null) thinkingSig[0] = tc.thinkingSignature();
+                            if (tc.thinkingSignature() != null) { thinkingSig[0] = tc.thinkingSignature(); }
                             blocks.set(blocks.size() - 1, new ThinkingContent(thinkingAcc.toString(), thinkingSig[0], false));
                             eventStream.push(new com.huawei.hicampus.mate.matecampusclaw.ai.stream.AssistantMessageEvent.ThinkingDeltaEvent(
                                 blocks.size() - 1, tc.thinking(), buildMessage(model, blocks, usage[0], stop[0])));
@@ -182,8 +177,8 @@ public class GoogleVertexAIProvider implements ApiProvider {
                                 idx, tc, buildMessage(model, blocks, usage[0], stop[0])));
                         }
                     }
-                    if (parsed.usage() != null) usage[0] = parsed.usage();
-                    if (parsed.finishReason() != null) stop[0] = GoogleShared.mapFinishReason(parsed.finishReason());
+                    if (parsed.usage() != null) { usage[0] = parsed.usage(); }
+                    if (parsed.finishReason() != null) { stop[0] = GoogleShared.mapFinishReason(parsed.finishReason()); }
                 }
             }
             finishCurrentBlock(currentType[0], blocks, textAcc, thinkingAcc, thinkingSig, eventStream, model, usage[0], stop[0]);
@@ -226,7 +221,7 @@ public class GoogleVertexAIProvider implements ApiProvider {
         }
         body.set("contents", GoogleShared.convertMessages(context.messages()));
         var tools = GoogleShared.convertTools(context.tools());
-        if (tools != null) body.set("tools", tools);
+        if (tools != null) { body.set("tools", tools); }
         var genConfig = MAPPER.createObjectNode();
         if (options != null && options.maxTokens() != null) {
             genConfig.put("maxOutputTokens", options.maxTokens());
@@ -254,19 +249,17 @@ public class GoogleVertexAIProvider implements ApiProvider {
         return body;
     }
 
-    private String resolveApiKey(Model model, @Nullable SimpleStreamOptions options) {
-        if (options != null && options.apiKey() != null) return options.apiKey();
-        if (model.apiKey() != null && !model.apiKey().isBlank()) return model.apiKey();
-        String key = System.getenv("GOOGLE_CLOUD_API_KEY");
-        if (key != null && !key.isBlank()) return key;
-        return System.getenv("GOOGLE_API_KEY");
+    private String resolveApiKey(com.huawei.hicampus.mate.matecampusclaw.ai.env.ResolvedProviderConfig providerConfig,
+                                 @Nullable SimpleStreamOptions options) {
+        if (options != null && options.apiKey() != null) { return options.apiKey(); }
+        return providerConfig.apiKey();
     }
 
     private void finishCurrentBlock(
             String type, List<ContentBlock> blocks,
             StringBuilder textAcc, StringBuilder thinkingAcc, String[] thinkingSig,
             AssistantMessageEventStream eventStream, Model model, Usage usage, StopReason stop) {
-        if (type == null || blocks.isEmpty()) return;
+        if (type == null || blocks.isEmpty()) { return; }
         int idx = blocks.size() - 1;
         if ("thinking".equals(type)) {
             String content = thinkingAcc.toString();
@@ -282,7 +275,7 @@ public class GoogleVertexAIProvider implements ApiProvider {
     }
 
     private Cost computeCost(Model model, Usage usage) {
-        if (model.cost() == null) return Cost.empty();
+        if (model.cost() == null) { return Cost.empty(); }
         var mc = model.cost();
         double input = usage.input() * mc.input() / 1_000_000.0;
         double output = usage.output() * mc.output() / 1_000_000.0;

@@ -201,7 +201,7 @@ public class BedrockProvider implements ApiProvider {
             int maxTokens) {
 
         boolean isClaude = model.id().contains("anthropic.claude") || model.id().contains("anthropic/claude");
-        if (!isClaude) return null;
+        if (!isClaude) { return null; }
 
         boolean adaptive = supportsAdaptiveThinking(model.id());
 
@@ -253,7 +253,7 @@ public class BedrockProvider implements ApiProvider {
                 case HIGH, XHIGH -> budgets.high();
                 default -> null;
             };
-            if (custom != null) return custom;
+            if (custom != null) { return custom; }
         }
         return switch (level) {
             case MINIMAL -> 1024;
@@ -370,7 +370,7 @@ public class BedrockProvider implements ApiProvider {
 
         int blockIdx = e.contentBlockIndex();
         var delta = e.delta();
-        if (delta == null) return;
+        if (delta == null) { return; }
 
         // Reasoning content delta
         if (delta.reasoningContent() != null && delta.reasoningContent().text() != null) {
@@ -456,9 +456,9 @@ public class BedrockProvider implements ApiProvider {
 
         int blockIdx = e.contentBlockIndex();
         Integer contentIdx = blockIndexToContentIndex.get(blockIdx);
-        if (contentIdx == null) return;
+        if (contentIdx == null) { return; }
         String type = blockTypes.get(blockIdx);
-        if (type == null) return;
+        if (type == null) { return; }
 
         switch (type) {
             case "text" -> {
@@ -550,7 +550,7 @@ public class BedrockProvider implements ApiProvider {
                                 .input(mapToDocument(tc.arguments()))
                                 .build()));
             } else if (cb instanceof ThinkingContent tc) {
-                if (tc.thinking() == null || tc.thinking().isBlank()) continue;
+                if (tc.thinking() == null || tc.thinking().isBlank()) { continue; }
                 // Build reasoningContent block
                 var reasoningTextBuilder = software.amazon.awssdk.services.bedrockruntime.model
                     .ReasoningTextBlock.builder().text(tc.thinking());
@@ -630,7 +630,7 @@ public class BedrockProvider implements ApiProvider {
     // -- Stop reason mapping --
 
     static StopReason mapStopReason(String reason) {
-        if (reason == null) return StopReason.STOP;
+        if (reason == null) { return StopReason.STOP; }
         return switch (reason) {
             case "end_turn", "stop_sequence" -> StopReason.STOP;
             case "tool_use" -> StopReason.TOOL_USE;
@@ -692,7 +692,7 @@ public class BedrockProvider implements ApiProvider {
 
     @SuppressWarnings("unchecked")
     static Map<String, Object> parseToolArguments(String json) {
-        if (json == null || json.isBlank()) return Map.of();
+        if (json == null || json.isBlank()) { return Map.of(); }
         try {
             return MAPPER.readValue(json, new TypeReference<Map<String, Object>>() {});
         } catch (Exception e) {
@@ -702,7 +702,7 @@ public class BedrockProvider implements ApiProvider {
 
     @SuppressWarnings("unchecked")
     static Document mapToDocument(Map<String, Object> map) {
-        if (map == null || map.isEmpty()) return Document.fromMap(Map.of());
+        if (map == null || map.isEmpty()) { return Document.fromMap(Map.of()); }
         Map<String, Document> docMap = new LinkedHashMap<>();
         for (var entry : map.entrySet()) {
             docMap.put(entry.getKey(), objectToDocument(entry.getValue()));
@@ -712,14 +712,14 @@ public class BedrockProvider implements ApiProvider {
 
     @SuppressWarnings("unchecked")
     static Document objectToDocument(Object value) {
-        if (value == null) return Document.fromNull();
-        if (value instanceof String s) return Document.fromString(s);
-        if (value instanceof Boolean b) return Document.fromBoolean(b);
-        if (value instanceof Integer i) return Document.fromNumber(i);
-        if (value instanceof Long l) return Document.fromNumber(l);
-        if (value instanceof Double d) return Document.fromNumber(d);
-        if (value instanceof Float f) return Document.fromNumber(f);
-        if (value instanceof Number n) return Document.fromNumber(n.doubleValue());
+        if (value == null) { return Document.fromNull(); }
+        if (value instanceof String s) { return Document.fromString(s); }
+        if (value instanceof Boolean b) { return Document.fromBoolean(b); }
+        if (value instanceof Integer i) { return Document.fromNumber(i); }
+        if (value instanceof Long l) { return Document.fromNumber(l); }
+        if (value instanceof Double d) { return Document.fromNumber(d); }
+        if (value instanceof Float f) { return Document.fromNumber(f); }
+        if (value instanceof Number n) { return Document.fromNumber(n.doubleValue()); }
         if (value instanceof Map<?, ?> m) {
             Map<String, Document> docMap = new LinkedHashMap<>();
             for (var entry : ((Map<String, Object>) m).entrySet()) {
@@ -739,7 +739,7 @@ public class BedrockProvider implements ApiProvider {
 
     @SuppressWarnings("unchecked")
     static Document jsonNodeToDocument(JsonNode node) {
-        if (node == null || node.isNull()) return Document.fromNull();
+        if (node == null || node.isNull()) { return Document.fromNull(); }
         try {
             Map<String, Object> map = MAPPER.treeToValue(node, Map.class);
             return mapToDocument(map);

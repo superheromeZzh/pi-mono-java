@@ -69,7 +69,7 @@ public record AgentLoopConfig(
      * or one wrapping the CampusClawAiService.
      */
     public StreamFunction effectiveStreamFunction() {
-        if (streamFunction != null) return streamFunction;
+        if (streamFunction != null) { return streamFunction; }
         return piAiService::streamSimple;
     }
 }

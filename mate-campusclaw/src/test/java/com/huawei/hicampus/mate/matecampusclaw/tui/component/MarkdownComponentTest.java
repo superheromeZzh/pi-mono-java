@@ -1,10 +1,10 @@
 package com.huawei.hicampus.mate.matecampusclaw.tui.component;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
 import java.util.function.UnaryOperator;
@@ -618,8 +618,8 @@ class MarkdownComponentTest {
     private int countLeadingSpaces(String s) {
         int count = 0;
         for (int i = 0; i < s.length(); i++) {
-            if (s.charAt(i) == ' ') count++;
-            else break;
+            if (s.charAt(i) == ' ') { count++; }
+            else { break; }
         }
         return count;
     }

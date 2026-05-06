@@ -28,6 +28,7 @@ import com.huawei.hicampus.mate.matecampusclaw.codingagent.skill.Skill;
 import com.huawei.hicampus.mate.matecampusclaw.codingagent.skill.SkillExpander;
 import com.huawei.hicampus.mate.matecampusclaw.codingagent.skill.SkillLoader;
 import com.huawei.hicampus.mate.matecampusclaw.codingagent.skill.SkillRegistry;
+import com.huawei.hicampus.mate.matecampusclaw.codingagent.skill.SkillStateStore;
 
 /**
  * Manages a single agent session lifecycle: initialization, prompt handling,
@@ -326,7 +327,7 @@ public class AgentSession {
      * Expands a prompt template command like "/templatename arg1 arg2".
      */
     String expandPromptTemplate(String input) {
-        if (!input.startsWith("/")) return input;
+        if (!input.startsWith("/")) { return input; }
 
         int spaceIdx = input.indexOf(' ');
         String name = spaceIdx >= 0 ? input.substring(1, spaceIdx) : input.substring(1);
@@ -406,16 +407,16 @@ public class AgentSession {
 
         // 1. Exact match
         for (Provider provider : modelRegistry.getProviders()) {
-            if (targetProvider != null && provider != targetProvider) continue;
+            if (targetProvider != null && provider != targetProvider) { continue; }
             var model = modelRegistry.getModel(provider, pattern);
-            if (model.isPresent()) return model.get();
+            if (model.isPresent()) { return model.get(); }
         }
 
         // 2. Fuzzy substring match on id and name
         String lowerPattern = pattern.toLowerCase();
         Model bestMatch = null;
         for (Provider provider : modelRegistry.getProviders()) {
-            if (targetProvider != null && provider != targetProvider) continue;
+            if (targetProvider != null && provider != targetProvider) { continue; }
             for (Model m : modelRegistry.getModels(provider)) {
                 if (m.id().toLowerCase().contains(lowerPattern)
                         || m.name().toLowerCase().contains(lowerPattern)) {
@@ -425,7 +426,7 @@ public class AgentSession {
                 }
             }
         }
-        if (bestMatch != null) return bestMatch;
+        if (bestMatch != null) { return bestMatch; }
 
         throw new IllegalArgumentException("Unknown model: " + modelId
                 + ". Use --list-models to see available models.");
@@ -435,13 +436,21 @@ public class AgentSession {
         skillRegistry.clear();
 
         // User-level skills: ~/.campusclaw/agent/skills/
-        List<Skill> userSkills = skillLoader.loadFromDirectory(USER_SKILLS_DIR, "user");
+        // Filter out skills explicitly disabled via the REST API.
+        java.util.Set<String> disabled = new SkillStateStore(userSkillsDir()).loadDisabled();
+        List<Skill> userSkills = skillLoader.loadFromDirectory(userSkillsDir(), "user").stream()
+                .filter(s -> !disabled.contains(s.name()))
+                .toList();
         skillRegistry.registerAll(userSkills);
 
         // Project-level skills: {cwd}/.campusclaw/skills/
         Path projectSkillsDir = cwd.resolve(PROJECT_SKILLS_SUBDIR);
         List<Skill> projectSkills = skillLoader.loadFromDirectory(projectSkillsDir, "project");
         skillRegistry.registerAll(projectSkills);
+    }
+
+    protected Path userSkillsDir() {
+        return USER_SKILLS_DIR;
     }
 
     static Map<String, String> buildEnvironmentMap() {

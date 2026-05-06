@@ -14,31 +14,11 @@ import com.huawei.hicampus.mate.matecampusclaw.agent.tool.AgentTool;
 import com.huawei.hicampus.mate.matecampusclaw.ai.CampusClawAiService;
 import com.huawei.hicampus.mate.matecampusclaw.ai.model.ModelRegistry;
 import com.huawei.hicampus.mate.matecampusclaw.ai.types.Api;
-import com.huawei.hicampus.mate.matecampusclaw.ai.types.AssistantMessage;
-import com.huawei.hicampus.mate.matecampusclaw.ai.types.CacheRetention;
-import com.huawei.hicampus.mate.matecampusclaw.ai.types.ContentBlock;
-import com.huawei.hicampus.mate.matecampusclaw.ai.types.Context;
-import com.huawei.hicampus.mate.matecampusclaw.ai.types.Cost;
-import com.huawei.hicampus.mate.matecampusclaw.ai.types.ImageContent;
 import com.huawei.hicampus.mate.matecampusclaw.ai.types.InputModality;
-import com.huawei.hicampus.mate.matecampusclaw.ai.types.Message;
 import com.huawei.hicampus.mate.matecampusclaw.ai.types.Model;
 import com.huawei.hicampus.mate.matecampusclaw.ai.types.ModelCost;
 import com.huawei.hicampus.mate.matecampusclaw.ai.types.Provider;
-import com.huawei.hicampus.mate.matecampusclaw.ai.types.SimpleStreamOptions;
-import com.huawei.hicampus.mate.matecampusclaw.ai.types.SimpleStreamOptionsFactory;
-import com.huawei.hicampus.mate.matecampusclaw.ai.types.StopReason;
-import com.huawei.hicampus.mate.matecampusclaw.ai.types.StreamOptions;
-import com.huawei.hicampus.mate.matecampusclaw.ai.types.TextContent;
-import com.huawei.hicampus.mate.matecampusclaw.ai.types.ThinkingBudgets;
-import com.huawei.hicampus.mate.matecampusclaw.ai.types.ThinkingContent;
 import com.huawei.hicampus.mate.matecampusclaw.ai.types.ThinkingLevel;
-import com.huawei.hicampus.mate.matecampusclaw.ai.types.Tool;
-import com.huawei.hicampus.mate.matecampusclaw.ai.types.ToolCall;
-import com.huawei.hicampus.mate.matecampusclaw.ai.types.ToolResultMessage;
-import com.huawei.hicampus.mate.matecampusclaw.ai.types.Transport;
-import com.huawei.hicampus.mate.matecampusclaw.ai.types.Usage;
-import com.huawei.hicampus.mate.matecampusclaw.ai.types.UserMessage;
 import com.huawei.hicampus.mate.matecampusclaw.codingagent.command.SlashCommandRegistry;
 import com.huawei.hicampus.mate.matecampusclaw.codingagent.compaction.Compactor;
 import com.huawei.hicampus.mate.matecampusclaw.codingagent.config.ConfigValueResolver;
@@ -91,6 +71,11 @@ public class CampusClawCommand implements Callable<Integer> {
     private final com.huawei.hicampus.mate.matecampusclaw.codingagent.loop.LoopManager loopManager;
     private final org.springframework.context.ApplicationContext applicationContext;
     private final SandboxSkillParser sandboxSkillParser;
+    private final com.huawei.hicampus.mate.matecampusclaw.codingagent.resolver.AgentModelResolver agentModelResolver;
+    private final com.huawei.hicampus.mate.matecampusclaw.codingagent.model.ModelCatalogService modelCatalogService;
+
+    @org.springframework.beans.factory.annotation.Value("${server.session.persistence.enabled:true}")
+    private boolean serverSessionPersistenceEnabled;
 
     public CampusClawCommand(CampusClawAiService piAiService, ModelRegistry modelRegistry,
                      SystemPromptBuilder promptBuilder, List<AgentTool> tools,
@@ -99,7 +84,9 @@ public class CampusClawCommand implements Callable<Integer> {
                      @org.springframework.lang.Nullable com.huawei.hicampus.mate.matecampusclaw.cron.CronService cronService,
                      com.huawei.hicampus.mate.matecampusclaw.codingagent.loop.LoopManager loopManager,
                      org.springframework.context.ApplicationContext applicationContext,
-                     @org.springframework.lang.Nullable SandboxSkillParser sandboxSkillParser) {
+                     @org.springframework.lang.Nullable SandboxSkillParser sandboxSkillParser,
+                     com.huawei.hicampus.mate.matecampusclaw.codingagent.resolver.AgentModelResolver agentModelResolver,
+                     com.huawei.hicampus.mate.matecampusclaw.codingagent.model.ModelCatalogService modelCatalogService) {
         this.piAiService = piAiService;
         this.modelRegistry = modelRegistry;
         this.promptBuilder = promptBuilder;
@@ -111,6 +98,8 @@ public class CampusClawCommand implements Callable<Integer> {
         this.loopManager = loopManager;
         this.applicationContext = applicationContext;
         this.sandboxSkillParser = sandboxSkillParser;
+        this.agentModelResolver = agentModelResolver;
+        this.modelCatalogService = modelCatalogService;
     }
 
     @Option(names = {"--provider"}, description = "Provider name (e.g. anthropic, openai, zai, google)")
@@ -249,8 +238,8 @@ public class CampusClawCommand implements Callable<Integer> {
         // Load settings and apply defaults for model and thinking level
         Settings settings = settingsManager != null ? settingsManager.load() : Settings.empty();
         String effectiveModel = model;
-        if (effectiveModel == null && settings.defaultModel() != null) {
-            effectiveModel = settings.defaultModel();
+        if (effectiveModel == null && settings.resolvedDefaultModel() != null) {
+            effectiveModel = settings.resolvedDefaultModel();
         }
         String effectiveThinking = thinking;
         if (effectiveThinking == null && settings.defaultThinkingLevel() != null) {
@@ -369,8 +358,8 @@ public class CampusClawCommand implements Callable<Integer> {
             System.out.println("Mode: " + mode);
             System.out.println("CWD: " + effectiveCwd);
             System.out.println("Prompt: " + effectivePrompt);
-            if (effectiveThinking != null) System.out.println("Thinking: " + effectiveThinking);
-            if (toolsFilter != null) System.out.println("Tools: " + toolsFilter);
+            if (effectiveThinking != null) { System.out.println("Thinking: " + effectiveThinking); }
+            if (toolsFilter != null) { System.out.println("Tools: " + toolsFilter); }
             return 0;
         }
 
@@ -455,16 +444,8 @@ public class CampusClawCommand implements Callable<Integer> {
                 // Try ChatMemory (GaussDB) first
                 if (applicationContext != null) {
                     try {
-                        // ChatMemoryStore from assistant module - use reflection
-                        java.util.List dbMessages = new java.util.ArrayList();
-                        try {
-                            Class<?> clazz = Class.forName("com.campusclaw.assistant.memory.ChatMemoryStore");
-                            Object store = applicationContext.getBean(clazz);
-                            java.lang.reflect.Method loadMethod = clazz.getMethod("load", String.class);
-                            dbMessages = (java.util.List) loadMethod.invoke(store, sessionManager.getSessionId());
-                        } catch (Exception e) {
-                            // ChatMemoryStore not available
-                        }
+                        var store = applicationContext.getBean(com.huawei.hicampus.mate.matecampusclaw.assistant.memory.ChatMemoryStore.class);
+                        var dbMessages = store.load(sessionManager.getSessionId());
                         if (!dbMessages.isEmpty()) {
                             messages = dbMessages;
                         }
@@ -520,24 +501,32 @@ public class CampusClawCommand implements Callable<Integer> {
             new ServerMode(piAiService, modelRegistry, promptBuilder,
                     effectiveTools, config, port != null ? port : 3000,
                     host != null ? host : "localhost",
-                    sandboxSkillParser, useSandbox).run();
+                    sandboxSkillParser, useSandbox,
+                    modelCatalogService,
+                    serverSessionPersistenceEnabled).run();
             return 0;
         }
 
         // Interactive mode (default)
         Terminal terminal = new JLineTerminal();
         try {
-            var interactiveMode = new InteractiveMode(commandRegistry, bashExecutor, new Compactor(piAiService), modelRegistry, cronService, loopManager, applicationContext);
+            var interactiveMode = new InteractiveMode(commandRegistry, bashExecutor,
+                    new Compactor(piAiService,
+                            com.huawei.hicampus.mate.matecampusclaw.codingagent.compaction.CompactionConfig.defaults(),
+                            agentModelResolver),
+                    modelRegistry, cronService, loopManager, applicationContext);
 
-            // Resolve --models scoped models for Ctrl+P cycling
+            // Resolve --models scoped models for Ctrl+P cycling.
+            // Precedence: --models flag overrides settings.enabledModels.
             if (modelsFilter != null && !modelsFilter.isBlank()) {
-                var patterns = List.of(modelsFilter.split(","));
                 var scoped = new ArrayList<Model>();
                 var allRegistered = modelRegistry.getAllModels();
-                for (String pattern : patterns) {
+                for (String pattern : modelsFilter.split(",")) {
                     String p = pattern.trim().toLowerCase();
+                    if (p.isEmpty()) { continue; }
                     for (var m : allRegistered) {
-                        if (matchesModelPattern(p, m) && scoped.stream().noneMatch(s -> ModelRegistry.modelsAreEqual(s, m))) {
+                        if (com.huawei.hicampus.mate.matecampusclaw.codingagent.model.ModelCatalogService.matchesPattern(p, m)
+                                && scoped.stream().noneMatch(s -> ModelRegistry.modelsAreEqual(s, m))) {
                             scoped.add(m);
                         }
                     }
@@ -545,18 +534,9 @@ public class CampusClawCommand implements Callable<Integer> {
                 if (!scoped.isEmpty()) {
                     interactiveMode.setScopedModels(scoped);
                 }
-            } else if (settings.enabledModels() != null && !settings.enabledModels().isEmpty()) {
-                // Also support enabledModels from settings
-                var scoped = new ArrayList<Model>();
-                var allRegistered = modelRegistry.getAllModels();
-                for (String pattern : settings.enabledModels()) {
-                    String p = pattern.trim().toLowerCase();
-                    for (var m : allRegistered) {
-                        if (matchesModelPattern(p, m) && scoped.stream().noneMatch(s -> ModelRegistry.modelsAreEqual(s, m))) {
-                            scoped.add(m);
-                        }
-                    }
-                }
+            } else if (modelCatalogService != null && modelCatalogService.isFiltered()) {
+                // settings.enabledModels: same filtered list the WS list_models returns.
+                var scoped = modelCatalogService.getAvailableModels();
                 if (!scoped.isEmpty()) {
                     interactiveMode.setScopedModels(scoped);
                 }
@@ -573,7 +553,7 @@ public class CampusClawCommand implements Callable<Integer> {
             // System terminal should not be explicitly closed by the application;
             // it will be automatically cleaned up by the OS when the process exits.
             // Explicitly closing it can cause the parent terminal window to exit.
-            if (sessionManager != null) sessionManager.close();
+            if (sessionManager != null) { sessionManager.close(); }
         }
         return 0;
     }
@@ -625,7 +605,7 @@ public class CampusClawCommand implements Callable<Integer> {
         com.huawei.hicampus.mate.matecampusclaw.codingagent.config.AppPaths.ensureUserDirs();
 
         // Normalize "uninstall" → "remove"
-        if ("uninstall".equals(command)) command = "remove";
+        if ("uninstall".equals(command)) { command = "remove"; }
 
         boolean local = args.contains("-l") || args.contains("--local");
         var filteredArgs = args.stream()
@@ -955,7 +935,7 @@ public class CampusClawCommand implements Callable<Integer> {
         // Provider/id format: "zai/glm-5"
         if (p.contains("/")) {
             String[] parts = p.split("/", 2);
-            if (!provider.contains(parts[0])) return false;
+            if (!provider.contains(parts[0])) { return false; }
             p = parts[1];
         }
 

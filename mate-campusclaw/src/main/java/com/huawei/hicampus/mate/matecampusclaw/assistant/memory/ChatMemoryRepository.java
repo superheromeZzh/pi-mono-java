@@ -1,8 +1,8 @@
 package com.huawei.hicampus.mate.matecampusclaw.assistant.memory;
 
-import com.huawei.hicampus.mate.matecampusclaw.ai.types.Message;
-
 import java.util.List;
+
+import com.huawei.hicampus.mate.matecampusclaw.ai.types.Message;
 
 public interface ChatMemoryRepository {
 

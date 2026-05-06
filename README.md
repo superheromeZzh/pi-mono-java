@@ -284,6 +284,39 @@ campusclaw/
 > Windows 用户将 `./mvnw` 替换为 `mvnw.cmd`。
 > 如果默认 JDK 不是 21，需在命令前设置 `JAVA_HOME`。
 
+### 同步 modules/* 到 mate-campusclaw
+
+`mate-campusclaw/` 是为对接公司 `mate` 父项目而维护的单模块镜像，包名重写为 `com.huawei.hicampus.mate.matecampusclaw`。日常在 `modules/*` 里开发，通过下面的脚本把变更同步进 `mate-campusclaw/`：
+
+```bash
+./scripts/sync-mate-campusclaw.sh             # 同步 + 编译验证
+./scripts/sync-mate-campusclaw.sh --dry-run   # 预览改动，不写盘
+./scripts/sync-mate-campusclaw.sh --no-verify # 跳过 mvn compile
+./scripts/sync-mate-campusclaw.sh --no-apply  # 仅生成 build/，不动 mate-campusclaw/
+```
+
+脚本三阶段：
+
+1. **Stage** — 把 `modules/{ai,tui,agent-core,assistant,cron,coding-agent-cli}` 复制到 `build/mate-campusclaw/`，并把 `com.campusclaw` 替换成 `com.huawei.hicampus.mate.matecampusclaw`（`.java/.yml/.properties/.imports/...` 全部覆盖）。
+2. **Apply** — `rsync --delete` 把 `build/` 同步到 `mate-campusclaw/`，跳过 `scripts/sync-mate-exclude.txt` 中登记的 mate 侧独有路径（如 `assistant/config/`、`codingagent/channel/`）。
+3. **Verify** — 在 `mate-campusclaw/` 跑 `mvn compile`（自动找 JDK 21，跳过 checkstyle/spotless）。
+
+> 在 `mate-campusclaw/` 下手写新文件、且与 `modules/*` 没有对应关系时，记得把路径加进 `scripts/sync-mate-exclude.txt`，否则下次 `--delete` 会清掉它。`application.properties` 和 `application-assistant.yml` 是按环境手工维护的，脚本永远不动；只有 `schema.sql` 和 `META-INF/spring/*.imports` 会从 `modules/*` 同步过来。
+
+#### pre-push 自动校验
+
+仓库自带一个 `scripts/git-hooks/pre-push` 钩子，在 `git push` 前自动检查 `mate-campusclaw/` 是否与 `modules/*` 同步——不同步就拦住 push 并提示先跑同步脚本。每次新 clone 仓库后启用一次即可：
+
+```bash
+git config core.hooksPath scripts/git-hooks
+```
+
+只有当本次 push 的提交范围里**真的动了** `modules/`、`mate-campusclaw/` 或 `scripts/sync-mate*` 时，钩子才会跑校验（其他改动直接放行，不会拖慢 push）。如果你确认要先 push、稍后再补同步，可以临时绕过：
+
+```bash
+git push --no-verify
+```
+
 ## 故障排查
 
 ### Maven 构建失败：JDK 版本不兼容

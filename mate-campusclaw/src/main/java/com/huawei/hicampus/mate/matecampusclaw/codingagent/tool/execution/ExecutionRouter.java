@@ -1,8 +1,13 @@
 package com.huawei.hicampus.mate.matecampusclaw.codingagent.tool.execution;
 
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.regex.Pattern;
+
 import com.huawei.hicampus.mate.matecampusclaw.agent.tool.AgentToolResult;
-import com.huawei.hicampus.mate.matecampusclaw.agent.tool.CancellationToken;
 import com.huawei.hicampus.mate.matecampusclaw.agent.tool.AgentToolUpdateCallback;
+import com.huawei.hicampus.mate.matecampusclaw.agent.tool.CancellationToken;
 import com.huawei.hicampus.mate.matecampusclaw.codingagent.config.ToolExecutionProperties;
 import com.huawei.hicampus.mate.matecampusclaw.codingagent.tool.bash.BashTool;
 import com.huawei.hicampus.mate.matecampusclaw.codingagent.tool.edit.EditTool;
@@ -14,17 +19,11 @@ import com.huawei.hicampus.mate.matecampusclaw.codingagent.tool.sandbox.Resource
 import com.huawei.hicampus.mate.matecampusclaw.codingagent.tool.sandbox.SandboxResult;
 import com.huawei.hicampus.mate.matecampusclaw.codingagent.tool.sandbox.SandboxSecurityPolicy;
 import com.huawei.hicampus.mate.matecampusclaw.codingagent.tool.write.WriteTool;
-import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.regex.Pattern;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * 执行路由器 - 根据配置和策略路由到本地或沙箱执行

@@ -1,10 +1,10 @@
 package com.huawei.hicampus.mate.matecampusclaw.agent;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -653,7 +653,7 @@ class AgentLoopIntegrationTest {
 
     private <T> int indexOfFirst(Class<T> type) {
         for (int i = 0; i < events.size(); i++) {
-            if (type.isInstance(events.get(i))) return i;
+            if (type.isInstance(events.get(i))) { return i; }
         }
         return -1;
     }

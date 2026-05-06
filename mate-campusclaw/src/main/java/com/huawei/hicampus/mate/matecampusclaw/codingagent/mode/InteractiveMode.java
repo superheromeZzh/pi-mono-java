@@ -10,7 +10,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executors;
@@ -19,17 +18,12 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
-import com.huawei.hicampus.mate.matecampusclaw.agent.event.AgentEndEvent;
 import com.huawei.hicampus.mate.matecampusclaw.agent.event.AgentEvent;
-import com.huawei.hicampus.mate.matecampusclaw.agent.event.AgentEventListener;
-import com.huawei.hicampus.mate.matecampusclaw.agent.event.AgentStartEvent;
 import com.huawei.hicampus.mate.matecampusclaw.agent.event.MessageEndEvent;
-import com.huawei.hicampus.mate.matecampusclaw.agent.event.MessageStartEvent;
 import com.huawei.hicampus.mate.matecampusclaw.agent.event.MessageUpdateEvent;
 import com.huawei.hicampus.mate.matecampusclaw.agent.event.ToolExecutionEndEvent;
 import com.huawei.hicampus.mate.matecampusclaw.agent.event.ToolExecutionStartEvent;
 import com.huawei.hicampus.mate.matecampusclaw.agent.event.ToolExecutionUpdateEvent;
-import com.huawei.hicampus.mate.matecampusclaw.agent.event.TurnEndEvent;
 import com.huawei.hicampus.mate.matecampusclaw.agent.event.TurnStartEvent;
 import com.huawei.hicampus.mate.matecampusclaw.agent.tool.CancellationToken;
 import com.huawei.hicampus.mate.matecampusclaw.ai.model.ModelRegistry;
@@ -47,13 +41,13 @@ import com.huawei.hicampus.mate.matecampusclaw.codingagent.mode.tui.AssistantMes
 import com.huawei.hicampus.mate.matecampusclaw.codingagent.mode.tui.BashExecutionComponent;
 import com.huawei.hicampus.mate.matecampusclaw.codingagent.mode.tui.CommandOutputComponent;
 import com.huawei.hicampus.mate.matecampusclaw.codingagent.mode.tui.EditorContainer;
+import com.huawei.hicampus.mate.matecampusclaw.codingagent.mode.tui.EditorContainer.CommandSuggestion;
 import com.huawei.hicampus.mate.matecampusclaw.codingagent.mode.tui.FooterComponent;
 import com.huawei.hicampus.mate.matecampusclaw.codingagent.mode.tui.ModelSelectorOverlay;
 import com.huawei.hicampus.mate.matecampusclaw.codingagent.mode.tui.SessionSelectorOverlay;
 import com.huawei.hicampus.mate.matecampusclaw.codingagent.mode.tui.ToolStatusComponent;
 import com.huawei.hicampus.mate.matecampusclaw.codingagent.mode.tui.TreeSelectorOverlay;
 import com.huawei.hicampus.mate.matecampusclaw.codingagent.mode.tui.UserMessageComponent;
-import com.huawei.hicampus.mate.matecampusclaw.codingagent.mode.tui.EditorContainer.CommandSuggestion;
 import com.huawei.hicampus.mate.matecampusclaw.codingagent.prompt.PromptTemplateEntry;
 import com.huawei.hicampus.mate.matecampusclaw.codingagent.session.AgentSession;
 import com.huawei.hicampus.mate.matecampusclaw.codingagent.skill.Skill;
@@ -65,6 +59,9 @@ import com.huawei.hicampus.mate.matecampusclaw.tui.Tui;
 import com.huawei.hicampus.mate.matecampusclaw.tui.component.Container;
 import com.huawei.hicampus.mate.matecampusclaw.tui.component.Text;
 import com.huawei.hicampus.mate.matecampusclaw.tui.terminal.Terminal;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
 
 /**
@@ -82,6 +79,8 @@ import org.springframework.context.ApplicationContext;
  */
 public class InteractiveMode {
 
+    private static final Logger log = LoggerFactory.getLogger(InteractiveMode.class);
+
     private final SlashCommandRegistry commandRegistry;
     private final BashExecutor bashExecutor;
     private final Compactor compactor;
@@ -89,7 +88,7 @@ public class InteractiveMode {
     private final com.huawei.hicampus.mate.matecampusclaw.cron.CronService cronService;
     private final com.huawei.hicampus.mate.matecampusclaw.codingagent.loop.LoopManager loopManager;
     private final ApplicationContext applicationContext;
-    private Object chatMemoryStore; // ChatMemoryStore from assistant module, accessed via reflection
+    private com.huawei.hicampus.mate.matecampusclaw.assistant.memory.ChatMemoryStore chatMemoryStore;
 
     // Scoped models for Ctrl+P cycling (from --models flag)
     private List<Model> scopedModels = List.of();
@@ -187,8 +186,7 @@ public class InteractiveMode {
         // Resolve ChatMemoryStore from Spring context (optional — graceful if DB not configured)
         if (applicationContext != null) {
             try {
-                Class<?> clazz = Class.forName("com.campusclaw.assistant.memory.ChatMemoryStore");
-                chatMemoryStore = applicationContext.getBean(clazz);
+                chatMemoryStore = applicationContext.getBean(com.huawei.hicampus.mate.matecampusclaw.assistant.memory.ChatMemoryStore.class);
             } catch (Exception e) {
                 chatMemoryStore = null; // DB not configured, skip ChatMemory
             }
@@ -559,7 +557,7 @@ public class InteractiveMode {
                     break;
                 }
 
-                if (eofFlag.get()) break;
+                if (eofFlag.get()) { break; }
                 if (input == null || input.trim().isEmpty()) {
                     tui.render();
                     continue;
@@ -581,6 +579,11 @@ public class InteractiveMode {
                 }
                 if ("/tree".equals(trimmed)) {
                     showTreeSelector(session);
+                    tui.render();
+                    continue;
+                }
+                if ("/model".equals(trimmed) || "/models".equals(trimmed)) {
+                    showModelSelector(session);
                     tui.render();
                     continue;
                 }
@@ -714,7 +717,7 @@ public class InteractiveMode {
                 output.append(result.stdout());
             }
             if (result.stderr() != null && !result.stderr().isEmpty()) {
-                if (!output.isEmpty()) output.append("\n");
+                if (!output.isEmpty()) { output.append("\n"); }
                 output.append(result.stderr());
             }
 
@@ -727,7 +730,11 @@ public class InteractiveMode {
     }
 
     private void executePrompt(AgentSession session, String input, AtomicBoolean aborted) {
-        chatContainer.addChild(new UserMessageComponent(input));
+        var userMessageComponent = new UserMessageComponent(input);
+        chatContainer.addChild(userMessageComponent);
+
+        // Snapshot agent history size so we can roll the turn back on abort.
+        int agentMessageCountBefore = session.getAgent().getState().getMessages().size();
 
         // Persist user message to session file
         var sm = session.getSessionManager();
@@ -738,9 +745,9 @@ public class InteractiveMode {
         // Persist user message to ChatMemory (GaussDB)
         if (chatMemoryStore != null && sm != null) {
             try {
-                // ChatMemory persistence disabled - no assistant module
+                chatMemoryStore.append(sm.getSessionId(), List.of(new UserMessage(input, System.currentTimeMillis())));
             } catch (Exception e) {
-                System.err.println("[InteractiveMode] Failed to persist user message to ChatMemory: " + e.getMessage());
+                log.debug("Failed to persist user message to ChatMemory (DB unavailable?): {}", e.getMessage());
             }
         }
 
@@ -773,23 +780,31 @@ public class InteractiveMode {
 
         CompletableFuture<Void> future = session.prompt(input);
 
-        boolean showedAbort = false;
         try {
             future.join();
         } catch (Exception e) {
-            String error = session.getAgent().getState().getError();
-            if (aborted.get()) {
-                chatContainer.addChild(new Text("\033[38;2;204;102;102m Operation aborted\033[0m"));
-                showedAbort = true;
-            } else {
+            if (!aborted.get()) {
+                String error = session.getAgent().getState().getError();
                 chatContainer.addChild(new Text(
                         "\033[38;2;204;102;102m Error: " + (error != null ? error : e.getMessage()) + "\033[0m"));
             }
         }
 
-        // Show abort message if cancellation completed without exception
-        if (aborted.get() && !showedAbort) {
-            chatContainer.addChild(new Text("\033[38;2;204;102;102m Operation aborted\033[0m"));
+        // On abort: remove the turn's chat display, roll back agent history, and
+        // restore the user's input into the editor so they can amend and resubmit.
+        if (aborted.get()) {
+            chatContainer.removeChild(userMessageComponent);
+            if (currentAssistantMessage != null) {
+                chatContainer.removeChild(currentAssistantMessage);
+                currentAssistantMessage = null;
+            }
+            var agentState = session.getAgent().getState();
+            var trimmed = new ArrayList<>(agentState.getMessages());
+            while (trimmed.size() > agentMessageCountBefore) {
+                trimmed.remove(trimmed.size() - 1);
+            }
+            agentState.replaceMessages(trimmed);
+            editorContainer.getEditor().setText(input);
         }
 
         String error = session.getAgent().getState().getError();
@@ -809,7 +824,7 @@ public class InteractiveMode {
                 if (replyText != null && !replyText.isEmpty()) {
                     try {
                         applicationContext.publishEvent(
-                            new com.huawei.hicampus.mate.matecampusclaw.codingagent.channel.AgentResponseEvent(this, replyText));
+                            new com.huawei.hicampus.mate.matecampusclaw.assistant.channel.gateway.AgentResponseEvent(this, replyText));
                     } catch (Exception e) {
                         System.err.println("[InteractiveMode] Failed to publish AgentResponseEvent: " + e.getMessage());
                     }
@@ -818,7 +833,7 @@ public class InteractiveMode {
         }
         currentAssistantMessage = null;
 
-        if (unsub != null) unsub.run();
+        if (unsub != null) { unsub.run(); }
         tui.render();
     }
 
@@ -849,7 +864,7 @@ public class InteractiveMode {
         editorContainer.setBorderForThinkingLevel(next.value());
         // Persist thinking level change
         var sm = session.getSessionManager();
-        if (sm != null) sm.appendThinkingLevelChange(next.value());
+        if (sm != null) { sm.appendThinkingLevelChange(next.value()); }
         showStatus("Thinking: " + next.value());
     }
 
@@ -858,7 +873,7 @@ public class InteractiveMode {
      * @param forward true for next, false for previous
      */
     private void cycleModel(AgentSession session, boolean forward) {
-        if (modelRegistry == null) return;
+        if (modelRegistry == null) { return; }
 
         // Use scoped models if available, otherwise all models
         List<Model> candidates;
@@ -888,7 +903,7 @@ public class InteractiveMode {
                 }
             }
         }
-        if (currentIdx == -1) currentIdx = 0;
+        if (currentIdx == -1) { currentIdx = 0; }
 
         int nextIdx = forward
                 ? (currentIdx + 1) % allModels.size()
@@ -913,7 +928,7 @@ public class InteractiveMode {
 
         // Persist model change
         var sm = session.getSessionManager();
-        if (sm != null) sm.appendModelChange(newModel.provider().value(), newModel.id());
+        if (sm != null) { sm.appendModelChange(newModel.provider().value(), newModel.id()); }
 
         String thinkingStr = newModel.reasoning()
                 ? " • " + session.getAgent().getState().getThinkingLevel().value()
@@ -938,7 +953,7 @@ public class InteractiveMode {
      * Shows the model selector overlay. Replaces the chat area until dismissed.
      */
     private void showModelSelector(AgentSession session) {
-        if (modelRegistry == null) return;
+        if (modelRegistry == null) { return; }
         var currentModel = session.getAgent().getState().getModel();
         var overlay = new ModelSelectorOverlay(modelRegistry, currentModel);
 
@@ -959,7 +974,7 @@ public class InteractiveMode {
                             ? session.getAgent().getState().getThinkingLevel().value() : "off");
             // Persist model change
             var sm = session.getSessionManager();
-            if (sm != null) sm.appendModelChange(model.provider().value(), model.id());
+            if (sm != null) { sm.appendModelChange(model.provider().value(), model.id()); }
 
             dismissOverlay();
             showStatus("切换到 " + model.name());
@@ -1098,7 +1113,7 @@ public class InteractiveMode {
         }
 
         String currentText = editorContainer.getEditor().getText();
-        if (currentText == null) currentText = "";
+        if (currentText == null) { currentText = ""; }
 
         try {
             Path tmpFile = Files.createTempFile("campusclaw-editor-", ".pi.md");
@@ -1203,7 +1218,7 @@ public class InteractiveMode {
                 }
             }
             case MessageUpdateEvent e -> {
-                if (currentAssistantMessage == null) return;
+                if (currentAssistantMessage == null) { return; }
                 if (e.assistantMessageEvent() instanceof AssistantMessageEvent.TextDeltaEvent delta) {
                     currentAssistantMessage.appendText(delta.delta());
                 } else if (e.assistantMessageEvent() instanceof AssistantMessageEvent.ThinkingDeltaEvent thinking) {
@@ -1220,13 +1235,13 @@ public class InteractiveMode {
                     // Persist assistant message to session file
                     if (currentSession != null) {
                         var sm = currentSession.getSessionManager();
-                        if (sm != null) sm.appendMessage(msg);
+                        if (sm != null) { sm.appendMessage(msg); }
                         // Persist assistant message to ChatMemory (GaussDB)
                         if (chatMemoryStore != null) {
                             try {
-                                // ChatMemory persistence disabled - no assistant module
+                                chatMemoryStore.append(sm.getSessionId(), List.of(msg));
                             } catch (Exception ex) {
-                                System.err.println("[InteractiveMode] Failed to persist assistant message to ChatMemory: " + ex.getMessage());
+                                log.debug("Failed to persist assistant message to ChatMemory (DB unavailable?): {}", ex.getMessage());
                             }
                         }
                     }
@@ -1256,10 +1271,10 @@ public class InteractiveMode {
     }
 
     private void checkAutoCompaction(AgentSession session) {
-        if (compactor == null) return;
+        if (compactor == null) { return; }
 
         var model = session.getAgent().getState().getModel();
-        if (model == null || model.contextWindow() <= 0) return;
+        if (model == null || model.contextWindow() <= 0) { return; }
 
         var messages = session.getHistory();
         if (compactor.needsCompaction(messages, model.contextWindow())) {
@@ -1297,7 +1312,7 @@ public class InteractiveMode {
     }
 
     private static String truncateDisplay(String s, int max) {
-        if (s.length() <= max) return s;
+        if (s.length() <= max) { return s; }
         return s.substring(0, max - 3) + "...";
     }
 
@@ -1306,13 +1321,13 @@ public class InteractiveMode {
      * with the file's content. Matches campusclaw TS @file behavior.
      */
     static String expandFileReferences(String input) {
-        if (input == null || !input.contains("@")) return input;
+        if (input == null || !input.contains("@")) { return input; }
 
         var sb = new StringBuilder();
         var tokens = input.split("\\s+");
         boolean first = true;
         for (String token : tokens) {
-            if (!first) sb.append(' ');
+            if (!first) { sb.append(' '); }
             first = false;
 
             if (token.startsWith("@") && token.length() > 1) {
@@ -1340,13 +1355,13 @@ public class InteractiveMode {
      * of being processed as slash commands.
      */
     private boolean isSkillOrTemplate(String input, AgentSession session) {
-        if (input.startsWith("/skill:")) return true;
+        if (input.startsWith("/skill:")) { return true; }
 
         // Check if it matches a prompt template name
         int spaceIdx = input.indexOf(' ');
         String name = spaceIdx >= 0 ? input.substring(1, spaceIdx) : input.substring(1);
         for (PromptTemplateEntry template : session.getPromptTemplates()) {
-            if (template.name().equals(name)) return true;
+            if (template.name().equals(name)) { return true; }
         }
         return false;
     }
@@ -1383,12 +1398,12 @@ public class InteractiveMode {
     }
 
     static int findEscapeSequenceEnd(String data, int start) {
-        if (start + 1 >= data.length()) return start + 1;
+        if (start + 1 >= data.length()) { return start + 1; }
         char second = data.charAt(start + 1);
         if (second == '[') {
             int j = start + 2;
             while (j < data.length()) {
-                if (data.charAt(j) >= 0x40 && data.charAt(j) <= 0x7E) return j + 1;
+                if (data.charAt(j) >= 0x40 && data.charAt(j) <= 0x7E) { return j + 1; }
                 j++;
             }
             return data.length();

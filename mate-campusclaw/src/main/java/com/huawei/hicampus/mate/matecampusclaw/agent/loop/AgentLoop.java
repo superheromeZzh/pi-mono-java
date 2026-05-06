@@ -34,6 +34,8 @@ import com.huawei.hicampus.mate.matecampusclaw.ai.types.Tool;
 import com.huawei.hicampus.mate.matecampusclaw.ai.types.ToolCall;
 import com.huawei.hicampus.mate.matecampusclaw.ai.types.ToolResultMessage;
 
+import reactor.core.publisher.Sinks;
+
 /**
  * Core agent loop that streams assistant responses, executes tools, and manages turn continuation.
  */
@@ -184,11 +186,19 @@ public class AgentLoop {
         );
 
         var stream = streamFunction.stream(model, llmContext, streamOptions);
+
+        // Wire cancellation to immediately complete the upstream Flux, disposing the HTTP
+        // subscription so ESC responds without waiting for the next SSE chunk.
+        var cancelSink = Sinks.<Object>one();
+        signal.onCancel(() -> cancelSink.tryEmitEmpty());
+
         AssistantMessage assistantMessage = null;
         var assistantStarted = false;
 
-        for (var event : stream.asFlux().toIterable()) {
-            if (signal.isCancelled()) break;
+        for (var event : stream.asFlux()
+                .takeUntilOther(cancelSink.asMono())
+                .toIterable()) {
+            if (signal.isCancelled()) { break; }
             var currentMessage = extractAssistantMessage(event);
             if (!assistantStarted) {
                 listener.onEvent(new MessageStartEvent(currentMessage));
@@ -198,6 +208,26 @@ public class AgentLoop {
                 listener.onEvent(new MessageUpdateEvent(currentMessage, event));
             }
             assistantMessage = currentMessage;
+        }
+
+        if (signal.isCancelled()) {
+            // Synthesize an ABORTED message so the outer loop terminates cleanly
+            // instead of falling through to result().block() (which would hang on the torn-down stream).
+            var aborted = new AssistantMessage(
+                assistantMessage != null ? assistantMessage.content() : List.of(),
+                assistantMessage != null ? assistantMessage.api() : model.api().value(),
+                assistantMessage != null ? assistantMessage.provider() : model.provider().value(),
+                assistantMessage != null ? assistantMessage.model() : model.id(),
+                assistantMessage != null ? assistantMessage.responseId() : null,
+                assistantMessage != null ? assistantMessage.usage() : null,
+                StopReason.ABORTED,
+                null,
+                System.currentTimeMillis()
+            );
+            if (!assistantStarted) {
+                listener.onEvent(new MessageStartEvent(aborted));
+            }
+            return aborted;
         }
 
         if (assistantMessage == null) {
@@ -280,7 +310,7 @@ public class AgentLoop {
     private List<Message> drainSteeringMessages() {
         if (getSteeringMessages != null) {
             var msgs = getSteeringMessages.get();
-            if (msgs != null && !msgs.isEmpty()) return msgs;
+            if (msgs != null && !msgs.isEmpty()) { return msgs; }
         }
         return steeringQueue.drain();
     }
@@ -288,7 +318,7 @@ public class AgentLoop {
     private List<Message> drainFollowUpMessages() {
         if (getFollowUpMessages != null) {
             var msgs = getFollowUpMessages.get();
-            if (msgs != null && !msgs.isEmpty()) return msgs;
+            if (msgs != null && !msgs.isEmpty()) { return msgs; }
         }
         return followUpQueue.drain();
     }

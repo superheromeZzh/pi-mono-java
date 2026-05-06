@@ -100,7 +100,7 @@ public final class MimeDetector {
     public static String fromExtension(Path path) {
         String name = path.getFileName().toString();
         int dot = name.lastIndexOf('.');
-        if (dot < 0) return "application/octet-stream";
+        if (dot < 0) { return "application/octet-stream"; }
         String ext = name.substring(dot + 1).toLowerCase();
         return EXTENSION_MAP.getOrDefault(ext, "application/octet-stream");
     }
