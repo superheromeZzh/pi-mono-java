@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026-2026. All rights reserved.
+ */
+
 package com.campusclaw.codingagent.command.builtin;
 
 import com.campusclaw.ai.types.Provider;

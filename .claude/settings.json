@@ -1,0 +1,20 @@
+{
+  "env": {
+    "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"
+  },
+  "hooks": {
+      "Stop": [                                                                                                         
+        {                                                
+          "matcher": "",
+          "hooks": [
+            {
+              "type": "command",
+              "command": "scripts/claude-hooks/checkstyle-on-stop.sh",
+              "timeout": 180,                                                                                           
+              "statusMessage": "Running checkstyle on changed Java files..."
+            }                                                                                                           
+          ]                                              
+        }                                                                                                               
+      ]
+    }   
+}
