@@ -392,6 +392,7 @@ public class ChatWebSocketHandler {
     // own cadence.
     // =========================================================================
 
+    @SuppressWarnings("checkstyle:huge_cyclomatic_complexity")
     private String serializeEvent(AgentEvent event, String conversationId) {
         try {
             if (event instanceof AgentStartEvent) {

@@ -163,6 +163,7 @@ public class AgentLoop {
         }
     }
 
+    @SuppressWarnings("checkstyle:huge_cyclomatic_complexity")
     private AssistantMessage invokeModel(AgentContext context, AgentEventListener listener, CancellationToken signal) {
         var transformedMessages = transformMessages(context.messages(), signal);
         var llmMessages = convertToLlm.convert(transformedMessages);

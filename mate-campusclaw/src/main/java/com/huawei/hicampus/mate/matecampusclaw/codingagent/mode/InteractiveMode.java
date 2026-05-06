@@ -184,6 +184,7 @@ public class InteractiveMode {
     /**
      * Runs the full-screen interactive REPL.
      */
+    @SuppressWarnings("checkstyle:huge_cyclomatic_complexity")
     public void run(AgentSession session, Terminal terminal) {
         Objects.requireNonNull(session, "session");
         Objects.requireNonNull(terminal, "terminal");
@@ -880,6 +881,7 @@ public class InteractiveMode {
         }
     }
 
+    @SuppressWarnings("checkstyle:huge_cyclomatic_complexity")
     private void executePrompt(AgentSession session, String input, AtomicBoolean aborted) {
         var userMessageComponent = new UserMessageComponent(input);
         chatContainer.addChild(userMessageComponent);
@@ -1386,6 +1388,7 @@ public class InteractiveMode {
         lastStatusComponent = text;
     }
 
+    @SuppressWarnings("checkstyle:huge_cyclomatic_complexity")
     void handleEvent(AgentEvent event) {
         switch (event) {
             case TurnStartEvent e -> {

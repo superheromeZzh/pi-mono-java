@@ -395,6 +395,7 @@ public class AgentSession {
      * - Fuzzy substring: "sonnet" matches "claude-sonnet-4-20250514"
      * - Thinking suffix: "sonnet:high" (thinking level is stripped, not applied here)
      */
+    @SuppressWarnings("checkstyle:huge_cyclomatic_complexity")
     Model resolveModel(String modelId) {
         // Strip thinking level suffix (e.g., "sonnet:high" → "sonnet")
         int colonIdx = modelId.indexOf(':');

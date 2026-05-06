@@ -83,6 +83,7 @@ public class GoogleGenerativeAIProvider implements ApiProvider {
         return eventStream;
     }
 
+    @SuppressWarnings("checkstyle:huge_cyclomatic_complexity")
     private void executeStream(
             Model model,
             Context context,

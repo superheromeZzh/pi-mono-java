@@ -169,6 +169,7 @@ public class Autocomplete implements Component, Focusable {
         return result;
     }
 
+    @SuppressWarnings("checkstyle:huge_cyclomatic_complexity")
     @Override
     public void handleInput(String data) {
         // Tab — trigger or cycle completions
@@ -296,6 +297,7 @@ public class Autocomplete implements Component, Focusable {
     /**
      * Computes file path suggestions for the given partial path.
      */
+    @SuppressWarnings("checkstyle:huge_cyclomatic_complexity")
     static List<String> computeFileSuggestions(String partial) {
         if (partial == null || partial.isEmpty()) {
             partial = ".";

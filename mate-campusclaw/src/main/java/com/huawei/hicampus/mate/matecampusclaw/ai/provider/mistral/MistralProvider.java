@@ -88,6 +88,7 @@ public class MistralProvider implements ApiProvider {
         return eventStream;
     }
 
+    @SuppressWarnings("checkstyle:huge_cyclomatic_complexity")
     private void executeStream(
             Model model,
             Context context,
@@ -347,6 +348,7 @@ public class MistralProvider implements ApiProvider {
                 System.currentTimeMillis());
     }
 
+    @SuppressWarnings("checkstyle:huge_cyclomatic_complexity")
     private ObjectNode buildRequestBody(Model model, Context context, @Nullable SimpleStreamOptions options) {
         var body = MAPPER.createObjectNode();
         body.put("model", model.id());

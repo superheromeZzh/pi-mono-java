@@ -251,6 +251,7 @@ public class CampusClawCommand implements Callable<Integer> {
             arity = "0..*")
     List<String> promptArgs;
 
+    @SuppressWarnings("checkstyle:huge_cyclomatic_complexity")
     @Override
     public Integer call() {
         // --proxy: explicit proxy overrides auto-detection from main()
@@ -706,6 +707,7 @@ public class CampusClawCommand implements Callable<Integer> {
      * Handles package management subcommands (install, remove, update, list, config).
      * Aligned with campusclaw's package management system.
      */
+    @SuppressWarnings("checkstyle:huge_cyclomatic_complexity")
     private Integer handlePackageCommand(String command, List<String> args) {
         com.campusclaw.codingagent.config.AppPaths.ensureUserDirs();
 
@@ -785,6 +787,7 @@ public class CampusClawCommand implements Callable<Integer> {
     /**
      * Handles skill management subcommands: install, list, remove, link, update.
      */
+    @SuppressWarnings("checkstyle:huge_cyclomatic_complexity")
     private Integer handleSkillCommand(List<String> args) {
         com.campusclaw.codingagent.config.AppPaths.ensureUserDirs();
 

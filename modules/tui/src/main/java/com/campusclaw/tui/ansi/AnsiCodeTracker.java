@@ -28,6 +28,7 @@ class AnsiCodeTracker {
     private String fgColor; // e.g. "31" or "38;5;240" or "38;2;128;0;255"
     private String bgColor; // e.g. "41" or "48;5;240" or "48;2;128;0;255"
 
+    @SuppressWarnings("checkstyle:huge_cyclomatic_complexity")
     void process(String ansiCode) {
         if (!ansiCode.endsWith("m")) {
             return;

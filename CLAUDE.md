@@ -91,6 +91,9 @@ Key runtime concepts:
 ### Imports（Spotless 自动处理）
 分组顺序 `java`, `javax`, `com`, `org`, *，未使用的 import 会被自动删除。
 
+### 圈复杂度（CC ≤ 15）
+方法的 cyclomatic complexity 不得超过 15（`switchBlockAsSingleDecisionPoint=true`，整段 switch 算 1 个决策点）。超阈值的方法必须拆分提取，**不要新增 `@SuppressWarnings("checkstyle:huge_cyclomatic_complexity")`**——存量带此注解的是历史欠债，等待重构，不是范例。
+
 ### 写完 Java 之后
 Stop 钩子会自动跑 `spotless:check` + `checkstyle:check`。主动修复：
 

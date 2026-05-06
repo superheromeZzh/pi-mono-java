@@ -98,6 +98,7 @@ public class MarkdownComponent implements Component {
     private static final Pattern BLOCKQUOTE_PATTERN = Pattern.compile("^>\\s?(.*)$");
     private static final Pattern TABLE_SEPARATOR_PATTERN = Pattern.compile("^\\|?[\\s-:|]+\\|?$");
 
+    @SuppressWarnings("checkstyle:huge_cyclomatic_complexity")
     private List<String> renderMarkdown(String markdown, int width) {
         String[] rawLines = markdown.split("\n", -1);
         List<String> output = new ArrayList<>();
@@ -345,6 +346,7 @@ public class MarkdownComponent implements Component {
      * Renders a markdown table with box-drawing borders.
      * Returns the index after the last consumed line.
      */
+    @SuppressWarnings("checkstyle:huge_cyclomatic_complexity")
     private int renderTable(String[] rawLines, int startIdx, int width, List<String> out) {
         int i = startIdx;
 
