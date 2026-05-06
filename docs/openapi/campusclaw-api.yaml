@@ -9,11 +9,12 @@ info:
     CampusClaw 的 HTTP Server 模式对外提供一组 REST 端点，用于流式对话、会话
     管理以及技能（skill）包管理。
 
-    **当前覆盖范围**：本文档只正式收录 **skill 管理** 相关端点
+    **当前覆盖范围**：本文档收录 **会话浏览**（`/api/conversations`、
+    `/api/conversations/{id}`）和 **skill 管理** 相关端点
     （`/api/skills`、`/api/skills/{name}`、`/api/skills/{name}/enable`、
     `/api/skills/{name}/disable`）。WebSocket 通道（`/api/ws/chat`）定义
-    在 `docs/asyncapi/chat-ws.yaml` 中；其他对话端点（`POST /api/chat`、
-    `DELETE /api/conversations/{id}`）尚未规范化，后续会迁移到本文件。
+    在 `docs/asyncapi/chat-ws.yaml` 中；流式对话端点（`POST /api/chat`）
+    尚未规范化，后续会迁移到本文件。
 
     **实现说明**：服务端是一个 Reactor Netty 实例，通过
     `modules/coding-agent-cli/.../ServerMode.java` 中的 `RouterFunctions`
@@ -37,6 +38,15 @@ servers:
         default: "3000"
 
 tags:
+  - name: conversations
+    description: |
+      浏览服务端持久化的会话历史。每条会话对应
+      `~/.campusclaw/agent/sessions/--<encoded-cwd>--/<id>.jsonl` 中的一个
+      JSONL 文件。**该列表是按服务进程的工作目录划分的** —— 不同
+      `user.dir` 下启动的 server 看到的列表彼此独立。
+
+      列表本身不要求建立 WS 连接，所以前端可以"打开页面就看到所有历史会话
+      并选择打开"，再用对应的 `conversation_id` 通过 `/api/ws/chat` 恢复。
   - name: skills
     description: |
       管理用户安装的技能（skill）包。每个 skill 是
@@ -57,6 +67,84 @@ tags:
       会沿用之前的禁用状态。
 
 paths:
+  /api/conversations:
+    get:
+      tags: [conversations]
+      summary: 列出已持久化的会话
+      operationId: listConversations
+      description: |
+        扫描服务端的 JSONL 会话目录并返回所有可恢复的会话条目。每条会话
+        会携带从 JSONL 解析出的：
+          - `id` —— 文件名（去掉 `.jsonl`），即客户端用来 resume 的
+            `conversation_id`
+          - `title` —— 第一条 user 消息的首个 `text` 内容（最多 80 字符），
+            没有 user 消息时回退为 `id`
+          - `messageCount` —— `type:"message"` 条目数量
+          - `createdAt` —— 会话 header 行的 ISO-8601 时间戳
+          - `updatedAt` —— JSONL 文件的最后修改时间（ISO-8601）
+
+        结果按 `updatedAt` 倒序排列。当持久化目录尚未创建（从未发过任何
+        prompt）时返回空数组。
+      responses:
+        "200":
+          description: 当前 cwd 下的全部会话条目。
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [conversations]
+                properties:
+                  conversations:
+                    type: array
+                    items: { $ref: "#/components/schemas/ConversationSummary" }
+              examples:
+                two-conversations:
+                  value:
+                    conversations:
+                      - id: f345b3be8453
+                        title: 用 Java 写一个快速排序
+                        messageCount: 4
+                        createdAt: "2026-05-04T10:23:14Z"
+                        updatedAt: "2026-05-04T10:24:55Z"
+                      - id: 0b0405bd448a
+                        title: 0b0405bd448a
+                        messageCount: 0
+                        createdAt: "2026-05-03T22:11:00Z"
+                        updatedAt: "2026-05-03T22:11:00Z"
+
+  /api/conversations/{id}:
+    delete:
+      tags: [conversations]
+      summary: 移除指定会话（仅内存层）
+      operationId: removeConversation
+      description: |
+        从内存中的 `SessionPool` 移除指定 `conversation_id` 对应的活跃
+        session（包含中断写者），但**不会**删除磁盘上的 JSONL 文件。也就是
+        说移除后用户用同一 `conversation_id` 重连仍能从磁盘 resume。
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+          description: 会话 ID（即 JSONL 文件名）。
+      responses:
+        "200":
+          description: 已从内存池中移除。
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message: { type: string }
+        "404":
+          description: 没有匹配的活跃会话（也可能磁盘上仍存在 JSONL）。
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error: { type: string }
+
   /api/skills:
     post:
       tags: [skills]
@@ -370,6 +458,32 @@ paths:
 
 components:
   schemas:
+    ConversationSummary:
+      type: object
+      description: "`GET /api/conversations` 返回的单条会话条目。"
+      required: [id, title, messageCount, createdAt, updatedAt]
+      properties:
+        id:
+          type: string
+          description: 会话 ID。前端把这个值传给 `/api/ws/chat?conversation_id=<id>` 即可恢复。
+        title:
+          type: string
+          description: |
+            第一条 user 消息的 text 内容（折叠空白，截断到 80 字符）。
+            没有 user 消息时回退为 `id`，便于前端始终能渲染一条可点项。
+        messageCount:
+          type: integer
+          minimum: 0
+          description: JSONL 中 `type:"message"` 条目的数量。
+        createdAt:
+          type: string
+          format: date-time
+          description: 会话 header 行写入时的 ISO-8601 时间。
+        updatedAt:
+          type: string
+          format: date-time
+          description: JSONL 文件最后修改时间，按此字段倒序排列结果。
+
     SkillInfo:
       type: object
       description: "`GET /api/skills` 返回的单个已安装 skill 条目。"

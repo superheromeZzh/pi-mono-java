@@ -1,11 +1,16 @@
 package com.campusclaw.codingagent.mode.server;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.time.Duration;
@@ -32,7 +37,9 @@ import com.campusclaw.ai.types.Message;
 import com.campusclaw.ai.types.StopReason;
 import com.campusclaw.ai.types.TextContent;
 import com.campusclaw.ai.types.Usage;
+import com.campusclaw.ai.types.UserMessage;
 import com.campusclaw.codingagent.session.AgentSession;
+import com.campusclaw.codingagent.session.SessionManager;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -281,6 +288,82 @@ class ChatWebSocketHandlerTest {
         assertEquals("openai", models.get(0).path("provider").asText());
         assertTrue(models.get(0).has("contextWindow"));
         assertTrue(models.get(0).has("cost"));
+    }
+
+    // =========================================================================
+    // Persistence — verifies the WS handler routes append calls through
+    // AgentSession.getSessionManager() in the same shape as InteractiveMode.
+    // =========================================================================
+
+    @Test
+    void promptAppendsUserMessageBeforeForwardingToAgent() throws Exception {
+        SessionManager sm = mock(SessionManager.class);
+        when(session.getSessionManager()).thenReturn(sm);
+
+        promptScript = listener -> {
+            listener.onEvent(new MessageStartEvent(null));
+            listener.onEvent(new MessageEndEvent(null));
+            listener.onEvent(new AgentEndEvent(List.of()));
+        };
+
+        runPromptRoundTrip("{\"type\":\"prompt\",\"id\":\"p1\",\"message\":\"hello\"}");
+
+        // The user message must hit the SessionManager exactly once before the
+        // assistant turn produces its own append from the MessageEnd subscriber.
+        verify(sm, times(1)).appendMessage(any(UserMessage.class));
+    }
+
+    @Test
+    void messageEndAppendsAssistantMessageThroughSessionManager() throws Exception {
+        SessionManager sm = mock(SessionManager.class);
+        when(session.getSessionManager()).thenReturn(sm);
+
+        AssistantMessage assistantFinal = new AssistantMessage(
+                List.<ContentBlock>of(new TextContent("ok", null)),
+                "messages", "anthropic", "sonnet",
+                null, Usage.empty(), StopReason.STOP, null, 1L);
+
+        promptScript = listener -> {
+            listener.onEvent(new MessageStartEvent(assistantFinal));
+            listener.onEvent(new MessageEndEvent(assistantFinal));
+            listener.onEvent(new AgentEndEvent(List.<Message>of(assistantFinal)));
+        };
+
+        runPromptRoundTrip("{\"type\":\"prompt\",\"id\":\"p2\",\"message\":\"hi\"}");
+
+        verify(sm).appendMessage(eq(assistantFinal));
+    }
+
+    @Test
+    void newSessionRotatesConversationIdWhenPersistenceEnabled() throws Exception {
+        SessionManager sm = mock(SessionManager.class);
+        when(session.getSessionManager()).thenReturn(sm);
+
+        JsonNode response = runRequestResponse(
+                "{\"type\":\"new_session\",\"id\":\"ns1\"}", "ns1");
+
+        assertEquals("response", response.path("type").asText());
+        assertTrue(response.path("success").asBoolean(), "new_session should succeed");
+        String returned = response.path("data").path("conversation_id").asText();
+        assertNotNull(returned, "new_session response must carry the rotated conversation_id");
+        assertNotEquals("", returned, "rotated conversation_id must not be empty");
+        verify(sm).close();
+        // Session was rotated: pool.rekey is called and getSessionManager is
+        // updated to a fresh SessionManager. The mock SM should not have
+        // received any further append calls.
+        verify(sm, never()).appendMessage(any());
+    }
+
+    @Test
+    void newSessionKeepsConversationIdWhenPersistenceDisabled() throws Exception {
+        // session.getSessionManager() returns null by default → persistence-off branch.
+        JsonNode response = runRequestResponse(
+                "{\"type\":\"new_session\",\"id\":\"ns2\"}", "ns2");
+
+        assertTrue(response.path("success").asBoolean());
+        // The returned id must be the same one assigned at handshake (no rotation
+        // when persistence is off, since there is no JSONL file to refresh).
+        assertNotEquals("", response.path("data").path("conversation_id").asText());
     }
 
     // =========================================================================

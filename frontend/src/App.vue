@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import { useChatWs } from './composables/useChatWs';
 import MessageList from './components/MessageList.vue';
+import ConversationsPanel from './components/ConversationsPanel.vue';
 import type { ThinkingLevel } from './types/ws';
 
 const chat = useChatWs();
@@ -70,7 +71,36 @@ function onConnect() {
 }
 function onDisconnect() {
   chat.disconnect();
+  // Refresh the list so a just-finished conversation appears at the top.
+  void chat.listConversations(wsUrl.value);
 }
+
+/** Picker click → set the resume id and connect immediately. */
+function onOpenConversation(id: string) {
+  convInput.value = id;
+  chat.connect(wsUrl.value, id);
+}
+
+/** Picker "+ New conversation" → connect with no id so the server mints one. */
+function onNewConversation() {
+  convInput.value = '';
+  chat.connect(wsUrl.value, null);
+}
+
+function onRefreshConversations() {
+  void chat.listConversations(wsUrl.value);
+}
+
+onMounted(() => {
+  // Pre-load the picker the moment the page opens, before any WS handshake.
+  void chat.listConversations(wsUrl.value);
+});
+
+// Re-pull the list whenever the user retypes the WS URL — they may be
+// pointing the frontend at a different server.
+watch(wsUrl, (next) => {
+  if (next) void chat.listConversations(next);
+});
 function onPrompt() {
   const t = promptText.value.trim();
   if (!t) return;
@@ -127,12 +157,25 @@ function logPrefix(dir: 'in' | 'out' | 'err' | 'info') {
     <span class="status">{{ streamStatus }}</span>
     <span class="spacer"></span>
     <button @click="chat.getState()" :disabled="!chat.connected.value">Refresh</button>
+    <button
+      @click="chat.getHistory()"
+      :disabled="!chat.connected.value"
+      title="Re-pull persisted history from the server and rebuild the chat view"
+    >Get history</button>
     <button class="danger" @click="chat.newSession()" :disabled="!chat.connected.value">New session</button>
     <span class="conn-text">{{ connStatus }}</span>
   </header>
 
   <main class="layout">
-    <MessageList />
+    <ConversationsPanel
+      v-if="!chat.connected.value"
+      :conversations="chat.conversations.value"
+      :loading="chat.conversationsLoading.value"
+      @open="onOpenConversation"
+      @new="onNewConversation"
+      @refresh="onRefreshConversations"
+    />
+    <MessageList v-else />
 
     <aside>
       <h3>Connection</h3>

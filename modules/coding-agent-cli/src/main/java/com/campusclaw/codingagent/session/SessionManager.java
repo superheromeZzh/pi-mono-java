@@ -20,6 +20,7 @@ import com.campusclaw.codingagent.config.AppPaths;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectWriter;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,6 +37,17 @@ public class SessionManager {
     private static final Logger log = LoggerFactory.getLogger(SessionManager.class);
 
     private final ObjectMapper mapper;
+    /**
+     * Typed writer for {@link Message}. {@link Message} carries
+     * {@code @JsonTypeInfo(property = "role")}, but when a Message is embedded
+     * inside a {@code Map<String, Object>} Jackson sees the value's static
+     * type as {@code Object} and silently drops the {@code "role"} field.
+     * Pre-serializing the Message through this writer and embedding the
+     * resulting {@link com.fasterxml.jackson.databind.JsonNode} preserves the
+     * discriminator so {@link #loadSession(Path)} can reconstruct the message
+     * polymorphically.
+     */
+    private final ObjectWriter messageWriter;
     private Path sessionFile;
     private String sessionId;
     private String lastEntryId;
@@ -44,13 +56,25 @@ public class SessionManager {
     public SessionManager() {
         this.mapper = new ObjectMapper();
         this.mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
+        this.messageWriter = this.mapper.writerFor(Message.class);
     }
 
     /**
-     * Creates a new session file in the sessions directory for the given cwd.
+     * Creates a new session file in the sessions directory for the given cwd,
+     * with a generated 8-char session ID.
      */
     public void createSession(String cwd) {
-        this.sessionId = UUID.randomUUID().toString().substring(0, 8);
+        createSession(cwd, UUID.randomUUID().toString().substring(0, 8));
+    }
+
+    /**
+     * Creates a new session file in the sessions directory for the given cwd
+     * using a caller-supplied session ID. The JSONL filename will be
+     * {@code <sessionId>.jsonl}, allowing external IDs (e.g. WS conversation_id)
+     * to map 1:1 to a session file.
+     */
+    public void createSession(String cwd, String sessionId) {
+        this.sessionId = sessionId;
         this.lastEntryId = null;
 
         // Encode cwd into safe directory name: ~/.campusclaw/agent/sessions/--path--/
@@ -147,6 +171,12 @@ public class SessionManager {
             if (entryId != null) { lastEntryId = entryId; }
 
             if ("message".equals(entry.get("type")) && entry.containsKey("message")) {
+                Object raw = entry.get("message");
+                if (raw instanceof Map<?, ?> m) {
+                    @SuppressWarnings("unchecked")
+                    Map<String, Object> mutable = (Map<String, Object>) m;
+                    backfillRoleIfMissing(mutable);
+                }
                 try {
                     String msgJson = mapper.writeValueAsString(entry.get("message"));
                     Message msg = mapper.readValue(msgJson, Message.class);
@@ -161,6 +191,43 @@ public class SessionManager {
     }
 
     /**
+     * Legacy session files written before the role-discriminator fix store
+     * {@code message} objects without a {@code "role"} field, because the old
+     * {@code appendMessage} put the {@link Message} into a {@code Map<String, Object>}
+     * which suppresses Jackson's {@code @JsonTypeInfo}. Without {@code role} the
+     * sealed-interface deserializer rejects the entry and the whole message
+     * gets silently dropped on resume.
+     *
+     * <p>Inspect the surviving fields and inject the most-likely role so old
+     * conversations can still be reopened. The heuristic is conservative:
+     * {@code toolCallId+toolName} → toolResult, any assistant-only metadata
+     * → assistant, otherwise → user.
+     */
+    static void backfillRoleIfMissing(Map<String, Object> message) {
+        if (message.containsKey("role")) {
+            return;
+        }
+        message.put("role", inferRole(message));
+    }
+
+    /** Inference rule shared with {@link ConversationLister}. */
+    static String inferRole(Map<String, Object> message) {
+        if (message.containsKey("toolCallId") && message.containsKey("toolName")) {
+            return "toolResult";
+        }
+        if (message.containsKey("api")
+                || message.containsKey("provider")
+                || message.containsKey("model")
+                || message.containsKey("responseId")
+                || message.containsKey("usage")
+                || message.containsKey("stopReason")
+                || message.containsKey("errorMessage")) {
+            return "assistant";
+        }
+        return "user";
+    }
+
+    /**
      * Appends a message entry to the session file.
      */
     public void appendMessage(Message message) {
@@ -172,7 +239,12 @@ public class SessionManager {
         entry.put("id", entryId);
         entry.put("parentId", lastEntryId);
         entry.put("timestamp", Instant.now().toString());
-        entry.put("message", message);
+        try {
+            entry.put("message", mapper.readTree(messageWriter.writeValueAsString(message)));
+        } catch (JsonProcessingException e) {
+            log.warn("Failed to serialize message; skipping append", e);
+            return;
+        }
         appendRaw(entry);
         lastEntryId = entryId;
     }

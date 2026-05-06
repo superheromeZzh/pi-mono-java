@@ -2,6 +2,7 @@ import { reactive, ref } from 'vue';
 import type {
   AssistantMessage,
   ClientCommand,
+  ConversationSummary,
   GetStateData,
   ListModelsData,
   LogEntry,
@@ -48,6 +49,16 @@ const eventLog = ref<LogEntry[]>([]);
 const availableModels = ref<ModelInfo[]>([]);
 const modelsFiltered = ref(false);
 
+// Persisted conversation list, fetched over plain HTTP (no WS required) so
+// the picker is browsable before the user picks one to open.
+const conversations = ref<ConversationSummary[]>([]);
+const conversationsLoading = ref(false);
+
+// Remember the WS URL of the most recent connect so server-side actions
+// (e.g. new_session rotates the id) can refresh the conversation list
+// without forcing every caller to thread the URL back through.
+const lastWsUrl = ref<string | null>(null);
+
 // Index into `messages` for the assistant bubble currently being updated by
 // message_update frames. -1 means no active assistant bubble.
 let currentAssistantIdx = -1;
@@ -81,6 +92,7 @@ function connect(url: string, convId?: string | null) {
     logEntry('info', '[already connected]');
     return;
   }
+  lastWsUrl.value = url;
   const full = convId ? `${url}?conversation_id=${encodeURIComponent(convId)}` : url;
   logEntry('info', `[connect] ${full}`);
   let socket: WebSocket;
@@ -96,7 +108,14 @@ function connect(url: string, convId?: string | null) {
     logEntry('info', '[open]');
     // Pull fresh state so UI shows model / thinking / conv immediately,
     // then ask for the available-model catalogue so the picker can render.
-    void getState();
+    // If the resumed session has prior messages on disk, pull them too so
+    // the chat view rebuilds without a manual button click.
+    void (async () => {
+      const state = await getState();
+      if (state && state.messageCount > 0) {
+        await getHistory();
+      }
+    })();
     void listModels();
   };
   socket.onclose = (ev) => {
@@ -183,11 +202,23 @@ async function abort() {
 
 async function newSession() {
   try {
-    await send({ type: 'new_session' }, true);
+    const data = await send<{ conversation_id?: string }>({ type: 'new_session' }, true);
     messages.value = [];
     for (const k of Object.keys(tools)) delete tools[k];
     currentAssistantIdx = -1;
+    // When server-side persistence is enabled, new_session rotates the
+    // conversation_id so the cleared session writes to a fresh JSONL file.
+    // Pull the rotated id straight from the response so the sidebar (and any
+    // bookmarked URL) tracks the live id without waiting for agent_start.
+    if (data && data.conversation_id) {
+      conversationId.value = data.conversation_id;
+    }
     await getState();
+    // The fresh JSONL file should appear in the picker the next time the
+    // user disconnects, so refresh the cached list now.
+    if (lastWsUrl.value) {
+      void listConversations(lastWsUrl.value);
+    }
   } catch (e) {
     logEntry('err', `[new_session rejected] ${(e as Error).message}`);
   }
@@ -231,6 +262,49 @@ async function setThinking(level: ThinkingLevel) {
   }
 }
 
+/**
+ * Translates the WS URL the user typed in the sidebar to the HTTP base used
+ * by the conversation-list endpoint. We swap the scheme (ws→http / wss→https)
+ * and drop the WS path so REST handlers under the same host:port can resolve.
+ *
+ * Falls back to the input string unchanged if the URL is unparseable, which
+ * makes the picker quietly skip listing rather than throwing.
+ */
+function wsToHttpBase(wsUrl: string): string {
+  try {
+    const u = new URL(wsUrl);
+    const httpProto = u.protocol === 'wss:' ? 'https:' : 'http:';
+    return `${httpProto}//${u.host}`;
+  } catch {
+    return wsUrl;
+  }
+}
+
+/**
+ * Fetches the persisted conversation list from
+ * {@code GET /api/conversations}. Stores the result on
+ * {@link conversations} for the picker UI; safe to call before any WS
+ * connection has been opened.
+ */
+async function listConversations(wsUrl: string) {
+  const base = wsToHttpBase(wsUrl);
+  conversationsLoading.value = true;
+  try {
+    const resp = await fetch(`${base}/api/conversations`);
+    if (!resp.ok) {
+      logEntry('err', `[list_conversations failed] HTTP ${resp.status}`);
+      return;
+    }
+    const body = (await resp.json()) as { conversations?: ConversationSummary[] };
+    conversations.value = Array.isArray(body.conversations) ? body.conversations : [];
+    logEntry('info', `[conversations] ${conversations.value.length} entries`);
+  } catch (e) {
+    logEntry('err', `[list_conversations error] ${(e as Error).message}`);
+  } finally {
+    conversationsLoading.value = false;
+  }
+}
+
 async function getState() {
   try {
     const data = await send<GetStateData>({ type: 'get_state' }, true);
@@ -240,8 +314,50 @@ async function getState() {
       thinkingLevel.value = data.thinkingLevel ?? 'medium';
       isStreaming.value = !!data.isStreaming;
     }
+    return data;
   } catch (e) {
     logEntry('err', `[get_state failed] ${(e as Error).message}`);
+    return undefined;
+  }
+}
+
+/**
+ * Pull the full message history from the server and rebuild the chat view.
+ *
+ * <p>After a reconnect with a known {@code conversation_id}, the server will
+ * have restored the JSONL-persisted history into the in-memory session, but
+ * the frontend's {@code messages} array starts empty. Calling this rebuilds
+ * the user/assistant bubbles so the chat looks like the user never left.
+ *
+ * <p>{@link ToolResultMessage} entries are skipped: tool execution state is
+ * reconstructed from {@code tool_start/tool_update/tool_end} events during a
+ * live turn, not from past tool result messages, so replaying them as
+ * standalone bubbles would be misleading.
+ */
+async function getHistory() {
+  try {
+    const data = await send<{ messages: Message[] }>({ type: 'get_history' }, true);
+    if (!data || !Array.isArray(data.messages)) return;
+    const rebuilt: UiMessage[] = [];
+    for (const msg of data.messages) {
+      if (msg.role === 'user') {
+        const text = Array.isArray(msg.content)
+          ? msg.content
+              .filter((b): b is { type: 'text'; text: string } =>
+                !!b && (b as { type?: string }).type === 'text')
+              .map((b) => b.text)
+              .join('')
+          : '';
+        rebuilt.push({ kind: 'user', text, timestamp: msg.timestamp ?? Date.now() });
+      } else if (isAssistant(msg)) {
+        rebuilt.push({ kind: 'assistant', message: msg });
+      }
+    }
+    messages.value = rebuilt;
+    currentAssistantIdx = -1;
+    logEntry('info', `[history loaded] ${rebuilt.length} messages`);
+  } catch (e) {
+    logEntry('err', `[get_history failed] ${(e as Error).message}`);
   }
 }
 
@@ -422,6 +538,8 @@ export function useChatWs() {
     tools, // reactive; components read by id
     availableModels,
     modelsFiltered,
+    conversations,
+    conversationsLoading,
 
     // actions
     connect,
@@ -433,6 +551,8 @@ export function useChatWs() {
     setModel,
     setThinking,
     getState,
+    getHistory,
     listModels,
+    listConversations,
   };
 }
