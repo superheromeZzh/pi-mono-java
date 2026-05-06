@@ -55,9 +55,50 @@ Key runtime concepts:
 ## Conventions to preserve
 
 - Java 21 features are in active use (records, sealed interfaces, pattern matching) — don't downgrade.
-- Spotless is enforced via `spotless-maven-plugin`; run `./mvnw spotless:apply` before committing or CI-equivalent checks will diverge.
+- Spotless is enforced via `spotless-maven-plugin` with **palantirJavaFormat 2.66.0**; run `./mvnw spotless:apply` before committing or CI-equivalent checks will diverge. **Requires JDK 21** (palantir 不兼容 JDK 25 的 javac 内部 API)。
 - Tests use JUnit 5 + Mockito + OkHttp `MockWebServer` (for provider integration tests).
 - User config lives at `~/.campusclaw/settings.json` — not `~/.pi/` despite the legacy `.pi/` dir in the repo.
+
+## Coding conventions enforced by build
+
+每条规则都是 **build-failing**：违规会让 `./mvnw validate`（Checkstyle）或 `./mvnw spotless:check`（palantirJavaFormat）失败。`scripts/claude-hooks/checkstyle-on-stop.sh` 会在每轮收尾自动跑一遍——但写之前就守规可以避免被钩子拦下、回头改的成本。
+
+### 文件头版权
+每个 `.java` 文件第一行起、`package` 之前必须有：
+
+```java
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. {YYYY}-{YYYY}. All rights reserved.
+ */
+```
+
+年份范围正则是 `\d{4}-\d{4}`，单年用同年填两遍即可（如 `2026-2026`）。
+
+### 大括号位置（K&R，palantir 自动整形）
+- `{` 永远在行尾，不要单独成行
+- `} else {` / `} catch (...) {` / `} finally {` / `} while (...);` 衔接同行
+- 单行守卫禁止：`if (cond) { stmt; }` 必须拆成多行
+
+### Locale（大小写转换、数字格式化必须显式传 Locale）
+| ❌ | ✅ |
+|---|---|
+| `s.toLowerCase()` | `s.toLowerCase(Locale.ROOT)` |
+| `s.toUpperCase()` | `s.toUpperCase(Locale.ROOT)` |
+| `String.format("%.2f", x)` | `String.format(Locale.ROOT, "%.2f", x)` |
+
+机器可读字符串（HTTP header、env var、路径、数字格式）默认 `Locale.ROOT`，仅在确有用户语言场景才换其他 Locale。背景：`"I".toLowerCase()` 在土耳其 locale 下 == `"ı"`。
+
+### Imports（Spotless 自动处理）
+分组顺序 `java`, `javax`, `com`, `org`, *，未使用的 import 会被自动删除。
+
+### 写完 Java 之后
+Stop 钩子会自动跑 `spotless:check` + `checkstyle:check`。主动修复：
+
+```bash
+./mvnw -q spotless:apply checkstyle:check
+```
+
+（前提：`JAVA_HOME` 指向 JDK 21；`~/.zshrc` 已配置默认走 21。）
 
 ## Mate-campusclaw mirror
 
