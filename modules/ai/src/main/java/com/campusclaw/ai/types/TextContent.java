@@ -13,6 +13,9 @@ import jakarta.annotation.Nullable;
  *
  * @param text          the text content
  * @param textSignature optional signature metadata (provider-specific)
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 public record TextContent(
         @JsonProperty("text") String text, @JsonProperty("textSignature") @Nullable String textSignature)

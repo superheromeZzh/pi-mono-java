@@ -42,6 +42,9 @@ import com.huawei.hicampus.mate.matecampusclaw.codingagent.skill.SkillStateStore
  * <p>Coordinates {@link Agent}, {@link ModelRegistry}, {@link SkillLoader},
  * {@link SystemPromptBuilder}, and {@link SkillExpander} to provide a cohesive
  * session abstraction for the coding agent CLI.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 public class AgentSession {
 

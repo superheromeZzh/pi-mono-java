@@ -72,6 +72,9 @@ import software.amazon.awssdk.services.bedrockruntime.model.ToolUseBlock;
  * <p>Supports Anthropic models (Claude on Bedrock) as well as other Bedrock
  * foundation models. AWS credentials are resolved from the default credential
  * chain unless overridden via environment variables.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 @Component
 public class BedrockProvider implements ApiProvider {

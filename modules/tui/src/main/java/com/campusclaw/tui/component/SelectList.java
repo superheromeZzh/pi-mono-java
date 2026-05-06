@@ -29,6 +29,9 @@ import com.campusclaw.tui.ansi.AnsiUtils;
  * </ul>
  *
  * @param <T> the item type
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 public class SelectList<T> implements Component, Focusable {
 

@@ -8,6 +8,9 @@ package com.campusclaw.tui;
  * Marks a {@link Component} as focusable, meaning it can receive keyboard input.
  * Components that implement both {@link Component} and {@link Focusable} participate
  * in the TUI focus management system.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 public interface Focusable {
 

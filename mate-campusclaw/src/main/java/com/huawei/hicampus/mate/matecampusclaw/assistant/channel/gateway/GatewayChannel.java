@@ -28,6 +28,9 @@ import jakarta.annotation.PostConstruct;
  * Acts as a WebSocket server that chat tools can connect to directly.
  * Incoming messages are forwarded to the current interactive session's agent
  * via MessageSubmitter.submitMessage().
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 @Component
 @ConditionalOnProperty(prefix = "pi.assistant.gateway", name = "enabled", havingValue = "true")

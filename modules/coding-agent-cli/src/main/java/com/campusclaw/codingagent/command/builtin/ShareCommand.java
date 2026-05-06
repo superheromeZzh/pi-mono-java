@@ -15,6 +15,9 @@ import com.campusclaw.codingagent.export.HtmlExporter;
 /**
  * Share session as a secret GitHub Gist.
  * Requires the `gh` CLI to be installed and authenticated.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 public class ShareCommand implements SlashCommand {
 

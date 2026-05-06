@@ -9,6 +9,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import jakarta.annotation.Nullable;
 
+@SuppressWarnings("checkstyle:top_class_comment")
 @JsonIgnoreProperties(ignoreUnknown = true)
 public record RpcCommand(
         @JsonProperty("type") String type,

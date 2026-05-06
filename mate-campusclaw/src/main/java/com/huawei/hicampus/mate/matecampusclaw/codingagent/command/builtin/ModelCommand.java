@@ -7,6 +7,7 @@ package com.huawei.hicampus.mate.matecampusclaw.codingagent.command.builtin;
 import com.huawei.hicampus.mate.matecampusclaw.codingagent.command.SlashCommand;
 import com.huawei.hicampus.mate.matecampusclaw.codingagent.command.SlashCommandContext;
 
+@SuppressWarnings("checkstyle:top_class_comment")
 public class ModelCommand implements SlashCommand {
 
     private final String name;

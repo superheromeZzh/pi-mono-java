@@ -70,6 +70,9 @@ import jakarta.annotation.Nullable;
  * <p>Uses the official {@code com.openai:openai-java} SDK for streaming
  * requests, mapping OpenAI SSE chunks to the unified
  * {@link AssistantMessageEvent} protocol.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 @Component
 public class OpenAICompletionsProvider implements ApiProvider {

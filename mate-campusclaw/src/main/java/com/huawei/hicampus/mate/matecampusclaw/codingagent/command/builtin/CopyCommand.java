@@ -11,6 +11,7 @@ import com.huawei.hicampus.mate.matecampusclaw.codingagent.command.SlashCommand;
 import com.huawei.hicampus.mate.matecampusclaw.codingagent.command.SlashCommandContext;
 import com.huawei.hicampus.mate.matecampusclaw.codingagent.util.ClipboardUtils;
 
+@SuppressWarnings("checkstyle:top_class_comment")
 public class CopyCommand implements SlashCommand {
 
     @Override

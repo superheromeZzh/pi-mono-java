@@ -33,6 +33,9 @@ import org.springframework.stereotype.Component;
  * Agent tool that lists directory contents.
  * Output format: one entry per line with type indicator, size, date, and name.
  * Directories are listed first, then alphabetical within each group.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 @Component
 public class LsTool implements AgentTool {

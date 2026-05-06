@@ -20,6 +20,9 @@ import org.slf4j.LoggerFactory;
 /**
  * Manages data format migrations for sessions and settings.
  * Supports versioned schema upgrades with rollback capability.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 public class MigrationManager {
     private static final Logger log = LoggerFactory.getLogger(MigrationManager.class);
@@ -27,11 +30,13 @@ public class MigrationManager {
     private static final String VERSION_FILE = ".schema-version";
     public static final int CURRENT_VERSION = 2;
 
+    @SuppressWarnings("checkstyle:top_class_comment")
     @FunctionalInterface
     public interface Migration {
         void apply(Path dataDir) throws IOException;
     }
 
+    @SuppressWarnings("checkstyle:top_class_comment")
     public record MigrationStep(int fromVersion, int toVersion, String description, Migration migration) {}
 
     private final List<MigrationStep> migrations = new ArrayList<>();

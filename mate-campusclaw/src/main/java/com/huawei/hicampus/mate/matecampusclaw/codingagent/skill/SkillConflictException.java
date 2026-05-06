@@ -11,6 +11,9 @@ import java.util.List;
  * conflicts with already-installed skills.
  *
  * <p>Maps to HTTP 409 Conflict at the REST layer.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 public class SkillConflictException extends SkillInstallException {
 

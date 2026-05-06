@@ -14,6 +14,9 @@ import com.huawei.hicampus.mate.matecampusclaw.tui.Component;
  * <p>Extends {@link Loader} by displaying a cancel hint (e.g. "Press Escape to cancel")
  * and tracking cancellation state. The parent component should check
  * {@link #isCancelled()} and act accordingly.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 public class CancellableLoader implements Component {
 

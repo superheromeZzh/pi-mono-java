@@ -16,6 +16,7 @@ import com.huawei.hicampus.mate.matecampusclaw.ai.types.UserMessage;
 import com.huawei.hicampus.mate.matecampusclaw.assistant.mapper.ChatMemoryMapper;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+@SuppressWarnings("checkstyle:top_class_comment")
 public class MyBatisChatMemoryRepository implements ChatMemoryRepository {
 
     private final ObjectMapper objectMapper;

@@ -9,6 +9,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import org.springframework.stereotype.Service;
 
+@SuppressWarnings("checkstyle:top_class_comment")
 @Service
 public class ChannelRegistry {
 

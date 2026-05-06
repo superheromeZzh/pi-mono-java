@@ -23,6 +23,9 @@ import com.campusclaw.tui.component.SelectList;
 /**
  * Session selector overlay for /resume.
  * Shows recent session files with metadata.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 public class SessionSelectorOverlay implements Component, Focusable {
 
@@ -31,6 +34,7 @@ public class SessionSelectorOverlay implements Component, Focusable {
     private static final String ANSI_RESET = "\033[0m";
     private static final String ANSI_BOLD = "\033[1m";
 
+    @SuppressWarnings("checkstyle:top_class_comment")
     public record SessionItem(String id, Path path, Instant modified, long sizeKb) {}
 
     private final SelectList<SessionItem> selectList;

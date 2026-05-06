@@ -19,6 +19,9 @@ import com.campusclaw.tui.Component;
  * When keybindings don't fit on a single line, they wrap to additional lines.
  * <p>
  * Example output: {@code  Ctrl+C Exit  |  Tab Complete  |  Enter Submit}
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 public class KeybindingsComponent implements Component {
 

@@ -18,6 +18,9 @@ import com.campusclaw.codingagent.command.SlashCommand;
  * <p>Extensions are discovered by the {@link ExtensionRegistry} from configured
  * packages (npm/git/local directories). Each extension declares what it provides
  * via the getter methods below.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 public interface Extension {
 

@@ -26,6 +26,9 @@ import org.springframework.stereotype.Service;
  * Manages in-session recurring prompts (loops). Unlike cron (isolated agent, persisted),
  * loops run within the current conversation session and output streams directly into chat.
  * Loops are session-scoped and do not survive application restart.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 @Service
 public class LoopManager implements MessageSubmitter {
@@ -38,6 +41,7 @@ public class LoopManager implements MessageSubmitter {
     private final AtomicInteger nextId = new AtomicInteger(1);
     private volatile ScheduledExecutorService scheduler;
 
+    @SuppressWarnings("checkstyle:top_class_comment")
     public record LoopEntry(String id, String prompt, long intervalMs, ScheduledFuture<?> future) {}
 
     /**

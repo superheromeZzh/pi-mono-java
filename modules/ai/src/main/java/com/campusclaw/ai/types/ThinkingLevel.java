@@ -9,6 +9,9 @@ import com.fasterxml.jackson.annotation.JsonValue;
 
 /**
  * Level of extended thinking / reasoning to request from the model.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 public enum ThinkingLevel {
     OFF("off"),

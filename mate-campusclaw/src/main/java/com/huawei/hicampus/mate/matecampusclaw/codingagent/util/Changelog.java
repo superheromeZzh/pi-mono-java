@@ -25,11 +25,15 @@ import jakarta.annotation.Nullable;
 /**
  * Manages application changelog entries.
  * Loads from bundled changelog.json and supports user-read tracking.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 public class Changelog {
     private static final Logger log = LoggerFactory.getLogger(Changelog.class);
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
+    @SuppressWarnings("checkstyle:top_class_comment")
     @JsonIgnoreProperties(ignoreUnknown = true)
     public record ChangelogEntry(
             @JsonProperty("version") String version,
@@ -37,6 +41,7 @@ public class Changelog {
             @JsonProperty("title") @Nullable String title,
             @JsonProperty("changes") List<Change> changes) {}
 
+    @SuppressWarnings("checkstyle:top_class_comment")
     @JsonIgnoreProperties(ignoreUnknown = true)
     public record Change(
             @JsonProperty("type") String type, // "feature", "fix", "improvement", "breaking"

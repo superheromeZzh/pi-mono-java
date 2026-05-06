@@ -33,6 +33,9 @@ import com.campusclaw.tui.ansi.AnsiUtils;
  *   <li>Escape — dismiss suggestions or cancel</li>
  *   <li>All other keys — delegated to the embedded {@link Input}</li>
  * </ul>
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 public class Autocomplete implements Component, Focusable {
 

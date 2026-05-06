@@ -13,6 +13,9 @@ import org.springframework.lang.Nullable;
 
 /**
  * Sealed payload type for cron jobs. Defines what to execute when a job fires.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
 @JsonSubTypes({@JsonSubTypes.Type(value = CronPayload.AgentPrompt.class, name = "agent_prompt")})

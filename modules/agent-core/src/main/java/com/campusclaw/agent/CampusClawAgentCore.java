@@ -6,6 +6,9 @@ package com.campusclaw.agent;
 
 /**
  * CampusClaw-Agent-Core - Agent runtime with state management, tool execution, and event system.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 public class CampusClawAgentCore {
 

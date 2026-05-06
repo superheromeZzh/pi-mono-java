@@ -18,6 +18,9 @@ import org.slf4j.LoggerFactory;
  * output from tools, libraries, or System.out.println() calls would
  * break the protocol. OutputGuard captures these and redirects them
  * to stderr or a log file.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 public class OutputGuard implements AutoCloseable {
 

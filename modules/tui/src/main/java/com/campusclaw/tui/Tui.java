@@ -30,6 +30,9 @@ import com.campusclaw.tui.terminal.TerminalSize;
  * on every frame — which, on macOS Terminal.app, triggers the
  * {@code NSPersistentUIManager} heap-corruption bug when window state is
  * serialized.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 public class Tui {
 

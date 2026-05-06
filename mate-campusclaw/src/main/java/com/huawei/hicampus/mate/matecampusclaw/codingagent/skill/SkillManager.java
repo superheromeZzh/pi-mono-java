@@ -35,6 +35,9 @@ import org.slf4j.LoggerFactory;
 /**
  * Manages skill lifecycle: install from git, link local directories, list, and remove.
  * Tracks installed skills in a {@code .installed.json} manifest file.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 public class SkillManager {
 

@@ -8,6 +8,7 @@ import java.util.List;
 
 import com.campusclaw.ai.types.Message;
 
+@SuppressWarnings("checkstyle:top_class_comment")
 public interface ChatMemoryRepository {
 
     List<Message> load(String conversationId);

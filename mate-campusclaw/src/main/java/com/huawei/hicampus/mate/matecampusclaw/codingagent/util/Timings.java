@@ -23,10 +23,14 @@ import jakarta.annotation.Nullable;
 /**
  * Performance timing tracker for measuring execution durations.
  * Supports named spans, nested timings, and statistical aggregation.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 public class Timings {
     private static final Logger log = LoggerFactory.getLogger(Timings.class);
 
+    @SuppressWarnings("checkstyle:top_class_comment")
     public record TimingSpan(
             String name,
             long startNanos,
@@ -46,6 +50,7 @@ public class Timings {
         }
     }
 
+    @SuppressWarnings("checkstyle:top_class_comment")
     public record TimingStats(
             String name,
             int count,

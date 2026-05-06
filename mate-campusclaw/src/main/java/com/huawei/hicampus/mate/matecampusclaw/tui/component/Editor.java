@@ -35,6 +35,9 @@ import com.huawei.hicampus.mate.matecampusclaw.tui.ansi.AnsiUtils;
  *   <li>Alt+Left / Ctrl+Left — move word backward</li>
  *   <li>Alt+Right / Ctrl+Right — move word forward</li>
  * </ul>
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 public class Editor implements Component, Focusable {
 

@@ -12,6 +12,9 @@ import com.campusclaw.agent.tool.CancellationToken;
 
 /**
  * 工具执行策略接口
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 public interface ToolExecutionStrategy {
 

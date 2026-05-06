@@ -27,6 +27,9 @@ import jakarta.annotation.Nullable;
  * @param metadata        arbitrary metadata to attach to the request
  * @param reasoning       thinking level to request from the model
  * @param thinkingBudgets token budgets per thinking level
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 public record SimpleStreamOptions(
         @JsonProperty("temperature") @Nullable Double temperature,
@@ -97,6 +100,7 @@ public record SimpleStreamOptions(
                 .thinkingBudgets(thinkingBudgets);
     }
 
+    @SuppressWarnings("checkstyle:top_class_comment")
     public static final class Builder {
         private Double temperature;
         private Integer maxTokens;

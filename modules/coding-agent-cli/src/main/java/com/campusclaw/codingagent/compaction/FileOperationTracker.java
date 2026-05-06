@@ -16,6 +16,9 @@ import com.campusclaw.ai.types.ToolCall;
 
 /**
  * Extracts file read/write operations from tool call history.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 public class FileOperationTracker {
 
@@ -61,5 +64,6 @@ public class FileOperationTracker {
         return val instanceof String s ? s : null;
     }
 
+    @SuppressWarnings("checkstyle:top_class_comment")
     public record FileOperations(Set<String> filesRead, Set<String> filesModified) {}
 }

@@ -12,6 +12,7 @@ import com.huawei.hicampus.mate.matecampusclaw.codingagent.command.SlashCommand;
 import com.huawei.hicampus.mate.matecampusclaw.codingagent.command.SlashCommandContext;
 import com.huawei.hicampus.mate.matecampusclaw.codingagent.compaction.Compactor;
 
+@SuppressWarnings("checkstyle:top_class_comment")
 public class CompactCommand implements SlashCommand {
 
     private final Compactor compactor;

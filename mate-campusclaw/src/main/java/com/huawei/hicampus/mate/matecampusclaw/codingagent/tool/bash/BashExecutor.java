@@ -19,6 +19,9 @@ import org.springframework.stereotype.Service;
 /**
  * Execution engine for bash commands, independent of the Bash tool.
  * Manages process lifecycle, timeout, cancellation, and separate stdout/stderr capture.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 @Service
 public class BashExecutor {

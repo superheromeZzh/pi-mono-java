@@ -6,6 +6,7 @@ package com.huawei.hicampus.mate.matecampusclaw.assistant;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
+@SuppressWarnings("checkstyle:top_class_comment")
 @ConfigurationProperties(prefix = "pi.assistant")
 public class AssistantProperties {
 
@@ -19,6 +20,7 @@ public class AssistantProperties {
         this.channel = channel;
     }
 
+    @SuppressWarnings("checkstyle:top_class_comment")
     public static class Channel {
         // Placeholder for future channel configuration extensions
     }

@@ -12,6 +12,7 @@ import com.campusclaw.codingagent.command.SlashCommand;
 import com.campusclaw.codingagent.command.SlashCommandContext;
 import com.campusclaw.codingagent.compaction.Compactor;
 
+@SuppressWarnings("checkstyle:top_class_comment")
 public class CompactCommand implements SlashCommand {
 
     private final Compactor compactor;

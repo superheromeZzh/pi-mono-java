@@ -14,6 +14,9 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  * @param cacheRead  cost of prompt-cache read tokens
  * @param cacheWrite cost of prompt-cache write tokens
  * @param total      total cost (sum of all components)
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 public record Cost(
         @JsonProperty("input") double input,

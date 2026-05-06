@@ -11,6 +11,7 @@ import com.campusclaw.codingagent.command.SlashCommand;
 import com.campusclaw.codingagent.command.SlashCommandContext;
 import com.campusclaw.codingagent.util.ClipboardUtils;
 
+@SuppressWarnings("checkstyle:top_class_comment")
 public class CopyCommand implements SlashCommand {
 
     @Override

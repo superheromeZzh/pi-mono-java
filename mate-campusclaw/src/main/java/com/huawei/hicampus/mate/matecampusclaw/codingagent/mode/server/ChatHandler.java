@@ -34,6 +34,9 @@ import reactor.core.publisher.Mono;
  *
  * <p>Supports multiple independent conversations via {@code conversation_id}.
  * Each conversation has its own {@link AgentSession} managed by a {@link SessionPool}.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 public class ChatHandler {
 

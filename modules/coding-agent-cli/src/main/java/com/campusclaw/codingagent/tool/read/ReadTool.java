@@ -34,6 +34,9 @@ import org.springframework.stereotype.Component;
  * Agent tool that reads file contents with optional line offset and limit.
  * Detects image files and returns them as {@link ImageContent}.
  * Text files are returned with line numbers and truncated if they exceed limits.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 @Component
 @ConditionalOnProperty(name = "tool.execution.hybrid-enabled", havingValue = "false", matchIfMissing = true)

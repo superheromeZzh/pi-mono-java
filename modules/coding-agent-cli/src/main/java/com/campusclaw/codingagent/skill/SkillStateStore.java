@@ -27,6 +27,9 @@ import org.slf4j.LoggerFactory;
  *
  * <p>Default semantics: a skill not listed in the file is considered enabled.
  * Only explicitly disabled skill names are tracked.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 public class SkillStateStore {
 

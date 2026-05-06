@@ -13,6 +13,9 @@ import com.huawei.hicampus.mate.matecampusclaw.tui.Component;
  *
  * <p>Displays an animated spinner with an optional message.
  * The spinner cycles through a set of frames on each render.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 public class Loader implements Component {
 

@@ -30,6 +30,9 @@ import org.springframework.stereotype.Component;
  * Agent tool that performs exact text replacement in files.
  * Falls back to fuzzy matching when exact match fails.
  * Uses {@link FileMutationQueue} to serialize concurrent edits to the same file.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 @Component
 @ConditionalOnProperty(name = "tool.execution.hybrid-enabled", havingValue = "false", matchIfMissing = true)

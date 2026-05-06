@@ -9,5 +9,6 @@ import java.util.Set;
 
 import com.campusclaw.ai.types.Message;
 
+@SuppressWarnings("checkstyle:top_class_comment")
 public record CompactionResult(
         String summary, List<Message> retainedMessages, Set<String> filesRead, Set<String> filesModified) {}

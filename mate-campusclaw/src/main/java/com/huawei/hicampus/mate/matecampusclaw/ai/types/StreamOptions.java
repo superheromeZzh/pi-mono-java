@@ -24,6 +24,9 @@ import jakarta.annotation.Nullable;
  * @param headers         additional HTTP headers for the request
  * @param maxRetryDelayMs maximum retry delay in milliseconds
  * @param metadata        arbitrary metadata to attach to the request
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 public record StreamOptions(
         @JsonProperty("temperature") @Nullable Double temperature,
@@ -60,6 +63,7 @@ public record StreamOptions(
                 .metadata(metadata);
     }
 
+    @SuppressWarnings("checkstyle:top_class_comment")
     public static final class Builder {
         private Double temperature;
         private Integer maxTokens;

@@ -22,9 +22,13 @@ import jakarta.annotation.Nullable;
 /**
  * Tracks the origin and provenance of resources (skills, tools, commands, settings).
  * Enables users to understand where a resource came from and diagnose conflicts.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 public class SourceInfo {
 
+    @SuppressWarnings("checkstyle:top_class_comment")
     public enum SourceType {
         BUILTIN, // Shipped with the application
         GLOBAL_CONFIG, // From ~/.campusclaw/agent/ directory
@@ -34,6 +38,7 @@ public class SourceInfo {
         CUSTOM // User-provided custom resource
     }
 
+    @SuppressWarnings("checkstyle:top_class_comment")
     public record ResourceSource(
             String resourceId,
             String resourceType, // "skill", "tool", "command", "setting", "keybinding"

@@ -68,5 +68,20 @@
             <property name="max" value="15"/>
             <property name="switchBlockAsSingleDecisionPoint" value="true"/>
         </module>
+
+        <!-- TopClassComment: public 类必须有 Javadoc 描述功能，且包含 @version 标签
+             记录版本+创建日期。@since 由配套 Javadoc 自带，不强制校验（Checkstyle 没有
+             标准 @since 校验项），但脚本会一同补齐。 -->
+        <module name="MissingJavadocType">
+            <property name="id" value="top_class_comment"/>
+            <property name="scope" value="public"/>
+        </module>
+        <module name="JavadocType">
+            <property name="id" value="top_class_comment_version"/>
+            <property name="scope" value="public"/>
+            <property name="versionFormat" value="\[br_eCampusCore [^,\]]+,\s*\d{4}/\d{2}/\d{2}\]"/>
+            <!-- 不强制每个泛型/record 组件都要 @param —— 那超出 TopClassComment 范围。 -->
+            <property name="allowMissingParamTags" value="true"/>
+        </module>
     </module>
 </module>

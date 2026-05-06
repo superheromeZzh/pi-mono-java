@@ -18,6 +18,9 @@ import com.campusclaw.codingagent.tool.bash.ShellResolver;
  * Executes commands via {@code bash -c}; shell discovery is delegated to
  * {@link ShellResolver} so that Git Bash on Windows is found even when
  * {@code bash.exe} is not on PATH.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 public class LocalBashOperations implements BashOperations {
 

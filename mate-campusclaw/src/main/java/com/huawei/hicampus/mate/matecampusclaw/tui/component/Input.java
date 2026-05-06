@@ -26,6 +26,9 @@ import com.huawei.hicampus.mate.matecampusclaw.tui.ansi.AnsiUtils;
  *   <li>Horizontal scrolling to keep cursor visible</li>
  *   <li>Enter submits, Escape cancels</li>
  * </ul>
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 public class Input implements Component, Focusable {
 

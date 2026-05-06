@@ -26,6 +26,9 @@ import org.slf4j.LoggerFactory;
  * </ol>
  *
  * <p>In each directory, AGENTS.md is preferred over CLAUDE.md.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 public class ContextFileLoader {
 

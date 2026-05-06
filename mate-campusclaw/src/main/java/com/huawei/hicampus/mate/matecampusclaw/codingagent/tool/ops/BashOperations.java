@@ -10,6 +10,9 @@ import java.nio.file.Path;
 /**
  * Abstraction for shell command execution.
  * Implementations may target local shell, SSH, or remote execution backends.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 public interface BashOperations {
 

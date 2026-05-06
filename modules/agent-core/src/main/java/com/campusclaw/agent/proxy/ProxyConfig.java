@@ -24,16 +24,21 @@ import org.slf4j.LoggerFactory;
  * Proxy configuration for HTTP/HTTPS connections.
  * Supports environment variables (HTTP_PROXY, HTTPS_PROXY, NO_PROXY)
  * and programmatic configuration.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 public class ProxyConfig {
     private static final Logger log = LoggerFactory.getLogger(ProxyConfig.class);
 
+    @SuppressWarnings("checkstyle:top_class_comment")
     public enum ProxyType {
         HTTP,
         SOCKS5,
         DIRECT
     }
 
+    @SuppressWarnings("checkstyle:top_class_comment")
     public record ProxyEntry(
             ProxyType type,
             String host,

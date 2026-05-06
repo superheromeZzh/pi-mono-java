@@ -25,6 +25,9 @@ import org.slf4j.LoggerFactory;
 
 /**
  * Image processing utilities: resize, EXIF handling, format conversion, and base64 encoding.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 public final class ImageUtils {
     private static final Logger log = LoggerFactory.getLogger(ImageUtils.class);

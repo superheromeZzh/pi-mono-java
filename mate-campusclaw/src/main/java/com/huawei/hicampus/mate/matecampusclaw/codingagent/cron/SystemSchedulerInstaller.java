@@ -12,6 +12,9 @@ import java.util.Locale;
 /**
  * Installs/uninstalls CampusClaw cron into the OS scheduler.
  * macOS: launchd plist; Linux: crontab entry; Windows: Task Scheduler (schtasks).
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 public class SystemSchedulerInstaller {
 

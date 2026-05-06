@@ -8,6 +8,9 @@ import com.campusclaw.codingagent.config.ToolExecutionProperties;
 
 /**
  * 简单测试：验证常驻容器模式和自动恢复
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 public class PersistentContainerTest {
 

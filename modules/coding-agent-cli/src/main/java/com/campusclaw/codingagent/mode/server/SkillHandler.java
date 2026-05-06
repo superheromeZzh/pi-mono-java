@@ -35,6 +35,9 @@ import reactor.core.scheduler.Schedulers;
  *   <li>POST   /api/skills/{name}/enable    — enable a skill by skill name</li>
  *   <li>POST   /api/skills/{name}/disable   — disable a skill by skill name</li>
  * </ul>
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 public class SkillHandler {
 

@@ -4,6 +4,7 @@
 
 package com.huawei.hicampus.mate.matecampusclaw.assistant.channel;
 
+@SuppressWarnings("checkstyle:top_class_comment")
 public interface Channel {
 
     String getName();

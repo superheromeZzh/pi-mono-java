@@ -13,6 +13,9 @@ import com.campusclaw.codingagent.command.SlashCommandContext;
 
 /**
  * Import and resume a session from a JSONL file.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 public class ImportCommand implements SlashCommand {
 

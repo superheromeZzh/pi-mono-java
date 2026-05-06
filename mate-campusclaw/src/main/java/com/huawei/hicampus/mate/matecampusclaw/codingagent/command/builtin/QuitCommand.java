@@ -8,6 +8,7 @@ import com.huawei.hicampus.mate.matecampusclaw.codingagent.command.QuitException
 import com.huawei.hicampus.mate.matecampusclaw.codingagent.command.SlashCommand;
 import com.huawei.hicampus.mate.matecampusclaw.codingagent.command.SlashCommandContext;
 
+@SuppressWarnings("checkstyle:top_class_comment")
 public class QuitCommand implements SlashCommand {
 
     @Override

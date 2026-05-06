@@ -67,6 +67,9 @@ import jakarta.annotation.Nullable;
  *   <li>Different streaming event types (item-based rather than chunk-based)</li>
  *   <li>Tool results use {@code function_call_output} instead of tool messages</li>
  * </ul>
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 @Component
 public class OpenAIResponsesProvider implements ApiProvider {

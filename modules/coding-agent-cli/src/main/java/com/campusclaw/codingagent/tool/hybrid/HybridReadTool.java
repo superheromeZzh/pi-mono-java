@@ -24,6 +24,9 @@ import org.springframework.stereotype.Component;
 
 /**
  * 混合模式 Read 工具 - 统一入口，智能路由
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 @Component
 @ConditionalOnProperty(name = "tool.execution.hybrid-enabled", havingValue = "true", matchIfMissing = false)

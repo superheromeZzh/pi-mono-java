@@ -11,6 +11,7 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
 import jakarta.annotation.Nullable;
 
+@SuppressWarnings("checkstyle:top_class_comment")
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
 @JsonSubTypes({
     @JsonSubTypes.Type(value = Credential.ApiKey.class, name = "api_key"),
@@ -18,8 +19,10 @@ import jakarta.annotation.Nullable;
 })
 @JsonIgnoreProperties(ignoreUnknown = true)
 public sealed interface Credential {
+    @SuppressWarnings("checkstyle:top_class_comment")
     record ApiKey(@JsonProperty("key") String key) implements Credential {}
 
+    @SuppressWarnings("checkstyle:top_class_comment")
     record OAuth(
             @JsonProperty("accessToken") String accessToken,
             @JsonProperty("refreshToken") @Nullable String refreshToken,

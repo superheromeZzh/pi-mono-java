@@ -20,6 +20,9 @@ import com.huawei.hicampus.mate.matecampusclaw.tui.component.SelectList;
  * Tree selector overlay for /tree command.
  * Shows session messages as a navigable list and lets user navigate branches.
  * Supports switching to a different point in the conversation.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 public class TreeSelectorOverlay implements Component, Focusable {
 
@@ -30,6 +33,7 @@ public class TreeSelectorOverlay implements Component, Focusable {
     private static final String ANSI_RESET = "\033[0m";
     private static final String ANSI_BOLD = "\033[1m";
 
+    @SuppressWarnings("checkstyle:top_class_comment")
     public record TreeItem(int index, String role, String preview) {}
 
     private final SelectList<TreeItem> selectList;

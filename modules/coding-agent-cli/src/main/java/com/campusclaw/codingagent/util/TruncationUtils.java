@@ -12,11 +12,15 @@ import java.util.Locale;
 /**
  * Utilities for truncating text output by line count and byte size.
  * Supports head truncation (keep last N lines) and tail truncation (keep first N lines).
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 public final class TruncationUtils {
 
     private TruncationUtils() {}
 
+    @SuppressWarnings("checkstyle:top_class_comment")
     public record TruncationResult(
             boolean truncated,
             int outputLines,

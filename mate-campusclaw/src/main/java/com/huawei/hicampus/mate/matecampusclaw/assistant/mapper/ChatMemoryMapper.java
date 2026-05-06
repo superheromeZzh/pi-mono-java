@@ -13,6 +13,7 @@ import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Select;
 
+@SuppressWarnings("checkstyle:top_class_comment")
 @Mapper
 public interface ChatMemoryMapper {
 

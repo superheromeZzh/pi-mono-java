@@ -31,6 +31,9 @@ import jakarta.annotation.Nullable;
 /**
  * Shared utilities for Google Generative AI and Vertex AI providers.
  * Handles message/tool conversion between the unified types and Google's API format.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 public final class GoogleShared {
 

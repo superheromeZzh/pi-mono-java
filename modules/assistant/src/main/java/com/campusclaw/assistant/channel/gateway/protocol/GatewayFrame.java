@@ -9,6 +9,7 @@ import java.util.Map;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+@SuppressWarnings("checkstyle:top_class_comment")
 @JsonIgnoreProperties(ignoreUnknown = true)
 public record GatewayFrame(
         @JsonProperty("type") String type,

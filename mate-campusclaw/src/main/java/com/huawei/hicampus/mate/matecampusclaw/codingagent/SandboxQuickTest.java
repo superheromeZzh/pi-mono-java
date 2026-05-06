@@ -10,6 +10,7 @@ import com.huawei.hicampus.mate.matecampusclaw.codingagent.tool.sandbox.Resource
 import com.huawei.hicampus.mate.matecampusclaw.codingagent.tool.sandbox.SandboxResult;
 import com.huawei.hicampus.mate.matecampusclaw.codingagent.tool.sandbox.SandboxSecurityPolicy;
 
+@SuppressWarnings("checkstyle:top_class_comment")
 public class SandboxQuickTest {
     public static void main(String[] args) throws Exception {
         System.out.println("=== Docker 沙箱测试 ===\n");

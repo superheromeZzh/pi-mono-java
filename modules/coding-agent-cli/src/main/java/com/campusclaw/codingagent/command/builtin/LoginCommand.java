@@ -17,6 +17,9 @@ import com.campusclaw.codingagent.command.SlashCommandContext;
  * <p>Once stored, the key is used in preference to env vars and to
  * {@code settings.json#provider.<id>.apiKey}, mirroring opencode's
  * {@code opencode auth login} flow.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 public class LoginCommand implements SlashCommand {
 

@@ -31,6 +31,9 @@ import org.springframework.stereotype.Component;
  * Agent tool that executes bash commands via {@link BashExecutor},
  * truncates combined output, and returns results as {@link TextContent}.
  * Disabled when hybrid execution is enabled.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 @Component
 @ConditionalOnProperty(name = "tool.execution.hybrid-enabled", havingValue = "false", matchIfMissing = true)

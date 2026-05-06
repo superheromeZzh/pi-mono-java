@@ -26,6 +26,9 @@ import org.springframework.stereotype.Component;
 
 /**
  * Agent tool for managing cron jobs via LLM conversation.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 @Component
 public class CronTool implements AgentTool {

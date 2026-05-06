@@ -27,6 +27,9 @@ import jakarta.annotation.Nullable;
  * @param headers         optional custom HTTP headers for API calls
  * @param thinkingFormat  optional thinking format identifier (e.g. "zai")
  * @param apiKey          optional API key embedded in the model (for custom models)
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 public record Model(
         @JsonProperty("id") String id,

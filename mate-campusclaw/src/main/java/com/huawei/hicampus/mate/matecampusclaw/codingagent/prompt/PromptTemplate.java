@@ -20,6 +20,9 @@ import java.util.regex.Pattern;
  *
  * <p>Example: {@code "Explain $1 in the context of $2"} with args ["React", "frontend"]
  * produces {@code "Explain React in the context of frontend"}.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 public final class PromptTemplate {
 

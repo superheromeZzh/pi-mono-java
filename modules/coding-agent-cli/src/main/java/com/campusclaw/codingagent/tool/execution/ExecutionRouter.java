@@ -32,6 +32,9 @@ import lombok.extern.slf4j.Slf4j;
 
 /**
  * 执行路由器 - 根据配置和策略路由到本地或沙箱执行
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 @Slf4j
 @Component

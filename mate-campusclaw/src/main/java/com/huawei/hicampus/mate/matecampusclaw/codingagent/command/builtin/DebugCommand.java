@@ -20,6 +20,9 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 /**
  * Dumps agent state and messages to a debug log file for troubleshooting.
  * Matches campusclaw TS /debug command.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 public class DebugCommand implements SlashCommand {
 

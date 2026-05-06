@@ -94,6 +94,21 @@ Key runtime concepts:
 ### 圈复杂度（CC ≤ 15）
 方法的 cyclomatic complexity 不得超过 15（`switchBlockAsSingleDecisionPoint=true`，整段 switch 算 1 个决策点）。超阈值的方法必须拆分提取，**不要新增 `@SuppressWarnings("checkstyle:huge_cyclomatic_complexity")`**——存量带此注解的是历史欠债，等待重构，不是范例。
 
+### 顶层 public 类必须有 Javadoc + @version
+新增 public class / interface / enum / record / @interface 时，类声明前必须有 Javadoc，且包含 `@version` 标签：
+
+```java
+/**
+ * Asynchronously transforms agent messages before they are sent to the model.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
+ */
+public interface ContextTransformer {
+```
+
+`@version` 格式正则 `\[br_eCampusCore [^,\]]+,\s*\d{4}/\d{2}/\d{2}\]`。`@since` 不强校验但建议同时写。功能描述用**英文**（与现有约定一致，AI / IDE 工具都按英文 Javadoc 优化）。
+
 ### 写完 Java 之后
 Stop 钩子会自动跑 `spotless:check` + `checkstyle:check`。主动修复：
 

@@ -34,6 +34,9 @@ import org.slf4j.LoggerFactory;
  *
  * <p>Cheap on filesystems with dozens of conversations. If a deployment ever
  * accumulates thousands of files, replace the per-call scan with an index.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 public class ConversationLister {
 

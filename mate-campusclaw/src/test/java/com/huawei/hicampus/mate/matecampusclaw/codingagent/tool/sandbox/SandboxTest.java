@@ -6,6 +6,7 @@ package com.huawei.hicampus.mate.matecampusclaw.codingagent.tool.sandbox;
 
 import com.huawei.hicampus.mate.matecampusclaw.codingagent.config.ToolExecutionProperties;
 
+@SuppressWarnings("checkstyle:top_class_comment")
 public class SandboxTest {
     public static void main(String[] args) {
         // 创建配置

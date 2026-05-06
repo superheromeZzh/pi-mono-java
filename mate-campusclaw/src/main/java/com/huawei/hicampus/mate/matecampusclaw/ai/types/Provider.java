@@ -12,6 +12,9 @@ import com.fasterxml.jackson.annotation.JsonValue;
 
 /**
  * LLM provider identifier.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 public enum Provider {
     ANTHROPIC("anthropic"),
