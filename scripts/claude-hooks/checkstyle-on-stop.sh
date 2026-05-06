@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
-# Claude Code Stop hook: runs Checkstyle when .java files have changed
-# in the working tree. Exits 2 with stderr feedback if violations are
-# found, blocking Claude from yielding the turn until they're fixed.
+# Claude Code Stop hook: when .java files have changed in the working tree,
+# run Spotless (palantirJavaFormat) + Checkstyle as quality gates. Exits 2
+# with stderr feedback if either fails, blocking Claude from yielding the
+# turn until violations are fixed.
 #
 # Wired in .claude/settings.json under hooks.Stop.
 
@@ -18,18 +19,48 @@ java_changed=$(
 )
 [ -z "$java_changed" ] && exit 0
 
-output=$(./mvnw -q checkstyle:check 2>&1)
-status=$?
-[ "$status" -eq 0 ] && exit 0
+# Spotless + palantirJavaFormat require JDK 21 (palantir is incompatible
+# with JDK 24+ javac internals). Auto-detect, leave existing JAVA_HOME
+# untouched if it's already a JDK 21.
+if [ -z "${JAVA_HOME:-}" ] || ! "$JAVA_HOME/bin/java" -version 2>&1 | grep -q '"21\.'; then
+  for candidate in \
+      "$(/usr/libexec/java_home -v 21 2>/dev/null)" \
+      "/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home" \
+      "/usr/local/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home"; do
+    if [ -n "$candidate" ] && [ -d "$candidate" ]; then
+      export JAVA_HOME="$candidate"
+      break
+    fi
+  done
+fi
 
-violations=$(printf '%s\n' "$output" | grep -E '^\[ERROR\].*\.java' | head -20)
-[ -z "$violations" ] && violations=$(printf '%s\n' "$output" | tail -30)
+run_check() {
+  local label="$1"; local goal="$2"
+  local out status
+  out=$(./mvnw -q "$goal" 2>&1)
+  status=$?
+  if [ "$status" -ne 0 ]; then
+    printf '=== %s ===\n%s\n\n' "$label" \
+      "$(printf '%s\n' "$out" | grep -E '\[ERROR\]' | head -15)"
+  fi
+}
+
+failures=$(
+  run_check "Spotless (palantirJavaFormat)" "spotless:check"
+  run_check "Checkstyle"                    "checkstyle:check"
+)
+
+[ -z "$failures" ] && exit 0
 
 cat >&2 <<EOF
-[checkstyle-on-stop] Java files changed and Checkstyle reported violations:
+[checkstyle-on-stop] Java files changed and quality gates failed:
 
-$violations
+$failures
 
-Fix them and re-run \`./mvnw checkstyle:check\` until clean before yielding.
+Fix:
+  ./mvnw -q spotless:apply       # auto-fix formatting (palantir)
+  ./mvnw -q checkstyle:check     # see remaining violations
+
+Style rules: see "Coding conventions enforced by build" in CLAUDE.md.
 EOF
 exit 2
