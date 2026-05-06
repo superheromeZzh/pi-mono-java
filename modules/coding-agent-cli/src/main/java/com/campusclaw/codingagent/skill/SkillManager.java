@@ -17,6 +17,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -159,7 +160,7 @@ public class SkillManager {
 
         String linkName = resolved.getFileName()
                 .toString()
-                .toLowerCase()
+                .toLowerCase(Locale.ROOT)
                 .replaceAll("[^a-z0-9-]", "-")
                 .replaceAll("-+", "-")
                 .replaceAll("^-|-$", "");
@@ -220,8 +221,8 @@ public class SkillManager {
         }
 
         String fileName = (originalName != null && !originalName.isBlank())
-                ? originalName.toLowerCase()
-                : resolved.getFileName().toString().toLowerCase();
+                ? originalName.toLowerCase(Locale.ROOT)
+                : resolved.getFileName().toString().toLowerCase(Locale.ROOT);
         boolean isZip = fileName.endsWith(".zip");
         boolean isTarGz = fileName.endsWith(".tar.gz") || fileName.endsWith(".tgz");
 
@@ -574,7 +575,7 @@ public class SkillManager {
         Matcher m = REPO_NAME_PATTERN.matcher(url);
         if (m.find()) {
             String name = m.group(1)
-                    .toLowerCase()
+                    .toLowerCase(Locale.ROOT)
                     .replaceAll("[^a-z0-9-]", "-")
                     .replaceAll("-+", "-")
                     .replaceAll("^-|-$", "");

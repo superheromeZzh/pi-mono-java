@@ -5,6 +5,7 @@
 package com.campusclaw.codingagent.config;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 
 import com.campusclaw.codingagent.tool.execution.ExecutionMode;
@@ -29,7 +30,7 @@ public class ToolExecutionProperties {
         String modeOverride = System.getProperty("TOOL_EXECUTION_DEFAULT_MODE");
         if (modeOverride != null && !modeOverride.isEmpty()) {
             try {
-                ExecutionMode mode = ExecutionMode.valueOf(modeOverride.toUpperCase());
+                ExecutionMode mode = ExecutionMode.valueOf(modeOverride.toUpperCase(Locale.ROOT));
                 this.defaultMode = mode;
                 log.info("Tool execution mode overridden by system property: {}", mode);
             } catch (IllegalArgumentException e) {

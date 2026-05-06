@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
@@ -234,7 +235,7 @@ public class BedrockProvider implements ApiProvider {
     }
 
     private static boolean supportsAdaptiveThinking(String modelId) {
-        String lower = modelId.toLowerCase();
+        String lower = modelId.toLowerCase(Locale.ROOT);
         return lower.contains("opus-4")
                 || lower.contains("sonnet-4")
                 || lower.contains("opus4")
@@ -242,7 +243,7 @@ public class BedrockProvider implements ApiProvider {
     }
 
     private static String mapBedrockThinkingEffort(com.campusclaw.ai.types.ThinkingLevel level, String modelId) {
-        boolean isOpus = modelId.toLowerCase().contains("opus");
+        boolean isOpus = modelId.toLowerCase(Locale.ROOT).contains("opus");
         return switch (level) {
             case MINIMAL, LOW -> "low";
             case MEDIUM -> "medium";

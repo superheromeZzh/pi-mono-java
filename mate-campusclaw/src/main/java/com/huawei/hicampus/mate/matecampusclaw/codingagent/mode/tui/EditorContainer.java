@@ -6,6 +6,7 @@ package com.huawei.hicampus.mate.matecampusclaw.codingagent.mode.tui;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.function.Consumer;
 
 import com.huawei.hicampus.mate.matecampusclaw.tui.Component;
@@ -108,7 +109,7 @@ public class EditorContainer implements Component, Focusable {
 
     /** Sets the border color based on thinking level (matching campusclaw dynamic border). */
     public void setBorderForThinkingLevel(String level) {
-        this.borderColor = switch (level != null ? level.toLowerCase() : "off") {
+        this.borderColor = switch (level != null ? level.toLowerCase(Locale.ROOT) : "off") {
             case "off" -> THINKING_OFF;
             case "minimal" -> THINKING_MINIMAL;
             case "low" -> THINKING_LOW;
@@ -260,10 +261,10 @@ public class EditorContainer implements Component, Focusable {
             return;
         }
 
-        String prefix = text.substring(1).toLowerCase();
+        String prefix = text.substring(1).toLowerCase(Locale.ROOT);
         List<CommandSuggestion> matches = new ArrayList<>();
         for (var cmd : allCommands) {
-            if (prefix.isEmpty() || cmd.name().toLowerCase().startsWith(prefix)) {
+            if (prefix.isEmpty() || cmd.name().toLowerCase(Locale.ROOT).startsWith(prefix)) {
                 matches.add(cmd);
             }
         }

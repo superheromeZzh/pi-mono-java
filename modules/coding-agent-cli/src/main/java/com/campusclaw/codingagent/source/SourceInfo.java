@@ -12,6 +12,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -102,7 +103,8 @@ public class SourceInfo {
                 .append(" (")
                 .append(source.resourceType())
                 .append(")");
-        sb.append(" from ").append(source.sourceType().name().toLowerCase().replace('_', ' '));
+        sb.append(" from ")
+                .append(source.sourceType().name().toLowerCase(Locale.ROOT).replace('_', ' '));
         if (source.packageName() != null) {
             sb.append(" [").append(source.packageName()).append("]");
         }

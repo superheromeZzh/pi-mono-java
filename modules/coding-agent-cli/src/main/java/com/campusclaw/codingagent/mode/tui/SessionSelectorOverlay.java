@@ -11,6 +11,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.function.Consumer;
 
@@ -69,7 +70,7 @@ public class SessionSelectorOverlay implements Component, Focusable {
 
     private String renderItem(SessionItem item) {
         String time = item.modified.toString().substring(0, 16).replace("T", " ");
-        return String.format("%-10s  %s  %dKB", item.id, time, item.sizeKb);
+        return String.format(Locale.ROOT, "%-10s  %s  %dKB", item.id, time, item.sizeKb);
     }
 
     private List<SessionItem> loadSessions(String cwd) {

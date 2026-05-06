@@ -6,6 +6,7 @@ package com.huawei.hicampus.mate.matecampusclaw.codingagent.mode.tui;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 import com.huawei.hicampus.mate.matecampusclaw.agent.tool.AgentToolResult;
@@ -159,7 +160,7 @@ public class ToolStatusComponent implements Component {
         // "Took X.Xs" line when complete (matching campusclaw)
         if (complete) {
             double elapsed = (endTimeMs - startTimeMs) / 1000.0;
-            String took = ANSI_TOOL_OUTPUT + "Took " + String.format("%.1fs", elapsed) + ANSI_RESET;
+            String took = ANSI_TOOL_OUTPUT + "Took " + String.format(Locale.ROOT, "%.1fs", elapsed) + ANSI_RESET;
             lines.add(bgLine("", width, bg)); // spacer before Took
             lines.add(bgLine(" " + took, width, bg));
         }

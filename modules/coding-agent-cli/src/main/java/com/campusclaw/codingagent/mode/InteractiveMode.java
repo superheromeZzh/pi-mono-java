@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.BlockingQueue;
@@ -366,7 +367,7 @@ public class InteractiveMode {
         var model = session.getAgent().getState().getModel();
         if (model != null) {
             footer.setModel(
-                    model.provider().name().toLowerCase(),
+                    model.provider().name().toLowerCase(Locale.ROOT),
                     model.id(),
                     model.contextWindow() > 0 ? model.contextWindow() : 200000,
                     model.reasoning());
@@ -764,7 +765,7 @@ public class InteractiveMode {
                                 var newModel = session.getAgent().getState().getModel();
                                 if (newModel != null) {
                                     footer.setModel(
-                                            newModel.provider().name().toLowerCase(),
+                                            newModel.provider().name().toLowerCase(Locale.ROOT),
                                             newModel.id(),
                                             newModel.contextWindow() > 0 ? newModel.contextWindow() : 200000,
                                             newModel.reasoning());
@@ -1082,7 +1083,7 @@ public class InteractiveMode {
         session.getAgent().setModel(newModel);
 
         footer.setModel(
-                newModel.provider().name().toLowerCase(),
+                newModel.provider().name().toLowerCase(Locale.ROOT),
                 newModel.id(),
                 newModel.contextWindow() > 0 ? newModel.contextWindow() : 200000,
                 newModel.reasoning());
@@ -1136,7 +1137,7 @@ public class InteractiveMode {
             // Apply model change
             session.getAgent().setModel(model);
             footer.setModel(
-                    model.provider().name().toLowerCase(),
+                    model.provider().name().toLowerCase(Locale.ROOT),
                     model.id(),
                     model.contextWindow() > 0 ? model.contextWindow() : 200000,
                     model.reasoning());

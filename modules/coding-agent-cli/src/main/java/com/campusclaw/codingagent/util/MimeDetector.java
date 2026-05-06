@@ -7,6 +7,7 @@ package com.campusclaw.codingagent.util;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 
@@ -106,7 +107,7 @@ public final class MimeDetector {
         if (dot < 0) {
             return "application/octet-stream";
         }
-        String ext = name.substring(dot + 1).toLowerCase();
+        String ext = name.substring(dot + 1).toLowerCase(Locale.ROOT);
         return EXTENSION_MAP.getOrDefault(ext, "application/octet-stream");
     }
 
@@ -147,6 +148,6 @@ public final class MimeDetector {
     public static String getExtension(Path path) {
         String name = path.getFileName().toString();
         int dot = name.lastIndexOf('.');
-        return dot >= 0 ? name.substring(dot + 1).toLowerCase() : "";
+        return dot >= 0 ? name.substring(dot + 1).toLowerCase(Locale.ROOT) : "";
     }
 }

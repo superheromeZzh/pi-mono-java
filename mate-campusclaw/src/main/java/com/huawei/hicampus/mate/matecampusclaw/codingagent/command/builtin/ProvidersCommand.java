@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 import com.huawei.hicampus.mate.matecampusclaw.ai.model.ModelRegistry;
@@ -73,14 +74,17 @@ public class ProvidersCommand implements SlashCommand {
         }
         rows.sort(Comparator.comparing(Provider::value));
 
-        context.output().println(String.format("%-20s %-7s %-10s %-7s", "PROVIDER", "MODELS", "AUTH.JSON", "OVERRIDE"));
+        context.output()
+                .println(String.format(
+                        Locale.ROOT, "%-20s %-7s %-10s %-7s", "PROVIDER", "MODELS", "AUTH.JSON", "OVERRIDE"));
         for (Provider p : rows) {
             int count = modelCounts.getOrDefault(p, 0);
             boolean hasAuth = auth.containsKey(p.value());
             Settings.ProviderConfig cfg = providerCfg.get(p.value());
             String override = describeOverride(cfg);
             context.output()
-                    .println(String.format("%-20s %-7d %-10s %-7s", p.value(), count, hasAuth ? "yes" : "—", override));
+                    .println(String.format(
+                            Locale.ROOT, "%-20s %-7d %-10s %-7s", p.value(), count, hasAuth ? "yes" : "—", override));
         }
 
         // Highlight settings.provider entries that don't map to any known Provider.

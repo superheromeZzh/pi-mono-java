@@ -7,6 +7,7 @@ package com.campusclaw.codingagent.mode.tui;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Locale;
 import java.util.function.Consumer;
 
 import com.campusclaw.ai.model.ModelRegistry;
@@ -116,7 +117,7 @@ public class ModelSelectorOverlay implements Component, Focusable {
         if (v == Math.floor(v)) {
             return String.valueOf((long) v);
         }
-        return String.format("%.2f", v);
+        return String.format(Locale.ROOT, "%.2f", v);
     }
 
     private static String padRight(String s, int width) {

@@ -4,6 +4,7 @@
 
 package com.campusclaw.ai.types;
 
+import java.util.Locale;
 import java.util.Optional;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -69,9 +70,9 @@ public enum Provider {
         if (value == null || value.isBlank()) {
             return Optional.empty();
         }
-        String normalized = value.toLowerCase().replace('_', '-');
+        String normalized = value.toLowerCase(Locale.ROOT).replace('_', '-');
         for (var p : values()) {
-            if (p.value.toLowerCase().replace('_', '-').equals(normalized)) {
+            if (p.value.toLowerCase(Locale.ROOT).replace('_', '-').equals(normalized)) {
                 return Optional.of(p);
             }
         }

@@ -7,6 +7,7 @@ package com.campusclaw.codingagent.mode.tui;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 import com.campusclaw.codingagent.util.GitUtils;
 import com.campusclaw.tui.Component;
@@ -164,13 +165,13 @@ public class FooterComponent implements Component {
             if (sb.length() > 0) {
                 sb.append(" ");
             }
-            sb.append("$").append(String.format("%.3f", totalCost));
+            sb.append("$").append(String.format(Locale.ROOT, "%.3f", totalCost));
         }
         if (contextWindow > 0) {
             int totalIn = inputTokens + cacheRead;
             double pct = totalIn * 100.0 / contextWindow;
             // Color-code context percentage
-            String pctStr = String.format("%.1f%%", pct);
+            String pctStr = String.format(Locale.ROOT, "%.1f%%", pct);
             if (sb.length() > 0) {
                 sb.append(" ");
             }
@@ -232,16 +233,16 @@ public class FooterComponent implements Component {
 
     public static String formatTokens(int tokens) {
         if (tokens >= 10_000_000) {
-            return String.format("%.0fM", tokens / 1_000_000.0);
+            return String.format(Locale.ROOT, "%.0fM", tokens / 1_000_000.0);
         }
         if (tokens >= 1_000_000) {
-            return String.format("%.1fM", tokens / 1_000_000.0);
+            return String.format(Locale.ROOT, "%.1fM", tokens / 1_000_000.0);
         }
         if (tokens >= 10_000) {
-            return String.format("%.0fk", tokens / 1000.0);
+            return String.format(Locale.ROOT, "%.0fk", tokens / 1000.0);
         }
         if (tokens >= 1000) {
-            return String.format("%.1fk", tokens / 1000.0);
+            return String.format(Locale.ROOT, "%.1fk", tokens / 1000.0);
         }
         return String.valueOf(tokens);
     }

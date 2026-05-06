@@ -10,6 +10,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Locale;
 import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
 
@@ -394,8 +395,8 @@ public class CampusClawCommand implements Callable<Integer> {
                     Comparator.comparing((Model m) -> m.provider().value()).thenComparing(Model::id));
             for (var m : allModels) {
                 if (search != null
-                        && !m.id().toLowerCase().contains(search.toLowerCase())
-                        && !m.name().toLowerCase().contains(search.toLowerCase())) {
+                        && !m.id().toLowerCase(Locale.ROOT).contains(search.toLowerCase(Locale.ROOT))
+                        && !m.name().toLowerCase(Locale.ROOT).contains(search.toLowerCase(Locale.ROOT))) {
                     continue;
                 }
                 System.out.printf("  %-15s %-40s %s%n", m.provider().value(), m.id(), m.name());
@@ -622,7 +623,7 @@ public class CampusClawCommand implements Callable<Integer> {
                 var scoped = new ArrayList<Model>();
                 var allRegistered = modelRegistry.getAllModels();
                 for (String pattern : modelsFilter.split(",")) {
-                    String p = pattern.trim().toLowerCase();
+                    String p = pattern.trim().toLowerCase(Locale.ROOT);
                     if (p.isEmpty()) {
                         continue;
                     }
@@ -1056,9 +1057,9 @@ public class CampusClawCommand implements Callable<Integer> {
     }
 
     static boolean matchesModelPattern(String pattern, Model model) {
-        String id = model.id().toLowerCase();
-        String name = model.name().toLowerCase();
-        String provider = model.provider().value().toLowerCase();
+        String id = model.id().toLowerCase(Locale.ROOT);
+        String name = model.name().toLowerCase(Locale.ROOT);
+        String provider = model.provider().value().toLowerCase(Locale.ROOT);
 
         // Strip thinking level suffix (e.g., "sonnet:high" → "sonnet")
         int colonIdx = pattern.indexOf(':');

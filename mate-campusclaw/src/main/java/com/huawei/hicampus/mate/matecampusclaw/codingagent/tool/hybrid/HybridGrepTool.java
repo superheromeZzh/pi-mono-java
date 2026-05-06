@@ -4,6 +4,7 @@
 
 package com.huawei.hicampus.mate.matecampusclaw.codingagent.tool.hybrid;
 
+import java.util.Locale;
 import java.util.Map;
 
 import com.huawei.hicampus.mate.matecampusclaw.agent.tool.AgentTool;
@@ -97,7 +98,7 @@ public class HybridGrepTool implements AgentTool {
         Object mode = params.get("_executionMode");
         if (mode != null) {
             try {
-                return ExecutionMode.valueOf(mode.toString().toUpperCase());
+                return ExecutionMode.valueOf(mode.toString().toUpperCase(Locale.ROOT));
             } catch (IllegalArgumentException e) {
                 // 忽略无效值
             }

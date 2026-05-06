@@ -7,6 +7,7 @@ package com.huawei.hicampus.mate.matecampusclaw.tui.component;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * Fuzzy string matching for autocomplete and search functionality.
@@ -37,8 +38,8 @@ public class FuzzyMatcher {
             return false;
         }
 
-        String lowerQuery = query.toLowerCase();
-        String lowerCandidate = candidate.toLowerCase();
+        String lowerQuery = query.toLowerCase(Locale.ROOT);
+        String lowerCandidate = candidate.toLowerCase(Locale.ROOT);
 
         int qi = 0;
         for (int ci = 0; ci < lowerCandidate.length() && qi < lowerQuery.length(); ci++) {
@@ -74,8 +75,8 @@ public class FuzzyMatcher {
             return -1;
         }
 
-        String lowerQuery = query.toLowerCase();
-        String lowerCandidate = candidate.toLowerCase();
+        String lowerQuery = query.toLowerCase(Locale.ROOT);
+        String lowerCandidate = candidate.toLowerCase(Locale.ROOT);
 
         int score = 0;
         int qi = 0;
@@ -130,8 +131,8 @@ public class FuzzyMatcher {
             return null;
         }
 
-        String lowerQuery = query.toLowerCase();
-        String lowerCandidate = candidate.toLowerCase();
+        String lowerQuery = query.toLowerCase(Locale.ROOT);
+        String lowerCandidate = candidate.toLowerCase(Locale.ROOT);
 
         List<Integer> positions = new ArrayList<>();
         int qi = 0;

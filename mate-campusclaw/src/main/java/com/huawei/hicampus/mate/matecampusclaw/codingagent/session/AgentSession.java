@@ -7,6 +7,7 @@ package com.huawei.hicampus.mate.matecampusclaw.codingagent.session;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
@@ -403,10 +404,10 @@ public class AgentSession {
         Provider targetProvider = null;
         if (pattern.contains("/")) {
             String[] parts = pattern.split("/", 2);
-            String providerStr = parts[0].toLowerCase();
+            String providerStr = parts[0].toLowerCase(Locale.ROOT);
             pattern = parts[1];
             for (Provider p : modelRegistry.getProviders()) {
-                if (p.value().toLowerCase().contains(providerStr)) {
+                if (p.value().toLowerCase(Locale.ROOT).contains(providerStr)) {
                     targetProvider = p;
                     break;
                 }
@@ -425,15 +426,15 @@ public class AgentSession {
         }
 
         // 2. Fuzzy substring match on id and name
-        String lowerPattern = pattern.toLowerCase();
+        String lowerPattern = pattern.toLowerCase(Locale.ROOT);
         Model bestMatch = null;
         for (Provider provider : modelRegistry.getProviders()) {
             if (targetProvider != null && provider != targetProvider) {
                 continue;
             }
             for (Model m : modelRegistry.getModels(provider)) {
-                if (m.id().toLowerCase().contains(lowerPattern)
-                        || m.name().toLowerCase().contains(lowerPattern)) {
+                if (m.id().toLowerCase(Locale.ROOT).contains(lowerPattern)
+                        || m.name().toLowerCase(Locale.ROOT).contains(lowerPattern)) {
                     if (bestMatch == null || m.id().length() < bestMatch.id().length()) {
                         bestMatch = m; // Prefer shorter ID (more specific match)
                     }

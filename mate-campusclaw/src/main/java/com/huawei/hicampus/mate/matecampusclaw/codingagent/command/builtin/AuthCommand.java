@@ -4,6 +4,8 @@
 
 package com.huawei.hicampus.mate.matecampusclaw.codingagent.command.builtin;
 
+import java.util.Locale;
+
 import com.huawei.hicampus.mate.matecampusclaw.ai.types.Provider;
 import com.huawei.hicampus.mate.matecampusclaw.codingagent.auth.AuthStore;
 import com.huawei.hicampus.mate.matecampusclaw.codingagent.command.SlashCommand;
@@ -44,7 +46,7 @@ public class AuthCommand implements SlashCommand {
             return;
         }
         String[] parts = args.split("\\s+", 2);
-        String sub = parts[0].toLowerCase();
+        String sub = parts[0].toLowerCase(Locale.ROOT);
         String rest = parts.length > 1 ? parts[1].trim() : "";
         switch (sub) {
             case "login" -> doLogin(context, rest);

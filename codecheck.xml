@@ -36,5 +36,22 @@
             <property name="option" value="alone_or_singleline"/>
             <property name="tokens" value="METHOD_DEF, CTOR_DEF, CLASS_DEF, INTERFACE_DEF, ENUM_DEF, RECORD_DEF, ANNOTATION_DEF, STATIC_INIT, INSTANCE_INIT, COMPACT_CTOR_DEF, LITERAL_FOR, LITERAL_WHILE, LITERAL_SWITCH"/>
         </module>
+
+        <!-- Locale: 禁止无参数的 toLowerCase/toUpperCase，避免 Turkish 等 locale 引发的诡异 bug
+             (例如 "I".toLowerCase() 在土耳其 locale 下变 "ı" 而非 "i")。 -->
+        <module name="RegexpSinglelineJava">
+            <property name="id" value="LocaleCaseConversion"/>
+            <property name="format" value="\.(toLowerCase|toUpperCase)\s*\(\s*\)"/>
+            <property name="message" value="字符串大小写转换必须显式传入 Locale.ROOT 或 Locale.ENGLISH。"/>
+            <property name="ignoreComments" value="true"/>
+        </module>
+        <!-- Locale: 禁止 String.format 直接以字符串字面量为第一参数（即未指定 Locale）。
+             允许 String.format(Locale.X, "...") 或 String.format(localeVar, "...")。 -->
+        <module name="RegexpSinglelineJava">
+            <property name="id" value="LocaleStringFormat"/>
+            <property name="format" value="\bString\.format\s*\(\s*&quot;"/>
+            <property name="message" value="String.format 必须显式以 Locale.ROOT 或 Locale.ENGLISH 作为第一参数。"/>
+            <property name="ignoreComments" value="true"/>
+        </module>
     </module>
 </module>

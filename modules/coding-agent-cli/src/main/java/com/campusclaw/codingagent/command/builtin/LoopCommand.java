@@ -4,6 +4,8 @@
 
 package com.campusclaw.codingagent.command.builtin;
 
+import java.util.Locale;
+
 import com.campusclaw.codingagent.command.SlashCommand;
 import com.campusclaw.codingagent.command.SlashCommandContext;
 import com.campusclaw.codingagent.loop.LoopManager;
@@ -146,7 +148,7 @@ public class LoopCommand implements SlashCommand {
             return -1;
         }
         String numStr = s.substring(0, i);
-        String unit = s.substring(i).toLowerCase();
+        String unit = s.substring(i).toLowerCase(Locale.ROOT);
         try {
             long value = Long.parseLong(numStr);
             if (value <= 0) {

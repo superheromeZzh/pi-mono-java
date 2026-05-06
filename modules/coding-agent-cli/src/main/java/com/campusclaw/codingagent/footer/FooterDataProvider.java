@@ -5,6 +5,7 @@
 package com.campusclaw.codingagent.footer;
 
 import java.util.List;
+import java.util.Locale;
 
 import com.campusclaw.ai.types.Model;
 import com.campusclaw.ai.types.ThinkingLevel;
@@ -39,19 +40,19 @@ public class FooterDataProvider {
                 return totalTokens + " tok";
             }
             if (totalTokens < 1_000_000) {
-                return String.format("%.1fK tok", totalTokens / 1000.0);
+                return String.format(Locale.ROOT, "%.1fK tok", totalTokens / 1000.0);
             }
-            return String.format("%.1fM tok", totalTokens / 1_000_000.0);
+            return String.format(Locale.ROOT, "%.1fM tok", totalTokens / 1_000_000.0);
         }
 
         public String formatCost() {
             if (totalCostUsd < 0.01) {
-                return String.format("$%.4f", totalCostUsd);
+                return String.format(Locale.ROOT, "$%.4f", totalCostUsd);
             }
             if (totalCostUsd < 1.0) {
-                return String.format("$%.3f", totalCostUsd);
+                return String.format(Locale.ROOT, "$%.3f", totalCostUsd);
             }
-            return String.format("$%.2f", totalCostUsd);
+            return String.format(Locale.ROOT, "$%.2f", totalCostUsd);
         }
     }
 
@@ -131,7 +132,9 @@ public class FooterDataProvider {
         }
         // Thinking level
         if (thinkingLevel != null && thinkingLevel != ThinkingLevel.OFF) {
-            sb.append(" \033[33m[").append(thinkingLevel.name().toLowerCase()).append("]\033[0m");
+            sb.append(" \033[33m[")
+                    .append(thinkingLevel.name().toLowerCase(Locale.ROOT))
+                    .append("]\033[0m");
         }
         // Token stats
         if (tokenStats != null) {

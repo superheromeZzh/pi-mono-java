@@ -5,6 +5,7 @@
 package com.campusclaw.codingagent.tool.execution;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.regex.Pattern;
@@ -320,7 +321,7 @@ public class ExecutionRouter {
                 return RiskLevel.CRITICAL;
             }
 
-            String baseCmd = command.trim().split("\\s+")[0].toLowerCase();
+            String baseCmd = command.trim().split("\\s+")[0].toLowerCase(Locale.ROOT);
             if (!properties.getLocalSafeCommands().contains(baseCmd)) {
                 return RiskLevel.MEDIUM;
             }
@@ -370,7 +371,7 @@ public class ExecutionRouter {
         Object modeParam = params.get("_executionMode");
         if (modeParam != null) {
             try {
-                return ExecutionMode.valueOf(modeParam.toString().toUpperCase());
+                return ExecutionMode.valueOf(modeParam.toString().toUpperCase(Locale.ROOT));
             } catch (IllegalArgumentException e) {
                 log.warn("Invalid execution mode: {}", modeParam);
             }

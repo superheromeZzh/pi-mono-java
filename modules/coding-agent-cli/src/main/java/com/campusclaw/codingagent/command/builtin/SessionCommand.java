@@ -4,6 +4,8 @@
 
 package com.campusclaw.codingagent.command.builtin;
 
+import java.util.Locale;
+
 import com.campusclaw.ai.types.AssistantMessage;
 import com.campusclaw.ai.types.Message;
 import com.campusclaw.ai.types.UserMessage;
@@ -78,15 +80,15 @@ public class SessionCommand implements SlashCommand {
             out.println("  Cache: R" + formatTokens((int) totalCacheRead) + " W" + formatTokens((int) totalCacheWrite));
         }
         if (totalCost > 0) {
-            out.println("  Cost: $" + String.format("%.4f", totalCost));
+            out.println("  Cost: $" + String.format(Locale.ROOT, "%.4f", totalCost));
         }
 
         // Context usage
         if (model != null && model.contextWindow() > 0) {
             long used = totalInput + totalOutput;
             double pct = (double) used / model.contextWindow() * 100;
-            out.println(
-                    "  Context usage: " + String.format("%.1f%%", pct) + " of " + formatTokens(model.contextWindow()));
+            out.println("  Context usage: " + String.format(Locale.ROOT, "%.1f%%", pct) + " of "
+                    + formatTokens(model.contextWindow()));
         }
 
         // Skills and templates
@@ -110,16 +112,16 @@ public class SessionCommand implements SlashCommand {
 
     private static String formatTokens(int tokens) {
         if (tokens >= 10_000_000) {
-            return String.format("%.0fM", tokens / 1_000_000.0);
+            return String.format(Locale.ROOT, "%.0fM", tokens / 1_000_000.0);
         }
         if (tokens >= 1_000_000) {
-            return String.format("%.1fM", tokens / 1_000_000.0);
+            return String.format(Locale.ROOT, "%.1fM", tokens / 1_000_000.0);
         }
         if (tokens >= 10_000) {
-            return String.format("%.0fk", tokens / 1000.0);
+            return String.format(Locale.ROOT, "%.0fk", tokens / 1000.0);
         }
         if (tokens >= 1000) {
-            return String.format("%.1fk", tokens / 1000.0);
+            return String.format(Locale.ROOT, "%.1fk", tokens / 1000.0);
         }
         return String.valueOf(tokens);
     }

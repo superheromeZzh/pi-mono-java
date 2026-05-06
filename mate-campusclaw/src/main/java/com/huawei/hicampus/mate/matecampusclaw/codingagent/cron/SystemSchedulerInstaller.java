@@ -7,6 +7,7 @@ package com.huawei.hicampus.mate.matecampusclaw.codingagent.cron;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Locale;
 
 /**
  * Installs/uninstalls CampusClaw cron into the OS scheduler.
@@ -343,11 +344,11 @@ public class SystemSchedulerInstaller {
     // --- Helpers ---
 
     private static boolean isWindows() {
-        return System.getProperty("os.name", "").toLowerCase().contains("win");
+        return System.getProperty("os.name", "").toLowerCase(Locale.ROOT).contains("win");
     }
 
     private static boolean isMacOS() {
-        return System.getProperty("os.name", "").toLowerCase().contains("mac");
+        return System.getProperty("os.name", "").toLowerCase(Locale.ROOT).contains("mac");
     }
 
     private static String getUid() {

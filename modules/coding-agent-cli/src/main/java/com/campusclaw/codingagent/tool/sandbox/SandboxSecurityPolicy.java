@@ -5,6 +5,7 @@
 package com.campusclaw.codingagent.tool.sandbox;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 import java.util.regex.Pattern;
 
@@ -54,7 +55,7 @@ public class SandboxSecurityPolicy {
         if (command == null || command.isEmpty()) {
             return false;
         }
-        String lower = command.toLowerCase();
+        String lower = command.toLowerCase(Locale.ROOT);
         for (Pattern pattern : DANGEROUS_PATTERNS) {
             if (pattern.matcher(lower).find()) {
                 log.warn("Dangerous command detected: {}", command);
@@ -113,7 +114,7 @@ public class SandboxSecurityPolicy {
         if (command == null || command.isEmpty()) {
             return false;
         }
-        String base = command.trim().split("\\s+")[0].toLowerCase();
+        String base = command.trim().split("\\s+")[0].toLowerCase(Locale.ROOT);
         return Set.of(
                         "cat", "head", "tail", "grep", "awk", "sed", "wc", "ls", "pwd", "echo", "sort", "uniq", "find",
                         "which", "whoami", "id", "uname", "date", "git", "diff", "patch")
