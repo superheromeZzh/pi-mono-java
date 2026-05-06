@@ -21,7 +21,13 @@ import java.util.concurrent.CompletableFuture;
 
 import com.campusclaw.agent.Agent;
 import com.campusclaw.agent.state.AgentState;
-import com.campusclaw.ai.types.*;
+import com.campusclaw.ai.types.AssistantMessage;
+import com.campusclaw.ai.types.StopReason;
+import com.campusclaw.ai.types.TextContent;
+import com.campusclaw.ai.types.ToolCall;
+import com.campusclaw.ai.types.ToolResultMessage;
+import com.campusclaw.ai.types.Usage;
+import com.campusclaw.ai.types.UserMessage;
 import com.campusclaw.codingagent.session.AgentSession;
 
 import org.junit.jupiter.api.BeforeEach;

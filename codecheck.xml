@@ -83,5 +83,16 @@
             <!-- 不强制每个泛型/record 组件都要 @param —— 那超出 TopClassComment 范围。 -->
             <property name="allowMissingParamTags" value="true"/>
         </module>
+
+        <!-- JavaComponentOrder: 文件按 copyright / package / import / 类 顺序排列且空行分隔。
+             Java 语法已强制了相对顺序，这里主要约束「空行分隔」。 -->
+        <module name="EmptyLineSeparator">
+            <property name="id" value="java_component_order_blank_line"/>
+            <property name="tokens" value="PACKAGE_DEF, IMPORT, STATIC_IMPORT"/>
+        </module>
+        <!-- 禁止 import xxx.* 与 import static xxx.*。 -->
+        <module name="AvoidStarImport">
+            <property name="id" value="java_component_order_no_star_import"/>
+        </module>
     </module>
 </module>

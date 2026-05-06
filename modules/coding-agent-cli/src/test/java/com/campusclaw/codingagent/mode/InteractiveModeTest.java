@@ -15,10 +15,12 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 import com.campusclaw.agent.Agent;
-import com.campusclaw.agent.event.*;
+import com.campusclaw.agent.event.MessageUpdateEvent;
 import com.campusclaw.agent.state.AgentState;
 import com.campusclaw.ai.stream.AssistantMessageEvent;
-import com.campusclaw.ai.types.*;
+import com.campusclaw.ai.types.AssistantMessage;
+import com.campusclaw.ai.types.TextContent;
+import com.campusclaw.ai.types.Usage;
 import com.campusclaw.codingagent.command.SlashCommandRegistry;
 import com.campusclaw.codingagent.command.builtin.HelpCommand;
 import com.campusclaw.codingagent.command.builtin.QuitCommand;

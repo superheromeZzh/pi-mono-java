@@ -9,9 +9,13 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
 
-import com.huawei.hicampus.mate.matecampusclaw.codingagent.mode.tui.*;
+import com.huawei.hicampus.mate.matecampusclaw.codingagent.mode.tui.AssistantMessageComponent;
+import com.huawei.hicampus.mate.matecampusclaw.codingagent.mode.tui.EditorContainer;
+import com.huawei.hicampus.mate.matecampusclaw.codingagent.mode.tui.FooterComponent;
+import com.huawei.hicampus.mate.matecampusclaw.codingagent.mode.tui.UserMessageComponent;
 import com.huawei.hicampus.mate.matecampusclaw.tui.Tui;
-import com.huawei.hicampus.mate.matecampusclaw.tui.component.*;
+import com.huawei.hicampus.mate.matecampusclaw.tui.component.Container;
+import com.huawei.hicampus.mate.matecampusclaw.tui.component.Text;
 import com.huawei.hicampus.mate.matecampusclaw.tui.terminal.TestTerminal;
 
 import org.junit.jupiter.api.Test;

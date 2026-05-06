@@ -31,7 +31,12 @@ import com.huawei.hicampus.mate.matecampusclaw.agent.tool.AgentToolUpdateCallbac
 import com.huawei.hicampus.mate.matecampusclaw.agent.tool.CancellationToken;
 import com.huawei.hicampus.mate.matecampusclaw.ai.CampusClawAiService;
 import com.huawei.hicampus.mate.matecampusclaw.ai.model.ModelRegistry;
-import com.huawei.hicampus.mate.matecampusclaw.ai.types.*;
+import com.huawei.hicampus.mate.matecampusclaw.ai.types.Api;
+import com.huawei.hicampus.mate.matecampusclaw.ai.types.InputModality;
+import com.huawei.hicampus.mate.matecampusclaw.ai.types.Message;
+import com.huawei.hicampus.mate.matecampusclaw.ai.types.Model;
+import com.huawei.hicampus.mate.matecampusclaw.ai.types.ModelCost;
+import com.huawei.hicampus.mate.matecampusclaw.ai.types.Provider;
 import com.huawei.hicampus.mate.matecampusclaw.codingagent.prompt.SystemPromptBuilder;
 import com.huawei.hicampus.mate.matecampusclaw.codingagent.skill.SkillExpander;
 import com.huawei.hicampus.mate.matecampusclaw.codingagent.skill.SkillLoader;

@@ -18,7 +18,15 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 
-import com.huawei.hicampus.mate.matecampusclaw.ai.types.*;
+import com.huawei.hicampus.mate.matecampusclaw.ai.types.AssistantMessage;
+import com.huawei.hicampus.mate.matecampusclaw.ai.types.Cost;
+import com.huawei.hicampus.mate.matecampusclaw.ai.types.Message;
+import com.huawei.hicampus.mate.matecampusclaw.ai.types.StopReason;
+import com.huawei.hicampus.mate.matecampusclaw.ai.types.TextContent;
+import com.huawei.hicampus.mate.matecampusclaw.ai.types.ToolCall;
+import com.huawei.hicampus.mate.matecampusclaw.ai.types.ToolResultMessage;
+import com.huawei.hicampus.mate.matecampusclaw.ai.types.Usage;
+import com.huawei.hicampus.mate.matecampusclaw.ai.types.UserMessage;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import org.junit.jupiter.api.BeforeEach;

@@ -8,7 +8,15 @@ import java.util.List;
 
 import com.huawei.hicampus.mate.matecampusclaw.ai.stream.AssistantMessageEvent;
 import com.huawei.hicampus.mate.matecampusclaw.ai.stream.AssistantMessageEventStream;
-import com.huawei.hicampus.mate.matecampusclaw.ai.types.*;
+import com.huawei.hicampus.mate.matecampusclaw.ai.types.Api;
+import com.huawei.hicampus.mate.matecampusclaw.ai.types.AssistantMessage;
+import com.huawei.hicampus.mate.matecampusclaw.ai.types.Context;
+import com.huawei.hicampus.mate.matecampusclaw.ai.types.Model;
+import com.huawei.hicampus.mate.matecampusclaw.ai.types.SimpleStreamOptions;
+import com.huawei.hicampus.mate.matecampusclaw.ai.types.StopReason;
+import com.huawei.hicampus.mate.matecampusclaw.ai.types.StreamOptions;
+import com.huawei.hicampus.mate.matecampusclaw.ai.types.TextContent;
+import com.huawei.hicampus.mate.matecampusclaw.ai.types.Usage;
 
 import jakarta.annotation.Nullable;
 

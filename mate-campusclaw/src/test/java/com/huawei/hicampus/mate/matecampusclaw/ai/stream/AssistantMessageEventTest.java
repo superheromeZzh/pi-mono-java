@@ -13,8 +13,23 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.List;
 import java.util.Map;
 
-import com.huawei.hicampus.mate.matecampusclaw.ai.stream.AssistantMessageEvent.*;
-import com.huawei.hicampus.mate.matecampusclaw.ai.types.*;
+import com.huawei.hicampus.mate.matecampusclaw.ai.stream.AssistantMessageEvent.DoneEvent;
+import com.huawei.hicampus.mate.matecampusclaw.ai.stream.AssistantMessageEvent.ErrorEvent;
+import com.huawei.hicampus.mate.matecampusclaw.ai.stream.AssistantMessageEvent.StartEvent;
+import com.huawei.hicampus.mate.matecampusclaw.ai.stream.AssistantMessageEvent.TextDeltaEvent;
+import com.huawei.hicampus.mate.matecampusclaw.ai.stream.AssistantMessageEvent.TextEndEvent;
+import com.huawei.hicampus.mate.matecampusclaw.ai.stream.AssistantMessageEvent.TextStartEvent;
+import com.huawei.hicampus.mate.matecampusclaw.ai.stream.AssistantMessageEvent.ThinkingDeltaEvent;
+import com.huawei.hicampus.mate.matecampusclaw.ai.stream.AssistantMessageEvent.ThinkingEndEvent;
+import com.huawei.hicampus.mate.matecampusclaw.ai.stream.AssistantMessageEvent.ThinkingStartEvent;
+import com.huawei.hicampus.mate.matecampusclaw.ai.stream.AssistantMessageEvent.ToolCallDeltaEvent;
+import com.huawei.hicampus.mate.matecampusclaw.ai.stream.AssistantMessageEvent.ToolCallEndEvent;
+import com.huawei.hicampus.mate.matecampusclaw.ai.stream.AssistantMessageEvent.ToolCallStartEvent;
+import com.huawei.hicampus.mate.matecampusclaw.ai.types.AssistantMessage;
+import com.huawei.hicampus.mate.matecampusclaw.ai.types.StopReason;
+import com.huawei.hicampus.mate.matecampusclaw.ai.types.TextContent;
+import com.huawei.hicampus.mate.matecampusclaw.ai.types.ToolCall;
+import com.huawei.hicampus.mate.matecampusclaw.ai.types.Usage;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 

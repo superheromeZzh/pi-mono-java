@@ -10,8 +10,16 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 
 import java.util.List;
 
-import com.huawei.hicampus.mate.matecampusclaw.ai.stream.AssistantMessageEvent.*;
-import com.huawei.hicampus.mate.matecampusclaw.ai.types.*;
+import com.huawei.hicampus.mate.matecampusclaw.ai.stream.AssistantMessageEvent.DoneEvent;
+import com.huawei.hicampus.mate.matecampusclaw.ai.stream.AssistantMessageEvent.ErrorEvent;
+import com.huawei.hicampus.mate.matecampusclaw.ai.stream.AssistantMessageEvent.StartEvent;
+import com.huawei.hicampus.mate.matecampusclaw.ai.stream.AssistantMessageEvent.TextDeltaEvent;
+import com.huawei.hicampus.mate.matecampusclaw.ai.stream.AssistantMessageEvent.TextEndEvent;
+import com.huawei.hicampus.mate.matecampusclaw.ai.stream.AssistantMessageEvent.TextStartEvent;
+import com.huawei.hicampus.mate.matecampusclaw.ai.types.AssistantMessage;
+import com.huawei.hicampus.mate.matecampusclaw.ai.types.StopReason;
+import com.huawei.hicampus.mate.matecampusclaw.ai.types.TextContent;
+import com.huawei.hicampus.mate.matecampusclaw.ai.types.Usage;
 
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;

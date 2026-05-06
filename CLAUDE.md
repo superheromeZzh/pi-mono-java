@@ -91,6 +91,10 @@ Key runtime concepts:
 ### Imports（Spotless 自动处理）
 分组顺序 `java`, `javax`, `com`, `org`, *，未使用的 import 会被自动删除。
 
+**禁止 wildcard import**：`import java.util.*;` 这类会被 `AvoidStarImport` 拒绝，必须显式列出每个用到的类。
+
+**结构空行**：版权头 / package / imports / 类之间必须空行分隔，由 `EmptyLineSeparator` 强制（覆盖 PACKAGE_DEF / IMPORT / STATIC_IMPORT 三个 token，避免误伤方法内的 local record/class）。
+
 ### 圈复杂度（CC ≤ 15）
 方法的 cyclomatic complexity 不得超过 15（`switchBlockAsSingleDecisionPoint=true`，整段 switch 算 1 个决策点）。超阈值的方法必须拆分提取，**不要新增 `@SuppressWarnings("checkstyle:huge_cyclomatic_complexity")`**——存量带此注解的是历史欠债，等待重构，不是范例。
 

@@ -13,8 +13,23 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.List;
 import java.util.Map;
 
-import com.campusclaw.ai.stream.AssistantMessageEvent.*;
-import com.campusclaw.ai.types.*;
+import com.campusclaw.ai.stream.AssistantMessageEvent.DoneEvent;
+import com.campusclaw.ai.stream.AssistantMessageEvent.ErrorEvent;
+import com.campusclaw.ai.stream.AssistantMessageEvent.StartEvent;
+import com.campusclaw.ai.stream.AssistantMessageEvent.TextDeltaEvent;
+import com.campusclaw.ai.stream.AssistantMessageEvent.TextEndEvent;
+import com.campusclaw.ai.stream.AssistantMessageEvent.TextStartEvent;
+import com.campusclaw.ai.stream.AssistantMessageEvent.ThinkingDeltaEvent;
+import com.campusclaw.ai.stream.AssistantMessageEvent.ThinkingEndEvent;
+import com.campusclaw.ai.stream.AssistantMessageEvent.ThinkingStartEvent;
+import com.campusclaw.ai.stream.AssistantMessageEvent.ToolCallDeltaEvent;
+import com.campusclaw.ai.stream.AssistantMessageEvent.ToolCallEndEvent;
+import com.campusclaw.ai.stream.AssistantMessageEvent.ToolCallStartEvent;
+import com.campusclaw.ai.types.AssistantMessage;
+import com.campusclaw.ai.types.StopReason;
+import com.campusclaw.ai.types.TextContent;
+import com.campusclaw.ai.types.ToolCall;
+import com.campusclaw.ai.types.Usage;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
