@@ -18,6 +18,9 @@ import com.huawei.hicampus.mate.matecampusclaw.tui.Component;
  *   ~/path (branch)
  *   ↑1.5k ↓200 R832 $0.001 0.7%/200k (auto)           (zai) glm-5 • medium
  * </pre>
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 public class FooterComponent implements Component {
 

@@ -17,6 +17,12 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+/**
+ * Wires the assistant module's MyBatis persistence beans against the host application's DataSource.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
+ */
 @Configuration
 @ConditionalOnBean(DataSource.class)
 public class AssistantPersistenceConfiguration {

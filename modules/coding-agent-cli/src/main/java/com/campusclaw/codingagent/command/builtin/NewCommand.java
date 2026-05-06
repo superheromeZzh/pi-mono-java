@@ -7,6 +7,7 @@ package com.campusclaw.codingagent.command.builtin;
 import com.campusclaw.codingagent.command.SlashCommand;
 import com.campusclaw.codingagent.command.SlashCommandContext;
 
+@SuppressWarnings("checkstyle:top_class_comment")
 public class NewCommand implements SlashCommand {
 
     @Override

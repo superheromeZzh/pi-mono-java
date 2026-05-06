@@ -16,11 +16,15 @@ import org.slf4j.LoggerFactory;
 /**
  * Print mode: executes a single prompt and writes the result to stdout.
  * Supports "text" (final text only) and "json" (all events as JSONL) output formats.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 public class PrintMode {
     private static final Logger log = LoggerFactory.getLogger(PrintMode.class);
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
+    @SuppressWarnings("checkstyle:top_class_comment")
     public enum OutputFormat {
         TEXT,
         JSON

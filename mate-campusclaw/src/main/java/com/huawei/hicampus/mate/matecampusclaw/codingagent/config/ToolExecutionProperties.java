@@ -18,6 +18,9 @@ import lombok.extern.slf4j.Slf4j;
 
 /**
  * 工具执行配置属性
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 @Slf4j
 @Data

@@ -17,6 +17,9 @@ import java.util.regex.Pattern;
  *   <li>{@code ${ENV_VAR:-default}} — expands with a default value if unset</li>
  *   <li>{@code ~} — expands to the user's home directory</li>
  * </ul>
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 public final class ConfigValueResolver {
 

@@ -16,9 +16,13 @@ import jakarta.annotation.Nullable;
 /**
  * Provides data for the status bar / footer display in the TUI.
  * Aggregates model info, token usage, session stats, and keybinding hints.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 public class FooterDataProvider {
 
+    @SuppressWarnings("checkstyle:top_class_comment")
     public record FooterData(
             String modelName,
             @Nullable String providerName,
@@ -28,6 +32,7 @@ public class FooterDataProvider {
             List<FooterHint> hints,
             boolean isStreaming) {}
 
+    @SuppressWarnings("checkstyle:top_class_comment")
     public record TokenStats(
             int inputTokens, int outputTokens, int cacheReadTokens, int totalTokens, double totalCostUsd) {
         public static TokenStats from(Usage usage) {
@@ -56,6 +61,7 @@ public class FooterDataProvider {
         }
     }
 
+    @SuppressWarnings("checkstyle:top_class_comment")
     public record SessionStats(int turnCount, int messageCount, long sessionDurationMs) {
         public String formatDuration() {
             long seconds = sessionDurationMs / 1000;
@@ -71,6 +77,7 @@ public class FooterDataProvider {
         }
     }
 
+    @SuppressWarnings("checkstyle:top_class_comment")
     public record FooterHint(String key, String description) {
         public String format() {
             return "\033[36m" + key + "\033[0m " + description;

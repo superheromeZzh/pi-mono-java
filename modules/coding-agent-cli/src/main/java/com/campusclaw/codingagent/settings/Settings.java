@@ -12,6 +12,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import jakarta.annotation.Nullable;
 
+@SuppressWarnings("checkstyle:top_class_comment")
 @JsonIgnoreProperties(ignoreUnknown = true)
 public record Settings(
         @JsonProperty("defaultProvider") @Nullable String defaultProvider,
@@ -60,29 +61,35 @@ public record Settings(
         return defaultModel;
     }
 
+    @SuppressWarnings("checkstyle:top_class_comment")
     public record BranchSummarySettings(
             @JsonProperty("reserveTokens") @Nullable Integer reserveTokens,
             @JsonProperty("skipPrompt") @Nullable Boolean skipPrompt) {}
 
+    @SuppressWarnings("checkstyle:top_class_comment")
     public record TerminalSettings(
             @JsonProperty("showImages") @Nullable Boolean showImages,
             @JsonProperty("clearOnShrink") @Nullable Boolean clearOnShrink) {}
 
+    @SuppressWarnings("checkstyle:top_class_comment")
     public record ImageSettings(
             @JsonProperty("autoResize") @Nullable Boolean autoResize,
             @JsonProperty("blockImages") @Nullable Boolean blockImages) {}
 
+    @SuppressWarnings("checkstyle:top_class_comment")
     public record CompactionSettings(
             @JsonProperty("enabled") @Nullable Boolean enabled,
             @JsonProperty("reserveTokens") @Nullable Integer reserveTokens,
             @JsonProperty("keepRecentTokens") @Nullable Integer keepRecentTokens) {}
 
+    @SuppressWarnings("checkstyle:top_class_comment")
     public record RetrySettings(
             @JsonProperty("enabled") @Nullable Boolean enabled,
             @JsonProperty("maxRetries") @Nullable Integer maxRetries,
             @JsonProperty("baseDelayMs") @Nullable Long baseDelayMs,
             @JsonProperty("maxDelayMs") @Nullable Long maxDelayMs) {}
 
+    @SuppressWarnings("checkstyle:top_class_comment")
     @JsonIgnoreProperties(ignoreUnknown = true)
     public record CustomModelConfig(
             @JsonProperty("id") String id,

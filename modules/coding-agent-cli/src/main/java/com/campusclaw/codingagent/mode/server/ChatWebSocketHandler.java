@@ -55,6 +55,9 @@ import reactor.netty.http.websocket.WebsocketOutbound;
  *
  * <p>Shares {@link SessionPool} with the SSE endpoint {@code /api/chat}, so
  * reconnecting with the same {@code conversation_id} resumes the same session.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 public class ChatWebSocketHandler {
 

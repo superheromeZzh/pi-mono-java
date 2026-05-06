@@ -16,6 +16,9 @@ import java.nio.file.Path;
  * @param baseDir                 directory containing the SKILL.md file
  * @param source                  origin: "user" or "project"
  * @param disableModelInvocation  if true, skill is not shown in system prompt
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 public record Skill(
         String name, String description, Path filePath, Path baseDir, String source, boolean disableModelInvocation) {

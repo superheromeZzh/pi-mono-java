@@ -13,6 +13,9 @@ import java.util.Optional;
 
 /**
  * MIME type detection based on file extension and content probing.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 public final class MimeDetector {
     private MimeDetector() {}

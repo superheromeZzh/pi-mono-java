@@ -15,6 +15,9 @@ import org.slf4j.LoggerFactory;
  *
  * <p>User-level: {@code ~/.campusclaw/agent/}
  * <p>Project-level: {@code {cwd}/.campusclaw/}
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 public final class AppPaths {
 

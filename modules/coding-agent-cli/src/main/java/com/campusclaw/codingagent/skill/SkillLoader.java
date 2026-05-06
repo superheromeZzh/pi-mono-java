@@ -29,6 +29,9 @@ import org.yaml.snakeyaml.Yaml;
  * <p>
  * Supports sandbox mode: when {@link SandboxSkillParser} is available and sandbox mode is enabled,
  * skills are parsed inside a Docker container for security.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 public class SkillLoader {
 

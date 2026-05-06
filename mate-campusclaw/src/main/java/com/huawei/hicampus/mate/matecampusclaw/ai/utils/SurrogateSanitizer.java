@@ -14,6 +14,9 @@ package com.huawei.hicampus.mate.matecampusclaw.ai.utils;
  *
  * <p>Valid emoji and other characters outside the Basic Multilingual Plane
  * use properly paired surrogates and are NOT affected.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 public final class SurrogateSanitizer {
 

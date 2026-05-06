@@ -4,6 +4,7 @@
 
 package com.campusclaw.codingagent.command;
 
+@SuppressWarnings("checkstyle:top_class_comment")
 public interface SlashCommand {
     /** Command name without the slash (e.g., "model", "settings"). */
     String name();

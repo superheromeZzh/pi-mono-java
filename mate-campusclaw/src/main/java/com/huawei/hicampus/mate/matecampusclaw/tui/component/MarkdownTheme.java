@@ -8,6 +8,9 @@ import java.util.function.UnaryOperator;
 
 /**
  * Theme for Markdown rendering — provides ANSI styling functions for each element type.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 public class MarkdownTheme {
 
@@ -110,6 +113,7 @@ public class MarkdownTheme {
         return new Builder();
     }
 
+    @SuppressWarnings("checkstyle:top_class_comment")
     public static class Builder {
         private static final String RESET = "\033[0m";
         private static final String BOLD = "\033[1m";

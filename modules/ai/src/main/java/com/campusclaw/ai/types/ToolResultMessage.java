@@ -19,6 +19,9 @@ import jakarta.annotation.Nullable;
  * @param details    optional provider-specific detail payload
  * @param isError    whether the tool execution resulted in an error
  * @param timestamp  Unix timestamp in milliseconds
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 public record ToolResultMessage(
         @JsonProperty("toolCallId") String toolCallId,

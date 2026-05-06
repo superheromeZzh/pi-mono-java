@@ -9,6 +9,9 @@ import lombok.Data;
 
 /**
  * 沙箱资源限制配置
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 @Data
 @Builder

@@ -43,6 +43,9 @@ import jakarta.annotation.Nullable;
 /**
  * {@link ApiProvider} for the Google Generative AI (Gemini) REST API.
  * Uses java.net.http.HttpClient for SSE streaming.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 @Component
 public class GoogleGenerativeAIProvider implements ApiProvider {

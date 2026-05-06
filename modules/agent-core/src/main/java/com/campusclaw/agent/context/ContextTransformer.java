@@ -12,6 +12,9 @@ import com.campusclaw.ai.types.Message;
 
 /**
  * Asynchronously transforms agent messages before they are sent to the model.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 @FunctionalInterface
 public interface ContextTransformer {

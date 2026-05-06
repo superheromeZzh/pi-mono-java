@@ -17,6 +17,9 @@ import com.campusclaw.codingagent.loop.LoopManager;
  *   /loop [interval] <prompt>   — start a loop (default interval: 10m)
  *   /loop stop [id]             — stop one or all loops
  *   /loop list                  — list active loops
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 public class LoopCommand implements SlashCommand {
 

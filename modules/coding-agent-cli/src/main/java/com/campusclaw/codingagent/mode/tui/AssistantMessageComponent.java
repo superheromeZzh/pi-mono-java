@@ -14,6 +14,9 @@ import com.campusclaw.tui.component.MarkdownComponent;
 /**
  * Renders an assistant message with optional thinking block and markdown-formatted text.
  * Updated incrementally during streaming.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 public class AssistantMessageComponent implements Component {
 

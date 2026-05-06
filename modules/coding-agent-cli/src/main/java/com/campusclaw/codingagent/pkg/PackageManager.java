@@ -25,11 +25,15 @@ import jakarta.annotation.Nullable;
 /**
  * Discovers and manages extension packages (skills, tools, commands).
  * Supports npm-style packages and git-based packages.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 public class PackageManager {
     private static final Logger log = LoggerFactory.getLogger(PackageManager.class);
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
+    @SuppressWarnings("checkstyle:top_class_comment")
     @JsonIgnoreProperties(ignoreUnknown = true)
     public record PackageManifest(
             @JsonProperty("name") String name,
@@ -40,6 +44,7 @@ public class PackageManager {
             @JsonProperty("commands") @Nullable List<String> commands,
             @JsonProperty("repository") @Nullable String repository) {}
 
+    @SuppressWarnings("checkstyle:top_class_comment")
     public record InstalledPackage(String name, String version, Path location, PackageManifest manifest) {}
 
     private final Path packagesDir;

@@ -34,6 +34,9 @@ import org.springframework.stereotype.Service;
  * <p>Marked {@code @Primary} so it shadows {@link com.huawei.hicampus.mate.matecampusclaw.ai.env.EnvProviderConfigResolver}
  * when the CLI module is on the classpath; without the CLI, the env-only
  * resolver in {@code modules/ai} is used.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 @Service
 @Primary

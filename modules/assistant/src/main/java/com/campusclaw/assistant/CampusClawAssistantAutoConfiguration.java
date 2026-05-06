@@ -19,6 +19,7 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 
+@SuppressWarnings("checkstyle:top_class_comment")
 @AutoConfiguration
 @ComponentScan
 @MapperScan("com.campusclaw.assistant.mapper")

@@ -9,6 +9,9 @@ import java.util.List;
 
 /**
  * Colorized side-by-side diff visualization for terminal display.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 public class DiffViewer {
 
@@ -24,6 +27,7 @@ public class DiffViewer {
     private static final String BG_GREEN = "\033[42m";
     private static final String INVERSE = "\033[7m";
 
+    @SuppressWarnings("checkstyle:top_class_comment")
     public enum LineType {
         SAME,
         ADDED,
@@ -31,6 +35,7 @@ public class DiffViewer {
         MODIFIED
     }
 
+    @SuppressWarnings("checkstyle:top_class_comment")
     public record DiffLine(LineType type, int oldLineNum, int newLineNum, String oldText, String newText) {}
 
     /**
@@ -168,6 +173,7 @@ public class DiffViewer {
         return new DiffSummary(added, removed, modified, unchanged);
     }
 
+    @SuppressWarnings("checkstyle:top_class_comment")
     public record DiffSummary(int added, int removed, int modified, int unchanged) {
         public String format() {
             return GREEN + "+" + added + RESET + " "

@@ -20,6 +20,9 @@ import org.slf4j.LoggerFactory;
  * <p>
  * Supports sandbox mode: when {@link SandboxSkillParser} is available,
  * skill body content is loaded inside a Docker container for security.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 public class SkillExpander {
 

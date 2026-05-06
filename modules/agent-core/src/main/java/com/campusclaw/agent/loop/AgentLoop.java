@@ -42,6 +42,9 @@ import reactor.core.publisher.Sinks;
 
 /**
  * Core agent loop that streams assistant responses, executes tools, and manages turn continuation.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 public class AgentLoop {
 

@@ -11,6 +11,9 @@ import java.util.function.UnaryOperator;
  * <p>
  * Use {@link #builder()} for fluent configuration, or {@link #defaultTheme()} / {@link #plainTheme()}
  * for preset themes.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 public class SelectListTheme {
 
@@ -84,6 +87,7 @@ public class SelectListTheme {
         return new Builder();
     }
 
+    @SuppressWarnings("checkstyle:top_class_comment")
     public static class Builder {
         private UnaryOperator<String> selectedPrefix = UnaryOperator.identity();
         private UnaryOperator<String> selectedText = UnaryOperator.identity();

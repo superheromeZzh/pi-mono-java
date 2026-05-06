@@ -25,6 +25,9 @@ import com.huawei.hicampus.mate.matecampusclaw.tui.ansi.AnsiUtils;
  * Supports expand/collapse via Ctrl+O (matching campusclaw behavior).
  * Collapsed: shows up to PREVIEW_LINES lines + "... (N more lines, ctrl+o to expand)"
  * Expanded: shows all content + "(ctrl+o to collapse)"
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 public class ToolStatusComponent implements Component {
 

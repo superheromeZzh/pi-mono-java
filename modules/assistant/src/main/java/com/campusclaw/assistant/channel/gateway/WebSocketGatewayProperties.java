@@ -9,6 +9,9 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 /**
  * Configuration properties for WebSocket Gateway server.
  * The gateway acts as a WebSocket server that chat tools can connect to directly.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 @ConfigurationProperties(prefix = "pi.assistant.gateway")
 public class WebSocketGatewayProperties {

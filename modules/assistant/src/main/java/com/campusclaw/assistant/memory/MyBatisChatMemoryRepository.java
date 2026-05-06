@@ -16,6 +16,7 @@ import com.campusclaw.ai.types.UserMessage;
 import com.campusclaw.assistant.mapper.ChatMemoryMapper;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+@SuppressWarnings("checkstyle:top_class_comment")
 public class MyBatisChatMemoryRepository implements ChatMemoryRepository {
 
     private final ObjectMapper objectMapper;

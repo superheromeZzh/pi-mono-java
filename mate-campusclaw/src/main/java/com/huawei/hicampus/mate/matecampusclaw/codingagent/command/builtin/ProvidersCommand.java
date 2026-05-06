@@ -25,6 +25,9 @@ import com.huawei.hicampus.mate.matecampusclaw.codingagent.settings.SettingsMana
  * key, whether {@code settings.json#provider.<id>} overrides apply.
  *
  * <p>The opencode equivalent is roughly {@code opencode providers}.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 public class ProvidersCommand implements SlashCommand {
 

@@ -17,6 +17,9 @@ import com.huawei.hicampus.mate.matecampusclaw.agent.tool.CancellationToken;
  * @param signal  cancellation token for cooperative cancellation (may be null)
  * @param timeout maximum execution duration (may be null for no timeout)
  * @param env     additional environment variables (may be null or empty)
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 public record BashExecOptions(
         Consumer<byte[]> onData, CancellationToken signal, Duration timeout, Map<String, String> env) {

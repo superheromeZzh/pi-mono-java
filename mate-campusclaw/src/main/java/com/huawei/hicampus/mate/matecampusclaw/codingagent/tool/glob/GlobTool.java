@@ -36,6 +36,9 @@ import org.springframework.stereotype.Component;
 /**
  * Agent tool for finding files by glob pattern.
  * Results are sorted by modification time (most recent first).
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 @Component
 @ConditionalOnProperty(name = "tool.execution.hybrid-enabled", havingValue = "false", matchIfMissing = true)

@@ -15,6 +15,9 @@ import com.campusclaw.ai.types.SimpleStreamOptions;
  *
  * <p>Implementations can wrap CampusClawAiService, add caching, logging, or any
  * other cross-cutting concern.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 @FunctionalInterface
 public interface StreamFunction {

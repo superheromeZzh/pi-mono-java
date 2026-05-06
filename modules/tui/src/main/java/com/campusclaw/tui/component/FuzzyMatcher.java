@@ -15,6 +15,9 @@ import java.util.Locale;
  * Implements a simple fuzzy matching algorithm: each character in the query must appear
  * (in order) in the candidate string. Matching is case-insensitive. Results are scored
  * by match quality — consecutive matches and matches at word boundaries score higher.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 public class FuzzyMatcher {
 

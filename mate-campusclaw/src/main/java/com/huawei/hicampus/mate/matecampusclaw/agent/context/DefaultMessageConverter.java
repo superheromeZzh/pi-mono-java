@@ -10,6 +10,9 @@ import com.huawei.hicampus.mate.matecampusclaw.ai.types.Message;
 
 /**
  * Default converter that passes agent messages straight through to the LLM.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 public class DefaultMessageConverter implements MessageConverter {
 

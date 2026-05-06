@@ -8,6 +8,7 @@ import com.campusclaw.codingagent.command.SlashCommand;
 import com.campusclaw.codingagent.command.SlashCommandContext;
 import com.campusclaw.codingagent.command.SlashCommandRegistry;
 
+@SuppressWarnings("checkstyle:top_class_comment")
 public class HelpCommand implements SlashCommand {
 
     private final SlashCommandRegistry registry;

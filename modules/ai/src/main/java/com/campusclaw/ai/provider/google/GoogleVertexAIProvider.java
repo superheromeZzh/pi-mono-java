@@ -42,6 +42,9 @@ import jakarta.annotation.Nullable;
 /**
  * {@link ApiProvider} for Google Vertex AI.
  * Uses REST API with API key or ADC auth.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 @Component
 public class GoogleVertexAIProvider implements ApiProvider {

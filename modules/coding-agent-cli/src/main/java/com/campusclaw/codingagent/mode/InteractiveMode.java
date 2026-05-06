@@ -81,6 +81,9 @@ import org.springframework.context.ApplicationContext;
  *
  * <p>Components are rendered by the {@link Tui} engine which handles differential
  * updates and synchronized output for flicker-free display.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 public class InteractiveMode {
 

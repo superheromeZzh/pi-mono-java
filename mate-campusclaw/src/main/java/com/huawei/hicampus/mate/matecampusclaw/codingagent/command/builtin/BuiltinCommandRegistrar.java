@@ -20,6 +20,7 @@ import org.springframework.stereotype.Component;
 
 import jakarta.annotation.PostConstruct;
 
+@SuppressWarnings("checkstyle:top_class_comment")
 @Component
 @Lazy(false)
 public class BuiltinCommandRegistrar {

@@ -37,6 +37,9 @@ import jakarta.annotation.PostConstruct;
  * lookup by provider + modelId. Pre-populates common models via {@link #init()}.
  *
  * <p>Thread-safe: all mutation methods synchronize on the internal lock.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 @Service
 public class ModelRegistry {

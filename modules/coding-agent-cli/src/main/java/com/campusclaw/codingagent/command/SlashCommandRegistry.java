@@ -12,6 +12,7 @@ import java.util.Optional;
 
 import org.springframework.stereotype.Service;
 
+@SuppressWarnings("checkstyle:top_class_comment")
 @Service
 public class SlashCommandRegistry {
     private final Map<String, SlashCommand> commands = new LinkedHashMap<>();

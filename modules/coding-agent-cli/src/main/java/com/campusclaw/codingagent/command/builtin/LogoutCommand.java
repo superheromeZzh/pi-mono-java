@@ -11,6 +11,9 @@ import com.campusclaw.codingagent.command.SlashCommandContext;
 
 /**
  * Removes a persisted API key. Usage: {@code /logout <provider>}.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 public class LogoutCommand implements SlashCommand {
 

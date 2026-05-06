@@ -19,6 +19,9 @@ import com.campusclaw.codingagent.command.SlashCommandContext;
  *   <li>{@code /auth list} — show which providers have stored credentials</li>
  *   <li>{@code /auth logout <provider>} — remove a stored credential</li>
  * </ul>
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 public class AuthCommand implements SlashCommand {
 

@@ -29,6 +29,9 @@ import org.springframework.stereotype.Component;
  * Agent tool that creates or overwrites files.
  * Automatically creates parent directories and serializes writes
  * through {@link FileMutationQueue}.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 @Component
 @ConditionalOnProperty(name = "tool.execution.hybrid-enabled", havingValue = "false", matchIfMissing = true)

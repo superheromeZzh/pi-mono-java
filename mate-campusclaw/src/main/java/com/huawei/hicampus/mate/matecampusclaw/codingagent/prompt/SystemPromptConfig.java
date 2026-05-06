@@ -23,6 +23,9 @@ import com.huawei.hicampus.mate.matecampusclaw.codingagent.skill.Skill;
  * @param contextFiles       AGENTS.md/CLAUDE.md context files (may be null or empty)
  * @param systemPromptOverride  content of SYSTEM.md if found (replaces base prompt; may be null)
  * @param appendSystemPrompt content of APPEND_SYSTEM.md if found (may be null)
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 public record SystemPromptConfig(
         List<AgentTool> tools,

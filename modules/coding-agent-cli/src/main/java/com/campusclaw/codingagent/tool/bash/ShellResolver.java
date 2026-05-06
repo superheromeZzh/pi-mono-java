@@ -26,6 +26,9 @@ import java.util.concurrent.TimeUnit;
  * </ul>
  * The result is cached for the lifetime of the JVM — the shell layout of the host
  * does not change at runtime.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 public final class ShellResolver {
 

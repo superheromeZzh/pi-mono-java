@@ -21,6 +21,9 @@ import java.util.List;
  *   <li>If input starts with {@code \033} followed by a printable char, yield Alt+char</li>
  *   <li>Otherwise, yield individual characters</li>
  * </ul>
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 public class StdinBuffer {
 

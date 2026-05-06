@@ -12,6 +12,9 @@ import java.util.function.UnaryOperator;
 /**
  * ANSI-aware text utility functions for terminal rendering.
  * Handles ANSI escape sequences, East Asian wide characters, and grapheme clusters.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 public final class AnsiUtils {
 

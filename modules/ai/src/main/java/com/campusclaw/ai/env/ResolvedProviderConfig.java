@@ -18,6 +18,9 @@ import jakarta.annotation.Nullable;
  * @param apiKey  the resolved API key, or null when none is available
  * @param baseUrl explicit base URL override, or null to use the model's default
  * @param headers optional extra HTTP headers
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 public record ResolvedProviderConfig(
         @Nullable String apiKey, @Nullable String baseUrl, @Nullable Map<String, String> headers) {

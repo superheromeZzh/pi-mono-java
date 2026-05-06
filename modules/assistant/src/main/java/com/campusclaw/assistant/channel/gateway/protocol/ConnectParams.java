@@ -7,6 +7,7 @@ package com.campusclaw.assistant.channel.gateway.protocol;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+@SuppressWarnings("checkstyle:top_class_comment")
 @JsonIgnoreProperties(ignoreUnknown = true)
 public record ConnectParams(
         @JsonProperty("minProtocol") Integer minProtocol,

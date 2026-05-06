@@ -22,6 +22,9 @@ import lombok.extern.slf4j.Slf4j;
 /**
  * Docker 沙箱客户端 - 使用系统 docker 命令
  * 简化版本，不依赖 docker-java 库
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 @Slf4j
 @Component

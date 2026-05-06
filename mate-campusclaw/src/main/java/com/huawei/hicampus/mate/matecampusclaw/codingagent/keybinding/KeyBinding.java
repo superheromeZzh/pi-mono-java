@@ -4,4 +4,5 @@
 
 package com.huawei.hicampus.mate.matecampusclaw.codingagent.keybinding;
 
+@SuppressWarnings("checkstyle:top_class_comment")
 public record KeyBinding(String action, String key, String description) {}

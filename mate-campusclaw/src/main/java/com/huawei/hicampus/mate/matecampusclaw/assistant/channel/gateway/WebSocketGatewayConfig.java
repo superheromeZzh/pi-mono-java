@@ -33,6 +33,9 @@ import io.netty.handler.logging.LoggingHandler;
 /**
  * WebSocket Gateway server configuration using Netty.
  * Uses SmartLifecycle to start after all beans are initialized.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 @Configuration
 @ConditionalOnProperty(prefix = "pi.assistant.gateway", name = "enabled", havingValue = "true")

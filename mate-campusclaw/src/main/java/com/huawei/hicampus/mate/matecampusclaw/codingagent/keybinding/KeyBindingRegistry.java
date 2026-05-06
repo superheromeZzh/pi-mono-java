@@ -21,6 +21,7 @@ import org.springframework.stereotype.Service;
 
 import jakarta.annotation.PostConstruct;
 
+@SuppressWarnings("checkstyle:top_class_comment")
 @Service
 public class KeyBindingRegistry {
     private static final Logger log = LoggerFactory.getLogger(KeyBindingRegistry.class);

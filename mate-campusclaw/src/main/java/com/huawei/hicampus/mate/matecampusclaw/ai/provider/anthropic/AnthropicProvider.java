@@ -70,6 +70,9 @@ import jakarta.annotation.Nullable;
  * <p>Uses the official {@code com.anthropic:anthropic-java} SDK for streaming
  * requests, mapping Anthropic SSE events to the unified
  * {@link AssistantMessageEvent} protocol.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 @Component
 public class AnthropicProvider implements ApiProvider {

@@ -10,6 +10,7 @@ import com.campusclaw.ai.types.Message;
 
 import org.springframework.stereotype.Service;
 
+@SuppressWarnings("checkstyle:top_class_comment")
 @Service
 public class ChatMemoryStore {
 

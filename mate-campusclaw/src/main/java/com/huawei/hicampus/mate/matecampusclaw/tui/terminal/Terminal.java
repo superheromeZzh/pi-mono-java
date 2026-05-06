@@ -10,6 +10,9 @@ import java.util.function.Consumer;
  * Abstraction over a terminal device. Provides raw I/O, cursor control,
  * size detection, and input handling. Implementations include a real
  * JLine-backed terminal and an in-memory test terminal.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 public interface Terminal {
 

@@ -18,20 +18,26 @@ import jakarta.annotation.Nullable;
 /**
  * Diagnostic checks for the coding agent environment.
  * Validates configuration, resources, and detects conflicts.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 public class Diagnostics {
     private static final Logger log = LoggerFactory.getLogger(Diagnostics.class);
 
+    @SuppressWarnings("checkstyle:top_class_comment")
     public enum Severity {
         INFO,
         WARNING,
         ERROR
     }
 
+    @SuppressWarnings("checkstyle:top_class_comment")
     public record DiagnosticResult(String checkName, Severity severity, String message, @Nullable String suggestion) {}
 
     private final List<DiagnosticCheck> checks = new ArrayList<>();
 
+    @SuppressWarnings("checkstyle:top_class_comment")
     @FunctionalInterface
     public interface DiagnosticCheck {
         List<DiagnosticResult> run();

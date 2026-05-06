@@ -10,6 +10,9 @@ import java.nio.file.Path;
 /**
  * Abstraction for file read operations.
  * Implementations may target local filesystem, SSH, or RPC backends.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 public interface ReadOperations {
 

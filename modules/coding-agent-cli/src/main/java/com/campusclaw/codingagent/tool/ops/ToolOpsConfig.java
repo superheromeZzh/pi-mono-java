@@ -12,6 +12,9 @@ import org.springframework.context.annotation.Configuration;
 /**
  * Spring configuration that provides local filesystem implementations
  * of the tool operations interfaces and shared utilities.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 @Configuration
 public class ToolOpsConfig {

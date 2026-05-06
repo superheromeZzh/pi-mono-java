@@ -22,6 +22,9 @@ import lombok.extern.slf4j.Slf4j;
 /**
  * 沙箱内的 Skill 解析器
  * 将 SKILL.md 拷贝到沙箱容器中解析，确保安全
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 @Slf4j
 @Component

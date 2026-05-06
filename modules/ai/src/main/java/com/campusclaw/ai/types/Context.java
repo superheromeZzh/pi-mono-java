@@ -16,6 +16,9 @@ import jakarta.annotation.Nullable;
  * @param systemPrompt optional system-level instructions
  * @param messages     the conversation history
  * @param tools        optional list of tools available for the LLM to invoke
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 public record Context(
         @JsonProperty("systemPrompt") @Nullable String systemPrompt,

@@ -15,6 +15,9 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  * @param cacheWrite  number of prompt-cache write tokens
  * @param totalTokens total number of tokens consumed
  * @param cost        monetary cost breakdown in USD
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 public record Usage(
         @JsonProperty("input") int input,

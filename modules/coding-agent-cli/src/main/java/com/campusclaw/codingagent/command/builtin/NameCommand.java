@@ -9,6 +9,9 @@ import com.campusclaw.codingagent.command.SlashCommandContext;
 
 /**
  * Sets or displays the session display name matching campusclaw TS /name command.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 public class NameCommand implements SlashCommand {
 

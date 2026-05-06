@@ -9,6 +9,9 @@ import com.fasterxml.jackson.annotation.JsonValue;
 
 /**
  * Reason why the LLM stopped generating output.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 public enum StopReason {
     STOP("stop"),

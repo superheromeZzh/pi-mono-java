@@ -7,6 +7,7 @@ package com.huawei.hicampus.mate.matecampusclaw.assistant.channel.gateway.protoc
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+@SuppressWarnings("checkstyle:top_class_comment")
 @JsonIgnoreProperties(ignoreUnknown = true)
 public record ClientInfo(
         @JsonProperty("name") String name,

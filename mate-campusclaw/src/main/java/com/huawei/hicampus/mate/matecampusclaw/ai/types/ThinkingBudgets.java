@@ -15,6 +15,9 @@ import jakarta.annotation.Nullable;
  * @param low     token budget for low thinking
  * @param medium  token budget for medium thinking
  * @param high    token budget for high thinking
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 public record ThinkingBudgets(
         @JsonProperty("minimal") @Nullable Integer minimal,

@@ -23,6 +23,9 @@ import com.huawei.hicampus.mate.matecampusclaw.ai.types.UserMessage;
 /**
  * Exports a conversation (list of messages) to an HTML document.
  * Converts ANSI escape codes to HTML spans and provides a styled output.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 public final class HtmlExporter {
 

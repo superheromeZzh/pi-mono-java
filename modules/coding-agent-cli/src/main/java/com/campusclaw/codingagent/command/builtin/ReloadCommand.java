@@ -9,6 +9,9 @@ import com.campusclaw.codingagent.command.SlashCommandContext;
 
 /**
  * Reloads skills and settings matching campusclaw TS /reload command.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 public class ReloadCommand implements SlashCommand {
 

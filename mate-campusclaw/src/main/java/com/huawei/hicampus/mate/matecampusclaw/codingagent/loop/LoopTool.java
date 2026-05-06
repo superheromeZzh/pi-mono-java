@@ -25,6 +25,9 @@ import org.springframework.stereotype.Component;
  *
  * Use this for tasks the user wants to see repeated in the current session.
  * Use CronTool for persistent background tasks that survive across sessions.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 @Component
 public class LoopTool implements AgentTool {

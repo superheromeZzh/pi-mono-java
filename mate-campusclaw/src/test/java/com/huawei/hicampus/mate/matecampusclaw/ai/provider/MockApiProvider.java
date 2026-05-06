@@ -19,6 +19,9 @@ import jakarta.annotation.Nullable;
  * <p>By default, produces a simple text response: start -> text_start ->
  * text_delta -> text_end -> done. Custom event sequences can be supplied
  * via the constructor.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 public class MockApiProvider implements ApiProvider {
 

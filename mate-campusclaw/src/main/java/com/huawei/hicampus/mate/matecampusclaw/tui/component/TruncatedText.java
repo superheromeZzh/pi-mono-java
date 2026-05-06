@@ -15,6 +15,9 @@ import com.huawei.hicampus.mate.matecampusclaw.tui.ansi.AnsiUtils;
  * TruncatedText component — displays single-line text that is truncated with an ellipsis
  * when it exceeds the available width. Unlike {@link Text}, this component never wraps;
  * it always produces exactly one line (or zero lines if the text is empty).
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 public class TruncatedText implements Component {
 

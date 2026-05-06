@@ -23,6 +23,9 @@ import org.slf4j.LoggerFactory;
 /**
  * RPC mode: reads JSONL commands from stdin, writes JSONL events to stdout.
  * Designed for headless operation and external process integration.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 public class RpcMode {
     private static final Logger log = LoggerFactory.getLogger(RpcMode.class);

@@ -21,6 +21,9 @@ import com.huawei.hicampus.mate.matecampusclaw.tui.ansi.AnsiUtils;
  * links ([text](url)), and horizontal rules (---).
  * <p>
  * Uses a hand-written line-by-line parser — no external Markdown library needed.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 public class MarkdownComponent implements Component {
 

@@ -16,6 +16,9 @@ import com.campusclaw.codingagent.config.AppPaths;
 
 /**
  * Resume a different session. Lists recent sessions and allows selection.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 public class ResumeCommand implements SlashCommand {
 
