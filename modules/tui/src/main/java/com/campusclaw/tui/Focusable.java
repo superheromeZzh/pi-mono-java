@@ -14,10 +14,8 @@ package com.campusclaw.tui;
  */
 public interface Focusable {
 
-    @SuppressWarnings("checkstyle:java_doc_format_missing")
     boolean isFocused();
 
-    @SuppressWarnings("checkstyle:java_doc_format_missing")
     void setFocused(boolean focused);
 
     /**

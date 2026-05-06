@@ -42,7 +42,6 @@ public class TreeSelectorOverlay implements Component, Focusable {
     private boolean focused;
     private final boolean empty;
 
-    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public TreeSelectorOverlay(List<com.campusclaw.ai.types.Message> messages) {
         var items = buildItems(messages);
         this.empty = items.isEmpty();

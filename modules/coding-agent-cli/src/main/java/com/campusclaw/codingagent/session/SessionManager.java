@@ -61,7 +61,6 @@ public class SessionManager {
     private String lastEntryId;
     private BufferedWriter writer;
 
-    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public SessionManager() {
         this.mapper = new ObjectMapper();
         this.mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);

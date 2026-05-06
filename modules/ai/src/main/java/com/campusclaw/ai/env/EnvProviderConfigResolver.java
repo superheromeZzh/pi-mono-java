@@ -24,7 +24,6 @@ public class EnvProviderConfigResolver implements ProviderConfigResolver {
 
     private final EnvApiKeyResolver envApiKeyResolver;
 
-    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public EnvProviderConfigResolver(EnvApiKeyResolver envApiKeyResolver) {
         this.envApiKeyResolver = envApiKeyResolver;
     }

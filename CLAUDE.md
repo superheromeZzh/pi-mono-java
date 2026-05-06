@@ -103,8 +103,8 @@ Key runtime concepts:
 ### 圈复杂度（CC ≤ 15）
 方法的 cyclomatic complexity 不得超过 15（`switchBlockAsSingleDecisionPoint=true`，整段 switch 算 1 个决策点）。超阈值的方法必须拆分提取，**不要新增 `@SuppressWarnings("checkstyle:huge_cyclomatic_complexity")`**——存量带此注解的是历史欠债，等待重构，不是范例。
 
-### public 方法必须有 Javadoc
-新写 public 方法时必须写 Javadoc 描述功能。`@param` / `@return` / `@throws` 按需补全（不强制写全），但写了就要和签名一致：
+### public 方法的 Javadoc 写了就要写对
+**不强制** public 方法必须有 Javadoc——只在「写了 Javadoc」时校验：`@param` / `@return` / `@throws` 一旦写出，就要与方法签名一致；不需要的 tag 可以省。
 
 ```java
 /**
@@ -115,7 +115,8 @@ public int size() {
 }
 ```
 
-存量 456 个未写 Javadoc 的方法已打 `@SuppressWarnings("checkstyle:java_doc_format_missing")` 标记技术债，不要新增此注解；getter/setter 类琐碎方法可省略 Javadoc（`allowMissingPropertyJavadoc=true`）。
+`@param x ...` 写了但参数列表里没有 `x` → 报错。  
+有 return 类型但 Javadoc 漏写 `@return` → 不报错（按需）。
 
 ### 顶层 public 类必须有 Javadoc + @version
 新增 public class / interface / enum / record / @interface 时，类声明前必须有 Javadoc，且包含 `@version` 标签：

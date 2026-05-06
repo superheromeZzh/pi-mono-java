@@ -116,73 +116,61 @@ public record SimpleStreamOptions(
 
         Builder() {}
 
-        @SuppressWarnings("checkstyle:java_doc_format_missing")
         public Builder temperature(@Nullable Double temperature) {
             this.temperature = temperature;
             return this;
         }
 
-        @SuppressWarnings("checkstyle:java_doc_format_missing")
         public Builder maxTokens(@Nullable Integer maxTokens) {
             this.maxTokens = maxTokens;
             return this;
         }
 
-        @SuppressWarnings("checkstyle:java_doc_format_missing")
         public Builder apiKey(@Nullable String apiKey) {
             this.apiKey = apiKey;
             return this;
         }
 
-        @SuppressWarnings("checkstyle:java_doc_format_missing")
         public Builder transport(@Nullable Transport transport) {
             this.transport = transport;
             return this;
         }
 
-        @SuppressWarnings("checkstyle:java_doc_format_missing")
         public Builder cacheRetention(@Nullable CacheRetention cacheRetention) {
             this.cacheRetention = cacheRetention;
             return this;
         }
 
-        @SuppressWarnings("checkstyle:java_doc_format_missing")
         public Builder sessionId(@Nullable String sessionId) {
             this.sessionId = sessionId;
             return this;
         }
 
-        @SuppressWarnings("checkstyle:java_doc_format_missing")
         public Builder headers(@Nullable Map<String, String> headers) {
             this.headers = headers;
             return this;
         }
 
-        @SuppressWarnings("checkstyle:java_doc_format_missing")
         public Builder maxRetryDelayMs(@Nullable Long maxRetryDelayMs) {
             this.maxRetryDelayMs = maxRetryDelayMs;
             return this;
         }
 
-        @SuppressWarnings("checkstyle:java_doc_format_missing")
         public Builder metadata(@Nullable Map<String, Object> metadata) {
             this.metadata = metadata;
             return this;
         }
 
-        @SuppressWarnings("checkstyle:java_doc_format_missing")
         public Builder reasoning(@Nullable ThinkingLevel reasoning) {
             this.reasoning = reasoning;
             return this;
         }
 
-        @SuppressWarnings("checkstyle:java_doc_format_missing")
         public Builder thinkingBudgets(@Nullable ThinkingBudgets thinkingBudgets) {
             this.thinkingBudgets = thinkingBudgets;
             return this;
         }
 
-        @SuppressWarnings("checkstyle:java_doc_format_missing")
         public SimpleStreamOptions build() {
             return new SimpleStreamOptions(
                     temperature,

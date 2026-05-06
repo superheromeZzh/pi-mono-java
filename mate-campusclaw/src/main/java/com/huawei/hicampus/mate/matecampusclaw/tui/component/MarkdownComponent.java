@@ -35,23 +35,19 @@ public class MarkdownComponent implements Component {
     private int cachedWidth = -1;
     private List<String> cachedLines;
 
-    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public MarkdownComponent() {
         this("", MarkdownTheme.defaultTheme());
     }
 
-    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public MarkdownComponent(String content) {
         this(content, MarkdownTheme.defaultTheme());
     }
 
-    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public MarkdownComponent(String content, MarkdownTheme theme) {
         this.content = content != null ? content : "";
         this.theme = theme;
     }
 
-    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public void setContent(String content) {
         this.content = content != null ? content : "";
         invalidate();
@@ -61,7 +57,6 @@ public class MarkdownComponent implements Component {
         return content;
     }
 
-    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public void setTheme(MarkdownTheme theme) {
         this.theme = theme;
         invalidate();

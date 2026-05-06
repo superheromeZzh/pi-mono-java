@@ -87,12 +87,10 @@ public class Input implements Component, Focusable {
     private Consumer<String> onSubmit;
     private Runnable onEscape;
 
-    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public Input() {
         this(null);
     }
 
-    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public Input(String placeholder) {
         this.placeholder = placeholder;
     }
@@ -105,7 +103,6 @@ public class Input implements Component, Focusable {
         return value;
     }
 
-    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public void setValue(String value) {
         this.value = value != null ? value : "";
         this.cursor = Math.min(this.cursor, this.value.length());

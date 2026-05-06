@@ -17,17 +17,14 @@ import org.apache.ibatis.annotations.Select;
 @Mapper
 public interface ChatMemoryMapper {
 
-    @SuppressWarnings("checkstyle:java_doc_format_missing")
     @Select("SELECT id, conversation_id, role, content, sequence, created_at "
             + "FROM chat_memory WHERE conversation_id = #{conversationId} ORDER BY sequence")
     List<ChatMemoryEntity> selectByConversationId(String conversationId);
 
-    @SuppressWarnings("checkstyle:java_doc_format_missing")
     @Insert("INSERT INTO chat_memory (conversation_id, role, content, sequence) "
             + "VALUES (#{conversationId}, #{role}, #{content}, #{sequence})")
     void insert(ChatMemoryEntity entity);
 
-    @SuppressWarnings("checkstyle:java_doc_format_missing")
     @Delete("DELETE FROM chat_memory WHERE conversation_id = #{conversationId}")
     void deleteByConversationId(String conversationId);
 }

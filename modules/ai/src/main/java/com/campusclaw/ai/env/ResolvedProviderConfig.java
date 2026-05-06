@@ -25,12 +25,10 @@ import jakarta.annotation.Nullable;
 public record ResolvedProviderConfig(
         @Nullable String apiKey, @Nullable String baseUrl, @Nullable Map<String, String> headers) {
 
-    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public static ResolvedProviderConfig empty() {
         return new ResolvedProviderConfig(null, null, null);
     }
 
-    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public static ResolvedProviderConfig ofApiKey(@Nullable String apiKey) {
         return new ResolvedProviderConfig(apiKey, null, null);
     }

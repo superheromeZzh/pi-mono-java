@@ -37,17 +37,14 @@ public class Timings {
             long endNanos,
             @Nullable String parentName,
             @Nullable Map<String, String> metadata) {
-        @SuppressWarnings("checkstyle:java_doc_format_missing")
         public long durationNanos() {
             return endNanos - startNanos;
         }
 
-        @SuppressWarnings("checkstyle:java_doc_format_missing")
         public double durationMs() {
             return durationNanos() / 1_000_000.0;
         }
 
-        @SuppressWarnings("checkstyle:java_doc_format_missing")
         public double durationSecs() {
             return durationNanos() / 1_000_000_000.0;
         }
@@ -64,7 +61,6 @@ public class Timings {
             double p50Ms,
             double p95Ms,
             double p99Ms) {
-        @SuppressWarnings("checkstyle:java_doc_format_missing")
         public String format() {
             if (count == 1) {
                 return String.format(Locale.ROOT, "%s: %.1fms", name, totalMs);

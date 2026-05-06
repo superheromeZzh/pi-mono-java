@@ -46,7 +46,6 @@ public record Settings(
         @JsonProperty("provider") @Nullable Map<String, ProviderConfig> provider,
         /** Per-agent overrides: e.g. {"summarizer": {"model": "..."}}. */
         @JsonProperty("agent") @Nullable Map<String, AgentConfig> agent) {
-    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public static Settings empty() {
         return new Settings(
                 null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null,

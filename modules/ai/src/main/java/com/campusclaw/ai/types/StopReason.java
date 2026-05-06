@@ -26,13 +26,11 @@ public enum StopReason {
         this.value = value;
     }
 
-    @SuppressWarnings("checkstyle:java_doc_format_missing")
     @JsonValue
     public String value() {
         return value;
     }
 
-    @SuppressWarnings("checkstyle:java_doc_format_missing")
     @JsonCreator
     public static StopReason fromValue(String value) {
         for (var reason : values()) {

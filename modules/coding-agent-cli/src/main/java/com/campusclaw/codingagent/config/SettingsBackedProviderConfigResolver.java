@@ -46,7 +46,6 @@ public class SettingsBackedProviderConfigResolver implements ProviderConfigResol
     private final EnvApiKeyResolver envApiKeyResolver;
     private final AuthStore authStore;
 
-    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public SettingsBackedProviderConfigResolver(
             SettingsManager settingsManager, EnvApiKeyResolver envApiKeyResolver, AuthStore authStore) {
         this.settingsManager = settingsManager;

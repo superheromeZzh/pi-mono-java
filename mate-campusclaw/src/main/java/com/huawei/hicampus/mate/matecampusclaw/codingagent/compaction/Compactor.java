@@ -51,7 +51,6 @@ public class Compactor {
     private final CompactionConfig config;
     private final com.huawei.hicampus.mate.matecampusclaw.codingagent.resolver.AgentModelResolver agentModelResolver;
 
-    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public Compactor(
             CampusClawAiService aiService,
             CompactionConfig config,
@@ -61,12 +60,10 @@ public class Compactor {
         this.agentModelResolver = agentModelResolver;
     }
 
-    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public Compactor(CampusClawAiService aiService, CompactionConfig config) {
         this(aiService, config, null);
     }
 
-    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public Compactor(CampusClawAiService aiService) {
         this(aiService, CompactionConfig.defaults(), null);
     }

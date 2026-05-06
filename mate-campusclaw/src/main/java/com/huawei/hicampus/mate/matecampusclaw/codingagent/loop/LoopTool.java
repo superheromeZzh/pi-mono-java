@@ -36,7 +36,6 @@ public class LoopTool implements AgentTool {
 
     private final LoopManager loopManager;
 
-    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public LoopTool(LoopManager loopManager) {
         this.loopManager = loopManager;
     }

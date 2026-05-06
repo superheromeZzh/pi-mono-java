@@ -56,7 +56,6 @@ public class ExecutionRouter {
     private final List<Pattern> sandboxPatterns;
     private final List<Pattern> protectedPathPatterns;
 
-    @SuppressWarnings("checkstyle:java_doc_format_missing")
     @Autowired
     public ExecutionRouter(
             ToolExecutionProperties properties,

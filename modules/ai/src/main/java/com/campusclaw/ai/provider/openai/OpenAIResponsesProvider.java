@@ -78,7 +78,6 @@ public class OpenAIResponsesProvider implements ApiProvider {
 
     private final com.campusclaw.ai.env.ProviderConfigResolver providerConfigResolver;
 
-    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public OpenAIResponsesProvider(com.campusclaw.ai.env.ProviderConfigResolver providerConfigResolver) {
         this.providerConfigResolver = providerConfigResolver;
     }

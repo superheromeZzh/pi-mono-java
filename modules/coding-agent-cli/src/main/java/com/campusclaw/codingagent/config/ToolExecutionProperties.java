@@ -27,7 +27,6 @@ import lombok.extern.slf4j.Slf4j;
 @ConfigurationProperties(prefix = "tool.execution")
 public class ToolExecutionProperties {
 
-    @SuppressWarnings("checkstyle:java_doc_format_missing")
     @PostConstruct
     public void init() {
         // Check for system property override

@@ -18,7 +18,6 @@ import java.util.List;
  */
 public interface LsOperations {
 
-    @SuppressWarnings("checkstyle:java_doc_format_missing")
     List<LsEntry> list(Path directory) throws IOException;
 
     @SuppressWarnings("checkstyle:top_class_comment")

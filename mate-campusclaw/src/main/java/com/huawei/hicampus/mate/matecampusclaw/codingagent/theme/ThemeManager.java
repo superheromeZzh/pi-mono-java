@@ -33,7 +33,6 @@ public class ThemeManager {
     private final Map<String, Theme> themes = new ConcurrentHashMap<>();
     private volatile Theme activeTheme;
 
-    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public ThemeManager() {
         registerBuiltins();
         activeTheme = themes.get("default");

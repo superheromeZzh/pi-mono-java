@@ -41,7 +41,6 @@ public class BashExecutionComponent implements Component {
         this.excluded = excluded;
     }
 
-    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public void setResult(String output, Integer exitCode) {
         this.output = output;
         this.exitCode = exitCode;

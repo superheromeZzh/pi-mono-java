@@ -12,12 +12,10 @@ package com.campusclaw.agent.tool;
  */
 public record BeforeToolCallResult(boolean block, String reason) {
 
-    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public static BeforeToolCallResult allow() {
         return new BeforeToolCallResult(false, null);
     }
 
-    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public static BeforeToolCallResult block(String reason) {
         return new BeforeToolCallResult(true, reason);
     }

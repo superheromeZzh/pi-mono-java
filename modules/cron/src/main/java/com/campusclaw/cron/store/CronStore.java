@@ -40,12 +40,10 @@ public class CronStore {
     private final Path jobsFile;
     private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
 
-    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public CronStore() {
         this(defaultJobsPath());
     }
 
-    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public CronStore(Path jobsFile) {
         this.jobsFile = jobsFile;
         this.mapper = new ObjectMapper();
@@ -53,7 +51,6 @@ public class CronStore {
         this.mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
     }
 
-    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public List<CronJob> load() {
         lock.readLock().lock();
         try {
@@ -70,7 +67,6 @@ public class CronStore {
         }
     }
 
-    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public void save(List<CronJob> jobs) {
         lock.writeLock().lock();
         try {
@@ -83,7 +79,6 @@ public class CronStore {
         }
     }
 
-    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public CronJob addJob(CronJob job) {
         lock.writeLock().lock();
         try {
@@ -96,7 +91,6 @@ public class CronStore {
         }
     }
 
-    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public boolean removeJob(String jobId) {
         lock.writeLock().lock();
         try {
@@ -111,12 +105,10 @@ public class CronStore {
         }
     }
 
-    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public Optional<CronJob> getJob(String jobId) {
         return load().stream().filter(j -> j.id().equals(jobId)).findFirst();
     }
 
-    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public void updateJob(CronJob updated) {
         lock.writeLock().lock();
         try {

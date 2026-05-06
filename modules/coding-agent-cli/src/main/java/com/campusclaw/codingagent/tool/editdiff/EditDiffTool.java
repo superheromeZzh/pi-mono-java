@@ -43,7 +43,6 @@ public class EditDiffTool implements AgentTool {
     private final EditOperations editOps;
     private final JsonNode parametersSchema;
 
-    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public EditDiffTool(EditOperations editOps) {
         this.editOps = editOps;
         this.parametersSchema = buildSchema();

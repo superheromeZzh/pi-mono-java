@@ -83,7 +83,6 @@ public class SelectListTheme {
 
     // --- Builder ---
 
-    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public static Builder builder() {
         return new Builder();
     }
@@ -96,37 +95,31 @@ public class SelectListTheme {
         private UnaryOperator<String> scrollInfo = UnaryOperator.identity();
         private UnaryOperator<String> noMatch = UnaryOperator.identity();
 
-        @SuppressWarnings("checkstyle:java_doc_format_missing")
         public Builder selectedPrefix(UnaryOperator<String> fn) {
             this.selectedPrefix = fn;
             return this;
         }
 
-        @SuppressWarnings("checkstyle:java_doc_format_missing")
         public Builder selectedText(UnaryOperator<String> fn) {
             this.selectedText = fn;
             return this;
         }
 
-        @SuppressWarnings("checkstyle:java_doc_format_missing")
         public Builder description(UnaryOperator<String> fn) {
             this.description = fn;
             return this;
         }
 
-        @SuppressWarnings("checkstyle:java_doc_format_missing")
         public Builder scrollInfo(UnaryOperator<String> fn) {
             this.scrollInfo = fn;
             return this;
         }
 
-        @SuppressWarnings("checkstyle:java_doc_format_missing")
         public Builder noMatch(UnaryOperator<String> fn) {
             this.noMatch = fn;
             return this;
         }
 
-        @SuppressWarnings("checkstyle:java_doc_format_missing")
         public SelectListTheme build() {
             return new SelectListTheme(selectedPrefix, selectedText, description, scrollInfo, noMatch);
         }

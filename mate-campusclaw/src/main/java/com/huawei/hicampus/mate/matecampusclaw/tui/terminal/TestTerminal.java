@@ -30,12 +30,10 @@ public class TestTerminal implements Terminal {
     private boolean rawMode;
     private boolean closed;
 
-    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public TestTerminal() {
         this(80, 24);
     }
 
-    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public TestTerminal(int width, int height) {
         this.size = new TerminalSize(width, height);
     }

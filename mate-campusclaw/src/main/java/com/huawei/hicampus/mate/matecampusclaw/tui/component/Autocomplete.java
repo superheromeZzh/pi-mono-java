@@ -64,12 +64,10 @@ public class Autocomplete implements Component, Focusable {
     private String cachedValue;
     private int cachedSuggestionIndex = -1;
 
-    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public Autocomplete() {
         this(null);
     }
 
-    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public Autocomplete(String placeholder) {
         this.input = new Input(placeholder);
     }
@@ -82,7 +80,6 @@ public class Autocomplete implements Component, Focusable {
         return input.getValue();
     }
 
-    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public void setValue(String value) {
         input.setValue(value);
         dismissSuggestions();

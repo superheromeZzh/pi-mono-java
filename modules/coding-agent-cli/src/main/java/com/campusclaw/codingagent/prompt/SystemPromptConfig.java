@@ -36,7 +36,6 @@ public record SystemPromptConfig(
         List<ContextFile> contextFiles,
         String systemPromptOverride,
         String appendSystemPrompt) {
-    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public SystemPromptConfig {
         tools = tools != null ? List.copyOf(tools) : List.of();
         skills = skills != null ? List.copyOf(skills) : List.of();

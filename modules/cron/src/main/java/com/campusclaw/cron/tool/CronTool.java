@@ -39,7 +39,6 @@ public class CronTool implements AgentTool {
 
     private final CronService cronService;
 
-    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public CronTool(CronService cronService) {
         this.cronService = cronService;
     }

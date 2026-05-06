@@ -62,7 +62,6 @@ public class ServerMode {
     private final ModelCatalogService modelCatalog;
     private final boolean sessionPersistenceEnabled;
 
-    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public ServerMode(
             CampusClawAiService aiService,
             ModelRegistry modelRegistry,
@@ -73,7 +72,6 @@ public class ServerMode {
         this(aiService, modelRegistry, promptBuilder, tools, baseConfig, port, "localhost", null, false, null, true);
     }
 
-    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public ServerMode(
             CampusClawAiService aiService,
             ModelRegistry modelRegistry,
@@ -99,7 +97,6 @@ public class ServerMode {
                 true);
     }
 
-    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public ServerMode(
             CampusClawAiService aiService,
             ModelRegistry modelRegistry,
@@ -125,7 +122,6 @@ public class ServerMode {
         this.sessionPersistenceEnabled = sessionPersistenceEnabled;
     }
 
-    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public void run() {
         var sessionPool = new SessionPool(
                 aiService,

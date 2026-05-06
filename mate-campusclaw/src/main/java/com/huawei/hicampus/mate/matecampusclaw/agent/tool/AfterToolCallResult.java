@@ -16,7 +16,6 @@ import com.huawei.hicampus.mate.matecampusclaw.ai.types.ContentBlock;
  */
 public record AfterToolCallResult(List<ContentBlock> content, Object details, Boolean isError) {
 
-    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public static AfterToolCallResult noOverride() {
         return new AfterToolCallResult(null, null, null);
     }

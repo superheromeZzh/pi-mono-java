@@ -52,7 +52,6 @@ public class WebSocketGatewayConfig implements SmartLifecycle {
     private Channel serverChannel;
     private volatile boolean running = false;
 
-    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public WebSocketGatewayConfig(
             WebSocketGatewayProperties properties, GatewayChannel gatewayChannel, ObjectMapper objectMapper) {
         this.properties = properties;

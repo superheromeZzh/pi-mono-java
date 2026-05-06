@@ -38,12 +38,10 @@ public class CronRunLog {
     private final ObjectMapper mapper;
     private final Path runsDir;
 
-    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public CronRunLog() {
         this(defaultRunsDir());
     }
 
-    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public CronRunLog(Path runsDir) {
         this.runsDir = runsDir;
         this.mapper = new ObjectMapper();
@@ -51,7 +49,6 @@ public class CronRunLog {
         this.mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
     }
 
-    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public void appendRun(CronRunRecord record) {
         Path logFile = runsDir.resolve(record.jobId() + ".jsonl");
         try {
@@ -67,7 +64,6 @@ public class CronRunLog {
         }
     }
 
-    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public List<CronRunRecord> getRecentRuns(String jobId, int limit) {
         Path logFile = runsDir.resolve(jobId + ".jsonl");
         if (!Files.exists(logFile)) {

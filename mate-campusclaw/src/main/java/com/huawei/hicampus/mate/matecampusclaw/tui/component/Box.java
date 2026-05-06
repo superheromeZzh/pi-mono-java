@@ -37,17 +37,14 @@ public class Box implements Component {
     private UnaryOperator<String> bgFn;
     private UnaryOperator<String> borderColorFn;
 
-    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public Box(Component child) {
         this(child, null, 0, 0, 0, null, null);
     }
 
-    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public Box(Component child, BorderStyle borderStyle) {
         this(child, borderStyle, 0, 0, 0, null, null);
     }
 
-    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public Box(Component child, BorderStyle borderStyle, int padding) {
         this(child, borderStyle, padding, -1, -1, null, null);
     }

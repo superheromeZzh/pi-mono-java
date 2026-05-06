@@ -25,10 +25,8 @@ public class ImageComponent implements Component {
     private int maxHeightCells = 24;
     private List<String> cachedRender;
 
-    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public ImageComponent() {}
 
-    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public ImageComponent(byte[] imageData, String altText) {
         this.imageData = imageData;
         this.altText = altText;
