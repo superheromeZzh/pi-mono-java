@@ -16,10 +16,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.huawei.hicampus.mate.matecampusclaw.ai.provider.ApiProvider;
 import com.huawei.hicampus.mate.matecampusclaw.ai.stream.AssistantMessageEventStream;
 import com.huawei.hicampus.mate.matecampusclaw.ai.types.Api;
@@ -38,6 +34,10 @@ import com.huawei.hicampus.mate.matecampusclaw.ai.types.ToolCall;
 import com.huawei.hicampus.mate.matecampusclaw.ai.types.ToolResultMessage;
 import com.huawei.hicampus.mate.matecampusclaw.ai.types.Usage;
 import com.huawei.hicampus.mate.matecampusclaw.ai.types.UserMessage;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -58,8 +58,7 @@ public class MistralProvider implements ApiProvider {
 
     private final com.huawei.hicampus.mate.matecampusclaw.ai.env.ProviderConfigResolver providerConfigResolver;
 
-    public MistralProvider(
-            com.huawei.hicampus.mate.matecampusclaw.ai.env.ProviderConfigResolver providerConfigResolver) {
+    public MistralProvider(com.huawei.hicampus.mate.matecampusclaw.ai.env.ProviderConfigResolver providerConfigResolver) {
         this.providerConfigResolver = providerConfigResolver;
     }
 
@@ -190,34 +189,35 @@ public class MistralProvider implements ApiProvider {
                                             thinkingStarted[0] = true;
                                             accumulatedBlocks.add(new ThinkingContent("", null, false));
                                             int idx = accumulatedBlocks.size() - 1;
-                                            eventStream.push(new com.huawei.hicampus.mate.matecampusclaw.ai.stream
-                                                    .AssistantMessageEvent.ThinkingStartEvent(
-                                                    idx,
-                                                    buildPartial(
-                                                            model,
-                                                            accumulatedBlocks,
-                                                            currentText.toString(),
-                                                            currentThinking.toString(),
-                                                            toolCallAccs,
-                                                            stop[0],
-                                                            usage[0])));
+                                            eventStream.push(
+                                                    new com.huawei.hicampus.mate.matecampusclaw.ai.stream.AssistantMessageEvent
+                                                            .ThinkingStartEvent(
+                                                            idx,
+                                                            buildPartial(
+                                                                    model,
+                                                                    accumulatedBlocks,
+                                                                    currentText.toString(),
+                                                                    currentThinking.toString(),
+                                                                    toolCallAccs,
+                                                                    stop[0],
+                                                                    usage[0])));
                                         }
                                         currentThinking.append(thinkText);
                                         int idx = accumulatedBlocks.size() - 1;
                                         accumulatedBlocks.set(
                                                 idx, new ThinkingContent(currentThinking.toString(), null, false));
-                                        eventStream.push(new com.huawei.hicampus.mate.matecampusclaw.ai.stream
-                                                .AssistantMessageEvent.ThinkingDeltaEvent(
-                                                idx,
-                                                thinkText,
-                                                buildPartial(
-                                                        model,
-                                                        accumulatedBlocks,
-                                                        currentText.toString(),
-                                                        currentThinking.toString(),
-                                                        toolCallAccs,
-                                                        stop[0],
-                                                        usage[0])));
+                                        eventStream.push(
+                                                new com.huawei.hicampus.mate.matecampusclaw.ai.stream.AssistantMessageEvent.ThinkingDeltaEvent(
+                                                        idx,
+                                                        thinkText,
+                                                        buildPartial(
+                                                                model,
+                                                                accumulatedBlocks,
+                                                                currentText.toString(),
+                                                                currentThinking.toString(),
+                                                                toolCallAccs,
+                                                                stop[0],
+                                                                usage[0])));
                                     }
                                 } else if ("text".equals(itemType)) {
                                     String text = item.path("text").asText("");
@@ -276,18 +276,17 @@ public class MistralProvider implements ApiProvider {
             if (thinkingStarted[0] && !currentThinking.isEmpty()) {
                 int thinkIdx = accumulatedBlocks.size() - 1;
                 accumulatedBlocks.set(thinkIdx, new ThinkingContent(currentThinking.toString(), null, false));
-                eventStream.push(
-                        new com.huawei.hicampus.mate.matecampusclaw.ai.stream.AssistantMessageEvent.ThinkingEndEvent(
-                                thinkIdx,
+                eventStream.push(new com.huawei.hicampus.mate.matecampusclaw.ai.stream.AssistantMessageEvent.ThinkingEndEvent(
+                        thinkIdx,
+                        currentThinking.toString(),
+                        buildPartial(
+                                model,
+                                accumulatedBlocks,
+                                currentText.toString(),
                                 currentThinking.toString(),
-                                buildPartial(
-                                        model,
-                                        accumulatedBlocks,
-                                        currentText.toString(),
-                                        currentThinking.toString(),
-                                        toolCallAccs,
-                                        stop[0],
-                                        usage[0])));
+                                toolCallAccs,
+                                stop[0],
+                                usage[0])));
             }
 
             // Build final message
@@ -473,8 +472,7 @@ public class MistralProvider implements ApiProvider {
     }
 
     private String resolveApiKey(
-            com.huawei.hicampus.mate.matecampusclaw.ai.env.ResolvedProviderConfig providerConfig,
-            @Nullable SimpleStreamOptions options) {
+            com.huawei.hicampus.mate.matecampusclaw.ai.env.ResolvedProviderConfig providerConfig, @Nullable SimpleStreamOptions options) {
         if (options != null && options.apiKey() != null) {
             return options.apiKey();
         }

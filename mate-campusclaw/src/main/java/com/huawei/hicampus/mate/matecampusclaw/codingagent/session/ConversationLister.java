@@ -14,10 +14,10 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 
+import com.huawei.hicampus.mate.matecampusclaw.codingagent.config.AppPaths;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.huawei.hicampus.mate.matecampusclaw.codingagent.config.AppPaths;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

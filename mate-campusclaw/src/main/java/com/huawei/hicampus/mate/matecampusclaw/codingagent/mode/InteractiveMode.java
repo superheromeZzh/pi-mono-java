@@ -191,8 +191,7 @@ public class InteractiveMode {
         // Resolve ChatMemoryStore from Spring context (optional — graceful if DB not configured)
         if (applicationContext != null) {
             try {
-                chatMemoryStore = applicationContext.getBean(
-                        com.huawei.hicampus.mate.matecampusclaw.assistant.memory.ChatMemoryStore.class);
+                chatMemoryStore = applicationContext.getBean(com.huawei.hicampus.mate.matecampusclaw.assistant.memory.ChatMemoryStore.class);
             } catch (Exception e) {
                 chatMemoryStore = null; // DB not configured, skip ChatMemory
             }
@@ -980,8 +979,7 @@ public class InteractiveMode {
                 if (replyText != null && !replyText.isEmpty()) {
                     try {
                         applicationContext.publishEvent(
-                                new com.huawei.hicampus.mate.matecampusclaw.assistant.channel.gateway
-                                        .AgentResponseEvent(this, replyText));
+                                new com.huawei.hicampus.mate.matecampusclaw.assistant.channel.gateway.AgentResponseEvent(this, replyText));
                     } catch (Exception e) {
                         System.err.println("[InteractiveMode] Failed to publish AgentResponseEvent: " + e.getMessage());
                     }
@@ -1236,8 +1234,7 @@ public class InteractiveMode {
                         for (var block : am.content()) {
                             if (block instanceof com.huawei.hicampus.mate.matecampusclaw.ai.types.TextContent tc) {
                                 comp.appendText(tc.text());
-                            } else if (block
-                                    instanceof com.huawei.hicampus.mate.matecampusclaw.ai.types.ThinkingContent tc) {
+                            } else if (block instanceof com.huawei.hicampus.mate.matecampusclaw.ai.types.ThinkingContent tc) {
                                 comp.appendThinking(tc.thinking());
                             }
                         }

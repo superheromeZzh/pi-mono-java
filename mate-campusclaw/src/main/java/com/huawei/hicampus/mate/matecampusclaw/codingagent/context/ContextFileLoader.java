@@ -87,8 +87,7 @@ public class ContextFileLoader {
      */
     public String loadSystemPrompt(Path cwd, Path agentDir) {
         // Project-level first
-        Path projectPath = cwd.resolve(
-                        com.huawei.hicampus.mate.matecampusclaw.codingagent.config.AppPaths.CONFIG_DIR_NAME)
+        Path projectPath = cwd.resolve(com.huawei.hicampus.mate.matecampusclaw.codingagent.config.AppPaths.CONFIG_DIR_NAME)
                 .resolve("SYSTEM.md");
         String content = readIfExists(projectPath);
         if (content != null) {
@@ -108,8 +107,7 @@ public class ContextFileLoader {
      * @return the content of APPEND_SYSTEM.md, or null if not found
      */
     public String loadAppendSystemPrompt(Path cwd, Path agentDir) {
-        Path projectPath = cwd.resolve(
-                        com.huawei.hicampus.mate.matecampusclaw.codingagent.config.AppPaths.CONFIG_DIR_NAME)
+        Path projectPath = cwd.resolve(com.huawei.hicampus.mate.matecampusclaw.codingagent.config.AppPaths.CONFIG_DIR_NAME)
                 .resolve("APPEND_SYSTEM.md");
         String content = readIfExists(projectPath);
         if (content != null) {

@@ -138,8 +138,7 @@ class BedrockProviderIntegrationTest {
 
         @Test
         void buildsRequestWithTools() {
-            var tools =
-                    List.of(new com.huawei.hicampus.mate.matecampusclaw.ai.types.Tool("bash", "Run commands", null));
+            var tools = List.of(new com.huawei.hicampus.mate.matecampusclaw.ai.types.Tool("bash", "Run commands", null));
             var context = new Context(null, List.of(new UserMessage("Hello", 1L)), tools);
 
             var request = provider.buildRequest(testModel(), context, null, null, null, null);

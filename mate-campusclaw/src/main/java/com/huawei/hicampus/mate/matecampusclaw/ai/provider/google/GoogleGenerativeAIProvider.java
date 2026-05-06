@@ -13,9 +13,6 @@ import java.net.http.HttpResponse;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.huawei.hicampus.mate.matecampusclaw.ai.provider.ApiProvider;
 import com.huawei.hicampus.mate.matecampusclaw.ai.stream.AssistantMessageEventStream;
 import com.huawei.hicampus.mate.matecampusclaw.ai.types.Api;
@@ -33,6 +30,9 @@ import com.huawei.hicampus.mate.matecampusclaw.ai.types.ThinkingContent;
 import com.huawei.hicampus.mate.matecampusclaw.ai.types.ThinkingLevel;
 import com.huawei.hicampus.mate.matecampusclaw.ai.types.ToolCall;
 import com.huawei.hicampus.mate.matecampusclaw.ai.types.Usage;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -53,8 +53,7 @@ public class GoogleGenerativeAIProvider implements ApiProvider {
 
     private final com.huawei.hicampus.mate.matecampusclaw.ai.env.ProviderConfigResolver providerConfigResolver;
 
-    public GoogleGenerativeAIProvider(
-            com.huawei.hicampus.mate.matecampusclaw.ai.env.ProviderConfigResolver providerConfigResolver) {
+    public GoogleGenerativeAIProvider(com.huawei.hicampus.mate.matecampusclaw.ai.env.ProviderConfigResolver providerConfigResolver) {
         this.providerConfigResolver = providerConfigResolver;
     }
 
@@ -157,10 +156,8 @@ public class GoogleGenerativeAIProvider implements ApiProvider {
                                 thinkingAcc.setLength(0);
                                 thinkingSig[0] = null;
                                 blocks.add(new ThinkingContent("", null, false));
-                                eventStream.push(
-                                        new com.huawei.hicampus.mate.matecampusclaw.ai.stream.AssistantMessageEvent
-                                                .ThinkingStartEvent(
-                                                blocks.size() - 1, buildMessage(model, blocks, usage[0], stop[0])));
+                                eventStream.push(new com.huawei.hicampus.mate.matecampusclaw.ai.stream.AssistantMessageEvent.ThinkingStartEvent(
+                                        blocks.size() - 1, buildMessage(model, blocks, usage[0], stop[0])));
                             }
                             thinkingAcc.append(tc.thinking());
                             if (tc.thinkingSignature() != null) {
@@ -169,12 +166,8 @@ public class GoogleGenerativeAIProvider implements ApiProvider {
                             blocks.set(
                                     blocks.size() - 1,
                                     new ThinkingContent(thinkingAcc.toString(), thinkingSig[0], false));
-                            eventStream.push(
-                                    new com.huawei.hicampus.mate.matecampusclaw.ai.stream.AssistantMessageEvent
-                                            .ThinkingDeltaEvent(
-                                            blocks.size() - 1,
-                                            tc.thinking(),
-                                            buildMessage(model, blocks, usage[0], stop[0])));
+                            eventStream.push(new com.huawei.hicampus.mate.matecampusclaw.ai.stream.AssistantMessageEvent.ThinkingDeltaEvent(
+                                    blocks.size() - 1, tc.thinking(), buildMessage(model, blocks, usage[0], stop[0])));
 
                         } else if (block instanceof TextContent tc) {
                             if (!"text".equals(currentType[0])) {
@@ -191,10 +184,8 @@ public class GoogleGenerativeAIProvider implements ApiProvider {
                                 currentType[0] = "text";
                                 textAcc.setLength(0);
                                 blocks.add(new TextContent("", null));
-                                eventStream.push(
-                                        new com.huawei.hicampus.mate.matecampusclaw.ai.stream.AssistantMessageEvent
-                                                .TextStartEvent(
-                                                blocks.size() - 1, buildMessage(model, blocks, usage[0], stop[0])));
+                                eventStream.push(new com.huawei.hicampus.mate.matecampusclaw.ai.stream.AssistantMessageEvent.TextStartEvent(
+                                        blocks.size() - 1, buildMessage(model, blocks, usage[0], stop[0])));
                             }
                             textAcc.append(tc.text());
                             blocks.set(blocks.size() - 1, new TextContent(textAcc.toString(), null));
@@ -215,18 +206,14 @@ public class GoogleGenerativeAIProvider implements ApiProvider {
                             currentType[0] = null;
                             blocks.add(tc);
                             int idx = blocks.size() - 1;
-                            eventStream.push(
-                                    new com.huawei.hicampus.mate.matecampusclaw.ai.stream.AssistantMessageEvent
-                                            .ToolCallStartEvent(idx, buildMessage(model, blocks, usage[0], stop[0])));
-                            eventStream.push(
-                                    new com.huawei.hicampus.mate.matecampusclaw.ai.stream.AssistantMessageEvent
-                                            .ToolCallDeltaEvent(
-                                            idx,
-                                            MAPPER.writeValueAsString(tc.arguments()),
-                                            buildMessage(model, blocks, usage[0], stop[0])));
-                            eventStream.push(
-                                    new com.huawei.hicampus.mate.matecampusclaw.ai.stream.AssistantMessageEvent
-                                            .ToolCallEndEvent(idx, tc, buildMessage(model, blocks, usage[0], stop[0])));
+                            eventStream.push(new com.huawei.hicampus.mate.matecampusclaw.ai.stream.AssistantMessageEvent.ToolCallStartEvent(
+                                    idx, buildMessage(model, blocks, usage[0], stop[0])));
+                            eventStream.push(new com.huawei.hicampus.mate.matecampusclaw.ai.stream.AssistantMessageEvent.ToolCallDeltaEvent(
+                                    idx,
+                                    MAPPER.writeValueAsString(tc.arguments()),
+                                    buildMessage(model, blocks, usage[0], stop[0])));
+                            eventStream.push(new com.huawei.hicampus.mate.matecampusclaw.ai.stream.AssistantMessageEvent.ToolCallEndEvent(
+                                    idx, tc, buildMessage(model, blocks, usage[0], stop[0])));
                         }
                     }
                     if (parsed.usage() != null) {
@@ -332,8 +319,7 @@ public class GoogleGenerativeAIProvider implements ApiProvider {
     }
 
     private String resolveApiKey(
-            com.huawei.hicampus.mate.matecampusclaw.ai.env.ResolvedProviderConfig providerConfig,
-            @Nullable SimpleStreamOptions options) {
+            com.huawei.hicampus.mate.matecampusclaw.ai.env.ResolvedProviderConfig providerConfig, @Nullable SimpleStreamOptions options) {
         if (options != null && options.apiKey() != null) {
             return options.apiKey();
         }
@@ -357,9 +343,8 @@ public class GoogleGenerativeAIProvider implements ApiProvider {
         if ("thinking".equals(type)) {
             String content = thinkingAcc.toString();
             blocks.set(idx, new ThinkingContent(content, thinkingSig[0], false));
-            eventStream.push(
-                    new com.huawei.hicampus.mate.matecampusclaw.ai.stream.AssistantMessageEvent.ThinkingEndEvent(
-                            idx, content, buildMessage(model, blocks, usage, stop)));
+            eventStream.push(new com.huawei.hicampus.mate.matecampusclaw.ai.stream.AssistantMessageEvent.ThinkingEndEvent(
+                    idx, content, buildMessage(model, blocks, usage, stop)));
         } else if ("text".equals(type)) {
             String content = textAcc.toString();
             blocks.set(idx, new TextContent(content, null));

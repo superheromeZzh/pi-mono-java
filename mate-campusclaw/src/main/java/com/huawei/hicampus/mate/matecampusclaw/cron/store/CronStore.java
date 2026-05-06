@@ -15,10 +15,10 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
+import com.huawei.hicampus.mate.matecampusclaw.cron.model.CronJob;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.huawei.hicampus.mate.matecampusclaw.cron.model.CronJob;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

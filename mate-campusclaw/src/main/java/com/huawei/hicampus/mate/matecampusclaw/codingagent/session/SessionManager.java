@@ -19,12 +19,12 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
+import com.huawei.hicampus.mate.matecampusclaw.ai.types.Message;
+import com.huawei.hicampus.mate.matecampusclaw.codingagent.config.AppPaths;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
-import com.huawei.hicampus.mate.matecampusclaw.ai.types.Message;
-import com.huawei.hicampus.mate.matecampusclaw.codingagent.config.AppPaths;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

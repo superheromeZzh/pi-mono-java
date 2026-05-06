@@ -13,9 +13,9 @@ import java.util.List;
 
 import com.anthropic.models.messages.MessageCreateParams;
 import com.anthropic.models.messages.MessageParam;
+import com.huawei.hicampus.mate.matecampusclaw.ai.types.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.huawei.hicampus.mate.matecampusclaw.ai.types.*;
 
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -24,9 +24,8 @@ class AnthropicProviderTest {
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
-    AnthropicProvider provider =
-            new AnthropicProvider(new com.huawei.hicampus.mate.matecampusclaw.ai.env.EnvProviderConfigResolver(
-                    new com.huawei.hicampus.mate.matecampusclaw.ai.env.EnvApiKeyResolver()));
+    AnthropicProvider provider = new AnthropicProvider(
+            new com.huawei.hicampus.mate.matecampusclaw.ai.env.EnvProviderConfigResolver(new com.huawei.hicampus.mate.matecampusclaw.ai.env.EnvApiKeyResolver()));
 
     private Model testModel() {
         return new Model(

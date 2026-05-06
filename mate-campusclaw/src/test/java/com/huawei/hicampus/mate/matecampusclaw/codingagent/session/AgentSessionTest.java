@@ -24,8 +24,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.huawei.hicampus.mate.matecampusclaw.agent.Agent;
 import com.huawei.hicampus.mate.matecampusclaw.agent.tool.AgentTool;
 import com.huawei.hicampus.mate.matecampusclaw.agent.tool.AgentToolResult;
@@ -37,6 +35,8 @@ import com.huawei.hicampus.mate.matecampusclaw.ai.types.*;
 import com.huawei.hicampus.mate.matecampusclaw.codingagent.prompt.SystemPromptBuilder;
 import com.huawei.hicampus.mate.matecampusclaw.codingagent.skill.SkillExpander;
 import com.huawei.hicampus.mate.matecampusclaw.codingagent.skill.SkillLoader;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -217,8 +217,7 @@ class AgentSessionTest {
 
             session.initialize(config());
 
-            var captor = ArgumentCaptor.forClass(
-                    com.huawei.hicampus.mate.matecampusclaw.codingagent.prompt.SystemPromptConfig.class);
+            var captor = ArgumentCaptor.forClass(com.huawei.hicampus.mate.matecampusclaw.codingagent.prompt.SystemPromptConfig.class);
             verify(promptBuilder).build(captor.capture());
 
             var promptConfig = captor.getValue();
@@ -234,8 +233,7 @@ class AgentSessionTest {
             var config = new SessionConfig("claude-sonnet-4-20250514", tempDir, "Be concise.", "interactive");
             session.initialize(config);
 
-            var captor = ArgumentCaptor.forClass(
-                    com.huawei.hicampus.mate.matecampusclaw.codingagent.prompt.SystemPromptConfig.class);
+            var captor = ArgumentCaptor.forClass(com.huawei.hicampus.mate.matecampusclaw.codingagent.prompt.SystemPromptConfig.class);
             verify(promptBuilder).build(captor.capture());
 
             assertEquals("Be concise.", captor.getValue().customPrompt());
@@ -301,8 +299,7 @@ class AgentSessionTest {
 
             session.initialize(config());
 
-            var captor = ArgumentCaptor.forClass(
-                    com.huawei.hicampus.mate.matecampusclaw.codingagent.prompt.SystemPromptConfig.class);
+            var captor = ArgumentCaptor.forClass(com.huawei.hicampus.mate.matecampusclaw.codingagent.prompt.SystemPromptConfig.class);
             verify(promptBuilder).build(captor.capture());
 
             var skills = captor.getValue().skills();
@@ -329,8 +326,7 @@ class AgentSessionTest {
 
             session.initialize(config());
 
-            var captor = ArgumentCaptor.forClass(
-                    com.huawei.hicampus.mate.matecampusclaw.codingagent.prompt.SystemPromptConfig.class);
+            var captor = ArgumentCaptor.forClass(com.huawei.hicampus.mate.matecampusclaw.codingagent.prompt.SystemPromptConfig.class);
             verify(promptBuilder).build(captor.capture());
 
             // visibleSkills should be empty since the only skill is hidden

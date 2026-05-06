@@ -13,9 +13,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.List;
 import java.util.Map;
 
+import com.huawei.hicampus.mate.matecampusclaw.ai.types.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.huawei.hicampus.mate.matecampusclaw.ai.types.*;
 
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -548,8 +548,7 @@ class BedrockProviderTest {
         @Test
         void setsToolsWhenPresent() {
             ObjectNode toolParams = MAPPER.createObjectNode();
-            var tools = List.of(
-                    new com.huawei.hicampus.mate.matecampusclaw.ai.types.Tool("bash", "Run commands", toolParams));
+            var tools = List.of(new com.huawei.hicampus.mate.matecampusclaw.ai.types.Tool("bash", "Run commands", toolParams));
             var context = new Context(null, List.of(new UserMessage("Hello", 1L)), tools);
 
             var request = provider.buildRequest(testModel(), context, null, null, null, null);

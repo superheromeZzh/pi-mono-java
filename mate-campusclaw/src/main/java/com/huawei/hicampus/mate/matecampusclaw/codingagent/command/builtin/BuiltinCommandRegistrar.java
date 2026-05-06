@@ -57,9 +57,7 @@ public class BuiltinCommandRegistrar {
         registry.register(new ModelCommand("model"));
         registry.register(new ModelCommand("models"));
         registry.register(new CompactCommand(new Compactor(
-                piAiService,
-                com.huawei.hicampus.mate.matecampusclaw.codingagent.compaction.CompactionConfig.defaults(),
-                agentModelResolver)));
+                piAiService, com.huawei.hicampus.mate.matecampusclaw.codingagent.compaction.CompactionConfig.defaults(), agentModelResolver)));
         registry.register(new NewCommand());
         registry.register(new QuitCommand());
         registry.register(new SettingsCommand(settingsManager));

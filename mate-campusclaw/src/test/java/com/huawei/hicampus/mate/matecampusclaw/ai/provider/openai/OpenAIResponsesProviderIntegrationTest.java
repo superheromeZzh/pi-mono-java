@@ -61,8 +61,7 @@ class OpenAIResponsesProviderIntegrationTest {
         server = new MockWebServer();
         server.start();
         provider = new OpenAIResponsesProvider(
-                new com.huawei.hicampus.mate.matecampusclaw.ai.env.EnvProviderConfigResolver(
-                        new com.huawei.hicampus.mate.matecampusclaw.ai.env.EnvApiKeyResolver()));
+                new com.huawei.hicampus.mate.matecampusclaw.ai.env.EnvProviderConfigResolver(new com.huawei.hicampus.mate.matecampusclaw.ai.env.EnvApiKeyResolver()));
     }
 
     @AfterEach

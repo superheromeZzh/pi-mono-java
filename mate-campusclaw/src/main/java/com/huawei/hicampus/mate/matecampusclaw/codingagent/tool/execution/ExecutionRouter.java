@@ -395,8 +395,7 @@ public class ExecutionRouter {
             output = "Error: " + result.getErrorMessage() + "\n" + output;
         }
 
-        return new AgentToolResult(
-                List.of(new com.huawei.hicampus.mate.matecampusclaw.ai.types.TextContent(output)), null);
+        return new AgentToolResult(List.of(new com.huawei.hicampus.mate.matecampusclaw.ai.types.TextContent(output)), null);
     }
 
     private enum RiskLevel {

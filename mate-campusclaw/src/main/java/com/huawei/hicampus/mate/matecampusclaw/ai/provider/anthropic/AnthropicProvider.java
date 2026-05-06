@@ -32,9 +32,6 @@ import com.anthropic.models.messages.ThinkingConfigParam;
 import com.anthropic.models.messages.ToolResultBlockParam;
 import com.anthropic.models.messages.ToolUnion;
 import com.anthropic.models.messages.ToolUseBlockParam;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.huawei.hicampus.mate.matecampusclaw.ai.env.ProviderConfigResolver;
 import com.huawei.hicampus.mate.matecampusclaw.ai.env.ResolvedProviderConfig;
 import com.huawei.hicampus.mate.matecampusclaw.ai.provider.ApiProvider;
@@ -59,6 +56,9 @@ import com.huawei.hicampus.mate.matecampusclaw.ai.types.ThinkingLevel;
 import com.huawei.hicampus.mate.matecampusclaw.ai.types.Tool;
 import com.huawei.hicampus.mate.matecampusclaw.ai.types.ToolCall;
 import com.huawei.hicampus.mate.matecampusclaw.ai.types.Usage;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import org.springframework.stereotype.Component;
 
@@ -619,8 +619,7 @@ public class AnthropicProvider implements ApiProvider {
                 .build();
     }
 
-    private static MessageParam convertToolResult(
-            com.huawei.hicampus.mate.matecampusclaw.ai.types.ToolResultMessage tr) {
+    private static MessageParam convertToolResult(com.huawei.hicampus.mate.matecampusclaw.ai.types.ToolResultMessage tr) {
         // Collect text content for the tool result
         List<ContentBlockParam> resultBlocks = new ArrayList<>();
         for (ContentBlock cb : tr.content()) {

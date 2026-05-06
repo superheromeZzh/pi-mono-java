@@ -11,9 +11,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.huawei.hicampus.mate.matecampusclaw.ai.provider.ApiProvider;
 import com.huawei.hicampus.mate.matecampusclaw.ai.stream.AssistantMessageEvent;
 import com.huawei.hicampus.mate.matecampusclaw.ai.stream.AssistantMessageEventStream;
@@ -36,6 +33,9 @@ import com.huawei.hicampus.mate.matecampusclaw.ai.types.ToolCall;
 import com.huawei.hicampus.mate.matecampusclaw.ai.types.ToolResultMessage;
 import com.huawei.hicampus.mate.matecampusclaw.ai.types.Usage;
 import com.huawei.hicampus.mate.matecampusclaw.ai.types.UserMessage;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import org.springframework.stereotype.Component;
 
@@ -189,9 +189,7 @@ public class BedrockProvider implements ApiProvider {
         }
 
         // Thinking / reasoning configuration via additionalModelRequestFields
-        if (reasoning != null
-                && reasoning != com.huawei.hicampus.mate.matecampusclaw.ai.types.ThinkingLevel.OFF
-                && model.reasoning()) {
+        if (reasoning != null && reasoning != com.huawei.hicampus.mate.matecampusclaw.ai.types.ThinkingLevel.OFF && model.reasoning()) {
             Document thinkingDoc = buildThinkingConfig(model, reasoning, thinkingBudgets, resolvedMaxTokens);
             if (thinkingDoc != null) {
                 builder.additionalModelRequestFields(thinkingDoc);
@@ -243,8 +241,7 @@ public class BedrockProvider implements ApiProvider {
                 || lower.contains("sonnet4");
     }
 
-    private static String mapBedrockThinkingEffort(
-            com.huawei.hicampus.mate.matecampusclaw.ai.types.ThinkingLevel level, String modelId) {
+    private static String mapBedrockThinkingEffort(com.huawei.hicampus.mate.matecampusclaw.ai.types.ThinkingLevel level, String modelId) {
         boolean isOpus = modelId.toLowerCase().contains("opus");
         return switch (level) {
             case MINIMAL, LOW -> "low";

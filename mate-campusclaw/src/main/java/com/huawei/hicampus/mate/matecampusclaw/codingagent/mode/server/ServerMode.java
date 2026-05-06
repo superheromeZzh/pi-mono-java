@@ -143,8 +143,8 @@ public class ServerMode {
                 .GET("/api/conversations", req -> ServerResponse.ok()
                         .bodyValue(Map.of(
                                 "conversations",
-                                com.huawei.hicampus.mate.matecampusclaw.codingagent.session.ConversationLister
-                                        .toWireFormat(conversationLister.listForServer()))))
+                                com.huawei.hicampus.mate.matecampusclaw.codingagent.session.ConversationLister.toWireFormat(
+                                        conversationLister.listForServer()))))
                 .DELETE("/api/conversations/{id}", req -> {
                     String id = req.pathVariable("id");
                     boolean removed = sessionPool.remove(id);

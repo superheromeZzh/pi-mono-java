@@ -531,8 +531,7 @@ public class CampusClawCommand implements Callable<Integer> {
                 // Try ChatMemory (GaussDB) first
                 if (applicationContext != null) {
                     try {
-                        var store = applicationContext.getBean(
-                                com.huawei.hicampus.mate.matecampusclaw.assistant.memory.ChatMemoryStore.class);
+                        var store = applicationContext.getBean(com.huawei.hicampus.mate.matecampusclaw.assistant.memory.ChatMemoryStore.class);
                         var dbMessages = store.load(sessionManager.getSessionId());
                         if (!dbMessages.isEmpty()) {
                             messages = dbMessages;
@@ -628,8 +627,7 @@ public class CampusClawCommand implements Callable<Integer> {
                         continue;
                     }
                     for (var m : allRegistered) {
-                        if (com.huawei.hicampus.mate.matecampusclaw.codingagent.model.ModelCatalogService
-                                        .matchesPattern(p, m)
+                        if (com.huawei.hicampus.mate.matecampusclaw.codingagent.model.ModelCatalogService.matchesPattern(p, m)
                                 && scoped.stream().noneMatch(s -> ModelRegistry.modelsAreEqual(s, m))) {
                             scoped.add(m);
                         }
@@ -805,9 +803,7 @@ public class CampusClawCommand implements Callable<Integer> {
         // 检查是否启用沙箱 skill 解析（通过环境变量或配置）
         boolean useSandbox = Boolean.parseBoolean(System.getenv("SKILL_SANDBOX_PARSING"));
         var manager = new SkillManager(
-                com.huawei.hicampus.mate.matecampusclaw.codingagent.config.AppPaths.USER_SKILLS_DIR,
-                sandboxSkillParser,
-                useSandbox);
+                com.huawei.hicampus.mate.matecampusclaw.codingagent.config.AppPaths.USER_SKILLS_DIR, sandboxSkillParser, useSandbox);
 
         switch (action) {
             case "install" -> {
@@ -823,9 +819,7 @@ public class CampusClawCommand implements Callable<Integer> {
                     // Show what was installed (使用支持沙箱的 SkillLoader)
                     var skillLoader = new SkillLoader(sandboxSkillParser, useSandbox);
                     var skills = skillLoader.loadFromDirectory(
-                            com.huawei.hicampus.mate.matecampusclaw.codingagent.config.AppPaths.USER_SKILLS_DIR.resolve(
-                                    name),
-                            "user");
+                            com.huawei.hicampus.mate.matecampusclaw.codingagent.config.AppPaths.USER_SKILLS_DIR.resolve(name), "user");
                     for (var skill : skills) {
                         System.out.println("  - " + skill.name() + ": " + skill.description());
                     }
@@ -902,9 +896,7 @@ public class CampusClawCommand implements Callable<Integer> {
                     System.out.println("Skill imported: " + name);
                     var skills = new SkillLoader()
                             .loadFromDirectory(
-                                    com.huawei.hicampus.mate.matecampusclaw.codingagent.config.AppPaths.USER_SKILLS_DIR
-                                            .resolve(name),
-                                    "user");
+                                    com.huawei.hicampus.mate.matecampusclaw.codingagent.config.AppPaths.USER_SKILLS_DIR.resolve(name), "user");
                     for (var skill : skills) {
                         System.out.println("  - " + skill.name() + ": " + skill.description());
                     }

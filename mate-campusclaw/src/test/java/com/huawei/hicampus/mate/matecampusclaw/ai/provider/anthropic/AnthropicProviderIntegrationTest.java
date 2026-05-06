@@ -60,8 +60,8 @@ class AnthropicProviderIntegrationTest {
     void setUp() throws IOException {
         server = new MockWebServer();
         server.start();
-        provider = new AnthropicProvider(new com.huawei.hicampus.mate.matecampusclaw.ai.env.EnvProviderConfigResolver(
-                new com.huawei.hicampus.mate.matecampusclaw.ai.env.EnvApiKeyResolver()));
+        provider = new AnthropicProvider(
+                new com.huawei.hicampus.mate.matecampusclaw.ai.env.EnvProviderConfigResolver(new com.huawei.hicampus.mate.matecampusclaw.ai.env.EnvApiKeyResolver()));
     }
 
     @AfterEach

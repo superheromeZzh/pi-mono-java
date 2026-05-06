@@ -4,13 +4,13 @@
 
 package com.huawei.hicampus.mate.matecampusclaw.assistant;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.huawei.hicampus.mate.matecampusclaw.assistant.channel.gateway.WebSocketGatewayProperties;
 import com.huawei.hicampus.mate.matecampusclaw.assistant.mapper.ChatMemoryMapper;
 import com.huawei.hicampus.mate.matecampusclaw.assistant.memory.ChatMemoryRepository;
 import com.huawei.hicampus.mate.matecampusclaw.assistant.memory.MyBatisChatMemoryRepository;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
@@ -41,8 +41,7 @@ public class CampusClawAssistantAutoConfiguration {
 
     @Bean
     @ConditionalOnMissingBean(com.huawei.hicampus.mate.matecampusclaw.assistant.memory.ChatMemoryStore.class)
-    public com.huawei.hicampus.mate.matecampusclaw.assistant.memory.ChatMemoryStore chatMemoryStore(
-            ChatMemoryRepository repository) {
+    public com.huawei.hicampus.mate.matecampusclaw.assistant.memory.ChatMemoryStore chatMemoryStore(ChatMemoryRepository repository) {
         return new com.huawei.hicampus.mate.matecampusclaw.assistant.memory.ChatMemoryStore(repository);
     }
 }

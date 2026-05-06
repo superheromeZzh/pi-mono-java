@@ -14,10 +14,10 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import com.huawei.hicampus.mate.matecampusclaw.cron.model.CronRunRecord;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.huawei.hicampus.mate.matecampusclaw.cron.model.CronRunRecord;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

@@ -95,8 +95,7 @@ public class Diagnostics {
                     "Run the agent once to auto-create it"));
         }
         // Project config
-        Path projectConfig =
-                projectDir.resolve(com.huawei.hicampus.mate.matecampusclaw.codingagent.config.AppPaths.CONFIG_DIR_NAME);
+        Path projectConfig = projectDir.resolve(com.huawei.hicampus.mate.matecampusclaw.codingagent.config.AppPaths.CONFIG_DIR_NAME);
         if (Files.isDirectory(projectConfig)) {
             results.add(new DiagnosticResult(
                     "project-config", Severity.INFO, "Project config directory exists: " + projectConfig, null));

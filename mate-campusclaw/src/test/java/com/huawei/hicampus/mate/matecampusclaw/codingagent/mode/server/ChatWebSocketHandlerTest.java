@@ -29,8 +29,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.huawei.hicampus.mate.matecampusclaw.agent.event.AgentEndEvent;
 import com.huawei.hicampus.mate.matecampusclaw.agent.event.AgentEventListener;
 import com.huawei.hicampus.mate.matecampusclaw.agent.event.AgentStartEvent;
@@ -46,6 +44,8 @@ import com.huawei.hicampus.mate.matecampusclaw.ai.types.Usage;
 import com.huawei.hicampus.mate.matecampusclaw.ai.types.UserMessage;
 import com.huawei.hicampus.mate.matecampusclaw.codingagent.session.AgentSession;
 import com.huawei.hicampus.mate.matecampusclaw.codingagent.session.SessionManager;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -291,10 +291,8 @@ class ChatWebSocketHandlerTest {
                 null));
 
         var settingsManager = mock(com.huawei.hicampus.mate.matecampusclaw.codingagent.settings.SettingsManager.class);
-        when(settingsManager.load())
-                .thenReturn(com.huawei.hicampus.mate.matecampusclaw.codingagent.settings.Settings.empty());
-        var catalog = new com.huawei.hicampus.mate.matecampusclaw.codingagent.model.ModelCatalogService(
-                modelRegistry, settingsManager);
+        when(settingsManager.load()).thenReturn(com.huawei.hicampus.mate.matecampusclaw.codingagent.settings.Settings.empty());
+        var catalog = new com.huawei.hicampus.mate.matecampusclaw.codingagent.model.ModelCatalogService(modelRegistry, settingsManager);
 
         when(session.getModelId()).thenReturn("test-a");
         ChatWebSocketHandler handler = new ChatWebSocketHandler(pool, catalog);

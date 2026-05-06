@@ -12,10 +12,10 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.List;
 import java.util.Map;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.huawei.hicampus.mate.matecampusclaw.ai.stream.AssistantMessageEventStream;
 import com.huawei.hicampus.mate.matecampusclaw.ai.types.*;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.openai.models.responses.ResponseInputItem;
 import com.openai.models.responses.ResponseStatus;
 
@@ -26,9 +26,8 @@ class OpenAIResponsesProviderTest {
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
-    OpenAIResponsesProvider provider =
-            new OpenAIResponsesProvider(new com.huawei.hicampus.mate.matecampusclaw.ai.env.EnvProviderConfigResolver(
-                    new com.huawei.hicampus.mate.matecampusclaw.ai.env.EnvApiKeyResolver()));
+    OpenAIResponsesProvider provider = new OpenAIResponsesProvider(
+            new com.huawei.hicampus.mate.matecampusclaw.ai.env.EnvProviderConfigResolver(new com.huawei.hicampus.mate.matecampusclaw.ai.env.EnvApiKeyResolver()));
 
     private Model testModel() {
         return new Model(
@@ -378,8 +377,7 @@ class OpenAIResponsesProviderTest {
         @Test
         void setsToolsWhenPresent() {
             ObjectNode toolParams = MAPPER.createObjectNode();
-            var tools = List.of(
-                    new com.huawei.hicampus.mate.matecampusclaw.ai.types.Tool("bash", "Run commands", toolParams));
+            var tools = List.of(new com.huawei.hicampus.mate.matecampusclaw.ai.types.Tool("bash", "Run commands", toolParams));
             var context = new Context(null, List.of(new UserMessage("Hello", 1L)), tools);
 
             var params = provider.buildParams(testModel(), context, null, null, null);

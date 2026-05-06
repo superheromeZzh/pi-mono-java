@@ -8,9 +8,9 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import com.huawei.hicampus.mate.matecampusclaw.assistant.channel.gateway.protocol.*;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.huawei.hicampus.mate.matecampusclaw.assistant.channel.gateway.protocol.*;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

@@ -12,10 +12,10 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.List;
 import java.util.Map;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.huawei.hicampus.mate.matecampusclaw.ai.stream.AssistantMessageEventStream;
 import com.huawei.hicampus.mate.matecampusclaw.ai.types.*;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -24,9 +24,8 @@ class OpenAICompletionsProviderTest {
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
-    OpenAICompletionsProvider provider =
-            new OpenAICompletionsProvider(new com.huawei.hicampus.mate.matecampusclaw.ai.env.EnvProviderConfigResolver(
-                    new com.huawei.hicampus.mate.matecampusclaw.ai.env.EnvApiKeyResolver()));
+    OpenAICompletionsProvider provider = new OpenAICompletionsProvider(
+            new com.huawei.hicampus.mate.matecampusclaw.ai.env.EnvProviderConfigResolver(new com.huawei.hicampus.mate.matecampusclaw.ai.env.EnvApiKeyResolver()));
 
     private Model testModel() {
         return new Model(
