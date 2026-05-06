@@ -4,6 +4,8 @@ import java.time.Duration;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.atomic.AtomicReference;
 
 import com.campusclaw.agent.Agent;
 import com.campusclaw.agent.event.AgentEndEvent;
@@ -22,8 +24,10 @@ import com.campusclaw.ai.types.Model;
 import com.campusclaw.ai.types.StopReason;
 import com.campusclaw.ai.types.TextContent;
 import com.campusclaw.ai.types.ThinkingLevel;
+import com.campusclaw.ai.types.UserMessage;
 import com.campusclaw.codingagent.model.ModelCatalogService;
 import com.campusclaw.codingagent.session.AgentSession;
+import com.campusclaw.codingagent.session.SessionManager;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
@@ -98,15 +102,27 @@ public class ChatWebSocketHandler {
     public Publisher<Void> handle(WebsocketInbound in, WebsocketOutbound out, String conversationIdHint) {
         SessionPool.SessionRef ref = pool.getOrCreate(conversationIdHint);
         AgentSession session = ref.session();
-        String conversationId = ref.conversationId();
-        log.info("WebSocket connected: conversation={}", conversationId);
+        // Holds the current conversation id. Rotated by `new_session` when
+        // persistence is enabled, so emitted frames always carry the live id
+        // matching the JSONL file the session is writing to.
+        AtomicReference<String> convIdRef = new AtomicReference<>(ref.conversationId());
+        log.info("WebSocket connected: conversation={}", convIdRef.get());
 
         Sinks.Many<String> outbound = Sinks.many().multicast().onBackpressureBuffer();
 
         Runnable unsubscribe = session.subscribe(event -> {
-            String json = serializeEvent(event, conversationId);
+            String json = serializeEvent(event, convIdRef.get());
             if (json != null) {
                 outbound.emitNext(json, BUSY_LOOP);
+            }
+            // Persist assistant messages on completion. Mirrors InteractiveMode's
+            // MessageEndEvent handler so the WS endpoint and CLI write identical
+            // JSONL streams.
+            if (event instanceof MessageEndEvent me && me.message() instanceof AssistantMessage am) {
+                SessionManager sm = session.getSessionManager();
+                if (sm != null) {
+                    sm.appendMessage(am);
+                }
             }
             // Model-level error (assistant completed with stopReason=ERROR) is
             // not the same as a runtime exception on session.prompt(). Surface it
@@ -116,7 +132,7 @@ public class ChatWebSocketHandler {
                     && me.message() instanceof AssistantMessage am
                     && am.stopReason() == StopReason.ERROR) {
                 String errorText = am.errorMessage() != null ? am.errorMessage() : "model returned stopReason=error";
-                String errorJson = serializeErrorFrame(conversationId, errorText);
+                String errorJson = serializeErrorFrame(convIdRef.get(), errorText);
                 if (errorJson != null) {
                     outbound.emitNext(errorJson, BUSY_LOOP);
                 }
@@ -124,7 +140,7 @@ public class ChatWebSocketHandler {
         });
 
         Mono<Void> inboundPipeline = in.receive().asString()
-                .doOnNext(raw -> handleCommand(raw, session, conversationId, outbound))
+                .doOnNext(raw -> handleCommand(raw, session, convIdRef, outbound))
                 .then();
 
         Flux<String> heartbeat = Flux.interval(HEARTBEAT_INTERVAL).map(i -> PONG_FRAME);
@@ -133,13 +149,14 @@ public class ChatWebSocketHandler {
 
         Mono<Void> cleanup = in.receiveCloseStatus()
                 .doFinally(sig -> {
-                    log.info("WebSocket closed: conversation={} signal={}", conversationId, sig);
+                    String cid = convIdRef.get();
+                    log.info("WebSocket closed: conversation={} signal={}", cid, sig);
                     unsubscribe.run();
                     if (session.isInitialized() && session.isStreaming()) {
                         try {
                             session.abort();
                         } catch (Exception e) {
-                            log.debug("Abort on disconnect failed for {}", conversationId, e);
+                            log.debug("Abort on disconnect failed for {}", cid, e);
                         }
                     }
                     outbound.emitComplete(BUSY_LOOP);
@@ -153,7 +170,7 @@ public class ChatWebSocketHandler {
     // Command dispatch
     // =========================================================================
 
-    private void handleCommand(String raw, AgentSession session, String conversationId, Sinks.Many<String> out) {
+    private void handleCommand(String raw, AgentSession session, AtomicReference<String> convIdRef, Sinks.Many<String> out) {
         String id = null;
         String type = "unknown";
         try {
@@ -162,20 +179,17 @@ public class ChatWebSocketHandler {
             id = cmd.hasNonNull("id") ? cmd.get("id").asText() : null;
 
             switch (type) {
-                case "prompt" -> handlePrompt(cmd, id, session, conversationId, out);
+                case "prompt" -> handlePrompt(cmd, id, session, convIdRef.get(), out);
                 case "steer" -> handleSteer(cmd, id, session, out);
                 case "abort" -> {
                     session.abort();
                     emitResponse(out, id, true, null);
                 }
-                case "new_session" -> {
-                    session.newSession();
-                    emitResponse(out, id, true, null);
-                }
+                case "new_session" -> handleNewSession(id, session, convIdRef, out);
                 case "set_model" -> handleSetModel(cmd, id, session, out);
                 case "list_models" -> handleListModels(cmd, id, session, out);
                 case "set_thinking_level" -> handleSetThinkingLevel(cmd, id, session, out);
-                case "get_state" -> handleGetState(id, session, conversationId, out);
+                case "get_state" -> handleGetState(id, session, convIdRef.get(), out);
                 case "get_history" -> emitResponse(out, id, true, Map.of("messages", messagesToNode(session.getHistory())));
                 case "get_prompt_templates" -> handleGetPromptTemplates(id, session, out);
                 case "list_skills" -> handleListSkills(id, session, out);
@@ -186,6 +200,28 @@ public class ChatWebSocketHandler {
             log.warn("Failed to handle WS command type={} raw={}", type, raw, e);
             emitResponse(out, id, false, "bad frame: " + e.getMessage());
         }
+    }
+
+    private void handleNewSession(String id, AgentSession session, AtomicReference<String> convIdRef, Sinks.Many<String> out) {
+        session.newSession();
+
+        SessionManager oldSm = session.getSessionManager();
+        if (oldSm == null) {
+            // Persistence disabled — keep the in-memory id stable and just clear messages.
+            emitResponse(out, id, true, Map.of("conversation_id", convIdRef.get()));
+            return;
+        }
+
+        // Rotate to a fresh JSONL file so the cleared state doesn't pollute history.
+        String oldId = convIdRef.get();
+        String newId = UUID.randomUUID().toString().replace("-", "").substring(0, 12);
+        oldSm.close();
+        SessionManager freshSm = new SessionManager();
+        freshSm.createSession(System.getProperty("user.dir"), newId);
+        session.setSessionManager(freshSm);
+        pool.rekey(oldId, newId);
+        convIdRef.set(newId);
+        emitResponse(out, id, true, Map.of("conversation_id", newId));
     }
 
     private void handlePrompt(JsonNode cmd, String id, AgentSession session, String conversationId, Sinks.Many<String> out) {
@@ -199,6 +235,10 @@ public class ChatWebSocketHandler {
             return;
         }
         emitResponse(out, id, true, Map.of("conversation_id", conversationId));
+        SessionManager sm = session.getSessionManager();
+        if (sm != null) {
+            sm.appendMessage(new UserMessage(message, System.currentTimeMillis()));
+        }
         session.prompt(message).whenComplete((v, ex) -> {
             if (ex != null) {
                 emitErrorFrame(out, conversationId, Agent.formatError(ex));
@@ -212,6 +252,10 @@ public class ChatWebSocketHandler {
             emitResponse(out, id, false, "message is required");
             return;
         }
+        SessionManager sm = session.getSessionManager();
+        if (sm != null) {
+            sm.appendMessage(new UserMessage(message, System.currentTimeMillis()));
+        }
         session.steer(message);
         emitResponse(out, id, true, null);
     }
@@ -224,6 +268,13 @@ public class ChatWebSocketHandler {
         }
         try {
             session.setModel(model);
+            SessionManager sm = session.getSessionManager();
+            if (sm != null) {
+                Model resolved = session.getAgent().getState().getModel();
+                if (resolved != null) {
+                    sm.appendModelChange(resolved.provider().value(), resolved.id());
+                }
+            }
             emitResponse(out, id, true, Map.of("model", session.getModelId()));
         } catch (Exception e) {
             emitResponse(out, id, false, "Invalid model: " + e.getMessage());
@@ -275,6 +326,10 @@ public class ChatWebSocketHandler {
         try {
             ThinkingLevel tl = ThinkingLevel.fromValue(level);
             session.getAgent().setThinkingLevel(tl);
+            SessionManager sm = session.getSessionManager();
+            if (sm != null) {
+                sm.appendThinkingLevelChange(tl.value());
+            }
             emitResponse(out, id, true, Map.of("level", tl.value()));
         } catch (Exception e) {
             emitResponse(out, id, false, "Invalid thinking level: " + level);

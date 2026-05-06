@@ -209,3 +209,16 @@ export interface LogEntry {
   text: string;
   ts: number;
 }
+
+/**
+ * Persisted conversation summary returned by `GET /api/conversations`.
+ * Mirrors the {@code ConversationSummary} schema in
+ * {@code docs/openapi/campusclaw-api.yaml}.
+ */
+export interface ConversationSummary {
+  id: string;
+  title: string;
+  messageCount: number;
+  createdAt: string;
+  updatedAt: string;
+}

@@ -74,6 +74,9 @@ public class CampusClawCommand implements Callable<Integer> {
     private final com.campusclaw.codingagent.resolver.AgentModelResolver agentModelResolver;
     private final com.campusclaw.codingagent.model.ModelCatalogService modelCatalogService;
 
+    @org.springframework.beans.factory.annotation.Value("${server.session.persistence.enabled:true}")
+    private boolean serverSessionPersistenceEnabled;
+
     public CampusClawCommand(CampusClawAiService piAiService, ModelRegistry modelRegistry,
                      SystemPromptBuilder promptBuilder, List<AgentTool> tools,
                      SlashCommandRegistry commandRegistry, BashExecutor bashExecutor,
@@ -499,7 +502,8 @@ public class CampusClawCommand implements Callable<Integer> {
                     effectiveTools, config, port != null ? port : 3000,
                     host != null ? host : "localhost",
                     sandboxSkillParser, useSandbox,
-                    modelCatalogService).run();
+                    modelCatalogService,
+                    serverSessionPersistenceEnabled).run();
             return 0;
         }
 
