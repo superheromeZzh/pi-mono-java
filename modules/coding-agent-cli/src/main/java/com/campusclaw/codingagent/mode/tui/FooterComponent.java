@@ -47,7 +47,7 @@ public class FooterComponent implements Component {
     // Git branch cache
     private String cachedBranch;
     private long branchCacheTime;
-    private static final long BRANCH_CACHE_TTL_MS = 10_000; // 10s
+    private static final long BRANCH_CACHE_TTL_MS = 10_000L; // 10s
 
     public void setModel(String provider, String model, int contextWindow, boolean supportsReasoning) {
         this.providerName = provider != null ? provider : "";

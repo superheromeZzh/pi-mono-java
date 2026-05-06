@@ -45,7 +45,7 @@ import org.slf4j.LoggerFactory;
 public class SessionPool {
 
     private static final Logger log = LoggerFactory.getLogger(SessionPool.class);
-    private static final long IDLE_TIMEOUT_MINUTES = 30;
+    private static final long IDLE_TIMEOUT_MINUTES = 30L;
 
     private final CampusClawAiService aiService;
     private final ModelRegistry modelRegistry;

@@ -30,7 +30,7 @@ public class StdinBuffer {
     private final StringBuilder buffer = new StringBuilder();
 
     // Timeout in milliseconds for incomplete escape sequences
-    private static final long ESCAPE_TIMEOUT_MS = 50;
+    private static final long ESCAPE_TIMEOUT_MS = 50L;
     private long lastInputTime;
 
     /**
