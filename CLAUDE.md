@@ -89,14 +89,14 @@ The hook runs the sync script in dry-run + no-verify mode and parses rsync's `--
 
 ## Git workflow
 
-The repo merges PRs with **Squash and merge**, which rewrites commit SHAs. Consequences:
+The repo merges PRs with **Merge commit**（保留每个 commit 的真实 SHA 和顺序，main 上额外多一个 merge commit 记录合并这件事）。
 
-- **One branch per change, deleted after merge.** Never reuse a feature branch after its PR is squash-merged — `git log origin/main..HEAD` will keep showing the old SHAs as "unmerged" even though the content is in main.
-- **Always branch from latest main.** Before a new change: `git checkout main && git pull`, then `git checkout -b <type>/<slug>`.
-- **Branch naming**: `fix/`, `feat/`, `chore/`, `refactor/`, `test/`, `docs/` + kebab-case slug (e.g. `fix/bash-windows-compat`).
+- **Branch from latest main for each topic.** `git checkout main && git pull`, then `git checkout -b <type>/<slug>`. 一个分支可以承载一个完整 feature 的多次提交，不需要把每个原子改动拆成单独分支；但不同主题的工作请分到不同分支，避免 PR 又大又杂。
+- **Branch naming**: `fix/`, `feat/`, `chore/`, `refactor/`, `test/`, `docs/` + kebab-case slug（例如 `fix/bash-windows-compat`）。
 - **Commit hygiene**: stage specific files (avoid `git add -A`); commit messages follow Conventional Commits with **Chinese descriptions** (`type(scope): 中文描述`); run `./mvnw spotless:apply` before committing.
-- **After a PR merges**: `git checkout main && git pull && git branch -d <branch> && git push origin --delete <branch>`.
-- **Never force-push to main.** Use `--force-with-lease` only on your own feature branch, and only when the user explicitly asks.
+- **保持 PR 与 main 同步**：如果开发期间 main 推进了，在自己分支上 `git fetch origin && git merge origin/main`，或 `git rebase origin/main` + `git push --force-with-lease`。前者无需 force-push 但会引入 merge commit 进 feature 分支，后者保持线性但需要 force-push（仅限自己分支）。
+- **合并后清理**: `git checkout main && git pull && git branch -d <branch> && git push origin --delete <branch>`。Merge commit 策略下 git 能正确识别分支已合并，`-d` 即可删除（无需 `-D`）。
+- **Never force-push to main.** `--force-with-lease` 只用于自己的 feature 分支，且仅在用户明确要求时使用。
 
 ## Reference
 
