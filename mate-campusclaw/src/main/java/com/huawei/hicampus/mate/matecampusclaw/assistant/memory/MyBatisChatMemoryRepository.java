@@ -1,16 +1,16 @@
 package com.huawei.hicampus.mate.matecampusclaw.assistant.memory;
 
+import java.io.UncheckedIOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+
 import com.huawei.hicampus.mate.matecampusclaw.ai.types.AssistantMessage;
 import com.huawei.hicampus.mate.matecampusclaw.ai.types.Message;
 import com.huawei.hicampus.mate.matecampusclaw.ai.types.ToolResultMessage;
 import com.huawei.hicampus.mate.matecampusclaw.ai.types.UserMessage;
 import com.huawei.hicampus.mate.matecampusclaw.assistant.mapper.ChatMemoryMapper;
 import com.fasterxml.jackson.databind.ObjectMapper;
-
-import java.io.UncheckedIOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
 
 public class MyBatisChatMemoryRepository implements ChatMemoryRepository {
 
@@ -41,7 +41,7 @@ public class MyBatisChatMemoryRepository implements ChatMemoryRepository {
     public void append(String conversationId, List<Message> messages) {
         Objects.requireNonNull(conversationId, "conversationId");
         Objects.requireNonNull(messages, "messages");
-        if (messages.isEmpty()) return;
+        if (messages.isEmpty()) { return; }
 
         List<ChatMemoryEntity> existing = mapper.selectByConversationId(conversationId);
         int nextSequence = existing.isEmpty() ? 0 : existing.getLast().sequence() + 1;

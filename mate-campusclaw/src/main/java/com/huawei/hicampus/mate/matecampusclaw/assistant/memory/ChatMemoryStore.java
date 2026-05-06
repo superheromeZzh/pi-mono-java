@@ -1,9 +1,12 @@
 package com.huawei.hicampus.mate.matecampusclaw.assistant.memory;
 
-import com.huawei.hicampus.mate.matecampusclaw.ai.types.Message;
-
 import java.util.List;
 
+import com.huawei.hicampus.mate.matecampusclaw.ai.types.Message;
+
+import org.springframework.stereotype.Service;
+
+@Service
 public class ChatMemoryStore {
 
     private final ChatMemoryRepository repository;

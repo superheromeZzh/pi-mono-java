@@ -1,7 +1,7 @@
 package com.huawei.hicampus.mate.matecampusclaw.codingagent.mode;
 
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
 
@@ -42,7 +42,7 @@ class TuiVisualTest {
 
         // Footer
         footer.setModel("zai", "glm-5", 200000, true);
-        footer.setCwd("/Users/z/campusclaw");
+        footer.setCwd(System.getProperty("user.home") + "/campusclaw");
         footer.setThinkingLevel("medium");
         footer.updateUsage(752, 71, 832, 0, 0.001);
 

@@ -91,17 +91,17 @@ public class EnvApiKeyResolver {
      */
     private Optional<String> detectBedrockCredentials() {
         // AWS_PROFILE
-        if (envSet("AWS_PROFILE")) return Optional.of(AUTHENTICATED);
+        if (envSet("AWS_PROFILE")) { return Optional.of(AUTHENTICATED); }
         // IAM keys
         if (envSet("AWS_ACCESS_KEY_ID") && envSet("AWS_SECRET_ACCESS_KEY"))
-            return Optional.of(AUTHENTICATED);
+            { return Optional.of(AUTHENTICATED); }
         // Bearer token
-        if (envSet("AWS_BEARER_TOKEN_BEDROCK")) return Optional.of(AUTHENTICATED);
+        if (envSet("AWS_BEARER_TOKEN_BEDROCK")) { return Optional.of(AUTHENTICATED); }
         // Container credentials
         if (envSet("AWS_CONTAINER_CREDENTIALS_FULL_URI") || envSet("AWS_CONTAINER_CREDENTIALS_RELATIVE_URI"))
-            return Optional.of(AUTHENTICATED);
+            { return Optional.of(AUTHENTICATED); }
         // Web identity (IRSA)
-        if (envSet("AWS_WEB_IDENTITY_TOKEN_FILE")) return Optional.of(AUTHENTICATED);
+        if (envSet("AWS_WEB_IDENTITY_TOKEN_FILE")) { return Optional.of(AUTHENTICATED); }
         return Optional.empty();
     }
 

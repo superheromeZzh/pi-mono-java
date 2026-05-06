@@ -7,7 +7,6 @@ import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.PosixFilePermission;
 import java.nio.file.attribute.PosixFilePermissions;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -64,7 +63,7 @@ public class AuthStorage {
     }
 
     private Optional<Map<String, Credential>> load() {
-        if (!Files.exists(AUTH_FILE)) return Optional.empty();
+        if (!Files.exists(AUTH_FILE)) { return Optional.empty(); }
         try {
             String json = Files.readString(AUTH_FILE);
             Map<String, Credential> map = MAPPER.readValue(json, new TypeReference<>() {});

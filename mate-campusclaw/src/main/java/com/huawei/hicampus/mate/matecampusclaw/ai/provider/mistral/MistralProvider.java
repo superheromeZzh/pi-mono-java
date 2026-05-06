@@ -10,35 +10,24 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.UUID;
 
 import com.huawei.hicampus.mate.matecampusclaw.ai.provider.ApiProvider;
 import com.huawei.hicampus.mate.matecampusclaw.ai.stream.AssistantMessageEventStream;
 import com.huawei.hicampus.mate.matecampusclaw.ai.types.Api;
 import com.huawei.hicampus.mate.matecampusclaw.ai.types.AssistantMessage;
-import com.huawei.hicampus.mate.matecampusclaw.ai.types.CacheRetention;
 import com.huawei.hicampus.mate.matecampusclaw.ai.types.ContentBlock;
 import com.huawei.hicampus.mate.matecampusclaw.ai.types.Context;
 import com.huawei.hicampus.mate.matecampusclaw.ai.types.Cost;
-import com.huawei.hicampus.mate.matecampusclaw.ai.types.ImageContent;
-import com.huawei.hicampus.mate.matecampusclaw.ai.types.InputModality;
-import com.huawei.hicampus.mate.matecampusclaw.ai.types.Message;
 import com.huawei.hicampus.mate.matecampusclaw.ai.types.Model;
-import com.huawei.hicampus.mate.matecampusclaw.ai.types.ModelCost;
-import com.huawei.hicampus.mate.matecampusclaw.ai.types.Provider;
 import com.huawei.hicampus.mate.matecampusclaw.ai.types.SimpleStreamOptions;
-import com.huawei.hicampus.mate.matecampusclaw.ai.types.SimpleStreamOptionsFactory;
 import com.huawei.hicampus.mate.matecampusclaw.ai.types.StopReason;
 import com.huawei.hicampus.mate.matecampusclaw.ai.types.StreamOptions;
 import com.huawei.hicampus.mate.matecampusclaw.ai.types.TextContent;
-import com.huawei.hicampus.mate.matecampusclaw.ai.types.ThinkingBudgets;
 import com.huawei.hicampus.mate.matecampusclaw.ai.types.ThinkingContent;
 import com.huawei.hicampus.mate.matecampusclaw.ai.types.ThinkingLevel;
-import com.huawei.hicampus.mate.matecampusclaw.ai.types.Tool;
 import com.huawei.hicampus.mate.matecampusclaw.ai.types.ToolCall;
 import com.huawei.hicampus.mate.matecampusclaw.ai.types.ToolResultMessage;
-import com.huawei.hicampus.mate.matecampusclaw.ai.types.Transport;
 import com.huawei.hicampus.mate.matecampusclaw.ai.types.Usage;
 import com.huawei.hicampus.mate.matecampusclaw.ai.types.UserMessage;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -62,7 +51,12 @@ public class MistralProvider implements ApiProvider {
     private static final Logger log = LoggerFactory.getLogger(MistralProvider.class);
     private static final ObjectMapper MAPPER = new ObjectMapper();
     private static final String DEFAULT_BASE_URL = "https://api.mistral.ai/v1";
-    private static final String ENV_API_KEY = "MISTRAL_API_KEY";
+
+    private final com.huawei.hicampus.mate.matecampusclaw.ai.env.ProviderConfigResolver providerConfigResolver;
+
+    public MistralProvider(com.huawei.hicampus.mate.matecampusclaw.ai.env.ProviderConfigResolver providerConfigResolver) {
+        this.providerConfigResolver = providerConfigResolver;
+    }
 
     @Override
     public Api getApi() {
@@ -91,13 +85,16 @@ public class MistralProvider implements ApiProvider {
 
     private void executeStream(Model model, Context context, @Nullable SimpleStreamOptions options,
                                AssistantMessageEventStream eventStream) {
-        String apiKey = resolveApiKey(model, options);
+        var providerConfig = providerConfigResolver.resolve(model.provider(), model);
+        String apiKey = resolveApiKey(providerConfig, options);
         if (apiKey == null || apiKey.isBlank()) {
-            eventStream.error(new IllegalStateException("Mistral API key not found. Set MISTRAL_API_KEY."));
+            eventStream.error(new IllegalStateException(
+                    "Mistral API key not found. Set MISTRAL_API_KEY, configure provider.mistral.apiKey in settings.json, or run /auth login."));
             return;
         }
 
-        String baseUrl = model.baseUrl() != null ? model.baseUrl() : DEFAULT_BASE_URL;
+        String overrideBaseUrl = providerConfig.resolveBaseUrl(model);
+        String baseUrl = overrideBaseUrl != null ? overrideBaseUrl : DEFAULT_BASE_URL;
         String url = baseUrl + "/chat/completions";
 
         ObjectNode requestBody = buildRequestBody(model, context, options);
@@ -127,13 +124,13 @@ public class MistralProvider implements ApiProvider {
             try (var reader = new BufferedReader(new InputStreamReader(response.body()))) {
                 String line;
                 while ((line = reader.readLine()) != null) {
-                    if (line.isBlank() || !line.startsWith("data: ")) continue;
+                    if (line.isBlank() || !line.startsWith("data: ")) { continue; }
                     String data = line.substring(6).trim();
-                    if (data.equals("[DONE]")) break;
+                    if (data.equals("[DONE]")) { break; }
 
                     JsonNode chunk = MAPPER.readTree(data);
                     var choices = chunk.path("choices");
-                    if (!choices.isArray() || choices.isEmpty()) continue;
+                    if (!choices.isArray() || choices.isEmpty()) { continue; }
 
                     var choice = choices.get(0);
                     var delta = choice.path("delta");
@@ -205,10 +202,10 @@ public class MistralProvider implements ApiProvider {
                         for (var tc : delta.get("tool_calls")) {
                             int idx = tc.path("index").asInt(0);
                             var acc = toolCallAccs.computeIfAbsent(idx, k -> new ToolCallAccumulator());
-                            if (tc.has("id")) acc.id = tc.get("id").asText();
+                            if (tc.has("id")) { acc.id = tc.get("id").asText(); }
                             var fn = tc.path("function");
-                            if (fn.has("name")) acc.name = fn.get("name").asText();
-                            if (fn.has("arguments")) acc.arguments.append(fn.get("arguments").asText());
+                            if (fn.has("name")) { acc.name = fn.get("name").asText(); }
+                            if (fn.has("arguments")) { acc.arguments.append(fn.get("arguments").asText()); }
                         }
                     }
 
@@ -269,9 +266,9 @@ public class MistralProvider implements ApiProvider {
         StopReason stop, Usage usage
     ) {
         var blocks = new ArrayList<ContentBlock>(accumulatedBlocks);
-        if (!currentText.isEmpty()) blocks.add(new TextContent(currentText));
+        if (!currentText.isEmpty()) { blocks.add(new TextContent(currentText)); }
         for (var acc : toolCallAccs.values()) {
-            if (acc.name != null) blocks.add(acc.toToolCall());
+            if (acc.name != null) { blocks.add(acc.toToolCall()); }
         }
         return new AssistantMessage(
             blocks, Api.MISTRAL_CONVERSATIONS.value(), model.provider().value(),
@@ -321,7 +318,7 @@ public class MistralProvider implements ApiProvider {
                                 thinkingItem.set("thinking", thinkingParts);
                                 contentArray.add(thinkingItem);
                             }
-                        } else if (block instanceof TextContent tc) text.append(tc.text());
+                        } else if (block instanceof TextContent tc) { text.append(tc.text()); }
                         else if (block instanceof ToolCall tc) {
                             var tcNode = MAPPER.createObjectNode();
                             tcNode.put("id", tc.id());
@@ -347,7 +344,7 @@ public class MistralProvider implements ApiProvider {
                     } else if (!text.isEmpty()) {
                         m.put("content", text.toString());
                     }
-                    if (!toolCalls.isEmpty()) m.set("tool_calls", toolCalls);
+                    if (!toolCalls.isEmpty()) { m.set("tool_calls", toolCalls); }
                     messages.add(m);
                 }
                 case ToolResultMessage trm -> {
@@ -380,8 +377,8 @@ public class MistralProvider implements ApiProvider {
         }
 
         if (options != null) {
-            if (options.maxTokens() != null) body.put("max_tokens", options.maxTokens());
-            if (options.temperature() != null) body.put("temperature", options.temperature());
+            if (options.maxTokens() != null) { body.put("max_tokens", options.maxTokens()); }
+            if (options.temperature() != null) { body.put("temperature", options.temperature()); }
 
             // Reasoning / thinking mode
             if (options.reasoning() != null && options.reasoning() != ThinkingLevel.OFF
@@ -395,10 +392,10 @@ public class MistralProvider implements ApiProvider {
         return body;
     }
 
-    private String resolveApiKey(Model model, @Nullable SimpleStreamOptions options) {
-        if (options != null && options.apiKey() != null) return options.apiKey();
-        if (model.apiKey() != null && !model.apiKey().isBlank()) return model.apiKey();
-        return System.getenv(ENV_API_KEY);
+    private String resolveApiKey(com.huawei.hicampus.mate.matecampusclaw.ai.env.ResolvedProviderConfig providerConfig,
+                                 @Nullable SimpleStreamOptions options) {
+        if (options != null && options.apiKey() != null) { return options.apiKey(); }
+        return providerConfig.apiKey();
     }
 
     private StopReason mapFinishReason(String reason) {
@@ -411,7 +408,7 @@ public class MistralProvider implements ApiProvider {
     }
 
     private Cost computeCost(Model model, Usage usage) {
-        if (model.cost() == null) return Cost.empty();
+        if (model.cost() == null) { return Cost.empty(); }
         var mc = model.cost();
         double input = usage.input() * mc.input() / 1_000_000.0;
         double output = usage.output() * mc.output() / 1_000_000.0;
@@ -421,7 +418,7 @@ public class MistralProvider implements ApiProvider {
     private static String extractText(List<ContentBlock> content) {
         var sb = new StringBuilder();
         for (var block : content) {
-            if (block instanceof TextContent tc) sb.append(tc.text());
+            if (block instanceof TextContent tc) { sb.append(tc.text()); }
         }
         return sb.toString();
     }

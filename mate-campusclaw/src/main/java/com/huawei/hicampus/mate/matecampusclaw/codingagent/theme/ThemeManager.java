@@ -3,11 +3,9 @@ package com.huawei.hicampus.mate.matecampusclaw.codingagent.theme;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -41,7 +39,7 @@ public class ThemeManager {
     /** Set active theme by name. */
     public boolean setActiveTheme(String name) {
         Theme theme = themes.get(name);
-        if (theme == null) return false;
+        if (theme == null) { return false; }
         activeTheme = theme;
         return true;
     }
@@ -63,7 +61,7 @@ public class ThemeManager {
 
     /** Load custom themes from a directory. */
     public void loadFromDirectory(Path dir) {
-        if (!Files.isDirectory(dir)) return;
+        if (!Files.isDirectory(dir)) { return; }
         try (var stream = Files.list(dir)) {
             stream.filter(p -> p.toString().endsWith(".json"))
                 .forEach(p -> {

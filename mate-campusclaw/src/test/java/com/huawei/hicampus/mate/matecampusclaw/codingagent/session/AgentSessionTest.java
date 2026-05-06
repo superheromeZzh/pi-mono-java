@@ -1,23 +1,17 @@
 package com.huawei.hicampus.mate.matecampusclaw.codingagent.session;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-import static org.mockito.Mockito.thenReturn;
-import static org.mockito.Mockito.verify;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyString;
-import static org.mockito.Mockito.contains;
-import static org.mockito.Mockito.Mock;
-import static org.mockito.Mockito.BeforeEach;
-import static org.mockito.Mockito.Test;
-import static org.mockito.Mockito.ExtendWith;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -102,7 +96,8 @@ class AgentSessionTest {
     private AgentSession createSession() {
         return new TestableAgentSession(
                 piAiService, modelRegistry, promptBuilder,
-                skillLoader, skillExpander, tools
+                skillLoader, skillExpander, tools,
+                tempDir.resolve(".user-skills-isolated")
         );
     }
 
@@ -540,6 +535,7 @@ class AgentSessionTest {
      */
     private static class TestableAgentSession extends AgentSession {
         private Agent mockAgent;
+        private final Path userSkillsDir;
 
         TestableAgentSession(
                 CampusClawAiService piAiService,
@@ -547,9 +543,11 @@ class AgentSessionTest {
                 SystemPromptBuilder promptBuilder,
                 SkillLoader skillLoader,
                 SkillExpander skillExpander,
-                List<AgentTool> tools
+                List<AgentTool> tools,
+                Path userSkillsDir
         ) {
             super(piAiService, modelRegistry, promptBuilder, skillLoader, skillExpander, tools);
+            this.userSkillsDir = userSkillsDir;
         }
 
         @Override
@@ -557,6 +555,11 @@ class AgentSessionTest {
             mockAgent = mock(Agent.class);
             when(mockAgent.getState()).thenReturn(new com.huawei.hicampus.mate.matecampusclaw.agent.state.AgentState());
             return mockAgent;
+        }
+
+        @Override
+        protected Path userSkillsDir() {
+            return userSkillsDir;
         }
 
         Agent getMockAgent() {

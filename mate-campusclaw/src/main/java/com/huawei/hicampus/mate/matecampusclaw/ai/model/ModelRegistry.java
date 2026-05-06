@@ -1,7 +1,9 @@
 package com.huawei.hicampus.mate.matecampusclaw.ai.model;
 
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -9,31 +11,14 @@ import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
 import com.huawei.hicampus.mate.matecampusclaw.ai.types.Api;
-import com.huawei.hicampus.mate.matecampusclaw.ai.types.AssistantMessage;
-import com.huawei.hicampus.mate.matecampusclaw.ai.types.CacheRetention;
-import com.huawei.hicampus.mate.matecampusclaw.ai.types.ContentBlock;
-import com.huawei.hicampus.mate.matecampusclaw.ai.types.Context;
 import com.huawei.hicampus.mate.matecampusclaw.ai.types.Cost;
-import com.huawei.hicampus.mate.matecampusclaw.ai.types.ImageContent;
 import com.huawei.hicampus.mate.matecampusclaw.ai.types.InputModality;
-import com.huawei.hicampus.mate.matecampusclaw.ai.types.Message;
 import com.huawei.hicampus.mate.matecampusclaw.ai.types.Model;
 import com.huawei.hicampus.mate.matecampusclaw.ai.types.ModelCost;
 import com.huawei.hicampus.mate.matecampusclaw.ai.types.Provider;
-import com.huawei.hicampus.mate.matecampusclaw.ai.types.SimpleStreamOptions;
-import com.huawei.hicampus.mate.matecampusclaw.ai.types.SimpleStreamOptionsFactory;
-import com.huawei.hicampus.mate.matecampusclaw.ai.types.StopReason;
-import com.huawei.hicampus.mate.matecampusclaw.ai.types.StreamOptions;
-import com.huawei.hicampus.mate.matecampusclaw.ai.types.TextContent;
-import com.huawei.hicampus.mate.matecampusclaw.ai.types.ThinkingBudgets;
-import com.huawei.hicampus.mate.matecampusclaw.ai.types.ThinkingContent;
-import com.huawei.hicampus.mate.matecampusclaw.ai.types.ThinkingLevel;
-import com.huawei.hicampus.mate.matecampusclaw.ai.types.Tool;
-import com.huawei.hicampus.mate.matecampusclaw.ai.types.ToolCall;
-import com.huawei.hicampus.mate.matecampusclaw.ai.types.ToolResultMessage;
-import com.huawei.hicampus.mate.matecampusclaw.ai.types.Transport;
 import com.huawei.hicampus.mate.matecampusclaw.ai.types.Usage;
-import com.huawei.hicampus.mate.matecampusclaw.ai.types.UserMessage;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -141,7 +126,7 @@ public class ModelRegistry {
      * Returns a new Cost with computed values.
      */
     public static Cost calculateCost(Model model, Usage usage) {
-        if (model.cost() == null) return Cost.empty();
+        if (model.cost() == null) { return Cost.empty(); }
         var mc = model.cost();
         double input = usage.input() * mc.input() / 1_000_000.0;
         double output = usage.output() * mc.output() / 1_000_000.0;
@@ -165,7 +150,7 @@ public class ModelRegistry {
      * Check if two models are equal by comparing both id and provider.
      */
     public static boolean modelsAreEqual(Model a, Model b) {
-        if (a == null || b == null) return false;
+        if (a == null || b == null) { return false; }
         return a.id().equals(b.id()) && a.provider() == b.provider();
     }
 
@@ -194,11 +179,65 @@ public class ModelRegistry {
 
     /**
      * Pre-registers commonly used models after bean construction.
+     *
+     * <p>Order:
+     * <ol>
+     *   <li>Built-in models from {@link #builtInModels()} (compiled-in defaults)</li>
+     *   <li>Optional classpath resource {@code /campusclaw-models.json} (override / add)</li>
+     *   <li>Optional user file {@code ~/.campusclaw/agent/models.json} (override / add)</li>
+     * </ol>
      */
     @PostConstruct
     void init() {
         registerAll(builtInModels());
-        log.info("ModelRegistry initialized with {} built-in model(s)", builtInModels().size());
+        int builtIn = builtInModels().size();
+        int fromClasspath = loadFromClasspathResource("/campusclaw-models.json");
+        int fromUser = loadFromUserFile();
+        log.info("ModelRegistry initialized: {} built-in + {} classpath + {} user override(s)",
+                builtIn, fromClasspath, fromUser);
+    }
+
+    /**
+     * Loads additional models from a JSON file. The file should contain a
+     * top-level array of Model objects (matching the {@link Model} record
+     * shape). Existing entries with the same provider+id are overwritten.
+     *
+     * @return number of models loaded, or 0 on missing file / parse error
+     */
+    public int loadFromJsonFile(Path file) {
+        if (file == null || !Files.exists(file)) { return 0; }
+        try (var in = Files.newInputStream(file)) {
+            return loadFromJsonStream(in, file.toString());
+        } catch (Exception e) {
+            log.warn("Failed to load models from {}: {}", file, e.getMessage());
+            return 0;
+        }
+    }
+
+    private int loadFromClasspathResource(String resource) {
+        try (InputStream in = ModelRegistry.class.getResourceAsStream(resource)) {
+            if (in == null) { return 0; }
+            return loadFromJsonStream(in, "classpath:" + resource);
+        } catch (Exception e) {
+            log.warn("Failed to load models from {}: {}", resource, e.getMessage());
+            return 0;
+        }
+    }
+
+    private int loadFromUserFile() {
+        String home = System.getProperty("user.home");
+        if (home == null || home.isBlank()) { return 0; }
+        Path file = Path.of(home, ".campusclaw", "agent", "models.json");
+        return loadFromJsonFile(file);
+    }
+
+    private int loadFromJsonStream(InputStream in, String source) throws java.io.IOException {
+        var mapper = new ObjectMapper();
+        var models = mapper.readValue(in, new TypeReference<List<Model>>() {});
+        if (models == null || models.isEmpty()) { return 0; }
+        registerAll(models);
+        log.debug("Loaded {} model(s) from {}", models.size(), source);
+        return models.size();
     }
 
     /**

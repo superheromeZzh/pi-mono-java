@@ -1,9 +1,9 @@
 package com.huawei.hicampus.mate.matecampusclaw.ai.provider.anthropic;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
 
@@ -20,7 +20,7 @@ class AnthropicProviderTest {
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
-    AnthropicProvider provider = new AnthropicProvider();
+    AnthropicProvider provider = new AnthropicProvider(new com.huawei.hicampus.mate.matecampusclaw.ai.env.EnvProviderConfigResolver(new com.huawei.hicampus.mate.matecampusclaw.ai.env.EnvApiKeyResolver()));
 
     private Model testModel() {
         return new Model(

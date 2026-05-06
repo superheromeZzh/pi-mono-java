@@ -207,7 +207,7 @@ public class Input implements Component, Focusable {
     public void handleInput(String data) {
         // Escape / Ctrl+C
         if (KEY_ESCAPE.equals(data) || KEY_CTRL_C.equals(data)) {
-            if (onEscape != null) onEscape.run();
+            if (onEscape != null) { onEscape.run(); }
             return;
         }
 
@@ -219,7 +219,7 @@ public class Input implements Component, Focusable {
 
         // Submit
         if (KEY_ENTER.equals(data) || KEY_NEWLINE.equals(data)) {
-            if (onSubmit != null) onSubmit.accept(value);
+            if (onSubmit != null) { onSubmit.accept(value); }
             return;
         }
 
@@ -348,7 +348,7 @@ public class Input implements Component, Focusable {
     }
 
     private void deleteToLineStart() {
-        if (cursor == 0) return;
+        if (cursor == 0) { return; }
         pushUndo();
         String deleted = value.substring(0, cursor);
         killRing.push(deleted, true, "kill".equals(lastAction));
@@ -358,7 +358,7 @@ public class Input implements Component, Focusable {
     }
 
     private void deleteToLineEnd() {
-        if (cursor >= value.length()) return;
+        if (cursor >= value.length()) { return; }
         pushUndo();
         String deleted = value.substring(cursor);
         killRing.push(deleted, false, "kill".equals(lastAction));
@@ -367,7 +367,7 @@ public class Input implements Component, Focusable {
     }
 
     private void deleteWordBackward() {
-        if (cursor == 0) return;
+        if (cursor == 0) { return; }
         boolean wasKill = "kill".equals(lastAction);
         pushUndo();
 
@@ -384,7 +384,7 @@ public class Input implements Component, Focusable {
     }
 
     private void deleteWordForward() {
-        if (cursor >= value.length()) return;
+        if (cursor >= value.length()) { return; }
         boolean wasKill = "kill".equals(lastAction);
         pushUndo();
 
@@ -401,7 +401,7 @@ public class Input implements Component, Focusable {
 
     private void yank() {
         String text = killRing.peek();
-        if (text == null) return;
+        if (text == null) { return; }
         pushUndo();
         // Strip newlines for single-line input
         String cleaned = text.replace("\n", "").replace("\r", "");
@@ -411,7 +411,7 @@ public class Input implements Component, Focusable {
     }
 
     private void yankPop() {
-        if (!"yank".equals(lastAction) || killRing.size() <= 1) return;
+        if (!"yank".equals(lastAction) || killRing.size() <= 1) { return; }
         pushUndo();
 
         String prevText = killRing.peek();
@@ -441,7 +441,7 @@ public class Input implements Component, Focusable {
 
     private void undo() {
         InputSnapshot snapshot = undoStack.pop();
-        if (snapshot == null) return;
+        if (snapshot == null) { return; }
         value = snapshot.value;
         cursor = snapshot.cursor;
         lastAction = null;
@@ -462,7 +462,7 @@ public class Input implements Component, Focusable {
     }
 
     private void moveWordBackwardInternal() {
-        if (cursor == 0) return;
+        if (cursor == 0) { return; }
 
         String before = value.substring(0, cursor);
         List<String> graphemes = graphemeList(before);
@@ -473,19 +473,19 @@ public class Input implements Component, Focusable {
             cursor -= graphemes.get(idx).length();
             idx--;
         }
-        if (idx < 0) return;
+        if (idx < 0) { return; }
 
         boolean isPunct = isPunctuation(graphemes.get(idx));
         while (idx >= 0) {
             String g = graphemes.get(idx);
-            if (isWhitespace(g) || (isPunct != isPunctuation(g))) break;
+            if (isWhitespace(g) || (isPunct != isPunctuation(g))) { break; }
             cursor -= g.length();
             idx--;
         }
     }
 
     private void moveWordForwardInternal() {
-        if (cursor >= value.length()) return;
+        if (cursor >= value.length()) { return; }
 
         String after = value.substring(cursor);
         List<String> graphemes = graphemeList(after);
@@ -496,12 +496,12 @@ public class Input implements Component, Focusable {
             cursor += graphemes.get(idx).length();
             idx++;
         }
-        if (idx >= graphemes.size()) return;
+        if (idx >= graphemes.size()) { return; }
 
         boolean isPunct = isPunctuation(graphemes.get(idx));
         while (idx < graphemes.size()) {
             String g = graphemes.get(idx);
-            if (isWhitespace(g) || (isPunct != isPunctuation(g))) break;
+            if (isWhitespace(g) || (isPunct != isPunctuation(g))) { break; }
             cursor += g.length();
             idx++;
         }
@@ -512,7 +512,7 @@ public class Input implements Component, Focusable {
     // -------------------------------------------------------------------
 
     private static String firstGrapheme(String text) {
-        if (text == null || text.isEmpty()) return "";
+        if (text == null || text.isEmpty()) { return ""; }
         BreakIterator bi = BreakIterator.getCharacterInstance();
         bi.setText(text);
         bi.first();
@@ -521,7 +521,7 @@ public class Input implements Component, Focusable {
     }
 
     private static int lastGraphemeLength(String text) {
-        if (text == null || text.isEmpty()) return 0;
+        if (text == null || text.isEmpty()) { return 0; }
         BreakIterator bi = BreakIterator.getCharacterInstance();
         bi.setText(text);
         int last = bi.last();
@@ -544,18 +544,18 @@ public class Input implements Component, Focusable {
     }
 
     private static String truncateToWidth(String text, int maxWidth) {
-        if (text == null || text.isEmpty()) return "";
-        if (AnsiUtils.visibleWidth(text) <= maxWidth) return text;
+        if (text == null || text.isEmpty()) { return ""; }
+        if (AnsiUtils.visibleWidth(text) <= maxWidth) { return text; }
         return AnsiUtils.sliceByColumn(text, 0, maxWidth);
     }
 
     private static boolean isWhitespace(String s) {
-        if (s == null || s.isEmpty()) return false;
+        if (s == null || s.isEmpty()) { return false; }
         return Character.isWhitespace(s.codePointAt(0));
     }
 
     private static boolean isPunctuation(String s) {
-        if (s == null || s.isEmpty()) return false;
+        if (s == null || s.isEmpty()) { return false; }
         int type = Character.getType(s.codePointAt(0));
         return type == Character.CONNECTOR_PUNCTUATION
                 || type == Character.DASH_PUNCTUATION

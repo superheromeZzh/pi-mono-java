@@ -49,7 +49,7 @@ public class SessionCommand implements SlashCommand {
         double totalCost = 0;
 
         for (Message msg : messages) {
-            if (msg instanceof UserMessage) userCount++;
+            if (msg instanceof UserMessage) { userCount++; }
             else if (msg instanceof AssistantMessage am) {
                 assistantCount++;
                 if (am.usage() != null) {
@@ -106,10 +106,10 @@ public class SessionCommand implements SlashCommand {
     }
 
     private static String formatTokens(int tokens) {
-        if (tokens >= 10_000_000) return String.format("%.0fM", tokens / 1_000_000.0);
-        if (tokens >= 1_000_000) return String.format("%.1fM", tokens / 1_000_000.0);
-        if (tokens >= 10_000) return String.format("%.0fk", tokens / 1000.0);
-        if (tokens >= 1000) return String.format("%.1fk", tokens / 1000.0);
+        if (tokens >= 10_000_000) { return String.format("%.0fM", tokens / 1_000_000.0); }
+        if (tokens >= 1_000_000) { return String.format("%.1fM", tokens / 1_000_000.0); }
+        if (tokens >= 10_000) { return String.format("%.0fk", tokens / 1000.0); }
+        if (tokens >= 1000) { return String.format("%.1fk", tokens / 1000.0); }
         return String.valueOf(tokens);
     }
 }

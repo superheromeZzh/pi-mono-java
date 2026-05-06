@@ -19,7 +19,7 @@ public final class ClipboardUtils {
     /** Copy text to clipboard using best available method. */
     public static boolean copy(String text) {
         // Try native first
-        if (tryNativeCopy(text)) return true;
+        if (tryNativeCopy(text)) { return true; }
         // Fall back to OSC 52 (works in most modern terminals)
         return tryOsc52Copy(text);
     }

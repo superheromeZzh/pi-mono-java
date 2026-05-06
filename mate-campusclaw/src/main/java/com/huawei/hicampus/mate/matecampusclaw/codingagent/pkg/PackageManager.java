@@ -54,7 +54,7 @@ public class PackageManager {
     /** Scan packages directory for installed packages. */
     public void scan() {
         installed.clear();
-        if (!Files.isDirectory(packagesDir)) return;
+        if (!Files.isDirectory(packagesDir)) { return; }
 
         try (var dirs = Files.list(packagesDir)) {
             dirs.filter(Files::isDirectory).forEach(dir -> {

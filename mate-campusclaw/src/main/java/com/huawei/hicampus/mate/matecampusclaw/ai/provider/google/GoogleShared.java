@@ -4,30 +4,17 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import com.huawei.hicampus.mate.matecampusclaw.ai.types.Api;
 import com.huawei.hicampus.mate.matecampusclaw.ai.types.AssistantMessage;
-import com.huawei.hicampus.mate.matecampusclaw.ai.types.CacheRetention;
 import com.huawei.hicampus.mate.matecampusclaw.ai.types.ContentBlock;
-import com.huawei.hicampus.mate.matecampusclaw.ai.types.Context;
 import com.huawei.hicampus.mate.matecampusclaw.ai.types.Cost;
 import com.huawei.hicampus.mate.matecampusclaw.ai.types.ImageContent;
-import com.huawei.hicampus.mate.matecampusclaw.ai.types.InputModality;
 import com.huawei.hicampus.mate.matecampusclaw.ai.types.Message;
-import com.huawei.hicampus.mate.matecampusclaw.ai.types.Model;
-import com.huawei.hicampus.mate.matecampusclaw.ai.types.ModelCost;
-import com.huawei.hicampus.mate.matecampusclaw.ai.types.Provider;
-import com.huawei.hicampus.mate.matecampusclaw.ai.types.SimpleStreamOptions;
-import com.huawei.hicampus.mate.matecampusclaw.ai.types.SimpleStreamOptionsFactory;
 import com.huawei.hicampus.mate.matecampusclaw.ai.types.StopReason;
-import com.huawei.hicampus.mate.matecampusclaw.ai.types.StreamOptions;
 import com.huawei.hicampus.mate.matecampusclaw.ai.types.TextContent;
-import com.huawei.hicampus.mate.matecampusclaw.ai.types.ThinkingBudgets;
 import com.huawei.hicampus.mate.matecampusclaw.ai.types.ThinkingContent;
-import com.huawei.hicampus.mate.matecampusclaw.ai.types.ThinkingLevel;
 import com.huawei.hicampus.mate.matecampusclaw.ai.types.Tool;
 import com.huawei.hicampus.mate.matecampusclaw.ai.types.ToolCall;
 import com.huawei.hicampus.mate.matecampusclaw.ai.types.ToolResultMessage;
-import com.huawei.hicampus.mate.matecampusclaw.ai.types.Transport;
 import com.huawei.hicampus.mate.matecampusclaw.ai.types.Usage;
 import com.huawei.hicampus.mate.matecampusclaw.ai.types.UserMessage;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -115,7 +102,7 @@ public final class GoogleShared {
                     var response = MAPPER.createObjectNode();
                     var sb = new StringBuilder();
                     for (var block : trm.content()) {
-                        if (block instanceof TextContent tc) sb.append(tc.text());
+                        if (block instanceof TextContent tc) { sb.append(tc.text()); }
                     }
                     String resultText = sb.toString();
                     if (trm.isError()) {
@@ -139,7 +126,7 @@ public final class GoogleShared {
      * Converts unified Tool definitions to Google function declarations.
      */
     public static ArrayNode convertTools(@Nullable List<Tool> tools) {
-        if (tools == null || tools.isEmpty()) return null;
+        if (tools == null || tools.isEmpty()) { return null; }
         var toolsArray = MAPPER.createArrayNode();
         var toolObj = MAPPER.createObjectNode();
         var functionDeclarations = MAPPER.createArrayNode();
@@ -219,7 +206,7 @@ public final class GoogleShared {
      * Maps Google finish reason to unified StopReason.
      */
     public static StopReason mapFinishReason(@Nullable String reason) {
-        if (reason == null) return StopReason.STOP;
+        if (reason == null) { return StopReason.STOP; }
         return switch (reason) {
             case "STOP" -> StopReason.STOP;
             case "MAX_TOKENS" -> StopReason.LENGTH;

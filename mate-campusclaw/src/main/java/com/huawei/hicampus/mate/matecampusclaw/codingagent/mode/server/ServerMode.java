@@ -7,6 +7,7 @@ import com.huawei.hicampus.mate.matecampusclaw.agent.tool.AgentTool;
 import com.huawei.hicampus.mate.matecampusclaw.ai.CampusClawAiService;
 import com.huawei.hicampus.mate.matecampusclaw.ai.model.ModelRegistry;
 import com.huawei.hicampus.mate.matecampusclaw.codingagent.config.AppPaths;
+import com.huawei.hicampus.mate.matecampusclaw.codingagent.model.ModelCatalogService;
 import com.huawei.hicampus.mate.matecampusclaw.codingagent.prompt.SystemPromptBuilder;
 import com.huawei.hicampus.mate.matecampusclaw.codingagent.session.SessionConfig;
 import com.huawei.hicampus.mate.matecampusclaw.codingagent.skill.SandboxSkillParser;
@@ -21,6 +22,7 @@ import org.springframework.web.reactive.function.server.RouterFunctions;
 import org.springframework.web.reactive.function.server.ServerResponse;
 
 import reactor.netty.http.server.HttpServer;
+import reactor.netty.http.server.HttpServerResponse;
 
 /**
  * HTTP server mode: starts a Reactor Netty server exposing REST + SSE endpoints.
@@ -33,6 +35,8 @@ import reactor.netty.http.server.HttpServer;
  *   <li>POST   /api/skills                — upload skill archive</li>
  *   <li>GET    /api/skills                — list installed skills</li>
  *   <li>DELETE /api/skills/{name}         — remove a skill</li>
+ *   <li>POST   /api/skills/{name}/enable  — enable a skill</li>
+ *   <li>POST   /api/skills/{name}/disable — disable a skill</li>
  * </ul>
  */
 public class ServerMode {
@@ -48,6 +52,8 @@ public class ServerMode {
     private final String host;
     private final SandboxSkillParser sandboxParser;
     private final boolean useSandbox;
+    private final ModelCatalogService modelCatalog;
+    private final boolean sessionPersistenceEnabled;
 
     public ServerMode(
             CampusClawAiService aiService,
@@ -57,7 +63,7 @@ public class ServerMode {
             SessionConfig baseConfig,
             int port
     ) {
-        this(aiService, modelRegistry, promptBuilder, tools, baseConfig, port, "localhost", null, false);
+        this(aiService, modelRegistry, promptBuilder, tools, baseConfig, port, "localhost", null, false, null, true);
     }
 
     public ServerMode(
@@ -69,7 +75,25 @@ public class ServerMode {
             int port,
             String host,
             SandboxSkillParser sandboxParser,
-            boolean useSandbox
+            boolean useSandbox,
+            ModelCatalogService modelCatalog
+    ) {
+        this(aiService, modelRegistry, promptBuilder, tools, baseConfig, port, host,
+                sandboxParser, useSandbox, modelCatalog, true);
+    }
+
+    public ServerMode(
+            CampusClawAiService aiService,
+            ModelRegistry modelRegistry,
+            SystemPromptBuilder promptBuilder,
+            List<AgentTool> tools,
+            SessionConfig baseConfig,
+            int port,
+            String host,
+            SandboxSkillParser sandboxParser,
+            boolean useSandbox,
+            ModelCatalogService modelCatalog,
+            boolean sessionPersistenceEnabled
     ) {
         this.aiService = aiService;
         this.modelRegistry = modelRegistry;
@@ -80,11 +104,16 @@ public class ServerMode {
         this.host = host;
         this.sandboxParser = sandboxParser;
         this.useSandbox = useSandbox;
+        this.modelCatalog = modelCatalog;
+        this.sessionPersistenceEnabled = sessionPersistenceEnabled;
     }
 
     public void run() {
-        var sessionPool = new SessionPool(aiService, modelRegistry, promptBuilder, tools, baseConfig, sandboxParser, useSandbox);
+        var sessionPool = new SessionPool(aiService, modelRegistry, promptBuilder, tools, baseConfig,
+                sandboxParser, useSandbox, sessionPersistenceEnabled);
         var chatHandler = new ChatHandler(sessionPool);
+        var wsHandler = new ChatWebSocketHandler(sessionPool, modelCatalog);
+        var conversationLister = new com.huawei.hicampus.mate.matecampusclaw.codingagent.session.ConversationLister();
 
         var skillHandler = new SkillHandler(
                 new SkillManager(AppPaths.USER_SKILLS_DIR, sandboxParser, useSandbox),
@@ -94,6 +123,10 @@ public class ServerMode {
                 .GET("/api/health", req ->
                         ServerResponse.ok().bodyValue(Map.of("status", "ok")))
                 .POST("/api/chat", chatHandler::chat)
+                .GET("/api/conversations", req -> ServerResponse.ok()
+                        .bodyValue(Map.of("conversations",
+                                com.huawei.hicampus.mate.matecampusclaw.codingagent.session.ConversationLister.toWireFormat(
+                                        conversationLister.listForServer()))))
                 .DELETE("/api/conversations/{id}", req -> {
                     String id = req.pathVariable("id");
                     boolean removed = sessionPool.remove(id);
@@ -106,6 +139,8 @@ public class ServerMode {
                 .POST("/api/skills", skillHandler::upload)
                 .GET("/api/skills", skillHandler::list)
                 .DELETE("/api/skills/{name}", skillHandler::delete)
+                .POST("/api/skills/{name}/enable", skillHandler::enable)
+                .POST("/api/skills/{name}/disable", skillHandler::disable)
                 .build();
 
         var httpHandler = RouterFunctions.toHttpHandler(routes);
@@ -114,7 +149,25 @@ public class ServerMode {
         var server = HttpServer.create()
                 .host(host)
                 .port(port)
-                .handle(adapter)
+                .route(r -> r
+                        // CORS preflight — `fetch()` from the Vite dev server (a different
+                        // origin than the API) sends OPTIONS for any non-simple request.
+                        // Reply 204 with the allow headers; browsers cache for 1h.
+                        .options("/api/**", (req, res) -> {
+                            applyCorsHeaders(res);
+                            return res.status(204).send();
+                        })
+                        .get("/api/ws/chat", (req, res) -> {
+                            String convId = extractQueryParam(req.uri(), "conversation_id");
+                            return res.sendWebsocket((in, out) -> wsHandler.handle(in, out, convId));
+                        })
+                        // All other routes (the WebFlux RouterFunctions adapter) go
+                        // through here. We pre-stamp CORS headers on the response so
+                        // even simple GETs from the browser pass the same-origin check.
+                        .route(req -> true, (req, res) -> {
+                            applyCorsHeaders(res);
+                            return adapter.apply(req, res);
+                        }))
                 .bindNow();
 
         log.info("CampusClaw API server started on {}:{}", host, port);
@@ -126,8 +179,52 @@ public class ServerMode {
         System.out.println("  POST   /api/skills");
         System.out.println("  GET    /api/skills");
         System.out.println("  DELETE /api/skills/{name}");
+        System.out.println("  POST   /api/skills/{name}/enable");
+        System.out.println("  POST   /api/skills/{name}/disable");
+        System.out.println("  WS     /api/ws/chat");
 
         server.onDispose().block();
         sessionPool.shutdown();
+    }
+
+    /**
+     * Stamps the response with permissive CORS headers so the Vite dev server
+     * (a different origin than the API) can call the REST endpoints from JS.
+     *
+     * <p>Origin is wide-open ({@code *}) because the server is meant to be run
+     * on the developer's own machine; tightening this should be done by an
+     * operator deploying the server publicly.
+     */
+    static void applyCorsHeaders(HttpServerResponse res) {
+        res.header("Access-Control-Allow-Origin", "*")
+                .header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+                .header("Access-Control-Allow-Headers", "Content-Type, Authorization, Accept")
+                .header("Access-Control-Max-Age", "3600");
+    }
+
+    /**
+     * Extracts a query parameter value from a request URI.
+     * Returns null if the parameter is absent or empty.
+     */
+    static String extractQueryParam(String uri, String name) {
+        if (uri == null) {
+            return null;
+        }
+        int qIdx = uri.indexOf('?');
+        if (qIdx < 0 || qIdx == uri.length() - 1) {
+            return null;
+        }
+        String query = uri.substring(qIdx + 1);
+        String prefix = name + "=";
+        for (String pair : query.split("&")) {
+            if (pair.startsWith(prefix)) {
+                String value = pair.substring(prefix.length());
+                if (value.isEmpty()) {
+                    return null;
+                }
+                return java.net.URLDecoder.decode(value, java.nio.charset.StandardCharsets.UTF_8);
+            }
+        }
+        return null;
     }
 }

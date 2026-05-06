@@ -1,10 +1,13 @@
 package com.huawei.hicampus.mate.matecampusclaw.assistant.channel.gateway;
 
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+
 import com.huawei.hicampus.mate.matecampusclaw.assistant.channel.Channel;
 import com.huawei.hicampus.mate.matecampusclaw.assistant.channel.ChannelRegistry;
 import com.huawei.hicampus.mate.matecampusclaw.assistant.channel.MessageSubmitter;
-import io.netty.channel.ChannelHandlerContext;
-import jakarta.annotation.PostConstruct;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,9 +16,8 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 
-import java.util.Map;
-import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
+import io.netty.channel.ChannelHandlerContext;
+import jakarta.annotation.PostConstruct;
 
 /**
  * Gateway Channel implementation.
@@ -178,10 +180,10 @@ public class GatewayChannel implements Channel {
      */
     public void sendDeltaToSession(String channelId, String sessionKey, String delta) {
         ChannelHandlerContext ctx = sessionContexts.get(channelId);
-        if (ctx == null) return;
+        if (ctx == null) { return; }
 
         GatewayWebSocketHandler handler = getHandler(channelId);
-        if (handler == null) return;
+        if (handler == null) { return; }
 
         String runId = UUID.randomUUID().toString();
         handler.sendEvent(ctx, "chat", runId, sessionKey, "delta", delta);
@@ -242,7 +244,7 @@ public class GatewayChannel implements Channel {
 
     private GatewayWebSocketHandler getHandler(String channelId) {
         ChannelHandlerContext ctx = sessionContexts.get(channelId);
-        if (ctx == null) return null;
+        if (ctx == null) { return null; }
         try {
             return (GatewayWebSocketHandler) ctx.pipeline().get("messageHandler");
         } catch (Exception e) {

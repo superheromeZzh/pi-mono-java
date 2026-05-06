@@ -1,18 +1,20 @@
 package com.huawei.hicampus.mate.matecampusclaw.assistant.channel.gateway;
 
+import java.util.*;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicInteger;
+
 import com.huawei.hicampus.mate.matecampusclaw.assistant.channel.gateway.protocol.*;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.WebSocketServerProtocolHandler;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.util.*;
-import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Handles WebSocket messages from connected chat clients.
@@ -337,7 +339,7 @@ public class GatewayWebSocketHandler extends SimpleChannelInboundHandler<TextWeb
     }
 
     private void sendTickEvent(ChannelHandlerContext ctx) {
-        if (!ctx.channel().isActive()) return;
+        if (!ctx.channel().isActive()) { return; }
 
         String channelId = ctx.channel().id().asShortText();
         int seq = sessionSeqCounters.computeIfAbsent(channelId, k -> new AtomicInteger(0)).getAndIncrement();

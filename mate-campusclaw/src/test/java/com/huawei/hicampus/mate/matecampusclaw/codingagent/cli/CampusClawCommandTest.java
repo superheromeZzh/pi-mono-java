@@ -19,7 +19,7 @@ import picocli.CommandLine;
 class CampusClawCommandTest {
 
     private CampusClawCommand parse(String... args) {
-        CampusClawCommand cmd = new CampusClawCommand(null, null, null, null, null, null, null, null, null, null, null);
+        CampusClawCommand cmd = new CampusClawCommand(null, null, null, null, null, null, null, null, null, null, null, null, null);
         new CommandLine(cmd).parseArgs(args);
         return cmd;
     }
@@ -336,14 +336,14 @@ class CampusClawCommandTest {
 
         @Test
         void helpExitsWithZero() {
-            CampusClawCommand cmd = new CampusClawCommand(null, null, null, null, null, null, null, null, null, null, null);
+            CampusClawCommand cmd = new CampusClawCommand(null, null, null, null, null, null, null, null, null, null, null, null, null);
             int exitCode = new CommandLine(cmd).execute("--help");
             assertEquals(0, exitCode);
         }
 
         @Test
         void versionExitsWithZero() {
-            CampusClawCommand cmd = new CampusClawCommand(null, null, null, null, null, null, null, null, null, null, null);
+            CampusClawCommand cmd = new CampusClawCommand(null, null, null, null, null, null, null, null, null, null, null, null, null);
             int exitCode = new CommandLine(cmd).execute("--version");
             assertEquals(0, exitCode);
         }

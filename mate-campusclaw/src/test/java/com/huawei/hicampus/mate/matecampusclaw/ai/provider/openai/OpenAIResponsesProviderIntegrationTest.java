@@ -1,10 +1,10 @@
 package com.huawei.hicampus.mate.matecampusclaw.ai.provider.openai;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -51,7 +51,7 @@ class OpenAIResponsesProviderIntegrationTest {
     void setUp() throws IOException {
         server = new MockWebServer();
         server.start();
-        provider = new OpenAIResponsesProvider();
+        provider = new OpenAIResponsesProvider(new com.huawei.hicampus.mate.matecampusclaw.ai.env.EnvProviderConfigResolver(new com.huawei.hicampus.mate.matecampusclaw.ai.env.EnvApiKeyResolver()));
     }
 
     @AfterEach

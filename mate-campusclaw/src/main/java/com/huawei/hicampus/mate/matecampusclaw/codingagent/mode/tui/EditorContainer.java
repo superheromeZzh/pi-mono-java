@@ -190,7 +190,7 @@ public class EditorContainer implements Component, Focusable {
                         int remaining = availableWidth - nameWidth - 4;
                         if (remaining > 10) {
                             desc = " — " + suggestion.description().substring(0, Math.min(remaining, suggestion.description().length()));
-                            if (remaining < suggestion.description().length()) desc += "…";
+                            if (remaining < suggestion.description().length()) { desc += "…"; }
                         } else {
                             desc = "";
                         }
@@ -263,12 +263,12 @@ public class EditorContainer implements Component, Focusable {
     }
 
     private void cycleNext() {
-        if (filteredSuggestions.isEmpty()) return;
+        if (filteredSuggestions.isEmpty()) { return; }
         suggestionIndex = (suggestionIndex + 1) % filteredSuggestions.size();
     }
 
     private void cyclePrev() {
-        if (filteredSuggestions.isEmpty()) return;
+        if (filteredSuggestions.isEmpty()) { return; }
         suggestionIndex = suggestionIndex <= 0 ? filteredSuggestions.size() - 1 : suggestionIndex - 1;
     }
 

@@ -4,31 +4,15 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.huawei.hicampus.mate.matecampusclaw.ai.CampusClawAiService;
-import com.huawei.hicampus.mate.matecampusclaw.ai.types.Api;
 import com.huawei.hicampus.mate.matecampusclaw.ai.types.AssistantMessage;
-import com.huawei.hicampus.mate.matecampusclaw.ai.types.CacheRetention;
 import com.huawei.hicampus.mate.matecampusclaw.ai.types.ContentBlock;
 import com.huawei.hicampus.mate.matecampusclaw.ai.types.Context;
-import com.huawei.hicampus.mate.matecampusclaw.ai.types.Cost;
-import com.huawei.hicampus.mate.matecampusclaw.ai.types.ImageContent;
-import com.huawei.hicampus.mate.matecampusclaw.ai.types.InputModality;
 import com.huawei.hicampus.mate.matecampusclaw.ai.types.Message;
 import com.huawei.hicampus.mate.matecampusclaw.ai.types.Model;
-import com.huawei.hicampus.mate.matecampusclaw.ai.types.ModelCost;
-import com.huawei.hicampus.mate.matecampusclaw.ai.types.Provider;
-import com.huawei.hicampus.mate.matecampusclaw.ai.types.SimpleStreamOptions;
-import com.huawei.hicampus.mate.matecampusclaw.ai.types.SimpleStreamOptionsFactory;
-import com.huawei.hicampus.mate.matecampusclaw.ai.types.StopReason;
-import com.huawei.hicampus.mate.matecampusclaw.ai.types.StreamOptions;
 import com.huawei.hicampus.mate.matecampusclaw.ai.types.TextContent;
-import com.huawei.hicampus.mate.matecampusclaw.ai.types.ThinkingBudgets;
 import com.huawei.hicampus.mate.matecampusclaw.ai.types.ThinkingContent;
-import com.huawei.hicampus.mate.matecampusclaw.ai.types.ThinkingLevel;
-import com.huawei.hicampus.mate.matecampusclaw.ai.types.Tool;
 import com.huawei.hicampus.mate.matecampusclaw.ai.types.ToolCall;
 import com.huawei.hicampus.mate.matecampusclaw.ai.types.ToolResultMessage;
-import com.huawei.hicampus.mate.matecampusclaw.ai.types.Transport;
-import com.huawei.hicampus.mate.matecampusclaw.ai.types.Usage;
 import com.huawei.hicampus.mate.matecampusclaw.ai.types.UserMessage;
 
 import org.slf4j.Logger;
@@ -52,23 +36,33 @@ public class Compactor {
         Be concise but thorough. Focus on information that would be needed to continue the conversation.
         """;
 
+    /** Agent role name used to look up {@code settings.agent.<name>.model} overrides. */
+    public static final String AGENT_NAME = "summarizer";
+
     private final CampusClawAiService aiService;
     private final CompactionConfig config;
+    private final com.huawei.hicampus.mate.matecampusclaw.codingagent.resolver.AgentModelResolver agentModelResolver;
 
-    public Compactor(CampusClawAiService aiService, CompactionConfig config) {
+    public Compactor(CampusClawAiService aiService, CompactionConfig config,
+                     com.huawei.hicampus.mate.matecampusclaw.codingagent.resolver.AgentModelResolver agentModelResolver) {
         this.aiService = aiService;
         this.config = config;
+        this.agentModelResolver = agentModelResolver;
+    }
+
+    public Compactor(CampusClawAiService aiService, CompactionConfig config) {
+        this(aiService, config, null);
     }
 
     public Compactor(CampusClawAiService aiService) {
-        this(aiService, CompactionConfig.defaults());
+        this(aiService, CompactionConfig.defaults(), null);
     }
 
     /**
      * Check if compaction is needed based on estimated token count.
      */
     public boolean needsCompaction(List<Message> messages, int contextWindow) {
-        if (!config.enabled()) return false;
+        if (!config.enabled()) { return false; }
         int estimatedTokens = estimateTokens(messages);
         int threshold = contextWindow - config.reserveTokens();
         return estimatedTokens > threshold;
@@ -105,8 +99,14 @@ public class Compactor {
             return new CompactionResult("", recentMessages, fileOps.filesRead(), fileOps.filesModified());
         }
 
+        // Per-agent override: settings.agent.summarizer.model can route compaction
+        // to a cheaper / faster model than the foreground chat.
+        Model summarizationModel = agentModelResolver != null
+                ? agentModelResolver.resolve(AGENT_NAME, model)
+                : model;
+
         // Generate summary of old messages
-        String summary = generateSummary(oldMessages, fileOps, model);
+        String summary = generateSummary(oldMessages, fileOps, summarizationModel);
 
         log.info("Compacted {} messages into summary ({} chars), keeping {} recent messages",
             oldMessages.size(), summary.length(), recentMessages.size());
@@ -152,14 +152,14 @@ public class Compactor {
         if (msg instanceof UserMessage um) {
             var sb = new StringBuilder("User: ");
             for (var cb : um.content()) {
-                if (cb instanceof TextContent tc) sb.append(tc.text());
+                if (cb instanceof TextContent tc) { sb.append(tc.text()); }
             }
             return sb.toString();
         } else if (msg instanceof AssistantMessage am) {
             var sb = new StringBuilder("Assistant: ");
             for (var cb : am.content()) {
-                if (cb instanceof TextContent tc) sb.append(tc.text());
-                else if (cb instanceof ToolCall tc) sb.append("[Tool: ").append(tc.name()).append("]");
+                if (cb instanceof TextContent tc) { sb.append(tc.text()); }
+                else if (cb instanceof ToolCall tc) { sb.append("[Tool: ").append(tc.name()).append("]"); }
             }
             return sb.toString();
         } else if (msg instanceof ToolResultMessage tr) {
@@ -168,7 +168,7 @@ public class Compactor {
                 if (cb instanceof TextContent tc) {
                     String text = tc.text();
                     sb.append(text, 0, Math.min(text.length(), 200));
-                    if (text.length() > 200) sb.append("...");
+                    if (text.length() > 200) { sb.append("..."); }
                 }
             }
             return sb.toString();
@@ -188,17 +188,17 @@ public class Compactor {
     static int estimateMessageTokens(Message msg) {
         int chars = 0;
         List<ContentBlock> content;
-        if (msg instanceof UserMessage um) content = um.content();
-        else if (msg instanceof AssistantMessage am) content = am.content();
-        else if (msg instanceof ToolResultMessage tr) content = tr.content();
-        else return 0;
+        if (msg instanceof UserMessage um) { content = um.content(); }
+        else if (msg instanceof AssistantMessage am) { content = am.content(); }
+        else if (msg instanceof ToolResultMessage tr) { content = tr.content(); }
+        else { return 0; }
 
         for (ContentBlock cb : content) {
-            if (cb instanceof TextContent tc) chars += tc.text().length();
-            else if (cb instanceof ThinkingContent tc) chars += tc.thinking().length();
+            if (cb instanceof TextContent tc) { chars += tc.text().length(); }
+            else if (cb instanceof ThinkingContent tc) { chars += tc.thinking().length(); }
             else if (cb instanceof ToolCall tc) {
                 chars += tc.name().length();
-                if (tc.arguments() != null) chars += tc.arguments().toString().length();
+                if (tc.arguments() != null) { chars += tc.arguments().toString().length(); }
             }
         }
         return Math.max(chars / 4, 1);

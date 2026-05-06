@@ -135,7 +135,7 @@ public class Editor implements Component, Focusable {
         for (String s : split) {
             lines.add(s);
         }
-        if (lines.isEmpty()) lines.add("");
+        if (lines.isEmpty()) { lines.add(""); }
         cursorLine = lines.size() - 1;
         cursorCol = lines.get(cursorLine).length();
         preferredVisualCol = -1;
@@ -178,10 +178,10 @@ public class Editor implements Component, Focusable {
 
     /** Adds an entry to the command history. Deduplicates consecutive entries. */
     public void addToHistory(String text) {
-        if (text == null || text.isBlank()) return;
-        if (!history.isEmpty() && history.getLast().equals(text)) return;
+        if (text == null || text.isBlank()) { return; }
+        if (!history.isEmpty() && history.getLast().equals(text)) { return; }
         history.add(text);
-        if (history.size() > MAX_HISTORY) history.removeFirst();
+        if (history.size() > MAX_HISTORY) { history.removeFirst(); }
         historyIndex = -1;
     }
 
@@ -424,7 +424,7 @@ public class Editor implements Component, Focusable {
     // -------------------------------------------------------------------
 
     private void navigateHistory(int direction) {
-        if (history.isEmpty()) return;
+        if (history.isEmpty()) { return; }
 
         if (historyIndex == -1) {
             // Starting to browse history — save current text
@@ -436,7 +436,7 @@ public class Editor implements Component, Focusable {
             }
         } else {
             int newIndex = historyIndex + direction;
-            if (newIndex < 0) return; // Already at oldest
+            if (newIndex < 0) { return; } // Already at oldest
             if (newIndex >= history.size()) {
                 // Return to current text
                 historyIndex = -1;
@@ -553,7 +553,7 @@ public class Editor implements Component, Focusable {
     }
 
     private void deleteToStartOfLine() {
-        if (cursorCol == 0) return;
+        if (cursorCol == 0) { return; }
 
         pushUndoSnapshot();
         String line = lines.get(cursorLine);
@@ -567,7 +567,7 @@ public class Editor implements Component, Focusable {
     }
 
     private void deleteWordBackward() {
-        if (cursorCol == 0 && cursorLine == 0) return;
+        if (cursorCol == 0 && cursorLine == 0) { return; }
 
         boolean wasKill = "kill".equals(lastAction);
         pushUndoSnapshot();
@@ -606,7 +606,7 @@ public class Editor implements Component, Focusable {
 
     private void deleteWordForward() {
         String line = lines.get(cursorLine);
-        if (cursorCol >= line.length() && cursorLine >= lines.size() - 1) return;
+        if (cursorCol >= line.length() && cursorLine >= lines.size() - 1) { return; }
 
         boolean wasKill = "kill".equals(lastAction);
         pushUndoSnapshot();
@@ -642,7 +642,7 @@ public class Editor implements Component, Focusable {
 
     private void yank() {
         String text = killRing.peek();
-        if (text == null) return;
+        if (text == null) { return; }
 
         pushUndoSnapshot();
         insertTextInternal(text);
@@ -651,7 +651,7 @@ public class Editor implements Component, Focusable {
     }
 
     private void yankPop() {
-        if (!"yank".equals(lastAction) || killRing.size() <= 1) return;
+        if (!"yank".equals(lastAction) || killRing.size() <= 1) { return; }
 
         pushUndoSnapshot();
 
@@ -677,7 +677,7 @@ public class Editor implements Component, Focusable {
 
     private void undo() {
         EditorSnapshot snapshot = undoStack.pop();
-        if (snapshot == null) return;
+        if (snapshot == null) { return; }
         lines = snapshot.lines;
         cursorLine = snapshot.cursorLine;
         cursorCol = snapshot.cursorCol;
@@ -727,7 +727,7 @@ public class Editor implements Component, Focusable {
         }
 
         int newLine = cursorLine + direction;
-        if (newLine < 0 || newLine >= lines.size()) return;
+        if (newLine < 0 || newLine >= lines.size()) { return; }
 
         cursorLine = newLine;
         // Attempt to place cursor at the preferred visual column
@@ -794,7 +794,7 @@ public class Editor implements Component, Focusable {
             idx--;
         }
 
-        if (idx < 0) return;
+        if (idx < 0) { return; }
 
         // Determine character type
         boolean isPunct = isPunctuation(graphemes.get(idx));
@@ -802,7 +802,7 @@ public class Editor implements Component, Focusable {
         // Skip run of same type
         while (idx >= 0) {
             String g = graphemes.get(idx);
-            if (isWhitespace(g) || (isPunct != isPunctuation(g))) break;
+            if (isWhitespace(g) || (isPunct != isPunctuation(g))) { break; }
             cursorCol -= g.length();
             idx--;
         }
@@ -845,7 +845,7 @@ public class Editor implements Component, Focusable {
             idx++;
         }
 
-        if (idx >= graphemes.size()) return;
+        if (idx >= graphemes.size()) { return; }
 
         // Determine character type
         boolean isPunct = isPunctuation(graphemes.get(idx));
@@ -853,7 +853,7 @@ public class Editor implements Component, Focusable {
         // Skip run of same type
         while (idx < graphemes.size()) {
             String g = graphemes.get(idx);
-            if (isWhitespace(g) || (isPunct != isPunctuation(g))) break;
+            if (isWhitespace(g) || (isPunct != isPunctuation(g))) { break; }
             cursorCol += g.length();
             idx++;
         }
@@ -1005,7 +1005,7 @@ public class Editor implements Component, Focusable {
 
     /** Insert text at cursor position (may be multi-line). Does NOT push undo snapshot. */
     private void insertTextInternal(String text) {
-        if (text == null || text.isEmpty()) return;
+        if (text == null || text.isEmpty()) { return; }
 
         String normalized = normalizeText(text);
         String[] insertedLines = normalized.split("\n", -1);
@@ -1057,7 +1057,7 @@ public class Editor implements Component, Focusable {
 
     /** Returns the first grapheme of a string, or the first char if BreakIterator fails. */
     private static String firstGrapheme(String text) {
-        if (text == null || text.isEmpty()) return "";
+        if (text == null || text.isEmpty()) { return ""; }
         BreakIterator bi = BreakIterator.getCharacterInstance();
         bi.setText(text);
         bi.first();
@@ -1067,7 +1067,7 @@ public class Editor implements Component, Focusable {
 
     /** Returns the length of the last grapheme in text. */
     private static int lastGraphemeLength(String text) {
-        if (text == null || text.isEmpty()) return 0;
+        if (text == null || text.isEmpty()) { return 0; }
         BreakIterator bi = BreakIterator.getCharacterInstance();
         bi.setText(text);
         int last = bi.last();
@@ -1077,7 +1077,7 @@ public class Editor implements Component, Focusable {
 
     /** Find the column offset corresponding to a given visual width target. */
     private static int colFromVisualWidth(String line, int targetVisualWidth) {
-        if (line.isEmpty()) return 0;
+        if (line.isEmpty()) { return 0; }
         BreakIterator bi = BreakIterator.getCharacterInstance();
         bi.setText(line);
         int col = 0;
@@ -1087,7 +1087,7 @@ public class Editor implements Component, Focusable {
         while (end != BreakIterator.DONE) {
             String grapheme = line.substring(start, end);
             int gw = AnsiUtils.visibleWidth(grapheme);
-            if (width + gw > targetVisualWidth) break;
+            if (width + gw > targetVisualWidth) { break; }
             width += gw;
             col = end;
             start = end;
@@ -1097,12 +1097,12 @@ public class Editor implements Component, Focusable {
     }
 
     private static boolean isWhitespace(String s) {
-        if (s == null || s.isEmpty()) return false;
+        if (s == null || s.isEmpty()) { return false; }
         return Character.isWhitespace(s.codePointAt(0));
     }
 
     private static boolean isPunctuation(String s) {
-        if (s == null || s.isEmpty()) return false;
+        if (s == null || s.isEmpty()) { return false; }
         int type = Character.getType(s.codePointAt(0));
         return type == Character.CONNECTOR_PUNCTUATION
                 || type == Character.DASH_PUNCTUATION

@@ -254,13 +254,13 @@ public class Autocomplete implements Component, Focusable {
     }
 
     private void cycleNext() {
-        if (suggestions.isEmpty()) return;
+        if (suggestions.isEmpty()) { return; }
         suggestionIndex = (suggestionIndex + 1) % suggestions.size();
         input.setValue(suggestions.get(suggestionIndex));
     }
 
     private void cyclePrev() {
-        if (suggestions.isEmpty()) return;
+        if (suggestions.isEmpty()) { return; }
         suggestionIndex = suggestionIndex <= 0 ? suggestions.size() - 1 : suggestionIndex - 1;
         input.setValue(suggestions.get(suggestionIndex));
     }
@@ -302,7 +302,7 @@ public class Autocomplete implements Component, Focusable {
             prefix = "";
         } else {
             dir = inputPath.getParent();
-            if (dir == null) dir = Paths.get(".");
+            if (dir == null) { dir = Paths.get("."); }
             prefix = inputPath.getFileName() != null ? inputPath.getFileName().toString() : "";
         }
 
@@ -340,7 +340,7 @@ public class Autocomplete implements Component, Focusable {
                 String nameB = Paths.get(b).getFileName().toString();
                 int scoreA = FuzzyMatcher.score(finalPrefix, nameA);
                 int scoreB = FuzzyMatcher.score(finalPrefix, nameB);
-                if (scoreA != scoreB) return Integer.compare(scoreB, scoreA);
+                if (scoreA != scoreB) { return Integer.compare(scoreB, scoreA); }
                 return nameA.compareToIgnoreCase(nameB);
             });
         } else {
