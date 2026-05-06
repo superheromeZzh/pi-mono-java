@@ -11,6 +11,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 
 import org.springframework.stereotype.Service;
@@ -32,7 +33,8 @@ public class BashExecutor {
      * @throws IOException if the process cannot be started
      */
     public BashExecutionResult execute(String command, Path cwd, BashExecutorOptions options) throws IOException {
-        boolean windows = System.getProperty("os.name", "").toLowerCase().contains("win");
+        boolean windows =
+                System.getProperty("os.name", "").toLowerCase(Locale.ROOT).contains("win");
         ShellResolver.ShellConfig shell = ShellResolver.resolve();
         String nullDevice = windows ? "NUL" : "/dev/null";
         List<String> argv = new ArrayList<>(shell.args().size() + 2);

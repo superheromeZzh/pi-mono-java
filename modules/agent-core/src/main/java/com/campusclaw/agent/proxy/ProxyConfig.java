@@ -15,6 +15,7 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -94,7 +95,7 @@ public class ProxyConfig {
             for (String entry : noProxy.split(",")) {
                 String trimmed = entry.trim();
                 if (!trimmed.isEmpty()) {
-                    config.noProxy.add(trimmed.toLowerCase());
+                    config.noProxy.add(trimmed.toLowerCase(Locale.ROOT));
                 }
             }
         }
@@ -135,7 +136,7 @@ public class ProxyConfig {
 
     /** Check if a host should bypass the proxy. */
     public boolean shouldBypass(String host) {
-        String lowerHost = host.toLowerCase();
+        String lowerHost = host.toLowerCase(Locale.ROOT);
         for (String pattern : noProxy) {
             if (pattern.equals("*")) {
                 return true;
@@ -345,7 +346,7 @@ public class ProxyConfig {
     }
 
     private static boolean isWindows() {
-        return System.getProperty("os.name", "").toLowerCase().contains("win");
+        return System.getProperty("os.name", "").toLowerCase(Locale.ROOT).contains("win");
     }
 
     private static String coalesce(String... values) {

@@ -13,6 +13,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Base64;
 import java.util.Iterator;
+import java.util.Locale;
 import java.util.Optional;
 
 import javax.imageio.ImageIO;
@@ -136,7 +137,7 @@ public final class ImageUtils {
 
     /** Check if file is likely an image based on extension. */
     public static boolean isImageFile(Path path) {
-        String name = path.getFileName().toString().toLowerCase();
+        String name = path.getFileName().toString().toLowerCase(Locale.ROOT);
         return name.endsWith(".png")
                 || name.endsWith(".jpg")
                 || name.endsWith(".jpeg")

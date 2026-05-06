@@ -7,6 +7,7 @@ package com.huawei.hicampus.mate.matecampusclaw.codingagent.util;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.Locale;
 import java.util.Optional;
 
 import org.slf4j.Logger;
@@ -51,7 +52,7 @@ public final class ClipboardUtils {
     }
 
     private static boolean tryNativeCopy(String text) {
-        String os = System.getProperty("os.name", "").toLowerCase();
+        String os = System.getProperty("os.name", "").toLowerCase(Locale.ROOT);
         String[] cmd;
         if (os.contains("mac")) {
             cmd = new String[] {"pbcopy"};
@@ -83,7 +84,7 @@ public final class ClipboardUtils {
     }
 
     private static Optional<String> tryNativePaste() {
-        String os = System.getProperty("os.name", "").toLowerCase();
+        String os = System.getProperty("os.name", "").toLowerCase(Locale.ROOT);
         String[] cmd;
         if (os.contains("mac")) {
             cmd = new String[] {"pbpaste"};

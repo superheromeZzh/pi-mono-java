@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.Deque;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -57,7 +58,7 @@ public class Timings {
             double p99Ms) {
         public String format() {
             if (count == 1) {
-                return String.format("%s: %.1fms", name, totalMs);
+                return String.format(Locale.ROOT, "%s: %.1fms", name, totalMs);
             }
             return String.format(
                     "%s: %.1fms avg (min=%.1f, max=%.1f, p95=%.1f, n=%d)", name, avgMs, minMs, maxMs, p95Ms, count);
@@ -182,7 +183,7 @@ public class Timings {
             sb.append("  ").append(stats.format()).append('\n');
         }
         double totalMs = spans.stream().mapToDouble(TimingSpan::durationMs).sum();
-        sb.append(String.format("  Total: %.1fms\n", totalMs));
+        sb.append(String.format(Locale.ROOT, "  Total: %.1fms\n", totalMs));
         return sb.toString();
     }
 

@@ -6,6 +6,7 @@ package com.campusclaw.codingagent.config;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 import com.campusclaw.ai.model.ModelRegistry;
 import com.campusclaw.ai.types.Api;
@@ -75,7 +76,7 @@ public class CustomModelLoader {
         if (cfg.inputModalities() != null) {
             for (String m : cfg.inputModalities()) {
                 try {
-                    modalities.add(InputModality.valueOf(m.toUpperCase()));
+                    modalities.add(InputModality.valueOf(m.toUpperCase(Locale.ROOT)));
                 } catch (IllegalArgumentException ignored) {
                 }
             }

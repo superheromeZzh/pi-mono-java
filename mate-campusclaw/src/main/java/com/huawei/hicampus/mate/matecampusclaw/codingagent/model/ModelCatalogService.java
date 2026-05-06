@@ -7,6 +7,7 @@ package com.huawei.hicampus.mate.matecampusclaw.codingagent.model;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Locale;
 
 import com.huawei.hicampus.mate.matecampusclaw.ai.env.ProviderConfigResolver;
 import com.huawei.hicampus.mate.matecampusclaw.ai.model.ModelRegistry;
@@ -113,7 +114,7 @@ public class ModelCatalogService {
             if (pattern == null) {
                 continue;
             }
-            String p = pattern.trim().toLowerCase();
+            String p = pattern.trim().toLowerCase(Locale.ROOT);
             if (p.isEmpty()) {
                 continue;
             }
@@ -148,9 +149,9 @@ public class ModelCatalogService {
      * the WS catalogue agree.
      */
     public static boolean matchesPattern(String pattern, Model model) {
-        String id = model.id().toLowerCase();
-        String name = model.name().toLowerCase();
-        String provider = model.provider().value().toLowerCase();
+        String id = model.id().toLowerCase(Locale.ROOT);
+        String name = model.name().toLowerCase(Locale.ROOT);
+        String provider = model.provider().value().toLowerCase(Locale.ROOT);
 
         // Strip optional ":thinking" suffix that the CLI accepts.
         int colonIdx = pattern.indexOf(':');

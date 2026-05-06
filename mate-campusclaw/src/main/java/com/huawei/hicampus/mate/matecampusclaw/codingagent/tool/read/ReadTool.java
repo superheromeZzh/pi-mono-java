@@ -9,6 +9,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.Base64;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 import com.huawei.hicampus.mate.matecampusclaw.agent.tool.AgentTool;
@@ -173,7 +174,7 @@ public class ReadTool implements AgentTool {
         var sb = new StringBuilder();
         for (int i = startIdx; i < endIdx; i++) {
             int lineNum = i + 1;
-            sb.append(String.format("%6d\t%s", lineNum, allLines[i]));
+            sb.append(String.format(Locale.ROOT, "%6d\t%s", lineNum, allLines[i]));
             if (i < endIdx - 1) {
                 sb.append('\n');
             }

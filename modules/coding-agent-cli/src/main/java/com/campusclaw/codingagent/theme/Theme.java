@@ -4,6 +4,7 @@
 
 package com.campusclaw.codingagent.theme;
 
+import java.util.Locale;
 import java.util.Map;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -81,7 +82,7 @@ public record Theme(
             int b = Integer.parseInt(color.substring(5, 7), 16);
             return "\033[38;2;" + r + ";" + g + ";" + b + "m";
         }
-        return switch (color.toLowerCase()) {
+        return switch (color.toLowerCase(Locale.ROOT)) {
             case "black" -> "\033[30m";
             case "red" -> "\033[31m";
             case "green" -> "\033[32m";

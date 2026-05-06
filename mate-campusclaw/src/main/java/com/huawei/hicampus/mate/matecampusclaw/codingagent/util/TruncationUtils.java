@@ -7,6 +7,7 @@ package com.huawei.hicampus.mate.matecampusclaw.codingagent.util;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * Utilities for truncating text output by line count and byte size.
@@ -186,7 +187,7 @@ public final class TruncationUtils {
             return String.valueOf((long) value);
         }
         // One decimal place, strip trailing zero
-        String formatted = String.format("%.1f", value);
+        String formatted = String.format(Locale.ROOT, "%.1f", value);
         if (formatted.endsWith(".0")) {
             return formatted.substring(0, formatted.length() - 2);
         }
