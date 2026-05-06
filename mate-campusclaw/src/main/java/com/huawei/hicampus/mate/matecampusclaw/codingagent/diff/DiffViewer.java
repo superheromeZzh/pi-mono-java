@@ -175,7 +175,6 @@ public class DiffViewer {
 
     @SuppressWarnings("checkstyle:top_class_comment")
     public record DiffSummary(int added, int removed, int modified, int unchanged) {
-        @SuppressWarnings("checkstyle:java_doc_format_missing")
         public String format() {
             return GREEN + "+" + added + RESET + " "
                     + RED + "-" + removed + RESET + " "

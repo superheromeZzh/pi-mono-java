@@ -12,12 +12,10 @@ package com.campusclaw.codingagent.skill;
  */
 public class SkillInstallException extends Exception {
 
-    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public SkillInstallException(String message) {
         super(message);
     }
 
-    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public SkillInstallException(String message, Throwable cause) {
         super(message, cause);
     }

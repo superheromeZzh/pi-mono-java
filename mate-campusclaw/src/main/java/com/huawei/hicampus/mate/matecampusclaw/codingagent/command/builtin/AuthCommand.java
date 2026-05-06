@@ -27,7 +27,6 @@ public class AuthCommand implements SlashCommand {
 
     private final AuthStore authStore;
 
-    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public AuthCommand(AuthStore authStore) {
         this.authStore = authStore;
     }

@@ -31,13 +31,11 @@ public enum Api {
         this.value = value;
     }
 
-    @SuppressWarnings("checkstyle:java_doc_format_missing")
     @JsonValue
     public String value() {
         return value;
     }
 
-    @SuppressWarnings("checkstyle:java_doc_format_missing")
     @JsonCreator
     public static Api fromValue(String value) {
         for (var a : values()) {

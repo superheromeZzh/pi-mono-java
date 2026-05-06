@@ -28,7 +28,6 @@ public record ToolCall(
         @JsonProperty("thoughtSignature") @Nullable String thoughtSignature)
         implements ContentBlock {
 
-    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public ToolCall(String id, String name, Map<String, Object> arguments) {
         this(id, name, arguments, null);
     }

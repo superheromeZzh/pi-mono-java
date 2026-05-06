@@ -35,7 +35,6 @@ public class AgentState {
     private final Set<String> pendingToolCalls;
     private String error;
 
-    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public AgentState() {
         this.thinkingLevel = ThinkingLevel.MEDIUM;
         this.tools = new ArrayList<>();
@@ -43,7 +42,6 @@ public class AgentState {
         this.pendingToolCalls = ConcurrentHashMap.newKeySet();
     }
 
-    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public String getSystemPrompt() {
         lock.readLock().lock();
         try {
@@ -53,7 +51,6 @@ public class AgentState {
         }
     }
 
-    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public void setSystemPrompt(String systemPrompt) {
         lock.writeLock().lock();
         try {
@@ -63,7 +60,6 @@ public class AgentState {
         }
     }
 
-    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public Model getModel() {
         lock.readLock().lock();
         try {
@@ -73,7 +69,6 @@ public class AgentState {
         }
     }
 
-    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public void setModel(Model model) {
         lock.writeLock().lock();
         try {
@@ -83,7 +78,6 @@ public class AgentState {
         }
     }
 
-    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public ThinkingLevel getThinkingLevel() {
         lock.readLock().lock();
         try {
@@ -93,7 +87,6 @@ public class AgentState {
         }
     }
 
-    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public void setThinkingLevel(ThinkingLevel thinkingLevel) {
         lock.writeLock().lock();
         try {
@@ -103,7 +96,6 @@ public class AgentState {
         }
     }
 
-    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public List<AgentTool> getTools() {
         lock.readLock().lock();
         try {
@@ -113,7 +105,6 @@ public class AgentState {
         }
     }
 
-    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public void setTools(List<AgentTool> tools) {
         lock.writeLock().lock();
         try {
@@ -123,7 +114,6 @@ public class AgentState {
         }
     }
 
-    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public List<Message> getMessages() {
         lock.readLock().lock();
         try {
@@ -133,7 +123,6 @@ public class AgentState {
         }
     }
 
-    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public void setMessages(List<Message> messages) {
         lock.writeLock().lock();
         try {
@@ -143,12 +132,10 @@ public class AgentState {
         }
     }
 
-    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public void replaceMessages(List<Message> messages) {
         setMessages(messages);
     }
 
-    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public void appendMessage(Message message) {
         lock.writeLock().lock();
         try {
@@ -158,7 +145,6 @@ public class AgentState {
         }
     }
 
-    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public void clearMessages() {
         lock.writeLock().lock();
         try {
@@ -168,7 +154,6 @@ public class AgentState {
         }
     }
 
-    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public boolean isStreaming() {
         lock.readLock().lock();
         try {
@@ -178,7 +163,6 @@ public class AgentState {
         }
     }
 
-    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public void setStreaming(boolean streaming) {
         lock.writeLock().lock();
         try {
@@ -188,7 +172,6 @@ public class AgentState {
         }
     }
 
-    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public Message getStreamMessage() {
         lock.readLock().lock();
         try {
@@ -198,7 +181,6 @@ public class AgentState {
         }
     }
 
-    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public void setStreamMessage(Message streamMessage) {
         lock.writeLock().lock();
         try {
@@ -208,7 +190,6 @@ public class AgentState {
         }
     }
 
-    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public Set<String> getPendingToolCalls() {
         lock.readLock().lock();
         try {
@@ -218,7 +199,6 @@ public class AgentState {
         }
     }
 
-    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public void setPendingToolCalls(Set<String> pendingToolCalls) {
         lock.writeLock().lock();
         try {
@@ -229,7 +209,6 @@ public class AgentState {
         }
     }
 
-    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public boolean addPendingToolCall(String toolCallId) {
         lock.writeLock().lock();
         try {
@@ -239,7 +218,6 @@ public class AgentState {
         }
     }
 
-    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public boolean removePendingToolCall(String toolCallId) {
         lock.writeLock().lock();
         try {
@@ -249,7 +227,6 @@ public class AgentState {
         }
     }
 
-    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public boolean hasPendingToolCall(String toolCallId) {
         lock.readLock().lock();
         try {
@@ -259,7 +236,6 @@ public class AgentState {
         }
     }
 
-    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public void clearPendingToolCalls() {
         lock.writeLock().lock();
         try {
@@ -269,7 +245,6 @@ public class AgentState {
         }
     }
 
-    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public String getError() {
         lock.readLock().lock();
         try {
@@ -279,7 +254,6 @@ public class AgentState {
         }
     }
 
-    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public void setError(String error) {
         lock.writeLock().lock();
         try {
@@ -289,7 +263,6 @@ public class AgentState {
         }
     }
 
-    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public AgentStateSnapshot snapshot() {
         lock.readLock().lock();
         try {

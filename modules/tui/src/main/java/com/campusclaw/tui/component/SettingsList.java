@@ -96,7 +96,6 @@ public class SettingsList<T> implements Component, Focusable {
         return Collections.unmodifiableList(entries);
     }
 
-    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public void setEntries(List<Entry<T>> entries) {
         this.entries = entries != null ? new ArrayList<>(entries) : new ArrayList<>();
         this.selectedIndex = 0;
@@ -107,7 +106,6 @@ public class SettingsList<T> implements Component, Focusable {
         return selectedIndex;
     }
 
-    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public void setSelectedIndex(int index) {
         if (entries.isEmpty()) {
             selectedIndex = 0;
@@ -117,7 +115,6 @@ public class SettingsList<T> implements Component, Focusable {
         invalidate();
     }
 
-    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public Entry<T> getSelectedEntry() {
         if (entries.isEmpty()) {
             return null;
@@ -125,25 +122,21 @@ public class SettingsList<T> implements Component, Focusable {
         return entries.get(selectedIndex);
     }
 
-    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public void setKeyStyleFn(UnaryOperator<String> keyStyleFn) {
         this.keyStyleFn = keyStyleFn;
         invalidate();
     }
 
-    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public void setValueStyleFn(UnaryOperator<String> valueStyleFn) {
         this.valueStyleFn = valueStyleFn;
         invalidate();
     }
 
-    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public void setSelectedStyleFn(UnaryOperator<String> selectedStyleFn) {
         this.selectedStyleFn = selectedStyleFn;
         invalidate();
     }
 
-    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public void setSeparatorStyleFn(UnaryOperator<String> separatorStyleFn) {
         this.separatorStyleFn = separatorStyleFn;
         invalidate();

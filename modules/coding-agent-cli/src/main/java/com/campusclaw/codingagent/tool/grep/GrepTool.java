@@ -86,13 +86,11 @@ public class GrepTool implements AgentTool {
     private final Path cwd;
     private volatile Boolean rgAvailable;
 
-    @SuppressWarnings("checkstyle:java_doc_format_missing")
     @Autowired
     public GrepTool(BashExecutor bashExecutor) {
         this(bashExecutor, Path.of(System.getProperty("user.dir")));
     }
 
-    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public GrepTool(BashExecutor bashExecutor, Path cwd) {
         this.bashExecutor = bashExecutor;
         this.cwd = cwd;

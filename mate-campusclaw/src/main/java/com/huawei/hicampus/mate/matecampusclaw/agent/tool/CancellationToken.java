@@ -19,14 +19,12 @@ public class CancellationToken {
     private boolean cancelled;
     private final List<Runnable> callbacks = new ArrayList<>();
 
-    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public boolean isCancelled() {
         synchronized (lock) {
             return cancelled;
         }
     }
 
-    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public void cancel() {
         List<Runnable> callbacksToRun;
         synchronized (lock) {
@@ -44,7 +42,6 @@ public class CancellationToken {
         }
     }
 
-    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public void onCancel(Runnable callback) {
         boolean runImmediately = false;
         synchronized (lock) {

@@ -23,17 +23,14 @@ public class Container implements Component {
 
     private final List<Component> children = new CopyOnWriteArrayList<>();
 
-    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public void addChild(Component component) {
         children.add(component);
     }
 
-    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public void removeChild(Component component) {
         children.remove(component);
     }
 
-    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public void clear() {
         children.clear();
     }

@@ -47,7 +47,6 @@ public class SkillHandler {
     private final SkillManager skillManager;
     private final SkillLoader skillLoader;
 
-    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public SkillHandler(SkillManager skillManager, SkillLoader skillLoader) {
         this.skillManager = skillManager;
         this.skillLoader = skillLoader;

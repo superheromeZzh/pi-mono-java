@@ -25,7 +25,6 @@ public record CronJob(
         CronJobState state,
         long createdAtMs) {
 
-    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public static CronJob create(
             String name, @Nullable String description, CronSchedule schedule, CronPayload payload) {
         return new CronJob(
@@ -40,12 +39,10 @@ public record CronJob(
                 System.currentTimeMillis());
     }
 
-    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public CronJob withState(CronJobState newState) {
         return new CronJob(id, name, description, enabled, deleteAfterRun, schedule, payload, newState, createdAtMs);
     }
 
-    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public CronJob withEnabled(boolean newEnabled) {
         return new CronJob(id, name, description, newEnabled, deleteAfterRun, schedule, payload, state, createdAtMs);
     }

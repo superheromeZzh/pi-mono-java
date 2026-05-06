@@ -50,13 +50,11 @@ public class ReadTool implements AgentTool {
     private final ReadOperations readOperations;
     private final Path cwd;
 
-    @SuppressWarnings("checkstyle:java_doc_format_missing")
     @Autowired
     public ReadTool(ReadOperations readOperations) {
         this(readOperations, Path.of(System.getProperty("user.dir")));
     }
 
-    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public ReadTool(ReadOperations readOperations, Path cwd) {
         this.readOperations = readOperations;
         this.cwd = cwd;

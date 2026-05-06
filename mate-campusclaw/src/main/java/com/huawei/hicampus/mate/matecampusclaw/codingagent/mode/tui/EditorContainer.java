@@ -63,7 +63,6 @@ public class EditorContainer implements Component, Focusable {
      */
     public record CommandSuggestion(String name, String description) {}
 
-    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public EditorContainer() {
         this.editor = new Editor();
         this.editor.setSubmitOnEnter(true);
@@ -71,7 +70,6 @@ public class EditorContainer implements Component, Focusable {
         this.editor.setFocused(true);
     }
 
-    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public void setOnSubmit(Consumer<String> onSubmit) {
         this.onSubmit = onSubmit;
         this.editor.setOnSubmit(value -> {
@@ -93,7 +91,6 @@ public class EditorContainer implements Component, Focusable {
         });
     }
 
-    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public void clear() {
         editor.setText("");
         dismissSuggestions();

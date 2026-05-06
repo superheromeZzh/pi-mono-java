@@ -35,13 +35,11 @@ public class FooterDataProvider {
     @SuppressWarnings("checkstyle:top_class_comment")
     public record TokenStats(
             int inputTokens, int outputTokens, int cacheReadTokens, int totalTokens, double totalCostUsd) {
-        @SuppressWarnings("checkstyle:java_doc_format_missing")
         public static TokenStats from(Usage usage) {
             double cost = usage.cost() != null ? usage.cost().total() : 0.0;
             return new TokenStats(usage.input(), usage.output(), usage.cacheRead(), usage.totalTokens(), cost);
         }
 
-        @SuppressWarnings("checkstyle:java_doc_format_missing")
         public String formatTokens() {
             if (totalTokens < 1000) {
                 return totalTokens + " tok";
@@ -52,7 +50,6 @@ public class FooterDataProvider {
             return String.format(Locale.ROOT, "%.1fM tok", totalTokens / 1_000_000.0);
         }
 
-        @SuppressWarnings("checkstyle:java_doc_format_missing")
         public String formatCost() {
             if (totalCostUsd < 0.01) {
                 return String.format(Locale.ROOT, "$%.4f", totalCostUsd);
@@ -66,7 +63,6 @@ public class FooterDataProvider {
 
     @SuppressWarnings("checkstyle:top_class_comment")
     public record SessionStats(int turnCount, int messageCount, long sessionDurationMs) {
-        @SuppressWarnings("checkstyle:java_doc_format_missing")
         public String formatDuration() {
             long seconds = sessionDurationMs / 1000;
             if (seconds < 60) {
@@ -83,7 +79,6 @@ public class FooterDataProvider {
 
     @SuppressWarnings("checkstyle:top_class_comment")
     public record FooterHint(String key, String description) {
-        @SuppressWarnings("checkstyle:java_doc_format_missing")
         public String format() {
             return "\033[36m" + key + "\033[0m " + description;
         }

@@ -40,7 +40,6 @@ public class SkillStateStore {
     private final Path skillsDir;
     private final ReentrantLock lock = new ReentrantLock();
 
-    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public SkillStateStore(Path skillsDir) {
         this.skillsDir = skillsDir;
     }
@@ -64,7 +63,6 @@ public class SkillStateStore {
         }
     }
 
-    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public boolean isDisabled(String name) {
         return loadDisabled().contains(name);
     }

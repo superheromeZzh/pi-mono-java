@@ -19,6 +19,5 @@ import com.campusclaw.ai.types.Message;
 @FunctionalInterface
 public interface ContextTransformer {
 
-    @SuppressWarnings("checkstyle:java_doc_format_missing")
     CompletableFuture<List<Message>> transform(List<Message> messages, CancellationToken signal);
 }

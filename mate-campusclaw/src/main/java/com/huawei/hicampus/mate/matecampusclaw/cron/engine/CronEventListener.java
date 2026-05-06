@@ -14,6 +14,5 @@ import com.huawei.hicampus.mate.matecampusclaw.cron.model.CronEvent;
  */
 @FunctionalInterface
 public interface CronEventListener {
-    @SuppressWarnings("checkstyle:java_doc_format_missing")
     void onCronEvent(CronEvent event);
 }

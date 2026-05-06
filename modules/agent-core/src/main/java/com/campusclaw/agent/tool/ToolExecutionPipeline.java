@@ -45,7 +45,6 @@ public class ToolExecutionPipeline {
         this.afterToolCallHandler = handler;
     }
 
-    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public ToolResultMessage execute(
             AgentTool tool,
             ToolCall toolCall,
@@ -112,7 +111,6 @@ public class ToolExecutionPipeline {
         return toToolResultMessage(toolCall, toolName, result, isError);
     }
 
-    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public List<ToolResultMessage> executeAll(
             List<ToolCallWithTool> calls,
             ToolExecutionMode mode,

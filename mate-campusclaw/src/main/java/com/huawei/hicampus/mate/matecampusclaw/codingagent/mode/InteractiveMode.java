@@ -167,7 +167,6 @@ public class InteractiveMode {
         this.scopedModels = models != null ? models : List.of();
     }
 
-    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public InteractiveMode(
             SlashCommandRegistry commandRegistry,
             BashExecutor bashExecutor,

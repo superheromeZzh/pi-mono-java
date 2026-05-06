@@ -44,7 +44,6 @@ public class CampusClawAiService {
     private final ApiProviderRegistry providerRegistry;
     private final ModelRegistry modelRegistry;
 
-    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public CampusClawAiService(ApiProviderRegistry providerRegistry, ModelRegistry modelRegistry) {
         this.providerRegistry = Objects.requireNonNull(providerRegistry, "providerRegistry must not be null");
         this.modelRegistry = Objects.requireNonNull(modelRegistry, "modelRegistry must not be null");

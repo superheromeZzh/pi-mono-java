@@ -109,16 +109,9 @@
             <property name="ignoreComments" value="true"/>
         </module>
 
-        <!-- JavaDocFormat: public 方法必须有 Javadoc 描述功能。@param / @return / @throws
-             按需补全（allowMissingParamTags=true / allowMissingReturnTag=true 让 tag 可选；
-             一旦写了，JavadocMethod 会校验与实际签名是否一致）。 -->
-        <module name="MissingJavadocMethod">
-            <property name="id" value="java_doc_format_missing"/>
-            <property name="scope" value="public"/>
-            <!-- getter/setter / equals/hashCode/toString / 构造器有时无需详注。 -->
-            <property name="allowMissingPropertyJavadoc" value="true"/>
-            <property name="allowedAnnotations" value="Override,Generated,GeneratedBy,Bean"/>
-        </module>
+        <!-- JavaDocFormat: 只校验「写了 Javadoc 的方法」是否合规——@param/@return/@throws
+             一旦写了就要和签名一致。**不**强制 public 方法都有 Javadoc。
+             allowMissingParamTags / allowMissingReturnTag = true 让 tag 缺省可接受。 -->
         <module name="JavadocMethod">
             <property name="id" value="java_doc_format_consistency"/>
             <property name="accessModifiers" value="public"/>

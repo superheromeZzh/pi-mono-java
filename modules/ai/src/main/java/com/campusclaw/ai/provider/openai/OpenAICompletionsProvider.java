@@ -81,7 +81,6 @@ public class OpenAICompletionsProvider implements ApiProvider {
 
     private final ProviderConfigResolver providerConfigResolver;
 
-    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public OpenAICompletionsProvider(ProviderConfigResolver providerConfigResolver) {
         this.providerConfigResolver = providerConfigResolver;
     }

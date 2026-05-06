@@ -21,7 +21,6 @@ public record TextContent(
         @JsonProperty("text") String text, @JsonProperty("textSignature") @Nullable String textSignature)
         implements ContentBlock {
 
-    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public TextContent(String text) {
         this(text, null);
     }

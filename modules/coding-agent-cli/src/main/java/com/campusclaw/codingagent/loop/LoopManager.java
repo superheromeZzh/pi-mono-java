@@ -90,7 +90,6 @@ public class LoopManager implements MessageSubmitter {
         return id;
     }
 
-    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public boolean stop(String id) {
         var entry = activeLoops.remove(id);
         if (entry != null) {
@@ -101,7 +100,6 @@ public class LoopManager implements MessageSubmitter {
         return false;
     }
 
-    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public int stopAll() {
         int count = activeLoops.size();
         activeLoops.values().forEach(e -> e.future().cancel(false));
@@ -112,7 +110,6 @@ public class LoopManager implements MessageSubmitter {
         return count;
     }
 
-    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public Collection<LoopEntry> list() {
         return List.copyOf(activeLoops.values());
     }
@@ -134,7 +131,6 @@ public class LoopManager implements MessageSubmitter {
         }
     }
 
-    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public void shutdown() {
         stopAll();
         if (scheduler != null) {

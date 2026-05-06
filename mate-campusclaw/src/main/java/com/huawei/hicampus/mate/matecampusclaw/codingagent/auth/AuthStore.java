@@ -53,12 +53,10 @@ public class AuthStore {
 
     private final Path authFile;
 
-    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public AuthStore() {
         this(AppPaths.AUTH_FILE);
     }
 
-    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public AuthStore(Path authFile) {
         this.authFile = authFile;
     }

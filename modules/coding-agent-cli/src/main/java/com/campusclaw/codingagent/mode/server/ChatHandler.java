@@ -45,7 +45,6 @@ public class ChatHandler {
 
     private final SessionPool pool;
 
-    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public ChatHandler(SessionPool pool) {
         this.pool = pool;
     }
@@ -56,7 +55,6 @@ public class ChatHandler {
             @JsonProperty("model") @Nullable String model,
             @JsonProperty("thinking") @Nullable String thinking) {}
 
-    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public Mono<ServerResponse> chat(ServerRequest request) {
         return request.bodyToMono(ChatRequest.class)
                 .flatMap(this::handleChat)

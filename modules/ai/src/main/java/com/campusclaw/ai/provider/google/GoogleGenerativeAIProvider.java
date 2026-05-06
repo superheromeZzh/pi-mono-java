@@ -56,7 +56,6 @@ public class GoogleGenerativeAIProvider implements ApiProvider {
 
     private final com.campusclaw.ai.env.ProviderConfigResolver providerConfigResolver;
 
-    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public GoogleGenerativeAIProvider(com.campusclaw.ai.env.ProviderConfigResolver providerConfigResolver) {
         this.providerConfigResolver = providerConfigResolver;
     }

@@ -44,7 +44,6 @@ public class ModelResolver {
     private final ModelRegistry modelRegistry;
     private final Map<String, String> scopedOverrides = new LinkedHashMap<>();
 
-    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public ModelResolver(ModelRegistry modelRegistry) {
         this.modelRegistry = Objects.requireNonNull(modelRegistry);
     }

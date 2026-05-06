@@ -20,7 +20,6 @@ public record CronJobState(
         int consecutiveErrors,
         int totalRuns) {
 
-    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public static CronJobState initial() {
         return new CronJobState(0, 0, 0, null, 0, 0);
     }

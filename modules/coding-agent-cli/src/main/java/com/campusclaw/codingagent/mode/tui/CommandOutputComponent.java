@@ -29,7 +29,6 @@ public class CommandOutputComponent implements Component {
     private int cachedWidth = -1;
     private List<String> cachedLines;
 
-    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public CommandOutputComponent(String text) {
         this.text = text != null ? text : "";
     }

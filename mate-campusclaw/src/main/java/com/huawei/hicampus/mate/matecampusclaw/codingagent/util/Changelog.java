@@ -51,7 +51,6 @@ public class Changelog {
     private @Nullable String lastReadVersion;
     private final Path stateFile;
 
-    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public Changelog(Path stateDir) {
         this.stateFile = stateDir.resolve("changelog-read.txt");
         loadReadState();

@@ -26,12 +26,10 @@ public class SessionTreePersistence {
 
     private final Path sessionDir;
 
-    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public SessionTreePersistence(Path sessionDir) {
         this.sessionDir = sessionDir;
     }
 
-    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public SessionTreePersistence() {
         this(com.campusclaw.codingagent.config.AppPaths.SESSIONS_DIR);
     }

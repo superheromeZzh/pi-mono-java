@@ -36,7 +36,6 @@ public class DockerSandboxClient {
     private String workerContainerId;
     private boolean dockerAvailable = false;
 
-    @SuppressWarnings("checkstyle:java_doc_format_missing")
     @Autowired
     public DockerSandboxClient(ToolExecutionProperties properties, SandboxSecurityPolicy securityPolicy) {
         this.properties = properties;

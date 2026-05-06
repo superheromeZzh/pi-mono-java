@@ -12,7 +12,6 @@ package com.huawei.hicampus.mate.matecampusclaw.ai;
  */
 public class CampusClawAi {
 
-    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public static void main(String[] args) {
         System.out.println("CampusClaw-AI Module initialized");
     }

@@ -50,13 +50,11 @@ public class BashTool implements AgentTool {
     private final BashExecutor bashExecutor;
     private final Path cwd;
 
-    @SuppressWarnings("checkstyle:java_doc_format_missing")
     @Autowired
     public BashTool(BashExecutor bashExecutor) {
         this(bashExecutor, Path.of(System.getProperty("user.dir")));
     }
 
-    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public BashTool(BashExecutor bashExecutor, Path cwd) {
         this.bashExecutor = bashExecutor;
         this.cwd = cwd;

@@ -17,6 +17,5 @@ import com.huawei.hicampus.mate.matecampusclaw.ai.types.Message;
 @FunctionalInterface
 public interface MessageConverter {
 
-    @SuppressWarnings("checkstyle:java_doc_format_missing")
     List<Message> convert(List<Message> agentMessages);
 }

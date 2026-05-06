@@ -16,7 +16,6 @@ public record SlashCommandContext(AgentSession session, OutputWriter output) {
     @SuppressWarnings("checkstyle:top_class_comment")
     @FunctionalInterface
     public interface OutputWriter {
-        @SuppressWarnings("checkstyle:java_doc_format_missing")
         void println(String message);
     }
 }

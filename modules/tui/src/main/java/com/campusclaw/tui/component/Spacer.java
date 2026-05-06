@@ -45,7 +45,6 @@ public class Spacer implements Component {
         return lines;
     }
 
-    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public void setLines(int lines) {
         this.lines = Math.max(0, lines);
         invalidate();

@@ -35,7 +35,6 @@ public class HybridWriteTool implements AgentTool {
     private final ExecutionRouter router;
     private final ObjectMapper mapper = new ObjectMapper();
 
-    @SuppressWarnings("checkstyle:java_doc_format_missing")
     @Autowired
     public HybridWriteTool(ExecutionRouter router) {
         this.router = router;

@@ -31,12 +31,10 @@ public class TruncatedText implements Component {
     private int cachedWidth = -1;
     private List<String> cachedLines;
 
-    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public TruncatedText() {
         this("");
     }
 
-    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public TruncatedText(String text) {
         this(text, null);
     }
@@ -52,7 +50,6 @@ public class TruncatedText implements Component {
         this.styleFn = styleFn;
     }
 
-    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public void setText(String text) {
         this.text = text != null ? text : "";
         invalidate();
@@ -62,7 +59,6 @@ public class TruncatedText implements Component {
         return text;
     }
 
-    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public void setStyleFn(UnaryOperator<String> styleFn) {
         this.styleFn = styleFn;
         invalidate();

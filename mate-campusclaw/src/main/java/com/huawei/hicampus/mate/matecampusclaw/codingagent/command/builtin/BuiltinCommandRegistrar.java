@@ -35,7 +35,6 @@ public class BuiltinCommandRegistrar {
     private final AgentModelResolver agentModelResolver;
     private final ModelRegistry modelRegistry;
 
-    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public BuiltinCommandRegistrar(
             SlashCommandRegistry registry,
             CampusClawAiService piAiService,
