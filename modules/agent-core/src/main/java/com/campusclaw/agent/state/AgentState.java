@@ -264,16 +264,15 @@ public class AgentState {
         lock.readLock().lock();
         try {
             return new AgentStateSnapshot(
-                systemPrompt,
-                model,
-                thinkingLevel,
-                tools,
-                messages,
-                streaming,
-                streamMessage,
-                pendingToolCalls,
-                error
-            );
+                    systemPrompt,
+                    model,
+                    thinkingLevel,
+                    tools,
+                    messages,
+                    streaming,
+                    streamMessage,
+                    pendingToolCalls,
+                    error);
         } finally {
             lock.readLock().unlock();
         }

@@ -22,9 +22,6 @@ public interface AgentTool {
     JsonNode parameters();
 
     AgentToolResult execute(
-        String toolCallId,
-        Map<String, Object> params,
-        CancellationToken signal,
-        AgentToolUpdateCallback onUpdate
-    ) throws Exception;
+            String toolCallId, Map<String, Object> params, CancellationToken signal, AgentToolUpdateCallback onUpdate)
+            throws Exception;
 }

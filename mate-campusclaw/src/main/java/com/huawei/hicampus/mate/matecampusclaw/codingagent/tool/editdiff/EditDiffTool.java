@@ -12,14 +12,14 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.huawei.hicampus.mate.matecampusclaw.agent.tool.AgentTool;
 import com.huawei.hicampus.mate.matecampusclaw.agent.tool.AgentToolResult;
 import com.huawei.hicampus.mate.matecampusclaw.agent.tool.AgentToolUpdateCallback;
 import com.huawei.hicampus.mate.matecampusclaw.agent.tool.CancellationToken;
 import com.huawei.hicampus.mate.matecampusclaw.ai.types.TextContent;
 import com.huawei.hicampus.mate.matecampusclaw.codingagent.tool.ops.EditOperations;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,7 +34,8 @@ public class EditDiffTool implements AgentTool {
 
     private static final Logger log = LoggerFactory.getLogger(EditDiffTool.class);
     private static final ObjectMapper MAPPER = new ObjectMapper();
-    private static final Pattern HUNK_HEADER = Pattern.compile("^@@\\s+-([0-9]+)(?:,([0-9]+))?\\s+\\+([0-9]+)(?:,([0-9]+))?\\s+@@");
+    private static final Pattern HUNK_HEADER =
+            Pattern.compile("^@@\\s+-([0-9]+)(?:,([0-9]+))?\\s+\\+([0-9]+)(?:,([0-9]+))?\\s+@@");
 
     private final EditOperations editOps;
     private final JsonNode parametersSchema;
@@ -66,11 +67,8 @@ public class EditDiffTool implements AgentTool {
 
     @Override
     public AgentToolResult execute(
-        String toolCallId,
-        Map<String, Object> params,
-        CancellationToken signal,
-        AgentToolUpdateCallback onUpdate
-    ) throws Exception {
+            String toolCallId, Map<String, Object> params, CancellationToken signal, AgentToolUpdateCallback onUpdate)
+            throws Exception {
         String filePath = (String) params.get("file_path");
         String diff = (String) params.get("diff");
 
@@ -164,7 +162,8 @@ public class EditDiffTool implements AgentTool {
 
     private static JsonNode buildSchema() {
         try {
-            return MAPPER.readTree("""
+            return MAPPER.readTree(
+                    """
                 {
                     "type": "object",
                     "properties": {

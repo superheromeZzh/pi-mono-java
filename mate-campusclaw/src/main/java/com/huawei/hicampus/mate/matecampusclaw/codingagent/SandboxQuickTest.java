@@ -38,10 +38,8 @@ public class SandboxQuickTest {
         // 如果可用，执行一个测试命令
         if (client.isAvailable()) {
             System.out.println("\n执行测试命令: echo 'Hello from Sandbox'");
-            SandboxResult result = client.execute(
-                java.util.List.of("echo", "Hello from Sandbox"),
-                ResourceLimits.defaults()
-            );
+            SandboxResult result =
+                    client.execute(java.util.List.of("echo", "Hello from Sandbox"), ResourceLimits.defaults());
             System.out.println("退出码: " + result.getExitCode());
             System.out.println("输出: " + result.getStdout().trim());
         } else {

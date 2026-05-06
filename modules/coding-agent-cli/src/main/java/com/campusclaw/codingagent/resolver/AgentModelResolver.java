@@ -43,9 +43,7 @@ public class AgentModelResolver {
      * if no override is configured or the override fails to resolve.
      */
     public Model resolve(String agentName, Model defaultModel) {
-        return findOverride(agentName)
-                .flatMap(this::lookupAcrossProviders)
-                .orElse(defaultModel);
+        return findOverride(agentName).flatMap(this::lookupAcrossProviders).orElse(defaultModel);
     }
 
     private Optional<String> findOverride(String agentName) {

@@ -20,9 +20,7 @@ import jakarta.annotation.Nullable;
  * @param headers optional extra HTTP headers
  */
 public record ResolvedProviderConfig(
-        @Nullable String apiKey,
-        @Nullable String baseUrl,
-        @Nullable Map<String, String> headers) {
+        @Nullable String apiKey, @Nullable String baseUrl, @Nullable Map<String, String> headers) {
 
     public static ResolvedProviderConfig empty() {
         return new ResolvedProviderConfig(null, null, null);

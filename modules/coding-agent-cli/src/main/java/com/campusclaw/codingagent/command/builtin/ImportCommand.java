@@ -57,7 +57,6 @@ public class ImportCommand implements SlashCommand {
             context.session().getAgent().getState().appendMessage(msg);
         }
 
-        context.output().println("Imported session " + sm.getSessionId()
-                + " with " + messages.size() + " messages.");
+        context.output().println("Imported session " + sm.getSessionId() + " with " + messages.size() + " messages.");
     }
 }

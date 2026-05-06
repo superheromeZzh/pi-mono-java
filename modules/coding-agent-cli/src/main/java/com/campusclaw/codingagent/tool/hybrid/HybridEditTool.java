@@ -48,42 +48,43 @@ public class HybridEditTool implements AgentTool {
 
     @Override
     public String description() {
-        return "Edit file contents using text replacement. Protected paths use sandbox. " +
-               "Use _executionMode parameter to force specific mode.";
+        return "Edit file contents using text replacement. Protected paths use sandbox. "
+                + "Use _executionMode parameter to force specific mode.";
     }
 
     @Override
     public JsonNode parameters() {
         ObjectNode props = mapper.createObjectNode();
-        props.set("path", mapper.createObjectNode()
-            .put("type", "string")
-            .put("description", "File path to edit"));
-        props.set("oldText", mapper.createObjectNode()
-            .put("type", "string")
-            .put("description", "Text to find and replace (single replacement mode)"));
-        props.set("newText", mapper.createObjectNode()
-            .put("type", "string")
-            .put("description", "Replacement text (single replacement mode)"));
+        props.set("path", mapper.createObjectNode().put("type", "string").put("description", "File path to edit"));
+        props.set(
+                "oldText",
+                mapper.createObjectNode()
+                        .put("type", "string")
+                        .put("description", "Text to find and replace (single replacement mode)"));
+        props.set(
+                "newText",
+                mapper.createObjectNode()
+                        .put("type", "string")
+                        .put("description", "Replacement text (single replacement mode)"));
         ArrayNode enumValues = mapper.createArrayNode();
         enumValues.add("local");
         enumValues.add("sandbox");
         enumValues.add("auto");
-        ObjectNode execModeNode = mapper.createObjectNode()
-            .put("type", "string");
+        ObjectNode execModeNode = mapper.createObjectNode().put("type", "string");
         execModeNode.set("enum", enumValues);
         execModeNode.put("description", "Override execution mode");
         props.set("_executionMode", execModeNode);
 
         return mapper.createObjectNode()
-            .put("type", "object")
-            .<ObjectNode>set("properties", props)
-            .set("required", mapper.createArrayNode().add("path"));
+                .put("type", "object")
+                .<ObjectNode>set("properties", props)
+                .set("required", mapper.createArrayNode().add("path"));
     }
 
     @Override
-    public AgentToolResult execute(String toolCallId, Map<String, Object> params,
-                                    CancellationToken signal,
-                                    AgentToolUpdateCallback onUpdate) throws Exception {
+    public AgentToolResult execute(
+            String toolCallId, Map<String, Object> params, CancellationToken signal, AgentToolUpdateCallback onUpdate)
+            throws Exception {
         ExecutionMode explicitMode = extractMode(params);
         return router.route(name(), params, explicitMode, signal, onUpdate);
     }

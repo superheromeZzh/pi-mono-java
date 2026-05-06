@@ -27,8 +27,7 @@ public sealed interface RenderDiff permits RenderDiff.LineUpdates, RenderDiff.Fu
      * Full rerender required — too many changes or structural differences
      * (e.g. line count changed, first render, width changed).
      */
-    record FullRerender() implements RenderDiff {
-    }
+    record FullRerender() implements RenderDiff {}
 
     /**
      * A single line update within a {@link LineUpdates} diff.
@@ -36,6 +35,5 @@ public sealed interface RenderDiff permits RenderDiff.LineUpdates, RenderDiff.Fu
      * @param row     the 0-based row index
      * @param content the new content for that row
      */
-    record LineUpdate(int row, String content) {
-    }
+    record LineUpdate(int row, String content) {}
 }

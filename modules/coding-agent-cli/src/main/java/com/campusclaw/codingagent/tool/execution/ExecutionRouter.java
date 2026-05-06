@@ -77,11 +77,11 @@ public class ExecutionRouter {
 
         // 预编译正则
         this.sandboxPatterns = properties.getSandboxRequiredPatterns().stream()
-            .map(Pattern::compile)
-            .toList();
+                .map(Pattern::compile)
+                .toList();
         this.protectedPathPatterns = properties.getProtectedPathPatterns().stream()
-            .map(Pattern::compile)
-            .toList();
+                .map(Pattern::compile)
+                .toList();
 
         log.info("ExecutionRouter initialized with default mode: {}", properties.getDefaultMode());
     }
@@ -94,7 +94,8 @@ public class ExecutionRouter {
             Map<String, Object> params,
             ExecutionMode explicitMode,
             CancellationToken signal,
-            AgentToolUpdateCallback onUpdate) throws Exception {
+            AgentToolUpdateCallback onUpdate)
+            throws Exception {
 
         ExecutionMode mode = determineMode(toolName, params, explicitMode);
 
@@ -112,9 +113,9 @@ public class ExecutionRouter {
     /**
      * 本地执行
      */
-    private AgentToolResult executeLocal(String toolName, Map<String, Object> params,
-                                          CancellationToken signal,
-                                          AgentToolUpdateCallback onUpdate) throws Exception {
+    private AgentToolResult executeLocal(
+            String toolName, Map<String, Object> params, CancellationToken signal, AgentToolUpdateCallback onUpdate)
+            throws Exception {
         if (!properties.isLocalExecutionEnabled()) {
             throw new IllegalStateException("Local execution is disabled");
         }
@@ -122,15 +123,16 @@ public class ExecutionRouter {
         String callId = "local-" + System.currentTimeMillis();
 
         // 检查本地工具是否可用，不可用则回退到沙箱
-        Optional<?> tool = switch (toolName) {
-            case "read" -> localReadTool.map(t -> t);
-            case "write" -> localWriteTool.map(t -> t);
-            case "edit" -> localEditTool.map(t -> t);
-            case "bash" -> localBashTool.map(t -> t);
-            case "glob" -> localGlobTool.map(t -> t);
-            case "grep" -> localGrepTool.map(t -> t);
-            default -> Optional.empty();
-        };
+        Optional<?> tool =
+                switch (toolName) {
+                    case "read" -> localReadTool.map(t -> t);
+                    case "write" -> localWriteTool.map(t -> t);
+                    case "edit" -> localEditTool.map(t -> t);
+                    case "bash" -> localBashTool.map(t -> t);
+                    case "glob" -> localGlobTool.map(t -> t);
+                    case "grep" -> localGrepTool.map(t -> t);
+                    default -> Optional.empty();
+                };
 
         if (tool.isEmpty()) {
             log.warn("Local tool {} not available, falling back to sandbox", toolName);
@@ -154,9 +156,9 @@ public class ExecutionRouter {
     /**
      * 沙箱执行
      */
-    private AgentToolResult executeSandbox(String toolName, Map<String, Object> params,
-                                            CancellationToken signal,
-                                            AgentToolUpdateCallback onUpdate) throws Exception {
+    private AgentToolResult executeSandbox(
+            String toolName, Map<String, Object> params, CancellationToken signal, AgentToolUpdateCallback onUpdate)
+            throws Exception {
         if (!properties.isSandboxExecutionEnabled()) {
             throw new IllegalStateException("Sandbox execution is disabled");
         }
@@ -179,9 +181,9 @@ public class ExecutionRouter {
     /**
      * 自动模式执行
      */
-    private AgentToolResult executeAuto(String toolName, Map<String, Object> params,
-                                         CancellationToken signal,
-                                         AgentToolUpdateCallback onUpdate) throws Exception {
+    private AgentToolResult executeAuto(
+            String toolName, Map<String, Object> params, CancellationToken signal, AgentToolUpdateCallback onUpdate)
+            throws Exception {
         RiskLevel risk = assessRisk(toolName, params);
 
         if (properties.isExecutionLoggingEnabled()) {
@@ -250,13 +252,12 @@ public class ExecutionRouter {
         String content = (String) params.get("content");
 
         String fullPath = "/workspace/" + path;
-        String parentDir = fullPath.contains("/") ?
-            fullPath.substring(0, fullPath.lastIndexOf('/')) : "/workspace";
+        String parentDir = fullPath.contains("/") ? fullPath.substring(0, fullPath.lastIndexOf('/')) : "/workspace";
 
         // 使用 printf 写入，处理特殊字符
         String escaped = content.replace("'", "'\\''");
-        return List.of("sh", "-c",
-            "mkdir -p '" + parentDir + "' && printf '%s' '" + escaped + "' > '" + fullPath + "'");
+        return List.of(
+                "sh", "-c", "mkdir -p '" + parentDir + "' && printf '%s' '" + escaped + "' > '" + fullPath + "'");
     }
 
     private List<String> buildEditCommand(Map<String, Object> params) {
@@ -283,15 +284,17 @@ public class ExecutionRouter {
     private List<String> buildGlobCommand(Map<String, Object> params) {
         String pattern = (String) params.get("pattern");
         String path = (String) params.getOrDefault("path", ".");
-        return List.of("sh", "-c",
-            "cd /workspace/" + path + " && find . -type f -name '" + pattern + "' 2>/dev/null | head -1000");
+        return List.of(
+                "sh",
+                "-c",
+                "cd /workspace/" + path + " && find . -type f -name '" + pattern + "' 2>/dev/null | head -1000");
     }
 
     private List<String> buildGrepCommand(Map<String, Object> params) {
         String pattern = (String) params.get("pattern");
         String path = (String) params.getOrDefault("path", ".");
-        return List.of("sh", "-c",
-            "cd /workspace/" + path + " && grep -r -n '" + pattern + "' . 2>/dev/null | head -500");
+        return List.of(
+                "sh", "-c", "cd /workspace/" + path + " && grep -r -n '" + pattern + "' . 2>/dev/null | head -500");
     }
 
     /**
@@ -357,8 +360,7 @@ public class ExecutionRouter {
     /**
      * 确定最终执行模式
      */
-    private ExecutionMode determineMode(String toolName, Map<String, Object> params,
-                                        ExecutionMode explicitMode) {
+    private ExecutionMode determineMode(String toolName, Map<String, Object> params, ExecutionMode explicitMode) {
         // 1. 优先使用显式指定的模式
         if (explicitMode != null && explicitMode != ExecutionMode.AUTO) {
             return explicitMode;
@@ -393,16 +395,13 @@ public class ExecutionRouter {
             output = "Error: " + result.getErrorMessage() + "\n" + output;
         }
 
-        return new AgentToolResult(
-            List.of(new com.campusclaw.ai.types.TextContent(output)),
-            null
-        );
+        return new AgentToolResult(List.of(new com.campusclaw.ai.types.TextContent(output)), null);
     }
 
     private enum RiskLevel {
-        LOW,        // 低风险：读取操作
-        MEDIUM,     // 中风险：写入操作、未知命令
-        HIGH,       // 高风险：系统路径、网络操作
-        CRITICAL    // 极高风险：匹配危险模式
+        LOW, // 低风险：读取操作
+        MEDIUM, // 中风险：写入操作、未知命令
+        HIGH, // 高风险：系统路径、网络操作
+        CRITICAL // 极高风险：匹配危险模式
     }
 }

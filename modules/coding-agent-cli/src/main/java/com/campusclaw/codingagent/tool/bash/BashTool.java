@@ -38,6 +38,7 @@ public class BashTool implements AgentTool {
 
     /** No default timeout — matches campusclaw behavior (timeout only if explicitly set). */
     static final int NO_TIMEOUT = 0;
+
     static final int MAX_OUTPUT_LINES = 2000;
     static final int MAX_OUTPUT_BYTES = 100_000;
 
@@ -74,12 +75,12 @@ public class BashTool implements AgentTool {
     @Override
     public JsonNode parameters() {
         ObjectNode props = MAPPER.createObjectNode();
-        props.set("command", MAPPER.createObjectNode()
-                .put("type", "string")
-                .put("description", "The bash command to execute"));
-        props.set("timeout", MAPPER.createObjectNode()
-                .put("type", "integer")
-                .put("description", "Timeout in seconds (optional)"));
+        props.set(
+                "command",
+                MAPPER.createObjectNode().put("type", "string").put("description", "The bash command to execute"));
+        props.set(
+                "timeout",
+                MAPPER.createObjectNode().put("type", "integer").put("description", "Timeout in seconds (optional)"));
 
         return MAPPER.createObjectNode()
                 .put("type", "object")
@@ -89,17 +90,11 @@ public class BashTool implements AgentTool {
 
     @Override
     public AgentToolResult execute(
-            String toolCallId,
-            Map<String, Object> params,
-            CancellationToken signal,
-            AgentToolUpdateCallback onUpdate
-    ) throws Exception {
+            String toolCallId, Map<String, Object> params, CancellationToken signal, AgentToolUpdateCallback onUpdate)
+            throws Exception {
         String command = (String) params.get("command");
         if (command == null || command.isBlank()) {
-            return new AgentToolResult(
-                    List.<ContentBlock>of(new TextContent("Error: command is required")),
-                    null
-            );
+            return new AgentToolResult(List.<ContentBlock>of(new TextContent("Error: command is required")), null);
         }
 
         int timeoutSeconds = NO_TIMEOUT;
@@ -114,17 +109,14 @@ public class BashTool implements AgentTool {
         var options = new BashExecutorOptions(
                 timeoutSeconds > 0 ? Duration.ofSeconds(timeoutSeconds) : null,
                 signal,
-                env.isEmpty() ? null : new java.util.HashMap<>(env)
-        );
+                env.isEmpty() ? null : new java.util.HashMap<>(env));
 
         BashExecutionResult execResult;
         try {
             execResult = bashExecutor.execute(command, cwd, options);
         } catch (IOException e) {
             return new AgentToolResult(
-                    List.<ContentBlock>of(new TextContent("Error executing command: " + e.getMessage())),
-                    null
-            );
+                    List.<ContentBlock>of(new TextContent("Error executing command: " + e.getMessage())), null);
         }
 
         // Combine stdout and stderr
@@ -152,15 +144,9 @@ public class BashTool implements AgentTool {
             displayText = combined;
         }
 
-        var details = new BashToolDetails(
-                truncationResult.truncated() ? truncationResult : null,
-                fullOutputPath
-        );
+        var details = new BashToolDetails(truncationResult.truncated() ? truncationResult : null, fullOutputPath);
 
-        return new AgentToolResult(
-                List.<ContentBlock>of(new TextContent(displayText)),
-                details
-        );
+        return new AgentToolResult(List.<ContentBlock>of(new TextContent(displayText)), details);
     }
 
     private static String buildCombinedOutput(BashExecutionResult result) {

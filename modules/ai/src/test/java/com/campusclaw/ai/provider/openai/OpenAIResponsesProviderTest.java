@@ -26,30 +26,41 @@ class OpenAIResponsesProviderTest {
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
-    OpenAIResponsesProvider provider = new OpenAIResponsesProvider(new com.campusclaw.ai.env.EnvProviderConfigResolver(new com.campusclaw.ai.env.EnvApiKeyResolver()));
+    OpenAIResponsesProvider provider = new OpenAIResponsesProvider(
+            new com.campusclaw.ai.env.EnvProviderConfigResolver(new com.campusclaw.ai.env.EnvApiKeyResolver()));
 
     private Model testModel() {
         return new Model(
-                "gpt-4o", "GPT-4o",
-                Api.OPENAI_RESPONSES, Provider.OPENAI,
-                "https://api.openai.com/v1", false,
+                "gpt-4o",
+                "GPT-4o",
+                Api.OPENAI_RESPONSES,
+                Provider.OPENAI,
+                "https://api.openai.com/v1",
+                false,
                 List.of(InputModality.TEXT, InputModality.IMAGE),
                 new ModelCost(2.5, 10.0, 1.25, 0.0),
-                128000, 16384, null, null,
-                null
-        );
+                128000,
+                16384,
+                null,
+                null,
+                null);
     }
 
     private Model reasoningModel() {
         return new Model(
-                "o3", "O3",
-                Api.OPENAI_RESPONSES, Provider.OPENAI,
-                "https://api.openai.com/v1", true,
+                "o3",
+                "O3",
+                Api.OPENAI_RESPONSES,
+                Provider.OPENAI,
+                "https://api.openai.com/v1",
+                true,
                 List.of(InputModality.TEXT, InputModality.IMAGE),
                 new ModelCost(2.0, 8.0, 0.5, 0.0),
-                200000, 100000, null, null,
-                null
-        );
+                200000,
+                100000,
+                null,
+                null,
+                null);
     }
 
     // -------------------------------------------------------------------
@@ -85,8 +96,14 @@ class OpenAIResponsesProviderTest {
         void convertsAssistantMessageWithText() {
             var am = new AssistantMessage(
                     List.of(new TextContent("Hi there", null)),
-                    "openai-responses", "openai", "gpt-4o",
-                    null, Usage.empty(), StopReason.STOP, null, 1L);
+                    "openai-responses",
+                    "openai",
+                    "gpt-4o",
+                    null,
+                    Usage.empty(),
+                    StopReason.STOP,
+                    null,
+                    1L);
             var result = OpenAIResponsesProvider.convertInputItems(List.of(am));
 
             assertEquals(1, result.size());
@@ -98,11 +115,15 @@ class OpenAIResponsesProviderTest {
             var am = new AssistantMessage(
                     List.of(
                             new TextContent("Let me check", null),
-                            new ToolCall("call_123", "bash",
-                                    Map.of("command", "ls"), null)
-                    ),
-                    "openai-responses", "openai", "gpt-4o",
-                    null, Usage.empty(), StopReason.TOOL_USE, null, 1L);
+                            new ToolCall("call_123", "bash", Map.of("command", "ls"), null)),
+                    "openai-responses",
+                    "openai",
+                    "gpt-4o",
+                    null,
+                    Usage.empty(),
+                    StopReason.TOOL_USE,
+                    null,
+                    1L);
             var result = OpenAIResponsesProvider.convertInputItems(List.of(am));
 
             // Should produce 2 items: function_call + easy_input_message (text)
@@ -116,8 +137,8 @@ class OpenAIResponsesProviderTest {
 
         @Test
         void convertsToolResultMessage() {
-            var tr = new ToolResultMessage("call_123", "bash",
-                    List.of(new TextContent("file1.txt\nfile2.txt")), null, false, 1L);
+            var tr = new ToolResultMessage(
+                    "call_123", "bash", List.of(new TextContent("file1.txt\nfile2.txt")), null, false, 1L);
             var result = OpenAIResponsesProvider.convertInputItems(List.of(tr));
 
             assertEquals(1, result.size());
@@ -130,10 +151,15 @@ class OpenAIResponsesProviderTest {
                     new UserMessage("Hello", 1L),
                     new AssistantMessage(
                             List.of(new TextContent("Hi")),
-                            "openai-responses", "openai", "gpt-4o",
-                            null, Usage.empty(), StopReason.STOP, null, 2L),
-                    new UserMessage("How?", 3L)
-            );
+                            "openai-responses",
+                            "openai",
+                            "gpt-4o",
+                            null,
+                            Usage.empty(),
+                            StopReason.STOP,
+                            null,
+                            2L),
+                    new UserMessage("How?", 3L));
             var result = OpenAIResponsesProvider.convertInputItems(messages);
 
             assertEquals(3, result.size());
@@ -148,12 +174,15 @@ class OpenAIResponsesProviderTest {
         @Test
         void dropsThinkingContentFromAssistantMessage() {
             var am = new AssistantMessage(
-                    List.of(
-                            new ThinkingContent("thinking...", null, false),
-                            new TextContent("Answer", null)
-                    ),
-                    "openai-responses", "openai", "gpt-4o",
-                    null, Usage.empty(), StopReason.STOP, null, 1L);
+                    List.of(new ThinkingContent("thinking...", null, false), new TextContent("Answer", null)),
+                    "openai-responses",
+                    "openai",
+                    "gpt-4o",
+                    null,
+                    Usage.empty(),
+                    StopReason.STOP,
+                    null,
+                    1L);
             var result = OpenAIResponsesProvider.convertInputItems(List.of(am));
 
             assertEquals(1, result.size());
@@ -163,12 +192,15 @@ class OpenAIResponsesProviderTest {
         @Test
         void assistantMessageWithOnlyToolCallsProducesNoTextItem() {
             var am = new AssistantMessage(
-                    List.of(
-                            new ToolCall("call_1", "bash",
-                                    Map.of("command", "ls"), null)
-                    ),
-                    "openai-responses", "openai", "gpt-4o",
-                    null, Usage.empty(), StopReason.TOOL_USE, null, 1L);
+                    List.of(new ToolCall("call_1", "bash", Map.of("command", "ls"), null)),
+                    "openai-responses",
+                    "openai",
+                    "gpt-4o",
+                    null,
+                    Usage.empty(),
+                    StopReason.TOOL_USE,
+                    null,
+                    1L);
             var result = OpenAIResponsesProvider.convertInputItems(List.of(am));
 
             // Should only have the function call, no empty text message
@@ -204,8 +236,7 @@ class OpenAIResponsesProviderTest {
             ObjectNode params = MAPPER.createObjectNode();
             var tools = List.of(
                     new com.campusclaw.ai.types.Tool("read", "Read file", params),
-                    new com.campusclaw.ai.types.Tool("write", "Write file", params)
-            );
+                    new com.campusclaw.ai.types.Tool("write", "Write file", params));
             var result = OpenAIResponsesProvider.convertTools(tools);
 
             assertEquals(2, result.size());
@@ -227,54 +258,44 @@ class OpenAIResponsesProviderTest {
 
         @Test
         void mapsCompletedToStop() {
-            assertEquals(StopReason.STOP,
-                    OpenAIResponsesProvider.mapResponseStatus(
-                            ResponseStatus.COMPLETED, List.of()));
+            assertEquals(
+                    StopReason.STOP, OpenAIResponsesProvider.mapResponseStatus(ResponseStatus.COMPLETED, List.of()));
         }
 
         @Test
         void mapsCompletedWithToolCallsToToolUse() {
             var blocks = List.<ContentBlock>of(
-                    new TextContent("Let me check"),
-                    new ToolCall("call_1", "bash", Map.of(), null));
-            assertEquals(StopReason.TOOL_USE,
-                    OpenAIResponsesProvider.mapResponseStatus(
-                            ResponseStatus.COMPLETED, blocks));
+                    new TextContent("Let me check"), new ToolCall("call_1", "bash", Map.of(), null));
+            assertEquals(
+                    StopReason.TOOL_USE, OpenAIResponsesProvider.mapResponseStatus(ResponseStatus.COMPLETED, blocks));
         }
 
         @Test
         void mapsIncompleteToLength() {
-            assertEquals(StopReason.LENGTH,
-                    OpenAIResponsesProvider.mapResponseStatus(
-                            ResponseStatus.INCOMPLETE, List.of()));
+            assertEquals(
+                    StopReason.LENGTH, OpenAIResponsesProvider.mapResponseStatus(ResponseStatus.INCOMPLETE, List.of()));
         }
 
         @Test
         void mapsFailedToError() {
-            assertEquals(StopReason.ERROR,
-                    OpenAIResponsesProvider.mapResponseStatus(
-                            ResponseStatus.FAILED, List.of()));
+            assertEquals(StopReason.ERROR, OpenAIResponsesProvider.mapResponseStatus(ResponseStatus.FAILED, List.of()));
         }
 
         @Test
         void mapsCancelledToError() {
-            assertEquals(StopReason.ERROR,
-                    OpenAIResponsesProvider.mapResponseStatus(
-                            ResponseStatus.CANCELLED, List.of()));
+            assertEquals(
+                    StopReason.ERROR, OpenAIResponsesProvider.mapResponseStatus(ResponseStatus.CANCELLED, List.of()));
         }
 
         @Test
         void mapsInProgressToStop() {
-            assertEquals(StopReason.STOP,
-                    OpenAIResponsesProvider.mapResponseStatus(
-                            ResponseStatus.IN_PROGRESS, List.of()));
+            assertEquals(
+                    StopReason.STOP, OpenAIResponsesProvider.mapResponseStatus(ResponseStatus.IN_PROGRESS, List.of()));
         }
 
         @Test
         void mapsQueuedToStop() {
-            assertEquals(StopReason.STOP,
-                    OpenAIResponsesProvider.mapResponseStatus(
-                            ResponseStatus.QUEUED, List.of()));
+            assertEquals(StopReason.STOP, OpenAIResponsesProvider.mapResponseStatus(ResponseStatus.QUEUED, List.of()));
         }
     }
 
@@ -305,8 +326,7 @@ class OpenAIResponsesProviderTest {
 
             Cost cost = OpenAIResponsesProvider.computeCost(modelCost, usage);
 
-            assertEquals(cost.input() + cost.output() + cost.cacheRead() + cost.cacheWrite(),
-                    cost.total(), 0.0001);
+            assertEquals(cost.input() + cost.output() + cost.cacheRead() + cost.cacheWrite(), cost.total(), 0.0001);
         }
 
         @Test
@@ -329,33 +349,27 @@ class OpenAIResponsesProviderTest {
 
         @Test
         void buildsBasicParams() {
-            var context = new Context(null,
-                    List.of(new UserMessage("Hello", 1L)), null);
+            var context = new Context(null, List.of(new UserMessage("Hello", 1L)), null);
 
-            var params = provider.buildParams(
-                    testModel(), context, null, null, null);
+            var params = provider.buildParams(testModel(), context, null, null, null);
 
             assertNotNull(params);
         }
 
         @Test
         void usesProvidedMaxTokens() {
-            var context = new Context(null,
-                    List.of(new UserMessage("Hello", 1L)), null);
+            var context = new Context(null, List.of(new UserMessage("Hello", 1L)), null);
 
-            var params = provider.buildParams(
-                    testModel(), context, 4096, null, null);
+            var params = provider.buildParams(testModel(), context, 4096, null, null);
 
             assertNotNull(params);
         }
 
         @Test
         void setsTemperature() {
-            var context = new Context(null,
-                    List.of(new UserMessage("Hello", 1L)), null);
+            var context = new Context(null, List.of(new UserMessage("Hello", 1L)), null);
 
-            var params = provider.buildParams(
-                    testModel(), context, null, 0.7, null);
+            var params = provider.buildParams(testModel(), context, null, 0.7, null);
 
             assertNotNull(params);
         }
@@ -364,22 +378,18 @@ class OpenAIResponsesProviderTest {
         void setsToolsWhenPresent() {
             ObjectNode toolParams = MAPPER.createObjectNode();
             var tools = List.of(new com.campusclaw.ai.types.Tool("bash", "Run commands", toolParams));
-            var context = new Context(null,
-                    List.of(new UserMessage("Hello", 1L)), tools);
+            var context = new Context(null, List.of(new UserMessage("Hello", 1L)), tools);
 
-            var params = provider.buildParams(
-                    testModel(), context, null, null, null);
+            var params = provider.buildParams(testModel(), context, null, null, null);
 
             assertNotNull(params);
         }
 
         @Test
         void setsSystemPromptAsInstructions() {
-            var context = new Context("Be helpful.",
-                    List.of(new UserMessage("Hello", 1L)), null);
+            var context = new Context("Be helpful.", List.of(new UserMessage("Hello", 1L)), null);
 
-            var params = provider.buildParams(
-                    testModel(), context, null, null, null);
+            var params = provider.buildParams(testModel(), context, null, null, null);
 
             assertNotNull(params);
             // Instructions should be set (verified by successful build)
@@ -395,12 +405,10 @@ class OpenAIResponsesProviderTest {
 
         @Test
         void errorsWhenNoApiKey() {
-            var context = new Context(null,
-                    List.of(new UserMessage("Hello", 1L)), null);
+            var context = new Context(null, List.of(new UserMessage("Hello", 1L)), null);
             var eventStream = new AssistantMessageEventStream();
 
-            provider.executeStream(testModel(), context,
-                    null, null, null, null, eventStream);
+            provider.executeStream(testModel(), context, null, null, null, null, eventStream);
 
             assertThrows(Exception.class, () -> eventStream.result().block());
         }
@@ -415,8 +423,7 @@ class OpenAIResponsesProviderTest {
 
         @Test
         void streamReturnsEventStream() {
-            var context = new Context(null,
-                    List.of(new UserMessage("Hello", 1L)), null);
+            var context = new Context(null, List.of(new UserMessage("Hello", 1L)), null);
             var options = StreamOptions.builder().apiKey("test-key").build();
 
             var stream = provider.stream(testModel(), context, options);
@@ -426,8 +433,7 @@ class OpenAIResponsesProviderTest {
 
         @Test
         void streamSimpleReturnsEventStream() {
-            var context = new Context(null,
-                    List.of(new UserMessage("Hello", 1L)), null);
+            var context = new Context(null, List.of(new UserMessage("Hello", 1L)), null);
             var options = SimpleStreamOptions.builder().apiKey("test-key").build();
 
             var stream = provider.streamSimple(testModel(), context, options);

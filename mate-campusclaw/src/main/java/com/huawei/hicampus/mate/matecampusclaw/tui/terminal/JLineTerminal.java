@@ -104,10 +104,7 @@ public class JLineTerminal implements Terminal {
         int width = size.getColumns();
         int height = size.getRows();
         // Fall back to sensible defaults if the terminal reports 0
-        return new TerminalSize(
-                width > 0 ? width : 80,
-                height > 0 ? height : 24
-        );
+        return new TerminalSize(width > 0 ? width : 80, height > 0 ? height : 24);
     }
 
     @Override

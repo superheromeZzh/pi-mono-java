@@ -20,11 +20,12 @@ public class SelectListTheme {
     private final UnaryOperator<String> scrollInfo;
     private final UnaryOperator<String> noMatch;
 
-    private SelectListTheme(UnaryOperator<String> selectedPrefix,
-                            UnaryOperator<String> selectedText,
-                            UnaryOperator<String> description,
-                            UnaryOperator<String> scrollInfo,
-                            UnaryOperator<String> noMatch) {
+    private SelectListTheme(
+            UnaryOperator<String> selectedPrefix,
+            UnaryOperator<String> selectedText,
+            UnaryOperator<String> description,
+            UnaryOperator<String> scrollInfo,
+            UnaryOperator<String> noMatch) {
         this.selectedPrefix = selectedPrefix;
         this.selectedText = selectedText;
         this.description = description;
@@ -69,11 +70,11 @@ public class SelectListTheme {
     /** Default theme with ANSI colors: blue prefix, bold selection, dim descriptions. */
     public static SelectListTheme defaultTheme() {
         return builder()
-                .selectedPrefix(text -> "\033[34m" + text + "\033[0m")   // blue
-                .selectedText(text -> "\033[1m" + text + "\033[0m")      // bold
-                .description(text -> "\033[2m" + text + "\033[0m")       // dim
-                .scrollInfo(text -> "\033[2m" + text + "\033[0m")        // dim
-                .noMatch(text -> "\033[2m" + text + "\033[0m")           // dim
+                .selectedPrefix(text -> "\033[34m" + text + "\033[0m") // blue
+                .selectedText(text -> "\033[1m" + text + "\033[0m") // bold
+                .description(text -> "\033[2m" + text + "\033[0m") // dim
+                .scrollInfo(text -> "\033[2m" + text + "\033[0m") // dim
+                .noMatch(text -> "\033[2m" + text + "\033[0m") // dim
                 .build();
     }
 

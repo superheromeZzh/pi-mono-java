@@ -103,20 +103,21 @@ public class TreeSelectorOverlay implements Component, Focusable {
     }
 
     private String renderItem(TreeItem item) {
-        String roleColor = switch (item.role) {
-            case "user" -> ANSI_USER;
-            case "assistant" -> ANSI_ASSISTANT;
-            default -> ANSI_DIM;
-        };
-        String roleLabel = switch (item.role) {
-            case "user" -> "U";
-            case "assistant" -> "A";
-            default -> "T";
-        };
-        return String.format("%s[%s]%s %s#%d%s %s",
-                roleColor, roleLabel, ANSI_RESET,
-                ANSI_DIM, item.index + 1, ANSI_RESET,
-                item.preview);
+        String roleColor =
+                switch (item.role) {
+                    case "user" -> ANSI_USER;
+                    case "assistant" -> ANSI_ASSISTANT;
+                    default -> ANSI_DIM;
+                };
+        String roleLabel =
+                switch (item.role) {
+                    case "user" -> "U";
+                    case "assistant" -> "A";
+                    default -> "T";
+                };
+        return String.format(
+                "%s[%s]%s %s#%d%s %s",
+                roleColor, roleLabel, ANSI_RESET, ANSI_DIM, item.index + 1, ANSI_RESET, item.preview);
     }
 
     @Override
@@ -139,8 +140,8 @@ public class TreeSelectorOverlay implements Component, Focusable {
     public List<String> render(int width) {
         var lines = new ArrayList<String>();
         lines.add("");
-        lines.add(" " + ANSI_BOLD + ANSI_ACCENT + "Session Tree" + ANSI_RESET
-                + ANSI_DIM + "  (↑↓ navigate, Enter select, Esc cancel)" + ANSI_RESET);
+        lines.add(" " + ANSI_BOLD + ANSI_ACCENT + "Session Tree" + ANSI_RESET + ANSI_DIM
+                + "  (↑↓ navigate, Enter select, Esc cancel)" + ANSI_RESET);
         lines.add("");
 
         if (empty) {

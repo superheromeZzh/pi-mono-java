@@ -20,8 +20,7 @@ public class FuzzyMatcher {
     /**
      * A single fuzzy match result with scoring information.
      */
-    public record MatchResult<T>(T item, String text, int score, List<Integer> matchPositions) {
-    }
+    public record MatchResult<T>(T item, String text, int score, List<Integer> matchPositions) {}
 
     /**
      * Tests whether the query fuzzy-matches the candidate string.
@@ -171,7 +170,8 @@ public class FuzzyMatcher {
             int matchScore = score(query, candidate);
             if (matchScore >= 0) {
                 List<Integer> positions = matchPositions(query, candidate);
-                results.add(new MatchResult<>(candidate, candidate, matchScore, positions != null ? positions : List.of()));
+                results.add(
+                        new MatchResult<>(candidate, candidate, matchScore, positions != null ? positions : List.of()));
             }
         }
 

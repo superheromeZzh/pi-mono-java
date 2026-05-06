@@ -24,14 +24,13 @@ import jakarta.annotation.Nullable;
  * @param timestamp    Unix timestamp in milliseconds
  */
 public record AssistantMessage(
-    @JsonProperty("content") List<ContentBlock> content,
-    @JsonProperty("api") String api,
-    @JsonProperty("provider") String provider,
-    @JsonProperty("model") String model,
-    @JsonProperty("responseId") @Nullable String responseId,
-    @JsonProperty("usage") Usage usage,
-    @JsonProperty("stopReason") StopReason stopReason,
-    @JsonProperty("errorMessage") @Nullable String errorMessage,
-    @JsonProperty("timestamp") long timestamp
-) implements Message {
-}
+        @JsonProperty("content") List<ContentBlock> content,
+        @JsonProperty("api") String api,
+        @JsonProperty("provider") String provider,
+        @JsonProperty("model") String model,
+        @JsonProperty("responseId") @Nullable String responseId,
+        @JsonProperty("usage") Usage usage,
+        @JsonProperty("stopReason") StopReason stopReason,
+        @JsonProperty("errorMessage") @Nullable String errorMessage,
+        @JsonProperty("timestamp") long timestamp)
+        implements Message {}

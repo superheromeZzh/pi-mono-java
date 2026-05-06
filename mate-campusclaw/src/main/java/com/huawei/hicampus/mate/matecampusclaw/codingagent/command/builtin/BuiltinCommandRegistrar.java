@@ -34,10 +34,14 @@ public class BuiltinCommandRegistrar {
     private final AgentModelResolver agentModelResolver;
     private final ModelRegistry modelRegistry;
 
-    public BuiltinCommandRegistrar(SlashCommandRegistry registry, CampusClawAiService piAiService,
-                                   SettingsManager settingsManager, LoopManager loopManager,
-                                   AuthStore authStore, AgentModelResolver agentModelResolver,
-                                   ModelRegistry modelRegistry) {
+    public BuiltinCommandRegistrar(
+            SlashCommandRegistry registry,
+            CampusClawAiService piAiService,
+            SettingsManager settingsManager,
+            LoopManager loopManager,
+            AuthStore authStore,
+            AgentModelResolver agentModelResolver,
+            ModelRegistry modelRegistry) {
         this.registry = registry;
         this.piAiService = piAiService;
         this.settingsManager = settingsManager;
@@ -52,8 +56,10 @@ public class BuiltinCommandRegistrar {
         registry.register(new HelpCommand(registry));
         registry.register(new ModelCommand("model"));
         registry.register(new ModelCommand("models"));
-        registry.register(new CompactCommand(new Compactor(piAiService,
-                com.huawei.hicampus.mate.matecampusclaw.codingagent.compaction.CompactionConfig.defaults(), agentModelResolver)));
+        registry.register(new CompactCommand(new Compactor(
+                piAiService,
+                com.huawei.hicampus.mate.matecampusclaw.codingagent.compaction.CompactionConfig.defaults(),
+                agentModelResolver)));
         registry.register(new NewCommand());
         registry.register(new QuitCommand());
         registry.register(new SettingsCommand(settingsManager));

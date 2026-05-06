@@ -11,7 +11,6 @@ import com.fasterxml.jackson.annotation.JsonValue;
  * Reason why the LLM stopped generating output.
  */
 public enum StopReason {
-
     STOP("stop"),
     LENGTH("length"),
     TOOL_USE("toolUse"),

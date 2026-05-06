@@ -39,8 +39,7 @@ public class LogoutCommand implements SlashCommand {
         }
         var providerOpt = Provider.tryFromValue(providerStr);
         if (providerOpt.isEmpty()) {
-            context.output().println("Unknown provider: " + providerStr
-                    + ". Run /providers to list known ids.");
+            context.output().println("Unknown provider: " + providerStr + ". Run /providers to list known ids.");
             return;
         }
         Provider provider = providerOpt.get();

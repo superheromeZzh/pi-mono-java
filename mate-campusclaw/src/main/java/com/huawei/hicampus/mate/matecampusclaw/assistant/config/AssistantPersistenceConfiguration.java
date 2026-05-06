@@ -4,12 +4,14 @@
 
 package com.huawei.hicampus.mate.matecampusclaw.assistant.config;
 
+import javax.sql.DataSource;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.huawei.hicampus.mate.matecampusclaw.assistant.mapper.ChatMemoryMapper;
 import com.huawei.hicampus.mate.matecampusclaw.assistant.memory.ChatMemoryRepository;
 import com.huawei.hicampus.mate.matecampusclaw.assistant.memory.ChatMemoryStore;
 import com.huawei.hicampus.mate.matecampusclaw.assistant.memory.MyBatisChatMemoryRepository;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import javax.sql.DataSource;
+
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;

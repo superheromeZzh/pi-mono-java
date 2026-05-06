@@ -76,7 +76,8 @@ public class CustomModelLoader {
             for (String m : cfg.inputModalities()) {
                 try {
                     modalities.add(InputModality.valueOf(m.toUpperCase()));
-                } catch (IllegalArgumentException ignored) {}
+                } catch (IllegalArgumentException ignored) {
+                }
             }
         }
         if (modalities.isEmpty()) {
@@ -95,7 +96,6 @@ public class CustomModelLoader {
                 cfg.maxTokens() != null ? cfg.maxTokens() : 8192,
                 null,
                 cfg.thinkingFormat(),
-                ConfigValueResolver.resolve(cfg.apiKey())
-        );
+                ConfigValueResolver.resolve(cfg.apiKey()));
     }
 }

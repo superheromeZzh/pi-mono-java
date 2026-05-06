@@ -19,26 +19,19 @@ import jakarta.annotation.Nullable;
 public class FooterDataProvider {
 
     public record FooterData(
-        String modelName,
-        @Nullable String providerName,
-        @Nullable ThinkingLevel thinkingLevel,
-        @Nullable TokenStats tokenStats,
-        @Nullable SessionStats sessionStats,
-        List<FooterHint> hints,
-        boolean isStreaming
-    ) {}
+            String modelName,
+            @Nullable String providerName,
+            @Nullable ThinkingLevel thinkingLevel,
+            @Nullable TokenStats tokenStats,
+            @Nullable SessionStats sessionStats,
+            List<FooterHint> hints,
+            boolean isStreaming) {}
 
     public record TokenStats(
-        int inputTokens,
-        int outputTokens,
-        int cacheReadTokens,
-        int totalTokens,
-        double totalCostUsd
-    ) {
+            int inputTokens, int outputTokens, int cacheReadTokens, int totalTokens, double totalCostUsd) {
         public static TokenStats from(Usage usage) {
             double cost = usage.cost() != null ? usage.cost().total() : 0.0;
-            return new TokenStats(usage.input(), usage.output(),
-                usage.cacheRead(), usage.totalTokens(), cost);
+            return new TokenStats(usage.input(), usage.output(), usage.cacheRead(), usage.totalTokens(), cost);
         }
 
         public String formatTokens() {
@@ -62,11 +55,7 @@ public class FooterDataProvider {
         }
     }
 
-    public record SessionStats(
-        int turnCount,
-        int messageCount,
-        long sessionDurationMs
-    ) {
+    public record SessionStats(int turnCount, int messageCount, long sessionDurationMs) {
         public String formatDuration() {
             long seconds = sessionDurationMs / 1000;
             if (seconds < 60) {
@@ -94,12 +83,11 @@ public class FooterDataProvider {
     private volatile SessionStats sessionStats = null;
     private volatile boolean streaming = false;
     private final List<FooterHint> defaultHints = List.of(
-        new FooterHint("Ctrl+C", "clear"),
-        new FooterHint("Ctrl+D", "exit"),
-        new FooterHint("Shift+Tab", "thinking"),
-        new FooterHint("Ctrl+P", "model"),
-        new FooterHint("Esc", "interrupt")
-    );
+            new FooterHint("Ctrl+C", "clear"),
+            new FooterHint("Ctrl+D", "exit"),
+            new FooterHint("Shift+Tab", "thinking"),
+            new FooterHint("Ctrl+P", "model"),
+            new FooterHint("Esc", "interrupt"));
 
     /** Update model info. */
     public void setModel(Model model) {
@@ -129,8 +117,8 @@ public class FooterDataProvider {
 
     /** Get current footer data snapshot. */
     public FooterData getFooterData() {
-        return new FooterData(modelName, providerName, thinkingLevel,
-            tokenStats, sessionStats, defaultHints, streaming);
+        return new FooterData(
+                modelName, providerName, thinkingLevel, tokenStats, sessionStats, defaultHints, streaming);
     }
 
     /** Format the footer as a single-line status bar. */

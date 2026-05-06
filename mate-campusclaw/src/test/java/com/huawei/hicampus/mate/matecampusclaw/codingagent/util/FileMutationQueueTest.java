@@ -40,8 +40,9 @@ class FileMutationQueueTest {
 
         @Test
         void propagatesException() {
-            assertThrows(RuntimeException.class, () ->
-                    queue.withLock(Path.of("/tmp/test.txt"), () -> {
+            assertThrows(
+                    RuntimeException.class,
+                    () -> queue.withLock(Path.of("/tmp/test.txt"), () -> {
                         throw new RuntimeException("boom");
                     }));
         }
@@ -49,8 +50,9 @@ class FileMutationQueueTest {
         @Test
         void releasesLockAfterException() throws Exception {
             // First call throws
-            assertThrows(RuntimeException.class, () ->
-                    queue.withLock(Path.of("/tmp/test.txt"), () -> {
+            assertThrows(
+                    RuntimeException.class,
+                    () -> queue.withLock(Path.of("/tmp/test.txt"), () -> {
                         throw new RuntimeException("fail");
                     }));
 
@@ -66,8 +68,8 @@ class FileMutationQueueTest {
             var barrier = new CyclicBarrier(2);
             var latch = new CountDownLatch(1);
 
-            Path path1 = Path.of("/tmp/a/../b/file.txt");    // normalizes to /tmp/b/file.txt
-            Path path2 = Path.of("/tmp/./b/file.txt");        // normalizes to /tmp/b/file.txt
+            Path path1 = Path.of("/tmp/a/../b/file.txt"); // normalizes to /tmp/b/file.txt
+            Path path2 = Path.of("/tmp/./b/file.txt"); // normalizes to /tmp/b/file.txt
 
             Thread t1 = new Thread(() -> {
                 try {
@@ -136,12 +138,12 @@ class FileMutationQueueTest {
                 final int taskId = i;
                 futures.add(executor.submit(() -> {
                     try {
-                        barrier.await(5, TimeUnit.SECONDS);  // all threads start ~simultaneously
+                        barrier.await(5, TimeUnit.SECONDS); // all threads start ~simultaneously
                         queue.withLock(file, () -> {
                             int current = concurrentCount.incrementAndGet();
                             maxConcurrent.updateAndGet(prev -> Math.max(prev, current));
                             executionOrder.add(taskId);
-                            Thread.sleep(20);  // simulate work
+                            Thread.sleep(20); // simulate work
                             concurrentCount.decrementAndGet();
                             return null;
                         });
@@ -199,12 +201,10 @@ class FileMutationQueueTest {
             }
 
             // Wait for all threads to be inside their respective locks
-            assertTrue(insideLockLatch.await(5, TimeUnit.SECONDS),
-                    "All threads should enter their locks concurrently");
+            assertTrue(insideLockLatch.await(5, TimeUnit.SECONDS), "All threads should enter their locks concurrently");
 
             // All threads were inside locks at the same time
-            assertEquals(fileCount, maxConcurrent.get(),
-                    "Different-file operations should run concurrently");
+            assertEquals(fileCount, maxConcurrent.get(), "Different-file operations should run concurrently");
 
             allCanProceed.countDown();
 

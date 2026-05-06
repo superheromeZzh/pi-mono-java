@@ -14,13 +14,13 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.huawei.hicampus.mate.matecampusclaw.agent.tool.AgentTool;
 import com.huawei.hicampus.mate.matecampusclaw.agent.tool.AgentToolResult;
 import com.huawei.hicampus.mate.matecampusclaw.agent.tool.AgentToolUpdateCallback;
 import com.huawei.hicampus.mate.matecampusclaw.agent.tool.CancellationToken;
 import com.huawei.hicampus.mate.matecampusclaw.codingagent.skill.Skill;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -38,11 +38,7 @@ class SystemPromptBuilderTest {
     }
 
     private SystemPromptConfig minimalConfig() {
-        return new SystemPromptConfig(
-                List.of(), List.of(),
-                Path.of("/test/project"),
-                null, Map.of()
-        );
+        return new SystemPromptConfig(List.of(), List.of(), Path.of("/test/project"), null, Map.of());
     }
 
     private Skill testSkill(String name, String description, String filePath) {
@@ -81,10 +77,7 @@ class SystemPromptBuilderTest {
         @Test
         void includesToolSection() {
             var tool = new StubTool("bash", "Execute bash commands");
-            var config = new SystemPromptConfig(
-                    List.of(tool), List.of(),
-                    Path.of("/cwd"), null, Map.of()
-            );
+            var config = new SystemPromptConfig(List.of(tool), List.of(), Path.of("/cwd"), null, Map.of());
 
             String result = builder.build(config);
 
@@ -96,10 +89,7 @@ class SystemPromptBuilderTest {
         void includesMultipleTools() {
             var tool1 = new StubTool("read", "Read file contents");
             var tool2 = new StubTool("write", "Write file contents");
-            var config = new SystemPromptConfig(
-                    List.of(tool1, tool2), List.of(),
-                    Path.of("/cwd"), null, Map.of()
-            );
+            var config = new SystemPromptConfig(List.of(tool1, tool2), List.of(), Path.of("/cwd"), null, Map.of());
 
             String result = builder.build(config);
 
@@ -124,10 +114,7 @@ class SystemPromptBuilderTest {
         @Test
         void includesSkillsInXmlFormat() {
             var skill = testSkill("commit", "Create git commits", "/path/to/skill.md");
-            var config = new SystemPromptConfig(
-                    List.of(), List.of(skill),
-                    Path.of("/cwd"), null, Map.of()
-            );
+            var config = new SystemPromptConfig(List.of(), List.of(skill), Path.of("/cwd"), null, Map.of());
 
             String result = builder.build(config);
 
@@ -142,10 +129,7 @@ class SystemPromptBuilderTest {
         void includesMultipleSkills() {
             var skill1 = testSkill("commit", "Git commits", "/a/skill.md");
             var skill2 = testSkill("review", "Code review", "/b/skill.md");
-            var config = new SystemPromptConfig(
-                    List.of(), List.of(skill1, skill2),
-                    Path.of("/cwd"), null, Map.of()
-            );
+            var config = new SystemPromptConfig(List.of(), List.of(skill1, skill2), Path.of("/cwd"), null, Map.of());
 
             String result = builder.build(config);
 
@@ -164,10 +148,7 @@ class SystemPromptBuilderTest {
         void escapesXmlSpecialChars() {
             // name with special chars (would be invalid in practice but tests escaping)
             var skill = testSkill("test", "desc & \"quoted\"", "/path/skill.md");
-            var config = new SystemPromptConfig(
-                    List.of(), List.of(skill),
-                    Path.of("/cwd"), null, Map.of()
-            );
+            var config = new SystemPromptConfig(List.of(), List.of(skill), Path.of("/cwd"), null, Map.of());
 
             String result = builder.build(config);
 
@@ -190,11 +171,8 @@ class SystemPromptBuilderTest {
 
         @Test
         void includesOsFromEnv() {
-            var config = new SystemPromptConfig(
-                    List.of(), List.of(),
-                    Path.of("/cwd"), null,
-                    Map.of("OS_NAME", "Linux")
-            );
+            var config =
+                    new SystemPromptConfig(List.of(), List.of(), Path.of("/cwd"), null, Map.of("OS_NAME", "Linux"));
 
             String result = builder.build(config);
             assertTrue(result.contains("操作系统: Linux"));
@@ -203,10 +181,7 @@ class SystemPromptBuilderTest {
         @Test
         void includesGitBranch() {
             var config = new SystemPromptConfig(
-                    List.of(), List.of(),
-                    Path.of("/cwd"), null,
-                    Map.of("GIT_BRANCH", "feature/test")
-            );
+                    List.of(), List.of(), Path.of("/cwd"), null, Map.of("GIT_BRANCH", "feature/test"));
 
             String result = builder.build(config);
             assertTrue(result.contains("Git 分支: feature/test"));
@@ -221,10 +196,7 @@ class SystemPromptBuilderTest {
         @Test
         void includesJavaVersion() {
             var config = new SystemPromptConfig(
-                    List.of(), List.of(),
-                    Path.of("/cwd"), null,
-                    Map.of("JAVA_VERSION", "21.0.1")
-            );
+                    List.of(), List.of(), Path.of("/cwd"), null, Map.of("JAVA_VERSION", "21.0.1"));
 
             String result = builder.build(config);
             assertTrue(result.contains("Java 版本: 21.0.1"));
@@ -241,11 +213,7 @@ class SystemPromptBuilderTest {
         @Test
         void appendsCustomPrompt() {
             var config = new SystemPromptConfig(
-                    List.of(), List.of(),
-                    Path.of("/cwd"),
-                    "Always use TypeScript strict mode.",
-                    Map.of()
-            );
+                    List.of(), List.of(), Path.of("/cwd"), "Always use TypeScript strict mode.", Map.of());
 
             String result = builder.build(config);
 
@@ -261,10 +229,7 @@ class SystemPromptBuilderTest {
 
         @Test
         void noCustomSectionWhenBlank() {
-            var config = new SystemPromptConfig(
-                    List.of(), List.of(),
-                    Path.of("/cwd"), "   ", Map.of()
-            );
+            var config = new SystemPromptConfig(List.of(), List.of(), Path.of("/cwd"), "   ", Map.of());
 
             String result = builder.build(config);
             assertFalse(result.contains("# 用户指令"));
@@ -287,8 +252,7 @@ class SystemPromptBuilderTest {
                     List.of(skill),
                     Path.of("/my/project"),
                     "Be concise.",
-                    Map.of("GIT_BRANCH", "main", "OS_NAME", "macOS")
-            );
+                    Map.of("GIT_BRANCH", "main", "OS_NAME", "macOS"));
 
             String result = builder.build(config);
 
@@ -344,7 +308,8 @@ class SystemPromptBuilderTest {
 
             tools.clear();
             assertEquals(1, config.tools().size());
-            assertThrows(UnsupportedOperationException.class, () -> config.tools().add(new StubTool("x", "y")));
+            assertThrows(
+                    UnsupportedOperationException.class, () -> config.tools().add(new StubTool("x", "y")));
         }
     }
 
@@ -361,13 +326,18 @@ class SystemPromptBuilderTest {
             this.description = description;
         }
 
-        @Override public String name() {
+        @Override
+        public String name() {
             return name;
         }
-        @Override public String label() {
+
+        @Override
+        public String label() {
             return name;
         }
-        @Override public String description() {
+
+        @Override
+        public String description() {
             return description;
         }
 
@@ -377,8 +347,11 @@ class SystemPromptBuilderTest {
         }
 
         @Override
-        public AgentToolResult execute(String toolCallId, Map<String, Object> params,
-                                       CancellationToken signal, AgentToolUpdateCallback onUpdate) {
+        public AgentToolResult execute(
+                String toolCallId,
+                Map<String, Object> params,
+                CancellationToken signal,
+                AgentToolUpdateCallback onUpdate) {
             return null;
         }
     }

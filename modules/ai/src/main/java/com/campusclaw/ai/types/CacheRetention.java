@@ -11,7 +11,6 @@ import com.fasterxml.jackson.annotation.JsonValue;
  * Cache retention policy for prompt caching.
  */
 public enum CacheRetention {
-
     NONE("none"),
     SHORT("short"),
     LONG("long");

@@ -32,21 +32,15 @@ public class PackageManager {
 
     @JsonIgnoreProperties(ignoreUnknown = true)
     public record PackageManifest(
-        @JsonProperty("name") String name,
-        @JsonProperty("version") @Nullable String version,
-        @JsonProperty("description") @Nullable String description,
-        @JsonProperty("skills") @Nullable List<String> skills,
-        @JsonProperty("tools") @Nullable List<String> tools,
-        @JsonProperty("commands") @Nullable List<String> commands,
-        @JsonProperty("repository") @Nullable String repository
-    ) {}
+            @JsonProperty("name") String name,
+            @JsonProperty("version") @Nullable String version,
+            @JsonProperty("description") @Nullable String description,
+            @JsonProperty("skills") @Nullable List<String> skills,
+            @JsonProperty("tools") @Nullable List<String> tools,
+            @JsonProperty("commands") @Nullable List<String> commands,
+            @JsonProperty("repository") @Nullable String repository) {}
 
-    public record InstalledPackage(
-        String name,
-        String version,
-        Path location,
-        PackageManifest manifest
-    ) {}
+    public record InstalledPackage(String name, String version, Path location, PackageManifest manifest) {}
 
     private final Path packagesDir;
     private final Map<String, InstalledPackage> installed = new LinkedHashMap<>();
@@ -68,7 +62,9 @@ public class PackageManager {
                 if (Files.exists(manifestPath)) {
                     try {
                         PackageManifest manifest = MAPPER.readValue(manifestPath.toFile(), PackageManifest.class);
-                        String name = manifest.name() != null ? manifest.name() : dir.getFileName().toString();
+                        String name = manifest.name() != null
+                                ? manifest.name()
+                                : dir.getFileName().toString();
                         String version = manifest.version() != null ? manifest.version() : "0.0.0";
                         installed.put(name, new InstalledPackage(name, version, dir, manifest));
                         log.debug("Found package: {} v{}", name, version);
@@ -110,8 +106,7 @@ public class PackageManager {
             Path skillsDir = pkg.location().resolve("skills");
             if (Files.isDirectory(skillsDir)) {
                 try (var stream = Files.list(skillsDir)) {
-                    stream.filter(p -> p.toString().endsWith(".md"))
-                        .forEach(paths::add);
+                    stream.filter(p -> p.toString().endsWith(".md")).forEach(paths::add);
                 } catch (IOException e) {
                     log.debug("Failed to list skills dir for {}", pkg.name(), e);
                 }

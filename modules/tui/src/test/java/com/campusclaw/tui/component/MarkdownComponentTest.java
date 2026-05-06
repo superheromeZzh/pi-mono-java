@@ -294,7 +294,8 @@ class MarkdownComponentTest {
             // Inner item should have more leading whitespace
             int outerIndent = countLeadingSpaces(lines.get(0));
             int innerIndent = countLeadingSpaces(lines.get(1));
-            assertTrue(innerIndent > outerIndent,
+            assertTrue(
+                    innerIndent > outerIndent,
                     "Inner should be more indented: outer=" + outerIndent + " inner=" + innerIndent);
         }
 
@@ -492,7 +493,8 @@ class MarkdownComponentTest {
 
         @Test
         void allElementsCombined() {
-            String input = """
+            String input =
+                    """
                     # Main Title
 
                     A paragraph with **bold** and *italic* and `code`.

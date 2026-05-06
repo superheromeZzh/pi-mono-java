@@ -27,15 +27,19 @@ import org.slf4j.LoggerFactory;
 public class ProxyConfig {
     private static final Logger log = LoggerFactory.getLogger(ProxyConfig.class);
 
-    public enum ProxyType { HTTP, SOCKS5, DIRECT }
+    public enum ProxyType {
+        HTTP,
+        SOCKS5,
+        DIRECT
+    }
 
     public record ProxyEntry(
-        ProxyType type,
-        String host,
-        int port,
-        String username,   // nullable
-        String password    // nullable
-    ) {
+            ProxyType type,
+            String host,
+            int port,
+            String username, // nullable
+            String password // nullable
+            ) {
         /** Convert to java.net.Proxy. */
         public Proxy toJavaProxy() {
             return switch (type) {
@@ -95,10 +99,11 @@ public class ProxyConfig {
             }
         }
         if (config.httpProxy != null || config.httpsProxy != null) {
-            log.info("Proxy configured: HTTP={}, HTTPS={}, NO_PROXY={}",
-                config.httpProxy != null ? config.httpProxy.toUrl() : "none",
-                config.httpsProxy != null ? config.httpsProxy.toUrl() : "none",
-                config.noProxy);
+            log.info(
+                    "Proxy configured: HTTP={}, HTTPS={}, NO_PROXY={}",
+                    config.httpProxy != null ? config.httpProxy.toUrl() : "none",
+                    config.httpsProxy != null ? config.httpsProxy.toUrl() : "none",
+                    config.noProxy);
         }
         return config;
     }
@@ -156,9 +161,11 @@ public class ProxyConfig {
     public ProxyEntry getHttpProxy() {
         return httpProxy;
     }
+
     public ProxyEntry getHttpsProxy() {
         return httpsProxy;
     }
+
     public List<String> getNoProxy() {
         return Collections.unmodifiableList(noProxy);
     }
@@ -166,6 +173,7 @@ public class ProxyConfig {
     public void setHttpProxy(ProxyEntry proxy) {
         this.httpProxy = proxy;
     }
+
     public void setHttpsProxy(ProxyEntry proxy) {
         this.httpsProxy = proxy;
     }
@@ -182,6 +190,7 @@ public class ProxyConfig {
                 }
                 return List.of(Proxy.NO_PROXY);
             }
+
             @Override
             public void connectFailed(URI uri, SocketAddress sa, IOException ioe) {
                 log.warn("Proxy connection failed: {} via {}", uri, sa, ioe);
@@ -189,15 +198,15 @@ public class ProxyConfig {
         });
         // Install authenticator if needed
         if ((httpProxy != null && httpProxy.username() != null)
-            || (httpsProxy != null && httpsProxy.username() != null)) {
+                || (httpsProxy != null && httpsProxy.username() != null)) {
             Authenticator.setDefault(new Authenticator() {
                 @Override
                 protected PasswordAuthentication getPasswordAuthentication() {
-                    ProxyEntry proxy = getRequestingProtocol().equalsIgnoreCase("https")
-                        ? httpsProxy : httpProxy;
+                    ProxyEntry proxy = getRequestingProtocol().equalsIgnoreCase("https") ? httpsProxy : httpProxy;
                     if (proxy != null && proxy.username() != null) {
-                        return new PasswordAuthentication(proxy.username(),
-                            proxy.password() != null ? proxy.password().toCharArray() : new char[0]);
+                        return new PasswordAuthentication(
+                                proxy.username(),
+                                proxy.password() != null ? proxy.password().toCharArray() : new char[0]);
                     }
                     return null;
                 }
@@ -299,10 +308,13 @@ public class ProxyConfig {
     private static String regQuery(String valueName) {
         try {
             var process = new ProcessBuilder(
-                    "reg", "query",
-                    "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings",
-                    "/v", valueName
-            ).redirectErrorStream(true).start();
+                            "reg",
+                            "query",
+                            "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings",
+                            "/v",
+                            valueName)
+                    .redirectErrorStream(true)
+                    .start();
             String output = new String(process.getInputStream().readAllBytes());
             int exitCode = process.waitFor();
             return exitCode == 0 ? output : null;

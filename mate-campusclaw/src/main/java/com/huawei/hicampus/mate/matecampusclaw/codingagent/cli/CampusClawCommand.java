@@ -59,8 +59,7 @@ import picocli.CommandLine.Parameters;
         name = "campusclaw",
         description = "CampusClaw — an AI-powered software engineering assistant.",
         mixinStandardHelpOptions = true,
-        version = "pi 0.1.0"
-)
+        version = "pi 0.1.0")
 @Component
 public class CampusClawCommand implements Callable<Integer> {
 
@@ -81,16 +80,20 @@ public class CampusClawCommand implements Callable<Integer> {
     @org.springframework.beans.factory.annotation.Value("${server.session.persistence.enabled:true}")
     private boolean serverSessionPersistenceEnabled;
 
-    public CampusClawCommand(CampusClawAiService piAiService, ModelRegistry modelRegistry,
-                     SystemPromptBuilder promptBuilder, List<AgentTool> tools,
-                     SlashCommandRegistry commandRegistry, BashExecutor bashExecutor,
-                     SettingsManager settingsManager,
-                     @org.springframework.lang.Nullable com.huawei.hicampus.mate.matecampusclaw.cron.CronService cronService,
-                     com.huawei.hicampus.mate.matecampusclaw.codingagent.loop.LoopManager loopManager,
-                     org.springframework.context.ApplicationContext applicationContext,
-                     @org.springframework.lang.Nullable SandboxSkillParser sandboxSkillParser,
-                     com.huawei.hicampus.mate.matecampusclaw.codingagent.resolver.AgentModelResolver agentModelResolver,
-                     com.huawei.hicampus.mate.matecampusclaw.codingagent.model.ModelCatalogService modelCatalogService) {
+    public CampusClawCommand(
+            CampusClawAiService piAiService,
+            ModelRegistry modelRegistry,
+            SystemPromptBuilder promptBuilder,
+            List<AgentTool> tools,
+            SlashCommandRegistry commandRegistry,
+            BashExecutor bashExecutor,
+            SettingsManager settingsManager,
+            @org.springframework.lang.Nullable com.huawei.hicampus.mate.matecampusclaw.cron.CronService cronService,
+            com.huawei.hicampus.mate.matecampusclaw.codingagent.loop.LoopManager loopManager,
+            org.springframework.context.ApplicationContext applicationContext,
+            @org.springframework.lang.Nullable SandboxSkillParser sandboxSkillParser,
+            com.huawei.hicampus.mate.matecampusclaw.codingagent.resolver.AgentModelResolver agentModelResolver,
+            com.huawei.hicampus.mate.matecampusclaw.codingagent.model.ModelCatalogService modelCatalogService) {
         this.piAiService = piAiService;
         this.modelRegistry = modelRegistry;
         this.promptBuilder = promptBuilder;
@@ -106,88 +109,145 @@ public class CampusClawCommand implements Callable<Integer> {
         this.modelCatalogService = modelCatalogService;
     }
 
-    @Option(names = {"--provider"}, description = "Provider name (e.g. anthropic, openai, zai, google)")
+    @Option(
+            names = {"--provider"},
+            description = "Provider name (e.g. anthropic, openai, zai, google)")
     String provider;
 
-    @Option(names = {"-m", "--model"}, description = "AI model to use (e.g. claude-sonnet-4-20250514)")
+    @Option(
+            names = {"-m", "--model"},
+            description = "AI model to use (e.g. claude-sonnet-4-20250514)")
     String model;
 
-    @Option(names = {"--api-key"}, description = "API key (overrides env vars)")
+    @Option(
+            names = {"--api-key"},
+            description = "API key (overrides env vars)")
     String apiKey;
 
-    @Option(names = {"--prompt"}, description = "Initial prompt to send to the agent (internal use)")
+    @Option(
+            names = {"--prompt"},
+            description = "Initial prompt to send to the agent (internal use)")
     String prompt;
 
-    @Option(names = {"--mode"}, description = "Execution mode: interactive, one-shot, rpc, server, or print",
+    @Option(
+            names = {"--mode"},
+            description = "Execution mode: interactive, one-shot, rpc, server, or print",
             defaultValue = "interactive")
     String mode;
 
-    @Option(names = {"--port"}, description = "HTTP server port (for server mode)")
+    @Option(
+            names = {"--port"},
+            description = "HTTP server port (for server mode)")
     Integer port;
 
-    @Option(names = {"--host"}, description = "HTTP server bind address (for server mode, default: localhost)")
+    @Option(
+            names = {"--host"},
+            description = "HTTP server bind address (for server mode, default: localhost)")
     String host;
 
-    @Option(names = {"--proxy"}, description = "HTTP/SOCKS5 proxy URL (e.g. http://127.0.0.1:7890)")
+    @Option(
+            names = {"--proxy"},
+            description = "HTTP/SOCKS5 proxy URL (e.g. http://127.0.0.1:7890)")
     String proxy;
 
-    @Option(names = {"--cwd"}, description = "Working directory (defaults to current directory)")
+    @Option(
+            names = {"--cwd"},
+            description = "Working directory (defaults to current directory)")
     Path cwd;
 
-    @Option(names = {"--system-prompt"}, description = "Custom system prompt (replaces default)")
+    @Option(
+            names = {"--system-prompt"},
+            description = "Custom system prompt (replaces default)")
     String systemPrompt;
 
-    @Option(names = {"--append-system-prompt"}, description = "Text appended to the system prompt")
+    @Option(
+            names = {"--append-system-prompt"},
+            description = "Text appended to the system prompt")
     String appendSystemPrompt;
 
-    @Option(names = {"--thinking"}, description = "Thinking level: off, minimal, low, medium, high, xhigh")
+    @Option(
+            names = {"--thinking"},
+            description = "Thinking level: off, minimal, low, medium, high, xhigh")
     String thinking;
 
-    @Option(names = {"--models"}, description = "Comma-separated model patterns for Ctrl+P cycling")
+    @Option(
+            names = {"--models"},
+            description = "Comma-separated model patterns for Ctrl+P cycling")
     String modelsFilter;
 
-    @Option(names = {"--tools"}, description = "Comma-separated list of tools to enable (e.g. read,bash,edit)")
+    @Option(
+            names = {"--tools"},
+            description = "Comma-separated list of tools to enable (e.g. read,bash,edit)")
     String toolsFilter;
 
-    @Option(names = {"--no-tools"}, description = "Disable all built-in tools")
+    @Option(
+            names = {"--no-tools"},
+            description = "Disable all built-in tools")
     boolean noTools;
 
-    @Option(names = {"-p", "--print"}, description = "Non-interactive mode: process prompt and exit")
+    @Option(
+            names = {"-p", "--print"},
+            description = "Non-interactive mode: process prompt and exit")
     boolean printMode;
 
-    @Option(names = {"-c", "--continue"}, description = "Continue previous session")
+    @Option(
+            names = {"-c", "--continue"},
+            description = "Continue previous session")
     boolean continueSession;
 
-    @Option(names = {"-r", "--resume"}, description = "Select a session to resume")
+    @Option(
+            names = {"-r", "--resume"},
+            description = "Select a session to resume")
     boolean resumeSession;
 
-    @Option(names = {"--session"}, description = "Use specific session file")
+    @Option(
+            names = {"--session"},
+            description = "Use specific session file")
     Path sessionPath;
 
-    @Option(names = {"--fork"}, description = "Fork specific session file into a new session")
+    @Option(
+            names = {"--fork"},
+            description = "Fork specific session file into a new session")
     Path forkPath;
 
-    @Option(names = {"--no-session"}, description = "Don't save session (ephemeral)")
+    @Option(
+            names = {"--no-session"},
+            description = "Don't save session (ephemeral)")
     boolean noSession;
 
-    @Option(names = {"--export"}, description = "Export session file to HTML", arity = "1..2")
+    @Option(
+            names = {"--export"},
+            description = "Export session file to HTML",
+            arity = "1..2")
     List<String> exportArgs;
 
-    @Option(names = {"--list-models"}, description = "List available models and exit", arity = "0..1",
+    @Option(
+            names = {"--list-models"},
+            description = "List available models and exit",
+            arity = "0..1",
             fallbackValue = "")
     String listModels;
 
-    @Option(names = {"--offline"}, description = "Disable startup network operations")
+    @Option(
+            names = {"--offline"},
+            description = "Disable startup network operations")
     boolean offline;
 
-    @Option(names = {"--verbose"}, description = "Enable verbose startup output")
+    @Option(
+            names = {"--verbose"},
+            description = "Enable verbose startup output")
     boolean verbose;
 
-    @Option(names = {"--cron-tick"}, description = "Execute due cron jobs and exit (for OS scheduler)", hidden = true)
+    @Option(
+            names = {"--cron-tick"},
+            description = "Execute due cron jobs and exit (for OS scheduler)",
+            hidden = true)
     boolean cronTick;
 
-    @Parameters(description = "Prompt arguments (joined with spaces if no -p given). " +
-            "Prefix with @ to include file contents.", arity = "0..*")
+    @Parameters(
+            description = "Prompt arguments (joined with spaces if no -p given). "
+                    + "Prefix with @ to include file contents.",
+            arity = "0..*")
     List<String> promptArgs;
 
     @Override
@@ -213,8 +273,12 @@ public class CampusClawCommand implements Callable<Integer> {
             if ("skill".equals(first)) {
                 return handleSkillCommand(promptArgs.subList(1, promptArgs.size()));
             }
-            if ("install".equals(first) || "remove".equals(first) || "uninstall".equals(first)
-                    || "update".equals(first) || "list".equals(first) || "config".equals(first)) {
+            if ("install".equals(first)
+                    || "remove".equals(first)
+                    || "uninstall".equals(first)
+                    || "update".equals(first)
+                    || "list".equals(first)
+                    || "config".equals(first)) {
                 return handlePackageCommand(first, promptArgs.subList(1, promptArgs.size()));
             }
         }
@@ -222,8 +286,11 @@ public class CampusClawCommand implements Callable<Integer> {
         String effectivePrompt = resolvePrompt();
 
         // Read piped stdin if not a TTY (skip for modes that don't need a prompt)
-        if (effectivePrompt == null && System.console() == null
-                && !"server".equals(mode) && !"rpc".equals(mode) && !"print".equals(mode)) {
+        if (effectivePrompt == null
+                && System.console() == null
+                && !"server".equals(mode)
+                && !"rpc".equals(mode)
+                && !"print".equals(mode)) {
             try {
                 String piped = new String(System.in.readAllBytes()).trim();
                 if (!piped.isEmpty()) {
@@ -254,7 +321,8 @@ public class CampusClawCommand implements Callable<Integer> {
         if (settings.customModels() != null) {
             for (Settings.CustomModelConfig cm : settings.customModels()) {
                 if (cm.id() == null || cm.api() == null || cm.baseUrl() == null || cm.apiKey() == null) {
-                    System.err.println("Warning: Skipping custom model with missing required fields (id, api, baseUrl, apiKey)");
+                    System.err.println(
+                            "Warning: Skipping custom model with missing required fields (id, api, baseUrl, apiKey)");
                     continue;
                 }
                 List<InputModality> modalities = List.of(InputModality.TEXT);
@@ -278,8 +346,7 @@ public class CampusClawCommand implements Callable<Integer> {
                         cm.maxTokens() != null ? cm.maxTokens() : 8192,
                         null,
                         cm.thinkingFormat(),
-                        resolvedApiKey
-                );
+                        resolvedApiKey);
                 modelRegistry.register(customModel);
             }
         }
@@ -323,15 +390,15 @@ public class CampusClawCommand implements Callable<Integer> {
         if (listModels != null) {
             String search = listModels.isBlank() ? null : listModels;
             var allModels = modelRegistry.getAllModels();
-            allModels.sort(Comparator.comparing((Model m) -> m.provider().value())
-                    .thenComparing(Model::id));
+            allModels.sort(
+                    Comparator.comparing((Model m) -> m.provider().value()).thenComparing(Model::id));
             for (var m : allModels) {
-                if (search != null && !m.id().toLowerCase().contains(search.toLowerCase())
+                if (search != null
+                        && !m.id().toLowerCase().contains(search.toLowerCase())
                         && !m.name().toLowerCase().contains(search.toLowerCase())) {
                     continue;
                 }
-                System.out.printf("  %-15s %-40s %s%n",
-                        m.provider().value(), m.id(), m.name());
+                System.out.printf("  %-15s %-40s %s%n", m.provider().value(), m.id(), m.name());
             }
             return 0;
         }
@@ -404,9 +471,8 @@ public class CampusClawCommand implements Callable<Integer> {
             effectiveTools = List.of();
         } else if (toolsFilter != null && !toolsFilter.isBlank()) {
             var allowed = List.of(toolsFilter.split(","));
-            effectiveTools = tools.stream()
-                    .filter(t -> allowed.contains(t.name()))
-                    .collect(Collectors.toList());
+            effectiveTools =
+                    tools.stream().filter(t -> allowed.contains(t.name())).collect(Collectors.toList());
         } else {
             effectiveTools = tools;
         }
@@ -414,11 +480,12 @@ public class CampusClawCommand implements Callable<Integer> {
         // 检查是否启用沙箱 skill 解析
         boolean useSandbox = Boolean.parseBoolean(System.getenv("SKILL_SANDBOX_PARSING"));
         AgentSession session = new AgentSession(
-                piAiService, modelRegistry, promptBuilder,
+                piAiService,
+                modelRegistry,
+                promptBuilder,
                 new SkillLoader(sandboxSkillParser, useSandbox),
                 new SkillExpander(sandboxSkillParser, useSandbox),
-                effectiveTools
-        );
+                effectiveTools);
 
         // Session persistence (skip if --no-session)
         SessionManager sessionManager = noSession ? null : new SessionManager();
@@ -438,8 +505,8 @@ public class CampusClawCommand implements Callable<Integer> {
                     for (var msg : messages) {
                         session.getAgent().getState().appendMessage(msg);
                     }
-                    System.err.println("Loaded session " + sessionManager.getSessionId()
-                            + " (" + messages.size() + " messages)");
+                    System.err.println(
+                            "Loaded session " + sessionManager.getSessionId() + " (" + messages.size() + " messages)");
                 } else {
                     System.err.println("Warning: session file empty or invalid: " + sessionPath);
                     sessionManager.createSession(effectiveCwd.toString());
@@ -454,8 +521,8 @@ public class CampusClawCommand implements Callable<Integer> {
                         session.getAgent().getState().appendMessage(msg);
                         sessionManager.appendMessage(msg);
                     }
-                    System.err.println("Forked session " + originalId + " → "
-                            + sessionManager.getSessionId() + " (" + messages.size() + " messages)");
+                    System.err.println("Forked session " + originalId + " → " + sessionManager.getSessionId() + " ("
+                            + messages.size() + " messages)");
                 }
             } else if (continueSession) {
                 // --continue: resume latest session (prefer ChatMemory, fallback to JSONL)
@@ -464,7 +531,8 @@ public class CampusClawCommand implements Callable<Integer> {
                 // Try ChatMemory (GaussDB) first
                 if (applicationContext != null) {
                     try {
-                        var store = applicationContext.getBean(com.huawei.hicampus.mate.matecampusclaw.assistant.memory.ChatMemoryStore.class);
+                        var store = applicationContext.getBean(
+                                com.huawei.hicampus.mate.matecampusclaw.assistant.memory.ChatMemoryStore.class);
                         var dbMessages = store.load(sessionManager.getSessionId());
                         if (!dbMessages.isEmpty()) {
                             messages = dbMessages;
@@ -483,8 +551,8 @@ public class CampusClawCommand implements Callable<Integer> {
                     for (var msg : messages) {
                         session.getAgent().getState().appendMessage(msg);
                     }
-                    System.err.println("Resumed session " + sessionManager.getSessionId()
-                            + " (" + messages.size() + " messages)");
+                    System.err.println(
+                            "Resumed session " + sessionManager.getSessionId() + " (" + messages.size() + " messages)");
                 } else {
                     sessionManager.createSession(effectiveCwd.toString());
                 }
@@ -518,23 +586,36 @@ public class CampusClawCommand implements Callable<Integer> {
         }
 
         if ("server".equals(mode)) {
-            new ServerMode(piAiService, modelRegistry, promptBuilder,
-                    effectiveTools, config, port != null ? port : 3000,
-                    host != null ? host : "localhost",
-                    sandboxSkillParser, useSandbox,
-                    modelCatalogService,
-                    serverSessionPersistenceEnabled).run();
+            new ServerMode(
+                            piAiService,
+                            modelRegistry,
+                            promptBuilder,
+                            effectiveTools,
+                            config,
+                            port != null ? port : 3000,
+                            host != null ? host : "localhost",
+                            sandboxSkillParser,
+                            useSandbox,
+                            modelCatalogService,
+                            serverSessionPersistenceEnabled)
+                    .run();
             return 0;
         }
 
         // Interactive mode (default)
         Terminal terminal = new JLineTerminal();
         try {
-            var interactiveMode = new InteractiveMode(commandRegistry, bashExecutor,
-                    new Compactor(piAiService,
+            var interactiveMode = new InteractiveMode(
+                    commandRegistry,
+                    bashExecutor,
+                    new Compactor(
+                            piAiService,
                             com.huawei.hicampus.mate.matecampusclaw.codingagent.compaction.CompactionConfig.defaults(),
                             agentModelResolver),
-                    modelRegistry, cronService, loopManager, applicationContext);
+                    modelRegistry,
+                    cronService,
+                    loopManager,
+                    applicationContext);
 
             // Resolve --models scoped models for Ctrl+P cycling.
             // Precedence: --models flag overrides settings.enabledModels.
@@ -547,7 +628,8 @@ public class CampusClawCommand implements Callable<Integer> {
                         continue;
                     }
                     for (var m : allRegistered) {
-                        if (com.huawei.hicampus.mate.matecampusclaw.codingagent.model.ModelCatalogService.matchesPattern(p, m)
+                        if (com.huawei.hicampus.mate.matecampusclaw.codingagent.model.ModelCatalogService
+                                        .matchesPattern(p, m)
                                 && scoped.stream().noneMatch(s -> ModelRegistry.modelsAreEqual(s, m))) {
                             scoped.add(m);
                         }
@@ -723,10 +805,9 @@ public class CampusClawCommand implements Callable<Integer> {
         // 检查是否启用沙箱 skill 解析（通过环境变量或配置）
         boolean useSandbox = Boolean.parseBoolean(System.getenv("SKILL_SANDBOX_PARSING"));
         var manager = new SkillManager(
-            com.huawei.hicampus.mate.matecampusclaw.codingagent.config.AppPaths.USER_SKILLS_DIR,
-            sandboxSkillParser,
-            useSandbox
-        );
+                com.huawei.hicampus.mate.matecampusclaw.codingagent.config.AppPaths.USER_SKILLS_DIR,
+                sandboxSkillParser,
+                useSandbox);
 
         switch (action) {
             case "install" -> {
@@ -742,7 +823,9 @@ public class CampusClawCommand implements Callable<Integer> {
                     // Show what was installed (使用支持沙箱的 SkillLoader)
                     var skillLoader = new SkillLoader(sandboxSkillParser, useSandbox);
                     var skills = skillLoader.loadFromDirectory(
-                            com.huawei.hicampus.mate.matecampusclaw.codingagent.config.AppPaths.USER_SKILLS_DIR.resolve(name), "user");
+                            com.huawei.hicampus.mate.matecampusclaw.codingagent.config.AppPaths.USER_SKILLS_DIR.resolve(
+                                    name),
+                            "user");
                     for (var skill : skills) {
                         System.out.println("  - " + skill.name() + ": " + skill.description());
                     }
@@ -760,8 +843,14 @@ public class CampusClawCommand implements Callable<Integer> {
                     return 0;
                 }
                 // Calculate column widths
-                int maxName = Math.max(4, infos.stream().mapToInt(i -> i.name().length()).max().orElse(4));
-                int maxType = Math.max(6, infos.stream().mapToInt(i -> i.sourceType().length()).max().orElse(6));
+                int maxName = Math.max(
+                        4, infos.stream().mapToInt(i -> i.name().length()).max().orElse(4));
+                int maxType = Math.max(
+                        6,
+                        infos.stream()
+                                .mapToInt(i -> i.sourceType().length())
+                                .max()
+                                .orElse(6));
                 String fmt = "  %-" + maxName + "s  %-" + maxType + "s  %s%n";
                 System.out.printf(fmt, "NAME", "SOURCE", "DESCRIPTION");
                 System.out.printf(fmt, "-".repeat(maxName), "-".repeat(maxType), "-".repeat(30));
@@ -793,7 +882,8 @@ public class CampusClawCommand implements Callable<Integer> {
                 Path localPath = Path.of(actionArgs.get(0));
                 try {
                     String name = manager.link(localPath);
-                    System.out.println("Linked skill: " + name + " → " + localPath.toAbsolutePath().normalize());
+                    System.out.println("Linked skill: " + name + " → "
+                            + localPath.toAbsolutePath().normalize());
                     return 0;
                 } catch (SkillInstallException e) {
                     System.err.println("Error: " + e.getMessage());
@@ -810,8 +900,11 @@ public class CampusClawCommand implements Callable<Integer> {
                     System.out.println("Importing skill from: " + archivePath);
                     String name = manager.importArchive(archivePath);
                     System.out.println("Skill imported: " + name);
-                    var skills = new SkillLoader().loadFromDirectory(
-                            com.huawei.hicampus.mate.matecampusclaw.codingagent.config.AppPaths.USER_SKILLS_DIR.resolve(name), "user");
+                    var skills = new SkillLoader()
+                            .loadFromDirectory(
+                                    com.huawei.hicampus.mate.matecampusclaw.codingagent.config.AppPaths.USER_SKILLS_DIR
+                                            .resolve(name),
+                                    "user");
                     for (var skill : skills) {
                         System.out.println("  - " + skill.name() + ": " + skill.description());
                     }
@@ -847,7 +940,8 @@ public class CampusClawCommand implements Callable<Integer> {
 
     private void printSkillHelp(String action) {
         if (action == null) {
-            System.out.println("""
+            System.out.println(
+                    """
                     Usage: campusclaw skill <command> [args]
 
                     Commands:
@@ -869,7 +963,9 @@ public class CampusClawCommand implements Callable<Integer> {
             return;
         }
         switch (action) {
-            case "install" -> System.out.println("""
+            case "install" ->
+                System.out.println(
+                        """
                     Usage: campusclaw skill install <git-url>
 
                     Clone a git repository into ~/.campusclaw/agent/skills/.
@@ -878,7 +974,9 @@ public class CampusClawCommand implements Callable<Integer> {
                     Examples:
                       campusclaw skill install https://github.com/user/my-skill
                       campusclaw skill install git@github.com:user/skill-collection.git""");
-            case "import" -> System.out.println("""
+            case "import" ->
+                System.out.println(
+                        """
                     Usage: campusclaw skill import <archive-path>
 
                     Extract a .zip or .tar.gz archive into ~/.campusclaw/agent/skills/.
@@ -890,17 +988,23 @@ public class CampusClawCommand implements Callable<Integer> {
                     Examples:
                       campusclaw skill import ./my-skill.zip
                       campusclaw skill import ~/Downloads/skill-collection.tar.gz""");
-            case "list", "ls" -> System.out.println("""
+            case "list", "ls" ->
+                System.out.println(
+                        """
                     Usage: campusclaw skill list
 
                     List all skills in ~/.campusclaw/agent/skills/ with their source and description.""");
-            case "remove", "rm", "uninstall" -> System.out.println("""
+            case "remove", "rm", "uninstall" ->
+                System.out.println(
+                        """
                     Usage: campusclaw skill remove <name>
 
                     Remove an installed skill by its directory name.
                     For git-installed skills, deletes the cloned directory.
                     For linked skills, removes the symlink (does not delete the original).""");
-            case "link" -> System.out.println("""
+            case "link" ->
+                System.out.println(
+                        """
                     Usage: campusclaw skill link <path>
 
                     Create a symbolic link in ~/.campusclaw/agent/skills/ pointing to a local directory.
@@ -908,7 +1012,9 @@ public class CampusClawCommand implements Callable<Integer> {
 
                     Example:
                       campusclaw skill link ./my-skill-in-progress""");
-            case "update" -> System.out.println("""
+            case "update" ->
+                System.out.println(
+                        """
                     Usage: campusclaw skill update <name>
 
                     Run 'git pull --ff-only' in the skill directory.
@@ -919,7 +1025,9 @@ public class CampusClawCommand implements Callable<Integer> {
 
     private void printPackageCommandHelp(String command) {
         switch (command) {
-            case "install" -> System.out.println("""
+            case "install" ->
+                System.out.println(
+                        """
                     Usage: pi install <source> [-l]
 
                     Install a package and add it to settings.
@@ -931,17 +1039,23 @@ public class CampusClawCommand implements Callable<Integer> {
                       pi install npm:@foo/bar
                       pi install git:github.com/user/repo
                       pi install ./local/path""");
-            case "remove" -> System.out.println("""
+            case "remove" ->
+                System.out.println(
+                        """
                     Usage: pi remove <source> [-l]
 
                     Remove a package source from settings.
                     Alias: pi uninstall <source> [-l]""");
-            case "update" -> System.out.println("""
+            case "update" ->
+                System.out.println(
+                        """
                     Usage: pi update [source]
 
                     Update installed packages.
                     If <source> is provided, only that package is updated.""");
-            case "list" -> System.out.println("""
+            case "list" ->
+                System.out.println(
+                        """
                     Usage: pi list
 
                     List installed packages from user and project settings.""");
@@ -1010,33 +1124,43 @@ public class CampusClawCommand implements Callable<Integer> {
     String getModel() {
         return model;
     }
+
     String getPrompt() {
         return prompt;
     }
+
     String getMode() {
         return mode;
     }
+
     Path getCwd() {
         return cwd;
     }
+
     String getSystemPrompt() {
         return systemPrompt;
     }
+
     List<String> getPromptArgs() {
         return promptArgs;
     }
+
     String getThinking() {
         return thinking;
     }
+
     String getToolsFilter() {
         return toolsFilter;
     }
+
     boolean isVerbose() {
         return verbose;
     }
+
     boolean isPrintMode() {
         return printMode;
     }
+
     String getAppendSystemPrompt() {
         return appendSystemPrompt;
     }

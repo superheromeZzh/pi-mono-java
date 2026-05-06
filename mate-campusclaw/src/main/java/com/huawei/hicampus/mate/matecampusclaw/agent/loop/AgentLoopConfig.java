@@ -24,22 +24,6 @@ import com.huawei.hicampus.mate.matecampusclaw.ai.types.SimpleStreamOptions;
  * provided, it takes precedence over {@code piAiService}.
  */
 public record AgentLoopConfig(
-    CampusClawAiService piAiService,
-    Model model,
-    MessageConverter convertToLlm,
-    ContextTransformer transformContext,
-    ToolExecutionPipeline toolPipeline,
-    ToolExecutionMode toolExecutionMode,
-    MessageQueue steeringQueue,
-    MessageQueue followUpQueue,
-    SimpleStreamOptions streamOptions,
-    StreamFunction streamFunction,
-    SteeringMessageSupplier getSteeringMessages,
-    SteeringMessageSupplier getFollowUpMessages
-) {
-
-    /** Legacy constructor for backward compatibility. */
-    public AgentLoopConfig(
         CampusClawAiService piAiService,
         Model model,
         MessageConverter convertToLlm,
@@ -48,11 +32,35 @@ public record AgentLoopConfig(
         ToolExecutionMode toolExecutionMode,
         MessageQueue steeringQueue,
         MessageQueue followUpQueue,
-        SimpleStreamOptions streamOptions
-    ) {
-        this(piAiService, model, convertToLlm, transformContext, toolPipeline,
-            toolExecutionMode, steeringQueue, followUpQueue, streamOptions,
-            null, null, null);
+        SimpleStreamOptions streamOptions,
+        StreamFunction streamFunction,
+        SteeringMessageSupplier getSteeringMessages,
+        SteeringMessageSupplier getFollowUpMessages) {
+
+    /** Legacy constructor for backward compatibility. */
+    public AgentLoopConfig(
+            CampusClawAiService piAiService,
+            Model model,
+            MessageConverter convertToLlm,
+            ContextTransformer transformContext,
+            ToolExecutionPipeline toolPipeline,
+            ToolExecutionMode toolExecutionMode,
+            MessageQueue steeringQueue,
+            MessageQueue followUpQueue,
+            SimpleStreamOptions streamOptions) {
+        this(
+                piAiService,
+                model,
+                convertToLlm,
+                transformContext,
+                toolPipeline,
+                toolExecutionMode,
+                steeringQueue,
+                followUpQueue,
+                streamOptions,
+                null,
+                null,
+                null);
     }
 
     public AgentLoopConfig {

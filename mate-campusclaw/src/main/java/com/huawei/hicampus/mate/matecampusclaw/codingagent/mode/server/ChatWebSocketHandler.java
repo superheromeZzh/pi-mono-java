@@ -11,6 +11,9 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectWriter;
 import com.huawei.hicampus.mate.matecampusclaw.agent.Agent;
 import com.huawei.hicampus.mate.matecampusclaw.agent.event.AgentEndEvent;
 import com.huawei.hicampus.mate.matecampusclaw.agent.event.AgentEvent;
@@ -32,9 +35,6 @@ import com.huawei.hicampus.mate.matecampusclaw.ai.types.UserMessage;
 import com.huawei.hicampus.mate.matecampusclaw.codingagent.model.ModelCatalogService;
 import com.huawei.hicampus.mate.matecampusclaw.codingagent.session.AgentSession;
 import com.huawei.hicampus.mate.matecampusclaw.codingagent.session.SessionManager;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.ObjectWriter;
 
 import org.reactivestreams.Publisher;
 import org.slf4j.Logger;
@@ -143,7 +143,8 @@ public class ChatWebSocketHandler {
             }
         });
 
-        Mono<Void> inboundPipeline = in.receive().asString()
+        Mono<Void> inboundPipeline = in.receive()
+                .asString()
                 .doOnNext(raw -> handleCommand(raw, session, convIdRef, outbound))
                 .then();
 
@@ -174,7 +175,8 @@ public class ChatWebSocketHandler {
     // Command dispatch
     // =========================================================================
 
-    private void handleCommand(String raw, AgentSession session, AtomicReference<String> convIdRef, Sinks.Many<String> out) {
+    private void handleCommand(
+            String raw, AgentSession session, AtomicReference<String> convIdRef, Sinks.Many<String> out) {
         String id = null;
         String type = "unknown";
         try {
@@ -194,7 +196,8 @@ public class ChatWebSocketHandler {
                 case "list_models" -> handleListModels(cmd, id, session, out);
                 case "set_thinking_level" -> handleSetThinkingLevel(cmd, id, session, out);
                 case "get_state" -> handleGetState(id, session, convIdRef.get(), out);
-                case "get_history" -> emitResponse(out, id, true, Map.of("messages", messagesToNode(session.getHistory())));
+                case "get_history" ->
+                    emitResponse(out, id, true, Map.of("messages", messagesToNode(session.getHistory())));
                 case "get_prompt_templates" -> handleGetPromptTemplates(id, session, out);
                 case "list_skills" -> handleListSkills(id, session, out);
                 case "ping" -> out.emitNext(PONG_FRAME, BUSY_LOOP);
@@ -206,7 +209,8 @@ public class ChatWebSocketHandler {
         }
     }
 
-    private void handleNewSession(String id, AgentSession session, AtomicReference<String> convIdRef, Sinks.Many<String> out) {
+    private void handleNewSession(
+            String id, AgentSession session, AtomicReference<String> convIdRef, Sinks.Many<String> out) {
         session.newSession();
 
         SessionManager oldSm = session.getSessionManager();
@@ -228,7 +232,8 @@ public class ChatWebSocketHandler {
         emitResponse(out, id, true, Map.of("conversation_id", newId));
     }
 
-    private void handlePrompt(JsonNode cmd, String id, AgentSession session, String conversationId, Sinks.Many<String> out) {
+    private void handlePrompt(
+            JsonNode cmd, String id, AgentSession session, String conversationId, Sinks.Many<String> out) {
         String message = cmd.path("message").asText();
         if (message.isEmpty()) {
             emitResponse(out, id, false, "message is required");
@@ -345,7 +350,9 @@ public class ChatWebSocketHandler {
         state.put("conversation_id", conversationId);
         state.put("isStreaming", session.isStreaming());
         state.put("model", session.getModelId());
-        state.put("thinkingLevel", session.getAgent().getState().getThinkingLevel().value());
+        state.put(
+                "thinkingLevel",
+                session.getAgent().getState().getThinkingLevel().value());
         state.put("messageCount", session.getHistory().size());
         emitResponse(out, id, true, state);
     }
@@ -388,9 +395,7 @@ public class ChatWebSocketHandler {
     private String serializeEvent(AgentEvent event, String conversationId) {
         try {
             if (event instanceof AgentStartEvent) {
-                return MAPPER.writeValueAsString(Map.of(
-                        "type", "agent_start",
-                        "conversation_id", conversationId));
+                return MAPPER.writeValueAsString(Map.of("type", "agent_start", "conversation_id", conversationId));
             } else if (event instanceof MessageStartEvent ms) {
                 var m = new LinkedHashMap<String, Object>();
                 m.put("type", "message_start");

@@ -61,7 +61,8 @@ class UsageAndCostTest {
 
         @Test
         void deserialization() throws JsonProcessingException {
-            var json = """
+            var json =
+                    """
                 {"input":0.01,"output":0.03,"cacheRead":0.005,"cacheWrite":0.002,"total":0.047}""";
             var cost = mapper.readValue(json, Cost.class);
             assertEquals(0.01, cost.input());
@@ -132,7 +133,8 @@ class UsageAndCostTest {
 
         @Test
         void deserialization() throws JsonProcessingException {
-            var json = """
+            var json =
+                    """
                 {
                   "input": 1000,
                   "output": 500,
@@ -159,8 +161,7 @@ class UsageAndCostTest {
 
         @Test
         void roundTrip() throws JsonProcessingException {
-            var original = new Usage(2000, 1000, 500, 250, 3750,
-                new Cost(0.02, 0.06, 0.005, 0.003, 0.088));
+            var original = new Usage(2000, 1000, 500, 250, 3750, new Cost(0.02, 0.06, 0.005, 0.003, 0.088));
             var json = mapper.writeValueAsString(original);
             var restored = mapper.readValue(json, Usage.class);
             assertEquals(original, restored);

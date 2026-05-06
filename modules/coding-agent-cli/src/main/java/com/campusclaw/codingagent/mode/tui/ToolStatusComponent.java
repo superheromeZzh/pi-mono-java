@@ -174,7 +174,7 @@ public class ToolStatusComponent implements Component {
     }
 
     @Override
-    public void invalidate() { }
+    public void invalidate() {}
 
     private String buildTitle() {
         // Bash: show "$ command" in bold white (matching campusclaw — command IS the title)

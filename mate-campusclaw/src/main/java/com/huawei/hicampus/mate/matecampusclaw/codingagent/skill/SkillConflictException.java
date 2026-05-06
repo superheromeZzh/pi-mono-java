@@ -32,7 +32,10 @@ public class SkillConflictException extends SkillInstallException {
                 sb.append(", ");
             }
             Conflict c = conflicts.get(i);
-            sb.append(c.skill()).append(" (already in package ").append(c.existingPackage()).append(")");
+            sb.append(c.skill())
+                    .append(" (already in package ")
+                    .append(c.existingPackage())
+                    .append(")");
         }
         return sb.toString();
     }

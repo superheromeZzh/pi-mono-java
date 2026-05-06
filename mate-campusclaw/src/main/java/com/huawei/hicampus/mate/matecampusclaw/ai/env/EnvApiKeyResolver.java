@@ -31,10 +31,8 @@ public class EnvApiKeyResolver {
         return switch (provider) {
             case ANTHROPIC -> firstEnv("ANTHROPIC_API_KEY", "ANTHROPIC_OAUTH_TOKEN");
             case OPENAI -> firstEnv("OPENAI_API_KEY");
-            case GOOGLE -> firstEnv("GOOGLE_API_KEY", "GOOGLE_CLOUD_API_KEY")
-                    .or(this::detectGoogleADC);
-            case GOOGLE_VERTEX -> firstEnv("GOOGLE_CLOUD_API_KEY")
-                    .or(this::detectGoogleADC);
+            case GOOGLE -> firstEnv("GOOGLE_API_KEY", "GOOGLE_CLOUD_API_KEY").or(this::detectGoogleADC);
+            case GOOGLE_VERTEX -> firstEnv("GOOGLE_CLOUD_API_KEY").or(this::detectGoogleADC);
             case AMAZON_BEDROCK -> detectBedrockCredentials();
             case AZURE_OPENAI -> firstEnv("AZURE_OPENAI_API_KEY");
             case MISTRAL -> firstEnv("MISTRAL_API_KEY");
@@ -100,16 +98,16 @@ public class EnvApiKeyResolver {
         }
         // IAM keys
         if (envSet("AWS_ACCESS_KEY_ID") && envSet("AWS_SECRET_ACCESS_KEY")) {
-                return Optional.of(AUTHENTICATED);
-            }
+            return Optional.of(AUTHENTICATED);
+        }
         // Bearer token
         if (envSet("AWS_BEARER_TOKEN_BEDROCK")) {
             return Optional.of(AUTHENTICATED);
         }
         // Container credentials
         if (envSet("AWS_CONTAINER_CREDENTIALS_FULL_URI") || envSet("AWS_CONTAINER_CREDENTIALS_RELATIVE_URI")) {
-                return Optional.of(AUTHENTICATED);
-            }
+            return Optional.of(AUTHENTICATED);
+        }
         // Web identity (IRSA)
         if (envSet("AWS_WEB_IDENTITY_TOKEN_FILE")) {
             return Optional.of(AUTHENTICATED);

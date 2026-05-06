@@ -91,9 +91,7 @@ class WriteToolTest {
 
         @Test
         void writesFileContent() throws Exception {
-            var result = writeTool.execute("c1",
-                    Map.of("path", "test.txt", "content", "hello world"),
-                    null, null);
+            var result = writeTool.execute("c1", Map.of("path", "test.txt", "content", "hello world"), null, null);
 
             assertTrue(extractText(result).contains("Wrote test.txt"));
             verify(writeOperations).writeFile(eq(tempDir.resolve("test.txt")), eq("hello world"));
@@ -101,9 +99,7 @@ class WriteToolTest {
 
         @Test
         void createsParentDirectories() throws Exception {
-            writeTool.execute("c2",
-                    Map.of("path", "a/b/c/deep.txt", "content", "deep"),
-                    null, null);
+            writeTool.execute("c2", Map.of("path", "a/b/c/deep.txt", "content", "deep"), null, null);
 
             verify(writeOperations).mkdir(tempDir.resolve("a/b/c"));
             verify(writeOperations).writeFile(eq(tempDir.resolve("a/b/c/deep.txt")), eq("deep"));
@@ -111,9 +107,7 @@ class WriteToolTest {
 
         @Test
         void mkdirBeforeWrite() throws Exception {
-            writeTool.execute("c3",
-                    Map.of("path", "sub/file.txt", "content", "data"),
-                    null, null);
+            writeTool.execute("c3", Map.of("path", "sub/file.txt", "content", "data"), null, null);
 
             InOrder inOrder = inOrder(writeOperations);
             inOrder.verify(writeOperations).mkdir(tempDir.resolve("sub"));
@@ -122,9 +116,7 @@ class WriteToolTest {
 
         @Test
         void writesEmptyContent() throws Exception {
-            var result = writeTool.execute("c4",
-                    Map.of("path", "empty.txt", "content", ""),
-                    null, null);
+            var result = writeTool.execute("c4", Map.of("path", "empty.txt", "content", ""), null, null);
 
             assertTrue(extractText(result).contains("Wrote"));
             verify(writeOperations).writeFile(eq(tempDir.resolve("empty.txt")), eq(""));
@@ -132,9 +124,7 @@ class WriteToolTest {
 
         @Test
         void writesUtf8Content() throws Exception {
-            writeTool.execute("c5",
-                    Map.of("path", "utf8.txt", "content", "你好世界"),
-                    null, null);
+            writeTool.execute("c5", Map.of("path", "utf8.txt", "content", "你好世界"), null, null);
 
             verify(writeOperations).writeFile(any(), eq("你好世界"));
         }
@@ -149,30 +139,25 @@ class WriteToolTest {
 
         @Test
         void missingPathReturnsError() throws Exception {
-            var result = writeTool.execute("c6",
-                    Map.of("content", "data"), null, null);
+            var result = writeTool.execute("c6", Map.of("content", "data"), null, null);
             assertTrue(extractText(result).contains("Error"));
         }
 
         @Test
         void blankPathReturnsError() throws Exception {
-            var result = writeTool.execute("c7",
-                    Map.of("path", "  ", "content", "data"), null, null);
+            var result = writeTool.execute("c7", Map.of("path", "  ", "content", "data"), null, null);
             assertTrue(extractText(result).contains("Error"));
         }
 
         @Test
         void missingContentReturnsError() throws Exception {
-            var result = writeTool.execute("c8",
-                    Map.of("path", "test.txt"), null, null);
+            var result = writeTool.execute("c8", Map.of("path", "test.txt"), null, null);
             assertTrue(extractText(result).contains("Error"));
         }
 
         @Test
         void pathTraversalReturnsError() throws Exception {
-            var result = writeTool.execute("c9",
-                    Map.of("path", "../../etc/passwd", "content", "hack"),
-                    null, null);
+            var result = writeTool.execute("c9", Map.of("path", "../../etc/passwd", "content", "hack"), null, null);
             assertTrue(extractText(result).contains("Error"));
             verify(writeOperations, never()).writeFile(any(), any());
         }
@@ -181,10 +166,9 @@ class WriteToolTest {
         void ioExceptionPropagates() throws IOException {
             doThrow(new IOException("disk full")).when(writeOperations).writeFile(any(), any());
 
-            assertThrows(Exception.class, () ->
-                    writeTool.execute("c10",
-                            Map.of("path", "fail.txt", "content", "data"),
-                            null, null));
+            assertThrows(
+                    Exception.class,
+                    () -> writeTool.execute("c10", Map.of("path", "fail.txt", "content", "data"), null, null));
         }
     }
 
@@ -197,9 +181,7 @@ class WriteToolTest {
 
         @Test
         void writeGoesThoughMutationQueue() throws Exception {
-            writeTool.execute("c11",
-                    Map.of("path", "queued.txt", "content", "queued"),
-                    null, null);
+            writeTool.execute("c11", Map.of("path", "queued.txt", "content", "queued"), null, null);
 
             // Write happened means the queue executed the callable
             verify(writeOperations).writeFile(eq(tempDir.resolve("queued.txt")), eq("queued"));

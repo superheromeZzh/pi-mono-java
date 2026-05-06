@@ -39,8 +39,10 @@ public class ModelCatalogService {
     private final ProviderConfigResolver providerConfigResolver;
 
     @Autowired
-    public ModelCatalogService(ModelRegistry modelRegistry, SettingsManager settingsManager,
-                               ProviderConfigResolver providerConfigResolver) {
+    public ModelCatalogService(
+            ModelRegistry modelRegistry,
+            SettingsManager settingsManager,
+            ProviderConfigResolver providerConfigResolver) {
         this.modelRegistry = modelRegistry;
         this.settingsManager = settingsManager;
         this.providerConfigResolver = providerConfigResolver;

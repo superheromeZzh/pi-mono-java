@@ -22,8 +22,7 @@ public record InstalledSkillRecord(
         @JsonProperty("sourceType") String sourceType,
         @JsonProperty("gitUrl") String gitUrl,
         @JsonProperty("localPath") String localPath,
-        @JsonProperty("installedAt") String installedAt
-) {
+        @JsonProperty("installedAt") String installedAt) {
     public static final String SOURCE_GIT = "git";
     public static final String SOURCE_LINK = "link";
     public static final String SOURCE_ARCHIVE = "archive";

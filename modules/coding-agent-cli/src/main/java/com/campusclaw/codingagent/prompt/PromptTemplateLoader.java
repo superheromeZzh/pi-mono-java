@@ -34,10 +34,9 @@ import org.slf4j.LoggerFactory;
 public class PromptTemplateLoader {
 
     private static final Logger log = LoggerFactory.getLogger(PromptTemplateLoader.class);
-    private static final Pattern FRONTMATTER_PATTERN = Pattern.compile(
-            "\\A---\\s*\\n(.*?)\\n---\\s*\\n", Pattern.DOTALL);
-    private static final Pattern DESCRIPTION_PATTERN = Pattern.compile(
-            "^description:\\s*(.+)$", Pattern.MULTILINE);
+    private static final Pattern FRONTMATTER_PATTERN =
+            Pattern.compile("\\A---\\s*\\n(.*?)\\n---\\s*\\n", Pattern.DOTALL);
+    private static final Pattern DESCRIPTION_PATTERN = Pattern.compile("^description:\\s*(.+)$", Pattern.MULTILINE);
 
     /**
      * Loads prompt templates from global and project directories.
@@ -54,7 +53,8 @@ public class PromptTemplateLoader {
         loadFromDir(globalDir, "user", byName);
 
         // Project prompts override
-        Path projectDir = cwd.resolve(com.campusclaw.codingagent.config.AppPaths.CONFIG_DIR_NAME).resolve("prompts");
+        Path projectDir = cwd.resolve(com.campusclaw.codingagent.config.AppPaths.CONFIG_DIR_NAME)
+                .resolve("prompts");
         loadFromDir(projectDir, "project", byName);
 
         return List.copyOf(byName.values());
@@ -103,9 +103,7 @@ public class PromptTemplateLoader {
                 for (String line : body.split("\n")) {
                     String trimmed = line.trim();
                     if (!trimmed.isEmpty()) {
-                        description = trimmed.length() > 60
-                                ? trimmed.substring(0, 60) + "..."
-                                : trimmed;
+                        description = trimmed.length() > 60 ? trimmed.substring(0, 60) + "..." : trimmed;
                         break;
                     }
                 }

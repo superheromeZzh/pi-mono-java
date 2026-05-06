@@ -11,6 +11,4 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public record FeaturesInfo(
-    @JsonProperty("methods") List<String> methods,
-    @JsonProperty("events") List<String> events
-) {}
+        @JsonProperty("methods") List<String> methods, @JsonProperty("events") List<String> events) {}

@@ -12,8 +12,7 @@ import java.util.List;
  */
 final class DiffUtils {
 
-    private DiffUtils() {
-    }
+    private DiffUtils() {}
 
     static final int CONTEXT_LINES = 3;
 
@@ -47,9 +46,8 @@ final class DiffUtils {
             int newStart = hunk[2];
             int newEnd = hunk[3];
 
-            sb.append(String.format("@@ -%d,%d +%d,%d @@\n",
-                    oldStart + 1, oldEnd - oldStart,
-                    newStart + 1, newEnd - newStart));
+            sb.append(String.format(
+                    "@@ -%d,%d +%d,%d @@\n", oldStart + 1, oldEnd - oldStart, newStart + 1, newEnd - newStart));
 
             appendHunkContent(sb, oldLines, newLines, oldStart, oldEnd, newStart, newEnd, changes);
         }
@@ -105,7 +103,7 @@ final class DiffUtils {
 
         List<int[]> changes = new ArrayList<>();
         // Each change: [oldLineStart, oldLineEnd, newLineStart, newLineEnd]
-        changes.add(new int[]{oldDiffStart, oldDiffEnd, newDiffStart, newDiffEnd});
+        changes.add(new int[] {oldDiffStart, oldDiffEnd, newDiffStart, newDiffEnd});
         return changes;
     }
 
@@ -117,22 +115,22 @@ final class DiffUtils {
             int ctxAfterNew = Math.min(CONTEXT_LINES, newLen - change[3]);
             int ctxAfter = Math.min(ctxAfterOld, ctxAfterNew);
 
-            hunks.add(new int[]{
-                    change[0] - ctxBefore,
-                    change[1] + ctxAfter,
-                    change[2] - ctxBefore,
-                    change[3] + ctxAfter
-            });
+            hunks.add(
+                    new int[] {change[0] - ctxBefore, change[1] + ctxAfter, change[2] - ctxBefore, change[3] + ctxAfter
+                    });
         }
         return hunks;
     }
 
     private static void appendHunkContent(
             StringBuilder sb,
-            String[] oldLines, String[] newLines,
-            int oldStart, int oldEnd, int newStart, int newEnd,
-            List<int[]> changes
-    ) {
+            String[] oldLines,
+            String[] newLines,
+            int oldStart,
+            int oldEnd,
+            int newStart,
+            int newEnd,
+            List<int[]> changes) {
         int[] change = changes.get(0);
         // Context before
         for (int i = oldStart; i < change[0]; i++) {

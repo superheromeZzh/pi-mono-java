@@ -56,7 +56,8 @@ public class MockApiProvider implements ApiProvider {
     }
 
     @Override
-    public AssistantMessageEventStream streamSimple(Model model, Context context, @Nullable SimpleStreamOptions options) {
+    public AssistantMessageEventStream streamSimple(
+            Model model, Context context, @Nullable SimpleStreamOptions options) {
         return buildStream();
     }
 
@@ -80,29 +81,27 @@ public class MockApiProvider implements ApiProvider {
 
     private AssistantMessage defaultPartialMessage() {
         return new AssistantMessage(
-            List.of(new TextContent("Hello from mock")),
-            api.value(),
-            "mock",
-            "mock-model",
-            null,
-            Usage.empty(),
-            StopReason.STOP,
-            null,
-            System.currentTimeMillis()
-        );
+                List.of(new TextContent("Hello from mock")),
+                api.value(),
+                "mock",
+                "mock-model",
+                null,
+                Usage.empty(),
+                StopReason.STOP,
+                null,
+                System.currentTimeMillis());
     }
 
     private AssistantMessage defaultFinalMessage() {
         return new AssistantMessage(
-            List.of(new TextContent("Hello from mock")),
-            api.value(),
-            "mock",
-            "mock-model",
-            null,
-            Usage.empty(),
-            StopReason.STOP,
-            null,
-            System.currentTimeMillis()
-        );
+                List.of(new TextContent("Hello from mock")),
+                api.value(),
+                "mock",
+                "mock-model",
+                null,
+                Usage.empty(),
+                StopReason.STOP,
+                null,
+                System.currentTimeMillis());
     }
 }

@@ -29,8 +29,7 @@ public class SkillExpander {
      * Matches {@code /skill:name} at the start, optionally followed by whitespace and args.
      * Group 1 = skill name, Group 2 = optional args (may be null).
      */
-    private static final Pattern SKILL_COMMAND = Pattern.compile(
-            "^/skill:([a-z0-9-]+)(?:\\s+(.*))?$", Pattern.DOTALL);
+    private static final Pattern SKILL_COMMAND = Pattern.compile("^/skill:([a-z0-9-]+)(?:\\s+(.*))?$", Pattern.DOTALL);
 
     private final SandboxSkillParser sandboxParser;
     private final boolean sandboxEnabled;
@@ -96,8 +95,11 @@ public class SkillExpander {
         }
 
         StringBuilder sb = new StringBuilder();
-        sb.append("<skill name=\"").append(skillName)
-                .append("\" location=\"").append(skill.filePath()).append("\">\n");
+        sb.append("<skill name=\"")
+                .append(skillName)
+                .append("\" location=\"")
+                .append(skill.filePath())
+                .append("\">\n");
         sb.append("References are relative to ").append(skill.baseDir()).append(".\n");
         sb.append(body);
         if (!body.endsWith("\n")) {
@@ -126,8 +128,10 @@ public class SkillExpander {
                 log.debug("Loading skill body in sandbox: {}", skill.filePath());
                 return sandboxParser.loadBodyInSandbox(skill.filePath());
             } catch (SkillLoadException e) {
-                log.warn("Sandbox body loading failed for {}, falling back to direct reading: {}",
-                        skill.filePath(), e.getMessage());
+                log.warn(
+                        "Sandbox body loading failed for {}, falling back to direct reading: {}",
+                        skill.filePath(),
+                        e.getMessage());
                 // Fall back to direct reading
             }
         }

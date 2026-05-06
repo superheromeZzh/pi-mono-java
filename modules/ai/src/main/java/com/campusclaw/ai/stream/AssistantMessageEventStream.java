@@ -29,24 +29,21 @@ public class AssistantMessageEventStream {
      * Creates a new AssistantMessageEventStream.
      */
     public AssistantMessageEventStream() {
-        this.delegate = new EventStream<>(
-            AssistantMessageEventStream::isTerminal,
-            AssistantMessageEventStream::extractMessage
-        );
+        this.delegate =
+                new EventStream<>(AssistantMessageEventStream::isTerminal, AssistantMessageEventStream::extractMessage);
     }
 
     private static boolean isTerminal(AssistantMessageEvent event) {
-        return event instanceof AssistantMessageEvent.DoneEvent
-            || event instanceof AssistantMessageEvent.ErrorEvent;
+        return event instanceof AssistantMessageEvent.DoneEvent || event instanceof AssistantMessageEvent.ErrorEvent;
     }
 
     private static AssistantMessage extractMessage(AssistantMessageEvent event) {
         return switch (event) {
             case AssistantMessageEvent.DoneEvent e -> e.message();
             case AssistantMessageEvent.ErrorEvent e -> e.error();
-            default -> throw new IllegalStateException(
-                "extractMessage called on non-terminal event: " + event.getClass().getSimpleName()
-            );
+            default ->
+                throw new IllegalStateException("extractMessage called on non-terminal event: "
+                        + event.getClass().getSimpleName());
         };
     }
 

@@ -31,7 +31,9 @@ public class SessionTree {
         entries.add(entry);
         entriesById.put(entry.id(), entry);
         if (entry.parentId() != null) {
-            childrenMap.computeIfAbsent(entry.parentId(), k -> new ArrayList<>()).add(entry.id());
+            childrenMap
+                    .computeIfAbsent(entry.parentId(), k -> new ArrayList<>())
+                    .add(entry.id());
         }
         currentEntryId = entry.id();
     }

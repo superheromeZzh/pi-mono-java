@@ -11,7 +11,6 @@ import com.fasterxml.jackson.annotation.JsonValue;
  * Transport protocol for streaming LLM responses.
  */
 public enum Transport {
-
     SSE("sse"),
     WEBSOCKET("websocket"),
     AUTO("auto");

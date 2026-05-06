@@ -77,9 +77,8 @@ public class Input implements Component, Focusable {
 
     // Undo
     private record InputSnapshot(String value, int cursor) {}
-    private final UndoStack<InputSnapshot> undoStack = new UndoStack<>(
-            s -> new InputSnapshot(s.value, s.cursor)
-    );
+
+    private final UndoStack<InputSnapshot> undoStack = new UndoStack<>(s -> new InputSnapshot(s.value, s.cursor));
 
     // Callbacks
     private Consumer<String> onSubmit;
@@ -175,7 +174,8 @@ public class Input implements Component, Focusable {
             }
 
             visibleText = AnsiUtils.sliceByColumn(value, startCol, startCol + scrollWidth);
-            String beforeCursor = AnsiUtils.sliceByColumn(value, startCol, startCol + Math.max(0, cursorCol - startCol));
+            String beforeCursor =
+                    AnsiUtils.sliceByColumn(value, startCol, startCol + Math.max(0, cursorCol - startCol));
             cursorDisplayPos = beforeCursor.length();
         }
 
@@ -184,8 +184,7 @@ public class Input implements Component, Focusable {
 
         if (focused) {
             String before = visibleText.substring(0, Math.min(cursorDisplayPos, visibleText.length()));
-            String after = cursorDisplayPos < visibleText.length()
-                    ? visibleText.substring(cursorDisplayPos) : "";
+            String after = cursorDisplayPos < visibleText.length() ? visibleText.substring(cursorDisplayPos) : "";
 
             sb.append(before);
             if (!after.isEmpty()) {

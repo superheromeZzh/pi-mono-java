@@ -44,9 +44,7 @@ public class SettingsBackedProviderConfigResolver implements ProviderConfigResol
     private final AuthStore authStore;
 
     public SettingsBackedProviderConfigResolver(
-            SettingsManager settingsManager,
-            EnvApiKeyResolver envApiKeyResolver,
-            AuthStore authStore) {
+            SettingsManager settingsManager, EnvApiKeyResolver envApiKeyResolver, AuthStore authStore) {
         this.settingsManager = settingsManager;
         this.envApiKeyResolver = envApiKeyResolver;
         this.authStore = authStore;
@@ -85,8 +83,7 @@ public class SettingsBackedProviderConfigResolver implements ProviderConfigResol
             if (key == null) {
                 continue;
             }
-            if (key.equalsIgnoreCase(provider.value())
-                    || key.replace('_', '-').equalsIgnoreCase(provider.value())) {
+            if (key.equalsIgnoreCase(provider.value()) || key.replace('_', '-').equalsIgnoreCase(provider.value())) {
                 return e.getValue();
             }
         }

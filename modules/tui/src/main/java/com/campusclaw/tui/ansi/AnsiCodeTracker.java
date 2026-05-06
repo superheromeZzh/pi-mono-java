@@ -61,8 +61,8 @@ class AnsiCodeTracker {
                     i += 3;
                     continue;
                 } else if (i + 4 < parts.length && parts[i + 1].equals("2")) {
-                    String colorCode = parts[i] + ";" + parts[i + 1] + ";" + parts[i + 2]
-                            + ";" + parts[i + 3] + ";" + parts[i + 4];
+                    String colorCode = parts[i] + ";" + parts[i + 1] + ";" + parts[i + 2] + ";" + parts[i + 3] + ";"
+                            + parts[i + 4];
                     if (code == 38) {
                         fgColor = colorCode;
                     } else {
@@ -165,9 +165,16 @@ class AnsiCodeTracker {
     }
 
     boolean hasActiveCodes() {
-        return bold || dim || italic || underline || blink
-                || inverse || hidden || strikethrough
-                || fgColor != null || bgColor != null;
+        return bold
+                || dim
+                || italic
+                || underline
+                || blink
+                || inverse
+                || hidden
+                || strikethrough
+                || fgColor != null
+                || bgColor != null;
     }
 
     String getLineEndReset() {

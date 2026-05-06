@@ -44,13 +44,22 @@ public class GlobTool implements AgentTool {
     static final int MAX_RESULTS = 1000;
 
     static final Set<String> EXCLUDED_DIRS = Set.of(
-            ".git", ".svn", ".hg",
+            ".git",
+            ".svn",
+            ".hg",
             "node_modules",
-            "build", "dist", "out", "target",
-            ".gradle", ".idea", ".vscode",
-            "__pycache__", ".tox", ".mypy_cache",
-            "vendor", ".bundle"
-    );
+            "build",
+            "dist",
+            "out",
+            "target",
+            ".gradle",
+            ".idea",
+            ".vscode",
+            "__pycache__",
+            ".tox",
+            ".mypy_cache",
+            "vendor",
+            ".bundle");
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
@@ -83,12 +92,16 @@ public class GlobTool implements AgentTool {
     @Override
     public JsonNode parameters() {
         ObjectNode props = MAPPER.createObjectNode();
-        props.set("pattern", MAPPER.createObjectNode()
-                .put("type", "string")
-                .put("description", "Glob pattern to match files (e.g. \"**/*.java\")"));
-        props.set("path", MAPPER.createObjectNode()
-                .put("type", "string")
-                .put("description", "Starting directory (optional, defaults to cwd)"));
+        props.set(
+                "pattern",
+                MAPPER.createObjectNode()
+                        .put("type", "string")
+                        .put("description", "Glob pattern to match files (e.g. \"**/*.java\")"));
+        props.set(
+                "path",
+                MAPPER.createObjectNode()
+                        .put("type", "string")
+                        .put("description", "Starting directory (optional, defaults to cwd)"));
 
         return MAPPER.createObjectNode()
                 .put("type", "object")
@@ -98,11 +111,8 @@ public class GlobTool implements AgentTool {
 
     @Override
     public AgentToolResult execute(
-            String toolCallId,
-            Map<String, Object> params,
-            CancellationToken signal,
-            AgentToolUpdateCallback onUpdate
-    ) throws Exception {
+            String toolCallId, Map<String, Object> params, CancellationToken signal, AgentToolUpdateCallback onUpdate)
+            throws Exception {
         String pattern = (String) params.get("pattern");
         if (pattern == null || pattern.isEmpty()) {
             return errorResult("Error: pattern is required");
@@ -139,9 +149,7 @@ public class GlobTool implements AgentTool {
                             return FileVisitResult.SKIP_SUBTREE;
                         }
                     }
-                    return matches.size() >= MAX_RESULTS
-                            ? FileVisitResult.TERMINATE
-                            : FileVisitResult.CONTINUE;
+                    return matches.size() >= MAX_RESULTS ? FileVisitResult.TERMINATE : FileVisitResult.CONTINUE;
                 }
 
                 @Override
@@ -151,7 +159,8 @@ public class GlobTool implements AgentTool {
                     }
                     Path relative = searchRoot.relativize(file);
                     if (matcher.matches(relative)) {
-                        matches.add(new MatchedFile(relative, attrs.lastModifiedTime().toMillis()));
+                        matches.add(new MatchedFile(
+                                relative, attrs.lastModifiedTime().toMillis()));
                     }
                     return FileVisitResult.CONTINUE;
                 }
@@ -183,20 +192,13 @@ public class GlobTool implements AgentTool {
         return textResult(sb.toString());
     }
 
-    private record MatchedFile(Path relativePath, long modifiedMillis) {
-    }
+    private record MatchedFile(Path relativePath, long modifiedMillis) {}
 
     private static AgentToolResult textResult(String text) {
-        return new AgentToolResult(
-                List.<ContentBlock>of(new TextContent(text)),
-                null
-        );
+        return new AgentToolResult(List.<ContentBlock>of(new TextContent(text)), null);
     }
 
     private static AgentToolResult errorResult(String message) {
-        return new AgentToolResult(
-                List.<ContentBlock>of(new TextContent(message)),
-                null
-        );
+        return new AgentToolResult(List.<ContentBlock>of(new TextContent(message)), null);
     }
 }

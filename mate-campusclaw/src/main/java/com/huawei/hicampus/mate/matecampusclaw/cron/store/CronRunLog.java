@@ -14,10 +14,10 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import com.huawei.hicampus.mate.matecampusclaw.cron.model.CronRunRecord;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.huawei.hicampus.mate.matecampusclaw.cron.model.CronRunRecord;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -51,8 +51,8 @@ public class CronRunLog {
         try {
             Files.createDirectories(runsDir);
             String json = mapper.writeValueAsString(record);
-            try (BufferedWriter writer = Files.newBufferedWriter(logFile, StandardCharsets.UTF_8,
-                    StandardOpenOption.CREATE, StandardOpenOption.APPEND)) {
+            try (BufferedWriter writer = Files.newBufferedWriter(
+                    logFile, StandardCharsets.UTF_8, StandardOpenOption.CREATE, StandardOpenOption.APPEND)) {
                 writer.write(json);
                 writer.newLine();
             }
@@ -92,6 +92,9 @@ public class CronRunLog {
 
     private static Path defaultRunsDir() {
         return Path.of(System.getProperty("user.home"))
-            .resolve(".campusclaw").resolve("agent").resolve("cron").resolve("runs");
+                .resolve(".campusclaw")
+                .resolve("agent")
+                .resolve("cron")
+                .resolve("runs");
     }
 }

@@ -40,6 +40,7 @@
         <lanterna.version>3.1.2</lanterna.version>
         <mockwebserver.version>4.12.0</mockwebserver.version>
         <spotless.version>2.44.4</spotless.version>
+        <palantir-java-format.version>2.66.0</palantir-java-format.version>
         <checkstyle-plugin.version>3.6.0</checkstyle-plugin.version>
         <checkstyle.version>10.20.2</checkstyle.version>
         <mybatis-spring-boot.version>3.0.4</mybatis-spring-boot.version>
@@ -255,6 +256,9 @@
                     <version>${spotless.version}</version>
                     <configuration>
                         <java>
+                            <palantirJavaFormat>
+                                <version>${palantir-java-format.version}</version>
+                            </palantirJavaFormat>
                             <removeUnusedImports/>
                             <importOrder>
                                 <order>java,javax,com,org,</order>

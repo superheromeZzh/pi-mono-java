@@ -49,15 +49,15 @@ public class CompactCommand implements SlashCommand {
             var newMessages = new ArrayList<Message>();
             if (!result.summary().isEmpty()) {
                 newMessages.add(new UserMessage(
-                        "[Context compaction summary]\n" + result.summary(),
-                        System.currentTimeMillis()));
+                        "[Context compaction summary]\n" + result.summary(), System.currentTimeMillis()));
             }
             newMessages.addAll(result.retainedMessages());
             agent.replaceMessages(newMessages);
 
             int removed = messages.size() - result.retainedMessages().size();
-            context.output().println("Compacted " + removed + " messages into summary, "
-                    + result.retainedMessages().size() + " recent messages kept.");
+            context.output()
+                    .println("Compacted " + removed + " messages into summary, "
+                            + result.retainedMessages().size() + " recent messages kept.");
         } catch (Exception e) {
             context.output().println("Compaction failed: " + e.getMessage());
         }

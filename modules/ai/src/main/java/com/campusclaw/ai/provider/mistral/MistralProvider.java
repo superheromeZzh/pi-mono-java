@@ -73,7 +73,8 @@ public class MistralProvider implements ApiProvider {
     }
 
     @Override
-    public AssistantMessageEventStream streamSimple(Model model, Context context, @Nullable SimpleStreamOptions options) {
+    public AssistantMessageEventStream streamSimple(
+            Model model, Context context, @Nullable SimpleStreamOptions options) {
         var eventStream = new AssistantMessageEventStream();
 
         Thread.ofVirtual().start(() -> {
@@ -87,13 +88,17 @@ public class MistralProvider implements ApiProvider {
         return eventStream;
     }
 
-    private void executeStream(Model model, Context context, @Nullable SimpleStreamOptions options,
-                               AssistantMessageEventStream eventStream) {
+    private void executeStream(
+            Model model,
+            Context context,
+            @Nullable SimpleStreamOptions options,
+            AssistantMessageEventStream eventStream) {
         var providerConfig = providerConfigResolver.resolve(model.provider(), model);
         String apiKey = resolveApiKey(providerConfig, options);
         if (apiKey == null || apiKey.isBlank()) {
-            eventStream.error(new IllegalStateException(
-                    "Mistral API key not found. Set MISTRAL_API_KEY, configure provider.mistral.apiKey in settings.json, or run /auth login."));
+            eventStream.error(
+                    new IllegalStateException(
+                            "Mistral API key not found. Set MISTRAL_API_KEY, configure provider.mistral.apiKey in settings.json, or run /auth login."));
             return;
         }
 
@@ -108,11 +113,11 @@ public class MistralProvider implements ApiProvider {
                     .connectTimeout(java.time.Duration.ofSeconds(15))
                     .build();
             var request = HttpRequest.newBuilder()
-                .uri(URI.create(url))
-                .header("Content-Type", "application/json")
-                .header("Authorization", "Bearer " + apiKey)
-                .POST(HttpRequest.BodyPublishers.ofString(requestBody.toString()))
-                .build();
+                    .uri(URI.create(url))
+                    .header("Content-Type", "application/json")
+                    .header("Authorization", "Bearer " + apiKey)
+                    .POST(HttpRequest.BodyPublishers.ofString(requestBody.toString()))
+                    .build();
 
             var response = client.send(request, HttpResponse.BodyHandlers.ofInputStream());
 
@@ -153,9 +158,14 @@ public class MistralProvider implements ApiProvider {
                             String text = contentNode.asText();
                             if (!text.isEmpty()) {
                                 currentText.append(text);
-                                var partial = buildPartial(model, accumulatedBlocks,
-                                    currentText.toString(), currentThinking.toString(),
-                                    toolCallAccs, stop[0], usage[0]);
+                                var partial = buildPartial(
+                                        model,
+                                        accumulatedBlocks,
+                                        currentText.toString(),
+                                        currentThinking.toString(),
+                                        toolCallAccs,
+                                        stop[0],
+                                        usage[0]);
                                 eventStream.pushTextDelta(textIndex, text, partial);
                             }
                         } else if (contentNode.isArray()) {
@@ -179,27 +189,48 @@ public class MistralProvider implements ApiProvider {
                                             thinkingStarted[0] = true;
                                             accumulatedBlocks.add(new ThinkingContent("", null, false));
                                             int idx = accumulatedBlocks.size() - 1;
-                                            eventStream.push(new com.campusclaw.ai.stream.AssistantMessageEvent.ThinkingStartEvent(
-                                                idx, buildPartial(model, accumulatedBlocks,
-                                                    currentText.toString(), currentThinking.toString(),
-                                                    toolCallAccs, stop[0], usage[0])));
+                                            eventStream.push(
+                                                    new com.campusclaw.ai.stream.AssistantMessageEvent
+                                                            .ThinkingStartEvent(
+                                                            idx,
+                                                            buildPartial(
+                                                                    model,
+                                                                    accumulatedBlocks,
+                                                                    currentText.toString(),
+                                                                    currentThinking.toString(),
+                                                                    toolCallAccs,
+                                                                    stop[0],
+                                                                    usage[0])));
                                         }
                                         currentThinking.append(thinkText);
                                         int idx = accumulatedBlocks.size() - 1;
-                                        accumulatedBlocks.set(idx, new ThinkingContent(currentThinking.toString(), null, false));
-                                        eventStream.push(new com.campusclaw.ai.stream.AssistantMessageEvent.ThinkingDeltaEvent(
-                                            idx, thinkText,
-                                            buildPartial(model, accumulatedBlocks,
-                                                currentText.toString(), currentThinking.toString(),
-                                                toolCallAccs, stop[0], usage[0])));
+                                        accumulatedBlocks.set(
+                                                idx, new ThinkingContent(currentThinking.toString(), null, false));
+                                        eventStream.push(
+                                                new com.campusclaw.ai.stream.AssistantMessageEvent.ThinkingDeltaEvent(
+                                                        idx,
+                                                        thinkText,
+                                                        buildPartial(
+                                                                model,
+                                                                accumulatedBlocks,
+                                                                currentText.toString(),
+                                                                currentThinking.toString(),
+                                                                toolCallAccs,
+                                                                stop[0],
+                                                                usage[0])));
                                     }
                                 } else if ("text".equals(itemType)) {
                                     String text = item.path("text").asText("");
                                     if (!text.isEmpty()) {
                                         currentText.append(text);
-                                        var partial = buildPartial(model, accumulatedBlocks,
-                                            currentText.toString(), currentThinking.toString(),
-                                            toolCallAccs, stop[0], usage[0]);
+                                        var partial = buildPartial(
+                                                model,
+                                                accumulatedBlocks,
+                                                currentText.toString(),
+                                                currentThinking.toString(),
+                                                toolCallAccs,
+                                                stop[0],
+                                                usage[0]);
                                         eventStream.pushTextDelta(textIndex, text, partial);
                                     }
                                 }
@@ -226,7 +257,8 @@ public class MistralProvider implements ApiProvider {
                     }
 
                     // Finish reason
-                    if (choice.has("finish_reason") && !choice.get("finish_reason").isNull()) {
+                    if (choice.has("finish_reason")
+                            && !choice.get("finish_reason").isNull()) {
                         stop[0] = mapFinishReason(choice.get("finish_reason").asText());
                     }
 
@@ -245,9 +277,16 @@ public class MistralProvider implements ApiProvider {
                 int thinkIdx = accumulatedBlocks.size() - 1;
                 accumulatedBlocks.set(thinkIdx, new ThinkingContent(currentThinking.toString(), null, false));
                 eventStream.push(new com.campusclaw.ai.stream.AssistantMessageEvent.ThinkingEndEvent(
-                    thinkIdx, currentThinking.toString(),
-                    buildPartial(model, accumulatedBlocks, currentText.toString(),
-                        currentThinking.toString(), toolCallAccs, stop[0], usage[0])));
+                        thinkIdx,
+                        currentThinking.toString(),
+                        buildPartial(
+                                model,
+                                accumulatedBlocks,
+                                currentText.toString(),
+                                currentThinking.toString(),
+                                toolCallAccs,
+                                stop[0],
+                                usage[0])));
             }
 
             // Build final message
@@ -260,13 +299,18 @@ public class MistralProvider implements ApiProvider {
             }
 
             var cost = computeCost(model, usage[0]);
-            var finalUsage = new Usage(usage[0].input(), usage[0].output(), 0, 0,
-                usage[0].input() + usage[0].output(), cost);
+            var finalUsage =
+                    new Usage(usage[0].input(), usage[0].output(), 0, 0, usage[0].input() + usage[0].output(), cost);
             var finalMessage = new AssistantMessage(
-                List.copyOf(finalBlocks),
-                Api.MISTRAL_CONVERSATIONS.value(), model.provider().value(),
-                model.id(), null, finalUsage, stop[0], null, System.currentTimeMillis()
-            );
+                    List.copyOf(finalBlocks),
+                    Api.MISTRAL_CONVERSATIONS.value(),
+                    model.provider().value(),
+                    model.id(),
+                    null,
+                    finalUsage,
+                    stop[0],
+                    null,
+                    System.currentTimeMillis());
             eventStream.pushDone(stop[0], finalMessage);
 
         } catch (Exception e) {
@@ -275,12 +319,13 @@ public class MistralProvider implements ApiProvider {
     }
 
     private AssistantMessage buildPartial(
-        Model model,
-        List<ContentBlock> accumulatedBlocks, String currentText,
-        String currentThinking,
-        Map<Integer, ToolCallAccumulator> toolCallAccs,
-        StopReason stop, Usage usage
-    ) {
+            Model model,
+            List<ContentBlock> accumulatedBlocks,
+            String currentText,
+            String currentThinking,
+            Map<Integer, ToolCallAccumulator> toolCallAccs,
+            StopReason stop,
+            Usage usage) {
         var blocks = new ArrayList<ContentBlock>(accumulatedBlocks);
         if (!currentText.isEmpty()) {
             blocks.add(new TextContent(currentText));
@@ -291,9 +336,15 @@ public class MistralProvider implements ApiProvider {
             }
         }
         return new AssistantMessage(
-            blocks, Api.MISTRAL_CONVERSATIONS.value(), model.provider().value(),
-            model.id(), null, usage, stop, null, System.currentTimeMillis()
-        );
+                blocks,
+                Api.MISTRAL_CONVERSATIONS.value(),
+                model.provider().value(),
+                model.id(),
+                null,
+                usage,
+                stop,
+                null,
+                System.currentTimeMillis());
     }
 
     private ObjectNode buildRequestBody(Model model, Context context, @Nullable SimpleStreamOptions options) {
@@ -334,7 +385,8 @@ public class MistralProvider implements ApiProvider {
                                 thinkingItem.put("type", "thinking");
                                 var thinkingParts = MAPPER.createArrayNode();
                                 thinkingParts.add(MAPPER.createObjectNode()
-                                    .put("type", "text").put("text", tc.thinking()));
+                                        .put("type", "text")
+                                        .put("text", tc.thinking()));
                                 thinkingItem.set("thinking", thinkingParts);
                                 contentArray.add(thinkingItem);
                             }
@@ -359,7 +411,8 @@ public class MistralProvider implements ApiProvider {
                         // Use array content format when thinking is present
                         if (!text.isEmpty()) {
                             contentArray.add(MAPPER.createObjectNode()
-                                .put("type", "text").put("text", text.toString()));
+                                    .put("type", "text")
+                                    .put("text", text.toString()));
                         }
                         m.set("content", contentArray);
                     } else if (!text.isEmpty()) {
@@ -408,8 +461,7 @@ public class MistralProvider implements ApiProvider {
             }
 
             // Reasoning / thinking mode
-            if (options.reasoning() != null && options.reasoning() != ThinkingLevel.OFF
-                    && model.reasoning()) {
+            if (options.reasoning() != null && options.reasoning() != ThinkingLevel.OFF && model.reasoning()) {
                 body.put("promptMode", "reasoning");
             }
         } else {
@@ -419,8 +471,8 @@ public class MistralProvider implements ApiProvider {
         return body;
     }
 
-    private String resolveApiKey(com.campusclaw.ai.env.ResolvedProviderConfig providerConfig,
-                                 @Nullable SimpleStreamOptions options) {
+    private String resolveApiKey(
+            com.campusclaw.ai.env.ResolvedProviderConfig providerConfig, @Nullable SimpleStreamOptions options) {
         if (options != null && options.apiKey() != null) {
             return options.apiKey();
         }
@@ -466,7 +518,8 @@ public class MistralProvider implements ApiProvider {
             if (!arguments.isEmpty()) {
                 try {
                     args = MAPPER.readValue(arguments.toString(), new TypeReference<>() {});
-                } catch (Exception ignored) {}
+                } catch (Exception ignored) {
+                }
             }
             return new ToolCall(id != null ? id : UUID.randomUUID().toString(), name != null ? name : "", args);
         }

@@ -35,8 +35,7 @@ public class LocalLsOperations implements LsOperations {
                         path.getFileName().toString(),
                         type,
                         attrs.size(),
-                        attrs.lastModifiedTime().toInstant()
-                ));
+                        attrs.lastModifiedTime().toInstant()));
             }
         }
         return entries;

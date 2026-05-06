@@ -32,6 +32,9 @@ import com.anthropic.models.messages.ThinkingConfigParam;
 import com.anthropic.models.messages.ToolResultBlockParam;
 import com.anthropic.models.messages.ToolUnion;
 import com.anthropic.models.messages.ToolUseBlockParam;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.huawei.hicampus.mate.matecampusclaw.ai.env.ProviderConfigResolver;
 import com.huawei.hicampus.mate.matecampusclaw.ai.env.ResolvedProviderConfig;
 import com.huawei.hicampus.mate.matecampusclaw.ai.provider.ApiProvider;
@@ -56,9 +59,6 @@ import com.huawei.hicampus.mate.matecampusclaw.ai.types.ThinkingLevel;
 import com.huawei.hicampus.mate.matecampusclaw.ai.types.Tool;
 import com.huawei.hicampus.mate.matecampusclaw.ai.types.ToolCall;
 import com.huawei.hicampus.mate.matecampusclaw.ai.types.Usage;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import org.springframework.stereotype.Component;
 
@@ -88,19 +88,23 @@ public class AnthropicProvider implements ApiProvider {
     }
 
     @Override
-    public AssistantMessageEventStream stream(
-            Model model, Context context, @Nullable StreamOptions options) {
-        return doStream(model, context,
+    public AssistantMessageEventStream stream(Model model, Context context, @Nullable StreamOptions options) {
+        return doStream(
+                model,
+                context,
                 options != null ? options.apiKey() : null,
                 options != null ? options.maxTokens() : null,
                 options != null ? options.temperature() : null,
-                null, null);
+                null,
+                null);
     }
 
     @Override
     public AssistantMessageEventStream streamSimple(
             Model model, Context context, @Nullable SimpleStreamOptions options) {
-        return doStream(model, context,
+        return doStream(
+                model,
+                context,
                 options != null ? options.apiKey() : null,
                 options != null ? options.maxTokens() : null,
                 options != null ? options.temperature() : null,
@@ -109,7 +113,8 @@ public class AnthropicProvider implements ApiProvider {
     }
 
     private AssistantMessageEventStream doStream(
-            Model model, Context context,
+            Model model,
+            Context context,
             @Nullable String apiKey,
             @Nullable Integer maxTokens,
             @Nullable Double temperature,
@@ -120,8 +125,7 @@ public class AnthropicProvider implements ApiProvider {
 
         Thread.ofVirtual().start(() -> {
             try {
-                executeStream(model, context, apiKey, maxTokens, temperature,
-                        reasoning, thinkingBudgets, eventStream);
+                executeStream(model, context, apiKey, maxTokens, temperature, reasoning, thinkingBudgets, eventStream);
             } catch (Exception e) {
                 eventStream.error(e);
             }
@@ -131,7 +135,8 @@ public class AnthropicProvider implements ApiProvider {
     }
 
     void executeStream(
-            Model model, Context context,
+            Model model,
+            Context context,
             @Nullable String apiKey,
             @Nullable Integer maxTokens,
             @Nullable Double temperature,
@@ -142,17 +147,19 @@ public class AnthropicProvider implements ApiProvider {
         ResolvedProviderConfig providerConfig = providerConfigResolver.resolve(model.provider(), model);
         String resolvedApiKey = apiKey != null ? apiKey : providerConfig.apiKey();
         if (resolvedApiKey == null || resolvedApiKey.isBlank()) {
-            String envHint = switch (model.provider()) {
-                case KIMI_CODING -> "KIMI_API_KEY";
-                case MINIMAX -> "MINIMAX_API_KEY";
-                case MINIMAX_CN -> "MINIMAX_CN_API_KEY";
-                case GITHUB_COPILOT -> "COPILOT_GITHUB_TOKEN";
-                case AZURE_OPENAI -> "AZURE_OPENAI_API_KEY";
-                default -> "ANTHROPIC_API_KEY";
-            };
+            String envHint =
+                    switch (model.provider()) {
+                        case KIMI_CODING -> "KIMI_API_KEY";
+                        case MINIMAX -> "MINIMAX_API_KEY";
+                        case MINIMAX_CN -> "MINIMAX_CN_API_KEY";
+                        case GITHUB_COPILOT -> "COPILOT_GITHUB_TOKEN";
+                        case AZURE_OPENAI -> "AZURE_OPENAI_API_KEY";
+                        default -> "ANTHROPIC_API_KEY";
+                    };
             eventStream.error(new IllegalStateException(
                     "API key not found for " + model.provider().value()
-                            + ". Set " + envHint + ", configure provider." + model.provider().value()
+                            + ". Set " + envHint + ", configure provider."
+                            + model.provider().value()
                             + ".apiKey in settings.json, or run /auth login."));
             return;
         }
@@ -160,8 +167,8 @@ public class AnthropicProvider implements ApiProvider {
         AnthropicClient client = buildClient(resolvedApiKey, providerConfig.resolveBaseUrl(model));
 
         try {
-            MessageCreateParams params = buildParams(model, context, maxTokens, temperature,
-                    reasoning, thinkingBudgets);
+            MessageCreateParams params =
+                    buildParams(model, context, maxTokens, temperature, reasoning, thinkingBudgets);
 
             processStream(client, params, model, eventStream);
         } catch (Exception e) {
@@ -186,7 +193,8 @@ public class AnthropicProvider implements ApiProvider {
     }
 
     MessageCreateParams buildParams(
-            Model model, Context context,
+            Model model,
+            Context context,
             @Nullable Integer maxTokens,
             @Nullable Double temperature,
             @Nullable ThinkingLevel reasoning,
@@ -206,8 +214,7 @@ public class AnthropicProvider implements ApiProvider {
             if (shouldEnableCaching(model.baseUrl())) {
                 sysBlock.cacheControl(CacheControlEphemeral.builder().build());
             }
-            builder.system(MessageCreateParams.System.ofTextBlockParams(
-                    List.of(sysBlock.build())));
+            builder.system(MessageCreateParams.System.ofTextBlockParams(List.of(sysBlock.build())));
         }
 
         // Tools
@@ -241,12 +248,11 @@ public class AnthropicProvider implements ApiProvider {
     }
 
     private void processStream(
-            AnthropicClient client, MessageCreateParams params,
-            Model model, AssistantMessageEventStream eventStream) {
+            AnthropicClient client, MessageCreateParams params, Model model, AssistantMessageEventStream eventStream) {
 
         // Mutable state for tracking partial message
         var contentBlocks = new ArrayList<ContentBlock>();
-        var accumulatedUsage = new long[]{0, 0, 0, 0}; // input, output, cacheRead, cacheWrite
+        var accumulatedUsage = new long[] {0, 0, 0, 0}; // input, output, cacheRead, cacheWrite
         String[] responseId = {null};
         var textAccumulator = new HashMap<Integer, StringBuilder>();
         var thinkingAccumulator = new HashMap<Integer, StringBuilder>();
@@ -267,25 +273,52 @@ public class AnthropicProvider implements ApiProvider {
                     accumulatedUsage[2] = usage.cacheReadInputTokens().orElse(0L);
                     accumulatedUsage[3] = usage.cacheCreationInputTokens().orElse(0L);
 
-                    var partial = buildPartialMessage(model, responseId[0],
-                            contentBlocks, accumulatedUsage, null);
+                    var partial = buildPartialMessage(model, responseId[0], contentBlocks, accumulatedUsage, null);
                     eventStream.push(new AssistantMessageEvent.StartEvent(partial));
 
                 } else if (event.isContentBlockStart()) {
-                    handleContentBlockStart(event.asContentBlockStart(), model, responseId[0],
-                            contentBlocks, accumulatedUsage, blockTypes, textAccumulator,
-                            thinkingAccumulator, toolJsonAccumulator, toolMeta, eventStream);
+                    handleContentBlockStart(
+                            event.asContentBlockStart(),
+                            model,
+                            responseId[0],
+                            contentBlocks,
+                            accumulatedUsage,
+                            blockTypes,
+                            textAccumulator,
+                            thinkingAccumulator,
+                            toolJsonAccumulator,
+                            toolMeta,
+                            eventStream);
 
                 } else if (event.isContentBlockDelta()) {
-                    handleContentBlockDelta(event.asContentBlockDelta(), model, responseId[0],
-                            contentBlocks, accumulatedUsage, blockTypes, textAccumulator,
-                            thinkingAccumulator, toolJsonAccumulator, signatureAcc, eventStream);
+                    handleContentBlockDelta(
+                            event.asContentBlockDelta(),
+                            model,
+                            responseId[0],
+                            contentBlocks,
+                            accumulatedUsage,
+                            blockTypes,
+                            textAccumulator,
+                            thinkingAccumulator,
+                            toolJsonAccumulator,
+                            signatureAcc,
+                            eventStream);
 
                 } else if (event.isContentBlockStop()) {
                     int idx = (int) event.asContentBlockStop().index();
-                    handleContentBlockStop(idx, model, responseId[0],
-                            contentBlocks, accumulatedUsage, blockTypes, textAccumulator,
-                            thinkingAccumulator, toolJsonAccumulator, toolMeta, signatureAcc, eventStream);
+                    handleContentBlockStop(
+                            idx,
+                            model,
+                            responseId[0],
+                            contentBlocks,
+                            accumulatedUsage,
+                            blockTypes,
+                            textAccumulator,
+                            thinkingAccumulator,
+                            toolJsonAccumulator,
+                            toolMeta,
+                            signatureAcc,
+                            eventStream);
 
                 } else if (event.isMessageDelta()) {
                     var e = event.asMessageDelta();
@@ -294,8 +327,8 @@ public class AnthropicProvider implements ApiProvider {
 
                 } else if (event.isMessageStop()) {
                     var finalStopReason = stopReason[0] != null ? stopReason[0] : StopReason.STOP;
-                    var finalMessage = buildPartialMessage(model, responseId[0],
-                            contentBlocks, accumulatedUsage, finalStopReason);
+                    var finalMessage =
+                            buildPartialMessage(model, responseId[0], contentBlocks, accumulatedUsage, finalStopReason);
                     eventStream.pushDone(finalStopReason, finalMessage);
                 }
             });
@@ -303,8 +336,11 @@ public class AnthropicProvider implements ApiProvider {
     }
 
     private void handleContentBlockStart(
-            RawContentBlockStartEvent e, Model model, String responseId,
-            List<ContentBlock> contentBlocks, long[] usage,
+            RawContentBlockStartEvent e,
+            Model model,
+            String responseId,
+            List<ContentBlock> contentBlocks,
+            long[] usage,
             Map<Integer, String> blockTypes,
             Map<Integer, StringBuilder> textAcc,
             Map<Integer, StringBuilder> thinkingAcc,
@@ -319,38 +355,41 @@ public class AnthropicProvider implements ApiProvider {
             blockTypes.put(idx, "text");
             textAcc.put(idx, new StringBuilder());
             contentBlocks.add(new TextContent("", null));
-            eventStream.push(new AssistantMessageEvent.TextStartEvent(idx,
-                    buildPartialMessage(model, responseId, contentBlocks, usage, null)));
+            eventStream.push(new AssistantMessageEvent.TextStartEvent(
+                    idx, buildPartialMessage(model, responseId, contentBlocks, usage, null)));
 
         } else if (cb.isThinking()) {
             blockTypes.put(idx, "thinking");
             thinkingAcc.put(idx, new StringBuilder());
             contentBlocks.add(new ThinkingContent("", null, false));
-            eventStream.push(new AssistantMessageEvent.ThinkingStartEvent(idx,
-                    buildPartialMessage(model, responseId, contentBlocks, usage, null)));
+            eventStream.push(new AssistantMessageEvent.ThinkingStartEvent(
+                    idx, buildPartialMessage(model, responseId, contentBlocks, usage, null)));
 
         } else if (cb.isRedactedThinking()) {
             // Redacted thinking: encrypted payload stored as signature
             var rt = cb.asRedactedThinking();
             blockTypes.put(idx, "redacted_thinking");
             contentBlocks.add(new ThinkingContent("[Reasoning redacted]", rt.data(), true));
-            eventStream.push(new AssistantMessageEvent.ThinkingStartEvent(idx,
-                    buildPartialMessage(model, responseId, contentBlocks, usage, null)));
+            eventStream.push(new AssistantMessageEvent.ThinkingStartEvent(
+                    idx, buildPartialMessage(model, responseId, contentBlocks, usage, null)));
 
         } else if (cb.isToolUse()) {
             var tu = cb.asToolUse();
             blockTypes.put(idx, "tool_use");
             toolJsonAcc.put(idx, new StringBuilder());
-            toolMeta.put(idx, new String[]{tu.id(), tu.name()});
+            toolMeta.put(idx, new String[] {tu.id(), tu.name()});
             contentBlocks.add(new ToolCall(tu.id(), tu.name(), Map.of(), null));
-            eventStream.push(new AssistantMessageEvent.ToolCallStartEvent(idx,
-                    buildPartialMessage(model, responseId, contentBlocks, usage, null)));
+            eventStream.push(new AssistantMessageEvent.ToolCallStartEvent(
+                    idx, buildPartialMessage(model, responseId, contentBlocks, usage, null)));
         }
     }
 
     private void handleContentBlockDelta(
-            RawContentBlockDeltaEvent e, Model model, String responseId,
-            List<ContentBlock> contentBlocks, long[] usage,
+            RawContentBlockDeltaEvent e,
+            Model model,
+            String responseId,
+            List<ContentBlock> contentBlocks,
+            long[] usage,
             Map<Integer, String> blockTypes,
             Map<Integer, StringBuilder> textAcc,
             Map<Integer, StringBuilder> thinkingAcc,
@@ -370,8 +409,8 @@ public class AnthropicProvider implements ApiProvider {
             if (idx < contentBlocks.size()) {
                 contentBlocks.set(idx, new TextContent(acc != null ? acc.toString() : text, null));
             }
-            eventStream.push(new AssistantMessageEvent.TextDeltaEvent(idx, text,
-                    buildPartialMessage(model, responseId, contentBlocks, usage, null)));
+            eventStream.push(new AssistantMessageEvent.TextDeltaEvent(
+                    idx, text, buildPartialMessage(model, responseId, contentBlocks, usage, null)));
 
         } else if (delta.isThinking()) {
             String text = delta.asThinking().thinking();
@@ -380,11 +419,12 @@ public class AnthropicProvider implements ApiProvider {
                 acc.append(text);
             }
             if (idx < contentBlocks.size()) {
-                String sig = signatureAcc.containsKey(idx) ? signatureAcc.get(idx).toString() : null;
+                String sig =
+                        signatureAcc.containsKey(idx) ? signatureAcc.get(idx).toString() : null;
                 contentBlocks.set(idx, new ThinkingContent(acc != null ? acc.toString() : text, sig, false));
             }
-            eventStream.push(new AssistantMessageEvent.ThinkingDeltaEvent(idx, text,
-                    buildPartialMessage(model, responseId, contentBlocks, usage, null)));
+            eventStream.push(new AssistantMessageEvent.ThinkingDeltaEvent(
+                    idx, text, buildPartialMessage(model, responseId, contentBlocks, usage, null)));
 
         } else if (delta.isSignature()) {
             // Accumulate thinking signature
@@ -402,14 +442,17 @@ public class AnthropicProvider implements ApiProvider {
             if (acc != null) {
                 acc.append(json);
             }
-            eventStream.push(new AssistantMessageEvent.ToolCallDeltaEvent(idx, json,
-                    buildPartialMessage(model, responseId, contentBlocks, usage, null)));
+            eventStream.push(new AssistantMessageEvent.ToolCallDeltaEvent(
+                    idx, json, buildPartialMessage(model, responseId, contentBlocks, usage, null)));
         }
     }
 
     private void handleContentBlockStop(
-            int idx, Model model, String responseId,
-            List<ContentBlock> contentBlocks, long[] usage,
+            int idx,
+            Model model,
+            String responseId,
+            List<ContentBlock> contentBlocks,
+            long[] usage,
             Map<Integer, String> blockTypes,
             Map<Integer, StringBuilder> textAcc,
             Map<Integer, StringBuilder> thinkingAcc,
@@ -423,21 +466,21 @@ public class AnthropicProvider implements ApiProvider {
         if ("text".equals(type)) {
             String content = textAcc.containsKey(idx) ? textAcc.get(idx).toString() : "";
             contentBlocks.set(idx, new TextContent(content, null));
-            eventStream.push(new AssistantMessageEvent.TextEndEvent(idx, content,
-                    buildPartialMessage(model, responseId, contentBlocks, usage, null)));
+            eventStream.push(new AssistantMessageEvent.TextEndEvent(
+                    idx, content, buildPartialMessage(model, responseId, contentBlocks, usage, null)));
 
         } else if ("thinking".equals(type)) {
             String content = thinkingAcc.containsKey(idx) ? thinkingAcc.get(idx).toString() : "";
             String sig = signatureAcc.containsKey(idx) ? signatureAcc.get(idx).toString() : null;
             contentBlocks.set(idx, new ThinkingContent(content, sig, false));
-            eventStream.push(new AssistantMessageEvent.ThinkingEndEvent(idx, content,
-                    buildPartialMessage(model, responseId, contentBlocks, usage, null)));
+            eventStream.push(new AssistantMessageEvent.ThinkingEndEvent(
+                    idx, content, buildPartialMessage(model, responseId, contentBlocks, usage, null)));
 
         } else if ("redacted_thinking".equals(type)) {
             // Redacted thinking block is already complete from start event
             String content = contentBlocks.get(idx) instanceof ThinkingContent tc ? tc.thinking() : "";
-            eventStream.push(new AssistantMessageEvent.ThinkingEndEvent(idx, content,
-                    buildPartialMessage(model, responseId, contentBlocks, usage, null)));
+            eventStream.push(new AssistantMessageEvent.ThinkingEndEvent(
+                    idx, content, buildPartialMessage(model, responseId, contentBlocks, usage, null)));
 
         } else if ("tool_use".equals(type)) {
             String jsonStr = toolJsonAcc.containsKey(idx) ? toolJsonAcc.get(idx).toString() : "{}";
@@ -447,8 +490,8 @@ public class AnthropicProvider implements ApiProvider {
             String name = meta != null ? meta[1] : "";
             var toolCall = new ToolCall(id, name, args, null);
             contentBlocks.set(idx, toolCall);
-            eventStream.push(new AssistantMessageEvent.ToolCallEndEvent(idx, toolCall,
-                    buildPartialMessage(model, responseId, contentBlocks, usage, null)));
+            eventStream.push(new AssistantMessageEvent.ToolCallEndEvent(
+                    idx, toolCall, buildPartialMessage(model, responseId, contentBlocks, usage, null)));
         }
     }
 
@@ -496,11 +539,12 @@ public class AnthropicProvider implements ApiProvider {
         // Rebuild the last text block with cache_control
         if (lastBlock.isText()) {
             var tb = lastBlock.asText();
-            blocks.set(lastIdx, ContentBlockParam.ofText(
-                TextBlockParam.builder()
-                    .text(tb.text())
-                    .cacheControl(CacheControlEphemeral.builder().build())
-                    .build()));
+            blocks.set(
+                    lastIdx,
+                    ContentBlockParam.ofText(TextBlockParam.builder()
+                            .text(tb.text())
+                            .cacheControl(CacheControlEphemeral.builder().build())
+                            .build()));
         } else if (lastBlock.isToolResult()) {
             // Tool result blocks - add cache_control via additional properties
             // The SDK doesn't expose cacheControl builder on ToolResultBlockParam,
@@ -509,9 +553,9 @@ public class AnthropicProvider implements ApiProvider {
         }
 
         return MessageParam.builder()
-            .role(msg.role())
-            .content(MessageParam.Content.ofBlockParams(blocks))
-            .build();
+                .role(msg.role())
+                .content(MessageParam.Content.ofBlockParams(blocks))
+                .build();
     }
 
     private static MessageParam convertUserMessage(com.huawei.hicampus.mate.matecampusclaw.ai.types.UserMessage um) {
@@ -521,13 +565,12 @@ public class AnthropicProvider implements ApiProvider {
                 blocks.add(ContentBlockParam.ofText(
                         TextBlockParam.builder().text(tc.text()).build()));
             } else if (cb instanceof ImageContent ic) {
-                blocks.add(ContentBlockParam.ofImage(
-                        ImageBlockParam.builder()
-                                .source(Base64ImageSource.builder()
-                                        .data(ic.data())
-                                        .mediaType(Base64ImageSource.MediaType.of(ic.mimeType()))
-                                        .build())
-                                .build()));
+                blocks.add(ContentBlockParam.ofImage(ImageBlockParam.builder()
+                        .source(Base64ImageSource.builder()
+                                .data(ic.data())
+                                .mediaType(Base64ImageSource.MediaType.of(ic.mimeType()))
+                                .build())
+                        .build()));
             }
         }
         return MessageParam.builder()
@@ -545,31 +588,29 @@ public class AnthropicProvider implements ApiProvider {
             } else if (cb instanceof ThinkingContent tc) {
                 if (tc.redacted()) {
                     // Replay redacted thinking as redacted_thinking block
-                    blocks.add(ContentBlockParam.ofRedactedThinking(
-                            RedactedThinkingBlockParam.builder()
-                                    .data(tc.thinkingSignature() != null ? tc.thinkingSignature() : "")
-                                    .build()));
-                } else if (tc.thinkingSignature() != null && !tc.thinkingSignature().isBlank()) {
+                    blocks.add(ContentBlockParam.ofRedactedThinking(RedactedThinkingBlockParam.builder()
+                            .data(tc.thinkingSignature() != null ? tc.thinkingSignature() : "")
+                            .build()));
+                } else if (tc.thinkingSignature() != null
+                        && !tc.thinkingSignature().isBlank()) {
                     // Replay thinking with signature for multi-turn continuity
-                    blocks.add(ContentBlockParam.ofThinking(
-                            ThinkingBlockParam.builder()
-                                    .thinking(tc.thinking())
-                                    .signature(tc.thinkingSignature())
-                                    .build()));
+                    blocks.add(ContentBlockParam.ofThinking(ThinkingBlockParam.builder()
+                            .thinking(tc.thinking())
+                            .signature(tc.thinkingSignature())
+                            .build()));
                 } else if (!tc.thinking().isBlank()) {
                     // No signature (e.g., aborted stream) — convert to plain text
                     blocks.add(ContentBlockParam.ofText(
                             TextBlockParam.builder().text(tc.thinking()).build()));
                 }
             } else if (cb instanceof ToolCall tc) {
-                blocks.add(ContentBlockParam.ofToolUse(
-                        ToolUseBlockParam.builder()
-                                .id(tc.id())
-                                .name(tc.name())
-                                .input(ToolUseBlockParam.Input.builder()
-                                        .putAllAdditionalProperties(toJsonValueMap(tc.arguments()))
-                                        .build())
-                                .build()));
+                blocks.add(ContentBlockParam.ofToolUse(ToolUseBlockParam.builder()
+                        .id(tc.id())
+                        .name(tc.name())
+                        .input(ToolUseBlockParam.Input.builder()
+                                .putAllAdditionalProperties(toJsonValueMap(tc.arguments()))
+                                .build())
+                        .build()));
             }
         }
         return MessageParam.builder()
@@ -578,7 +619,8 @@ public class AnthropicProvider implements ApiProvider {
                 .build();
     }
 
-    private static MessageParam convertToolResult(com.huawei.hicampus.mate.matecampusclaw.ai.types.ToolResultMessage tr) {
+    private static MessageParam convertToolResult(
+            com.huawei.hicampus.mate.matecampusclaw.ai.types.ToolResultMessage tr) {
         // Collect text content for the tool result
         List<ContentBlockParam> resultBlocks = new ArrayList<>();
         for (ContentBlock cb : tr.content()) {
@@ -588,9 +630,8 @@ public class AnthropicProvider implements ApiProvider {
             }
         }
 
-        var toolResultBuilder = ToolResultBlockParam.builder()
-                .toolUseId(tr.toolCallId())
-                .isError(tr.isError());
+        var toolResultBuilder =
+                ToolResultBlockParam.builder().toolUseId(tr.toolCallId()).isError(tr.isError());
 
         if (!resultBlocks.isEmpty()) {
             // Use string content for simplicity
@@ -632,9 +673,10 @@ public class AnthropicProvider implements ApiProvider {
             if (parameters.has("properties")) {
                 var propsNode = parameters.get("properties");
                 var propsBuilder = com.anthropic.models.messages.Tool.InputSchema.Properties.builder();
-                propsNode.fieldNames().forEachRemaining(fieldName ->
-                        propsBuilder.putAdditionalProperty(fieldName,
-                                com.anthropic.core.JsonValue.from(nodeToObject(propsNode.get(fieldName)))));
+                propsNode
+                        .fieldNames()
+                        .forEachRemaining(fieldName -> propsBuilder.putAdditionalProperty(
+                                fieldName, com.anthropic.core.JsonValue.from(nodeToObject(propsNode.get(fieldName)))));
                 schemaBuilder.properties(propsBuilder.build());
             }
             if (parameters.has("required")) {
@@ -649,13 +691,17 @@ public class AnthropicProvider implements ApiProvider {
     // -- Utility methods --
 
     private AssistantMessage buildPartialMessage(
-            Model model, String responseId,
-            List<ContentBlock> contentBlocks, long[] usage,
+            Model model,
+            String responseId,
+            List<ContentBlock> contentBlocks,
+            long[] usage,
             @Nullable StopReason stopReason) {
 
         var piUsage = new Usage(
-                (int) usage[0], (int) usage[1],
-                (int) usage[2], (int) usage[3],
+                (int) usage[0],
+                (int) usage[1],
+                (int) usage[2],
+                (int) usage[3],
                 (int) (usage[0] + usage[1]),
                 computeCost(model.cost(), usage));
 
@@ -676,7 +722,11 @@ public class AnthropicProvider implements ApiProvider {
         double outputCost = usage[1] * modelCost.output() / 1_000_000.0;
         double cacheReadCost = usage[2] * modelCost.cacheRead() / 1_000_000.0;
         double cacheWriteCost = usage[3] * modelCost.cacheWrite() / 1_000_000.0;
-        return new Cost(inputCost, outputCost, cacheReadCost, cacheWriteCost,
+        return new Cost(
+                inputCost,
+                outputCost,
+                cacheReadCost,
+                cacheWriteCost,
                 inputCost + outputCost + cacheReadCost + cacheWriteCost);
     }
 
@@ -702,8 +752,10 @@ public class AnthropicProvider implements ApiProvider {
      * Check if a model supports adaptive thinking (Opus 4.6 and Sonnet 4.6).
      */
     private static boolean supportsAdaptiveThinking(String modelId) {
-        return modelId.contains("opus-4-6") || modelId.contains("opus-4.6")
-            || modelId.contains("sonnet-4-6") || modelId.contains("sonnet-4.6");
+        return modelId.contains("opus-4-6")
+                || modelId.contains("opus-4.6")
+                || modelId.contains("sonnet-4-6")
+                || modelId.contains("sonnet-4.6");
     }
 
     /**
@@ -723,13 +775,14 @@ public class AnthropicProvider implements ApiProvider {
 
     private static long resolveBudget(ThinkingLevel level, @Nullable ThinkingBudgets budgets, int maxTokens) {
         if (budgets != null) {
-            Integer budget = switch (level) {
-                case MINIMAL -> budgets.minimal();
-                case LOW -> budgets.low();
-                case MEDIUM -> budgets.medium();
-                case HIGH -> budgets.high();
-                default -> null;
-            };
+            Integer budget =
+                    switch (level) {
+                        case MINIMAL -> budgets.minimal();
+                        case LOW -> budgets.low();
+                        case MEDIUM -> budgets.medium();
+                        case HIGH -> budgets.high();
+                        default -> null;
+                    };
             if (budget != null) {
                 return budget;
             }

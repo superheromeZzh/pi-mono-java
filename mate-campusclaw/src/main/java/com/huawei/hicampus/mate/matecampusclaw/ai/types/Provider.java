@@ -13,7 +13,6 @@ import com.fasterxml.jackson.annotation.JsonValue;
  * LLM provider identifier.
  */
 public enum Provider {
-
     ANTHROPIC("anthropic"),
     OPENAI("openai"),
     GOOGLE("google"),

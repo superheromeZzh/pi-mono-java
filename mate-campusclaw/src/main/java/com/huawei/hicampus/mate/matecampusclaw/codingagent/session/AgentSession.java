@@ -70,8 +70,7 @@ public class AgentSession {
             SystemPromptBuilder promptBuilder,
             SkillLoader skillLoader,
             SkillExpander skillExpander,
-            List<AgentTool> tools
-    ) {
+            List<AgentTool> tools) {
         this.piAiService = Objects.requireNonNull(piAiService, "piAiService");
         this.modelRegistry = Objects.requireNonNull(modelRegistry, "modelRegistry");
         this.promptBuilder = Objects.requireNonNull(promptBuilder, "promptBuilder");
@@ -119,9 +118,14 @@ public class AgentSession {
         Map<String, String> env = buildEnvironmentMap();
 
         SystemPromptConfig promptConfig = new SystemPromptConfig(
-                tools, visibleSkills, cwd, config.customPrompt(), env,
-                contextFiles, systemPromptOverride, appendSystemPrompt
-        );
+                tools,
+                visibleSkills,
+                cwd,
+                config.customPrompt(),
+                env,
+                contextFiles,
+                systemPromptOverride,
+                appendSystemPrompt);
         String systemPrompt = promptBuilder.build(promptConfig);
 
         // 7. Create and configure Agent
@@ -315,9 +319,7 @@ public class AgentSession {
         Map<String, String> env = buildEnvironmentMap();
 
         SystemPromptConfig promptConfig = new SystemPromptConfig(
-                tools, visibleSkills, cwd, customPrompt, env,
-                contextFiles, systemPromptOverride, appendSystemPrompt
-        );
+                tools, visibleSkills, cwd, customPrompt, env, contextFiles, systemPromptOverride, appendSystemPrompt);
         String systemPrompt = promptBuilder.build(promptConfig);
         agent.setSystemPrompt(systemPrompt);
     }
@@ -442,8 +444,8 @@ public class AgentSession {
             return bestMatch;
         }
 
-        throw new IllegalArgumentException("Unknown model: " + modelId
-                + ". Use --list-models to see available models.");
+        throw new IllegalArgumentException(
+                "Unknown model: " + modelId + ". Use --list-models to see available models.");
     }
 
     void loadSkills(Path cwd) {

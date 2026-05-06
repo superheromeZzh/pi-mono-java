@@ -24,7 +24,8 @@ import org.springframework.stereotype.Service;
 @Service
 public class SystemPromptBuilder {
 
-    static final String BASE_PROMPT = """
+    static final String BASE_PROMPT =
+            """
             你是 "CampusClaw"，一个智能园区管理助手。你帮助用户管理园区的人、物和事， \
             提供园区设施管理、人员管理、事务处理等智能化服务。
 
@@ -56,7 +57,8 @@ public class SystemPromptBuilder {
         var sb = new StringBuilder();
 
         // 1. Base role definition (or SYSTEM.md override)
-        if (config.systemPromptOverride() != null && !config.systemPromptOverride().isBlank()) {
+        if (config.systemPromptOverride() != null
+                && !config.systemPromptOverride().isBlank()) {
             sb.append(config.systemPromptOverride());
         } else {
             sb.append(BASE_PROMPT);
@@ -72,7 +74,11 @@ public class SystemPromptBuilder {
         if (!config.tools().isEmpty()) {
             sb.append("\n\n可用工具:\n");
             for (AgentTool tool : config.tools()) {
-                sb.append("- ").append(tool.name()).append(": ").append(tool.description()).append('\n');
+                sb.append("- ")
+                        .append(tool.name())
+                        .append(": ")
+                        .append(tool.description())
+                        .append('\n');
             }
         }
 
@@ -168,8 +174,7 @@ public class SystemPromptBuilder {
             sb.append("- Git 分支: ").append(gitBranch).append('\n');
         }
 
-        String javaVersion = config.env().getOrDefault("JAVA_VERSION",
-                System.getProperty("java.version", "unknown"));
+        String javaVersion = config.env().getOrDefault("JAVA_VERSION", System.getProperty("java.version", "unknown"));
         sb.append("- Java 版本: ").append(javaVersion).append('\n');
 
         String shell = System.getenv("SHELL");

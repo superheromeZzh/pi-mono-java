@@ -42,13 +42,14 @@ public class CronCommand implements SlashCommand {
 
         Path launcherScript = SystemSchedulerInstaller.detectLauncherScript();
         if (launcherScript == null && !"status".equals(action)) {
-            context.output().println("Error: Cannot find campusclaw.sh launcher script.\n"
-                    + "Run this command from the project root directory.");
+            context.output()
+                    .println("Error: Cannot find campusclaw.sh launcher script.\n"
+                            + "Run this command from the project root directory.");
             return;
         }
 
-        var installer = new SystemSchedulerInstaller(
-                launcherScript != null ? launcherScript : Path.of("campusclaw.sh"));
+        var installer =
+                new SystemSchedulerInstaller(launcherScript != null ? launcherScript : Path.of("campusclaw.sh"));
 
         try {
             switch (action) {
@@ -74,7 +75,9 @@ public class CronCommand implements SlashCommand {
     }
 
     private void printUsage(SlashCommandContext context) {
-        context.output().println("""
+        context.output()
+                .println(
+                        """
                 Usage:
                   /cron install [interval]  Register with OS scheduler (default: 60s)
                   /cron uninstall           Unregister from OS scheduler
@@ -82,6 +85,7 @@ public class CronCommand implements SlashCommand {
 
                 This registers campusclaw --cron-tick with launchd (macOS) or
                 crontab (Linux) so cron jobs execute even without an active session."""
-                .stripIndent().stripTrailing());
+                                .stripIndent()
+                                .stripTrailing());
     }
 }

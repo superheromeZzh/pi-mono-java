@@ -14,10 +14,4 @@ import java.nio.file.Path;
  * @param customPrompt additional user-supplied system prompt text (may be null)
  * @param mode         execution mode: "interactive", "one-shot", or "print"
  */
-public record SessionConfig(
-        String model,
-        Path cwd,
-        String customPrompt,
-        String mode
-) {
-}
+public record SessionConfig(String model, Path cwd, String customPrompt, String mode) {}

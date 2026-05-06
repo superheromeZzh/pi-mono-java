@@ -107,8 +107,8 @@ public class AuthStore {
             return new LinkedHashMap<>();
         }
         try {
-            return MAPPER.readValue(Files.readString(authFile),
-                    new TypeReference<Map<String, Map<String, Object>>>() {});
+            return MAPPER.readValue(
+                    Files.readString(authFile), new TypeReference<Map<String, Map<String, Object>>>() {});
         } catch (Exception e) {
             log.warn("Failed to read auth file {}: {}", authFile, e.getMessage());
             return new LinkedHashMap<>();

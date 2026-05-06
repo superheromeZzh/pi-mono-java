@@ -7,5 +7,4 @@ package com.huawei.hicampus.mate.matecampusclaw.agent.event;
 /**
  * Emitted when a new agent turn begins.
  */
-public record TurnStartEvent() implements AgentEvent {
-}
+public record TurnStartEvent() implements AgentEvent {}

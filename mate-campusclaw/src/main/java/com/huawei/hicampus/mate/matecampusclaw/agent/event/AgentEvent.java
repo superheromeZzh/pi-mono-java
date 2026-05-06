@@ -23,15 +23,14 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
     @JsonSubTypes.Type(value = ToolExecutionUpdateEvent.class, name = "tool_execution_update"),
     @JsonSubTypes.Type(value = ToolExecutionEndEvent.class, name = "tool_execution_end")
 })
-public sealed interface AgentEvent permits
-    AgentStartEvent,
-    AgentEndEvent,
-    TurnStartEvent,
-    TurnEndEvent,
-    MessageStartEvent,
-    MessageUpdateEvent,
-    MessageEndEvent,
-    ToolExecutionStartEvent,
-    ToolExecutionUpdateEvent,
-    ToolExecutionEndEvent {
-}
+public sealed interface AgentEvent
+        permits AgentStartEvent,
+                AgentEndEvent,
+                TurnStartEvent,
+                TurnEndEvent,
+                MessageStartEvent,
+                MessageUpdateEvent,
+                MessageEndEvent,
+                ToolExecutionStartEvent,
+                ToolExecutionUpdateEvent,
+                ToolExecutionEndEvent {}

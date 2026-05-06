@@ -43,7 +43,7 @@ public class FileOperationTracker {
                                 // Simple heuristic: bash commands that write to files
                                 // can't reliably extract file paths from bash commands
                             }
-                            default -> { }
+                            default -> {}
                         }
                     }
                 }

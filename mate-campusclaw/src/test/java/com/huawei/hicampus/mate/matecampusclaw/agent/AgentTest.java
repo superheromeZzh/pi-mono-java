@@ -17,6 +17,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.huawei.hicampus.mate.matecampusclaw.agent.context.DefaultMessageConverter;
 import com.huawei.hicampus.mate.matecampusclaw.agent.event.AgentEndEvent;
 import com.huawei.hicampus.mate.matecampusclaw.agent.event.AgentEvent;
@@ -51,7 +52,6 @@ import com.huawei.hicampus.mate.matecampusclaw.ai.types.ToolCall;
 import com.huawei.hicampus.mate.matecampusclaw.ai.types.ToolResultMessage;
 import com.huawei.hicampus.mate.matecampusclaw.ai.types.Usage;
 import com.huawei.hicampus.mate.matecampusclaw.ai.types.UserMessage;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import org.junit.jupiter.api.Test;
 
@@ -60,16 +60,15 @@ class AgentTest {
     @Test
     void promptEmitsEventsAndCompletes() throws Exception {
         var agent = new Agent(
-            piAiService(sampleModel(), new TextResponseProvider("hello", "world")),
-            new AgentState(),
-            new DefaultMessageConverter(),
-            null,
-            new ToolExecutionPipeline(),
-            ToolExecutionMode.SEQUENTIAL,
-            new MessageQueue(),
-            new MessageQueue(),
-            SimpleStreamOptions.empty()
-        );
+                piAiService(sampleModel(), new TextResponseProvider("hello", "world")),
+                new AgentState(),
+                new DefaultMessageConverter(),
+                null,
+                new ToolExecutionPipeline(),
+                ToolExecutionMode.SEQUENTIAL,
+                new MessageQueue(),
+                new MessageQueue(),
+                SimpleStreamOptions.empty());
         agent.setModel(sampleModel());
 
         var events = new ArrayList<AgentEvent>();
@@ -81,7 +80,8 @@ class AgentTest {
 
         assertEquals(2, agent.getState().getMessages().size());
         assertEquals("hello", text((UserMessage) agent.getState().getMessages().get(0)));
-        assertEquals("world", text((AssistantMessage) agent.getState().getMessages().get(1)));
+        assertEquals(
+                "world", text((AssistantMessage) agent.getState().getMessages().get(1)));
         assertFalse(agent.getState().isStreaming());
         assertNull(agent.getState().getStreamMessage());
         assertNull(agent.getState().getError());
@@ -95,16 +95,15 @@ class AgentTest {
     void abortCancelsRunningToolExecution() throws Exception {
         var tool = new BlockingAbortTool();
         var agent = new Agent(
-            piAiService(sampleModel(), new ToolCallProvider("abort", "blocking_tool", Map.of("query", "abort"))),
-            new AgentState(),
-            new DefaultMessageConverter(),
-            null,
-            new ToolExecutionPipeline(),
-            ToolExecutionMode.SEQUENTIAL,
-            new MessageQueue(),
-            new MessageQueue(),
-            SimpleStreamOptions.empty()
-        );
+                piAiService(sampleModel(), new ToolCallProvider("abort", "blocking_tool", Map.of("query", "abort"))),
+                new AgentState(),
+                new DefaultMessageConverter(),
+                null,
+                new ToolExecutionPipeline(),
+                ToolExecutionMode.SEQUENTIAL,
+                new MessageQueue(),
+                new MessageQueue(),
+                SimpleStreamOptions.empty());
         agent.setModel(sampleModel());
         agent.setTools(List.of(tool));
 
@@ -127,16 +126,15 @@ class AgentTest {
     void steeringMessagesAreInjectedIntoNextTurn() throws Exception {
         var steeringQueue = new MessageQueue();
         var agent = new Agent(
-            piAiService(sampleModel(), new SteeringProvider()),
-            new AgentState(),
-            new DefaultMessageConverter(),
-            null,
-            new ToolExecutionPipeline(),
-            ToolExecutionMode.SEQUENTIAL,
-            steeringQueue,
-            new MessageQueue(),
-            SimpleStreamOptions.empty()
-        );
+                piAiService(sampleModel(), new SteeringProvider()),
+                new AgentState(),
+                new DefaultMessageConverter(),
+                null,
+                new ToolExecutionPipeline(),
+                ToolExecutionMode.SEQUENTIAL,
+                steeringQueue,
+                new MessageQueue(),
+                SimpleStreamOptions.empty());
         agent.setModel(sampleModel());
         agent.setTools(List.of(new SteeringTool(agent)));
 
@@ -147,11 +145,13 @@ class AgentTest {
         agent.waitForIdle().get(2, TimeUnit.SECONDS);
 
         assertEquals(5, agent.getState().getMessages().size());
-        assertEquals("steering", text((UserMessage) agent.getState().getMessages().get(0)));
+        assertEquals(
+                "steering", text((UserMessage) agent.getState().getMessages().get(0)));
         assertInstanceOf(AssistantMessage.class, agent.getState().getMessages().get(1));
         assertInstanceOf(ToolResultMessage.class, agent.getState().getMessages().get(2));
         assertEquals("steer", text((UserMessage) agent.getState().getMessages().get(3)));
-        assertEquals("done after steering", text((AssistantMessage) agent.getState().getMessages().get(4)));
+        assertEquals("done after steering", text((AssistantMessage)
+                agent.getState().getMessages().get(4)));
         assertTrue(events.stream().anyMatch(ToolExecutionStartEvent.class::isInstance));
         assertEquals(2, events.stream().filter(TurnEndEvent.class::isInstance).count());
     }
@@ -159,16 +159,15 @@ class AgentTest {
     @Test
     void subscribeReturnsUnsubscribeRunnable() throws Exception {
         var agent = new Agent(
-            piAiService(sampleModel(), new TextResponseProvider("hello", "world")),
-            new AgentState(),
-            new DefaultMessageConverter(),
-            null,
-            new ToolExecutionPipeline(),
-            ToolExecutionMode.SEQUENTIAL,
-            new MessageQueue(),
-            new MessageQueue(),
-            SimpleStreamOptions.empty()
-        );
+                piAiService(sampleModel(), new TextResponseProvider("hello", "world")),
+                new AgentState(),
+                new DefaultMessageConverter(),
+                null,
+                new ToolExecutionPipeline(),
+                ToolExecutionMode.SEQUENTIAL,
+                new MessageQueue(),
+                new MessageQueue(),
+                SimpleStreamOptions.empty());
         agent.setModel(sampleModel());
 
         var events = new ArrayList<AgentEvent>();
@@ -190,20 +189,19 @@ class AgentTest {
 
     private Model sampleModel() {
         return new Model(
-            "test-model",
-            "Test Model",
-            Api.ANTHROPIC_MESSAGES,
-            Provider.ANTHROPIC,
-            "https://example.com",
-            true,
-            List.of(InputModality.TEXT),
-            new ModelCost(1.0, 2.0, 0.5, 0.25),
-            200_000,
-            4_096,
-            null,
-            null,
-            null
-        );
+                "test-model",
+                "Test Model",
+                Api.ANTHROPIC_MESSAGES,
+                Provider.ANTHROPIC,
+                "https://example.com",
+                true,
+                List.of(InputModality.TEXT),
+                new ModelCost(1.0, 2.0, 0.5, 0.25),
+                200_000,
+                4_096,
+                null,
+                null,
+                null);
     }
 
     private String text(UserMessage message) {
@@ -238,19 +236,21 @@ class AgentTest {
         @Override
         public com.fasterxml.jackson.databind.JsonNode parameters() {
             return mapper.createObjectNode()
-                .put("type", "object")
-                .<com.fasterxml.jackson.databind.node.ObjectNode>set("properties",
-                    mapper.createObjectNode().set("query", mapper.createObjectNode().put("type", "string")))
-                .set("required", mapper.createArrayNode().add("query"));
+                    .put("type", "object")
+                    .<com.fasterxml.jackson.databind.node.ObjectNode>set(
+                            "properties",
+                            mapper.createObjectNode()
+                                    .set("query", mapper.createObjectNode().put("type", "string")))
+                    .set("required", mapper.createArrayNode().add("query"));
         }
 
         @Override
         public AgentToolResult execute(
-            String toolCallId,
-            Map<String, Object> params,
-            CancellationToken signal,
-            AgentToolUpdateCallback onUpdate
-        ) throws Exception {
+                String toolCallId,
+                Map<String, Object> params,
+                CancellationToken signal,
+                AgentToolUpdateCallback onUpdate)
+                throws Exception {
             entered.countDown();
             var cancelledLatch = new CountDownLatch(1);
             signal.onCancel(() -> {
@@ -289,19 +289,20 @@ class AgentTest {
         @Override
         public com.fasterxml.jackson.databind.JsonNode parameters() {
             return mapper.createObjectNode()
-                .put("type", "object")
-                .<com.fasterxml.jackson.databind.node.ObjectNode>set("properties",
-                    mapper.createObjectNode().set("query", mapper.createObjectNode().put("type", "string")))
-                .set("required", mapper.createArrayNode().add("query"));
+                    .put("type", "object")
+                    .<com.fasterxml.jackson.databind.node.ObjectNode>set(
+                            "properties",
+                            mapper.createObjectNode()
+                                    .set("query", mapper.createObjectNode().put("type", "string")))
+                    .set("required", mapper.createArrayNode().add("query"));
         }
 
         @Override
         public AgentToolResult execute(
-            String toolCallId,
-            Map<String, Object> params,
-            CancellationToken signal,
-            AgentToolUpdateCallback onUpdate
-        ) {
+                String toolCallId,
+                Map<String, Object> params,
+                CancellationToken signal,
+                AgentToolUpdateCallback onUpdate) {
             agent.steer(new UserMessage("steer", 3L));
             onUpdate.onUpdate(new AgentToolResult(List.of(new TextContent("partial")), null));
             return new AgentToolResult(List.of(new TextContent("tool result")), Map.of("query", params.get("query")));
@@ -325,10 +326,7 @@ class AgentTest {
 
         @Override
         public AssistantMessageEventStream stream(
-            Model model,
-            Context context,
-            com.huawei.hicampus.mate.matecampusclaw.ai.types.StreamOptions options
-        ) {
+                Model model, Context context, com.huawei.hicampus.mate.matecampusclaw.ai.types.StreamOptions options) {
             throw new UnsupportedOperationException("Agent uses streamSimple");
         }
 
@@ -359,10 +357,7 @@ class AgentTest {
 
         @Override
         public AssistantMessageEventStream stream(
-            Model model,
-            Context context,
-            com.huawei.hicampus.mate.matecampusclaw.ai.types.StreamOptions options
-        ) {
+                Model model, Context context, com.huawei.hicampus.mate.matecampusclaw.ai.types.StreamOptions options) {
             throw new UnsupportedOperationException("Agent uses streamSimple");
         }
 
@@ -383,10 +378,7 @@ class AgentTest {
 
         @Override
         public AssistantMessageEventStream stream(
-            Model model,
-            Context context,
-            com.huawei.hicampus.mate.matecampusclaw.ai.types.StreamOptions options
-        ) {
+                Model model, Context context, com.huawei.hicampus.mate.matecampusclaw.ai.types.StreamOptions options) {
             throw new UnsupportedOperationException("Agent uses streamSimple");
         }
 
@@ -401,7 +393,8 @@ class AgentTest {
                     default -> throw new IllegalStateException("Unexpected prompt: " + text);
                 };
             }
-            throw new IllegalStateException("Unexpected last message: " + lastMessage.getClass().getSimpleName());
+            throw new IllegalStateException(
+                    "Unexpected last message: " + lastMessage.getClass().getSimpleName());
         }
     }
 
@@ -409,27 +402,25 @@ class AgentTest {
         var stream = new AssistantMessageEventStream();
         var toolCall = new ToolCall("tool-call-1", toolName, args);
         var partial = new AssistantMessage(
-            List.of(toolCall),
-            model.api().value(),
-            model.provider().value(),
-            model.id(),
-            null,
-            Usage.empty(),
-            StopReason.TOOL_USE,
-            null,
-            10L
-        );
+                List.of(toolCall),
+                model.api().value(),
+                model.provider().value(),
+                model.id(),
+                null,
+                Usage.empty(),
+                StopReason.TOOL_USE,
+                null,
+                10L);
         var done = new AssistantMessage(
-            List.of(toolCall),
-            model.api().value(),
-            model.provider().value(),
-            model.id(),
-            null,
-            Usage.empty(),
-            StopReason.TOOL_USE,
-            null,
-            11L
-        );
+                List.of(toolCall),
+                model.api().value(),
+                model.provider().value(),
+                model.id(),
+                null,
+                Usage.empty(),
+                StopReason.TOOL_USE,
+                null,
+                11L);
         stream.push(new AssistantMessageEvent.StartEvent(partial));
         stream.push(new AssistantMessageEvent.ToolCallEndEvent(0, toolCall, partial));
         stream.push(new AssistantMessageEvent.DoneEvent(StopReason.TOOL_USE, done));
@@ -439,27 +430,25 @@ class AgentTest {
     private static AssistantMessageEventStream textStream(Model model, String text) {
         var stream = new AssistantMessageEventStream();
         var partial = new AssistantMessage(
-            List.of(new TextContent(text)),
-            model.api().value(),
-            model.provider().value(),
-            model.id(),
-            null,
-            Usage.empty(),
-            StopReason.STOP,
-            null,
-            20L
-        );
+                List.of(new TextContent(text)),
+                model.api().value(),
+                model.provider().value(),
+                model.id(),
+                null,
+                Usage.empty(),
+                StopReason.STOP,
+                null,
+                20L);
         var done = new AssistantMessage(
-            List.of(new TextContent(text)),
-            model.api().value(),
-            model.provider().value(),
-            model.id(),
-            null,
-            Usage.empty(),
-            StopReason.STOP,
-            null,
-            21L
-        );
+                List.of(new TextContent(text)),
+                model.api().value(),
+                model.provider().value(),
+                model.id(),
+                null,
+                Usage.empty(),
+                StopReason.STOP,
+                null,
+                21L);
         stream.push(new AssistantMessageEvent.StartEvent(partial));
         stream.push(new AssistantMessageEvent.TextDeltaEvent(0, text, partial));
         stream.push(new AssistantMessageEvent.DoneEvent(StopReason.STOP, done));

@@ -19,11 +19,7 @@ import com.huawei.hicampus.mate.matecampusclaw.agent.tool.CancellationToken;
  * @param env     additional environment variables (may be null or empty)
  */
 public record BashExecOptions(
-        Consumer<byte[]> onData,
-        CancellationToken signal,
-        Duration timeout,
-        Map<String, String> env
-) {
+        Consumer<byte[]> onData, CancellationToken signal, Duration timeout, Map<String, String> env) {
     public BashExecOptions {
         env = env == null ? Map.of() : Map.copyOf(env);
     }

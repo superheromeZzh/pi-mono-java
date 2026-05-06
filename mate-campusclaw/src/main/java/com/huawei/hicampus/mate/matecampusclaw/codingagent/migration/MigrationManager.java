@@ -32,12 +32,7 @@ public class MigrationManager {
         void apply(Path dataDir) throws IOException;
     }
 
-    public record MigrationStep(
-        int fromVersion,
-        int toVersion,
-        String description,
-        Migration migration
-    ) {}
+    public record MigrationStep(int fromVersion, int toVersion, String description, Migration migration) {}
 
     private final List<MigrationStep> migrations = new ArrayList<>();
 
@@ -95,7 +90,8 @@ public class MigrationManager {
                     applied.add(step.description());
                     current = step.toVersion();
                 } catch (IOException e) {
-                    log.error("Migration failed at v{} -> v{}: {}", step.fromVersion(), step.toVersion(), e.getMessage());
+                    log.error(
+                            "Migration failed at v{} -> v{}: {}", step.fromVersion(), step.toVersion(), e.getMessage());
                     throw e;
                 }
             }
@@ -111,15 +107,14 @@ public class MigrationManager {
             // Copy key files
             try (var stream = Files.list(dataDir)) {
                 stream.filter(p -> !p.getFileName().toString().startsWith("."))
-                    .filter(Files::isRegularFile)
-                    .forEach(p -> {
-                        try {
-                            Files.copy(p, backupDir.resolve(p.getFileName()),
-                                StandardCopyOption.REPLACE_EXISTING);
-                        } catch (IOException e) {
-                            log.warn("Failed to backup file: {}", p, e);
-                        }
-                    });
+                        .filter(Files::isRegularFile)
+                        .forEach(p -> {
+                            try {
+                                Files.copy(p, backupDir.resolve(p.getFileName()), StandardCopyOption.REPLACE_EXISTING);
+                            } catch (IOException e) {
+                                log.warn("Failed to backup file: {}", p, e);
+                            }
+                        });
             }
             log.debug("Created backup at {}", backupDir);
         } catch (IOException e) {
@@ -137,40 +132,38 @@ public class MigrationManager {
             }
 
             try (var stream = Files.list(sessionsDir)) {
-                stream.filter(p -> p.toString().endsWith(".jsonl"))
-                    .forEach(sessionFile -> {
-                        try {
-                            List<String> lines = Files.readAllLines(sessionFile);
-                            List<String> updated = new ArrayList<>();
-                            String lastId = null;
-                            for (String line : lines) {
-                                if (line.isBlank()) {
-                                    continue;
-                                }
-                                // Add parentId if not present
-                                if (!line.contains("\"parentId\"")) {
-                                    // Insert parentId before the closing brace
-                                    String parentField = lastId != null
-                                        ? ",\"parentId\":\"" + lastId + "\""
-                                        : ",\"parentId\":null";
-                                    line = line.substring(0, line.length() - 1) + parentField + "}";
-                                }
-                                // Extract id for next iteration
-                                int idIdx = line.indexOf("\"id\":\"");
-                                if (idIdx >= 0) {
-                                    int start = idIdx + 6;
-                                    int end = line.indexOf('"', start);
-                                    if (end > start) {
-                                        lastId = line.substring(start, end);
-                                    }
-                                }
-                                updated.add(line);
+                stream.filter(p -> p.toString().endsWith(".jsonl")).forEach(sessionFile -> {
+                    try {
+                        List<String> lines = Files.readAllLines(sessionFile);
+                        List<String> updated = new ArrayList<>();
+                        String lastId = null;
+                        for (String line : lines) {
+                            if (line.isBlank()) {
+                                continue;
                             }
-                            Files.write(sessionFile, updated);
-                        } catch (IOException e) {
-                            log.warn("Failed to migrate session file: {}", sessionFile, e);
+                            // Add parentId if not present
+                            if (!line.contains("\"parentId\"")) {
+                                // Insert parentId before the closing brace
+                                String parentField =
+                                        lastId != null ? ",\"parentId\":\"" + lastId + "\"" : ",\"parentId\":null";
+                                line = line.substring(0, line.length() - 1) + parentField + "}";
+                            }
+                            // Extract id for next iteration
+                            int idIdx = line.indexOf("\"id\":\"");
+                            if (idIdx >= 0) {
+                                int start = idIdx + 6;
+                                int end = line.indexOf('"', start);
+                                if (end > start) {
+                                    lastId = line.substring(start, end);
+                                }
+                            }
+                            updated.add(line);
                         }
-                    });
+                        Files.write(sessionFile, updated);
+                    } catch (IOException e) {
+                        log.warn("Failed to migrate session file: {}", sessionFile, e);
+                    }
+                });
             }
         }));
     }

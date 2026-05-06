@@ -7,14 +7,14 @@ package com.huawei.hicampus.mate.matecampusclaw.codingagent.loop;
 import java.util.List;
 import java.util.Map;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.huawei.hicampus.mate.matecampusclaw.agent.tool.AgentTool;
 import com.huawei.hicampus.mate.matecampusclaw.agent.tool.AgentToolResult;
 import com.huawei.hicampus.mate.matecampusclaw.agent.tool.AgentToolUpdateCallback;
 import com.huawei.hicampus.mate.matecampusclaw.agent.tool.CancellationToken;
 import com.huawei.hicampus.mate.matecampusclaw.ai.types.TextContent;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import org.springframework.stereotype.Component;
 
@@ -58,23 +58,30 @@ public class LoopTool implements AgentTool {
     public JsonNode parameters() {
         var props = MAPPER.createObjectNode();
 
-        props.set("action", MAPPER.createObjectNode()
-                .put("type", "string")
-                .put("description", "Action: start, stop, stop_all, list")
-                .set("enum", MAPPER.createArrayNode()
-                        .add("start").add("stop").add("stop_all").add("list")));
+        props.set(
+                "action",
+                MAPPER.createObjectNode()
+                        .put("type", "string")
+                        .put("description", "Action: start, stop, stop_all, list")
+                        .set(
+                                "enum",
+                                MAPPER.createArrayNode()
+                                        .add("start")
+                                        .add("stop")
+                                        .add("stop_all")
+                                        .add("list")));
 
-        props.set("prompt", MAPPER.createObjectNode()
-                .put("type", "string")
-                .put("description", "The prompt to repeat (for start)"));
+        props.set(
+                "prompt",
+                MAPPER.createObjectNode().put("type", "string").put("description", "The prompt to repeat (for start)"));
 
-        props.set("interval_ms", MAPPER.createObjectNode()
-                .put("type", "integer")
-                .put("description", "Interval in milliseconds (for start, default 600000 = 10 minutes)"));
+        props.set(
+                "interval_ms",
+                MAPPER.createObjectNode()
+                        .put("type", "integer")
+                        .put("description", "Interval in milliseconds (for start, default 600000 = 10 minutes)"));
 
-        props.set("id", MAPPER.createObjectNode()
-                .put("type", "string")
-                .put("description", "Loop ID (for stop)"));
+        props.set("id", MAPPER.createObjectNode().put("type", "string").put("description", "Loop ID (for stop)"));
 
         return MAPPER.createObjectNode()
                 .put("type", "object")
@@ -83,8 +90,8 @@ public class LoopTool implements AgentTool {
     }
 
     @Override
-    public AgentToolResult execute(String toolCallId, Map<String, Object> params,
-                                    CancellationToken signal, AgentToolUpdateCallback onUpdate) {
+    public AgentToolResult execute(
+            String toolCallId, Map<String, Object> params, CancellationToken signal, AgentToolUpdateCallback onUpdate) {
         String action = (String) params.get("action");
         if (action == null) {
             return text("Error: action is required");
@@ -145,9 +152,12 @@ public class LoopTool implements AgentTool {
         var sb = new StringBuilder();
         sb.append("Active loops (").append(loops.size()).append("):\n");
         for (var entry : loops) {
-            sb.append("  #").append(entry.id())
-                    .append("  every ").append(formatInterval(entry.intervalMs()))
-                    .append("  ").append(entry.prompt())
+            sb.append("  #")
+                    .append(entry.id())
+                    .append("  every ")
+                    .append(formatInterval(entry.intervalMs()))
+                    .append("  ")
+                    .append(entry.prompt())
                     .append("\n");
         }
         return text(sb.toString());

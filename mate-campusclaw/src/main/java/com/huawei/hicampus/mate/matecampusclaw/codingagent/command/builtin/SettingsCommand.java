@@ -49,8 +49,8 @@ public class SettingsCommand implements SlashCommand {
 
         // Thinking
         var thinkingLevel = state.getThinkingLevel();
-        out.println("  Thinking: " + (thinkingLevel != null ? thinkingLevel.value()
-                : nvl(settings.defaultThinkingLevel(), "medium")));
+        out.println("  Thinking: "
+                + (thinkingLevel != null ? thinkingLevel.value() : nvl(settings.defaultThinkingLevel(), "medium")));
 
         // Transport & modes
         out.println("  Transport: " + nvl(settings.transport(), "auto"));
@@ -61,8 +61,10 @@ public class SettingsCommand implements SlashCommand {
         out.println("  Theme: " + nvl(settings.theme(), "default"));
 
         // UI
-        out.println("  Hide thinking block: " + (settings.hideThinkingBlock() != null ? settings.hideThinkingBlock() : false));
-        out.println("  Skill commands: " + (settings.enableSkillCommands() != null ? settings.enableSkillCommands() : true));
+        out.println("  Hide thinking block: "
+                + (settings.hideThinkingBlock() != null ? settings.hideThinkingBlock() : false));
+        out.println("  Skill commands: "
+                + (settings.enableSkillCommands() != null ? settings.enableSkillCommands() : true));
 
         // Shell
         if (settings.shellPath() != null) {

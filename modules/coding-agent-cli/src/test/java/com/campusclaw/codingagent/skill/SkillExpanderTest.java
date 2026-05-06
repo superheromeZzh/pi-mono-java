@@ -35,9 +35,7 @@ class SkillExpanderTest {
         Path skillDir = tempDir.resolve(name);
         Files.createDirectories(skillDir);
         Path skillFile = skillDir.resolve("SKILL.md");
-        String content = frontmatter != null
-                ? "---\n" + frontmatter + "\n---\n" + body
-                : body;
+        String content = frontmatter != null ? "---\n" + frontmatter + "\n---\n" + body : body;
         Files.writeString(skillFile, content);
         return new Skill(name, "Description for " + name, skillFile, skillDir, "project", false);
     }
@@ -51,8 +49,8 @@ class SkillExpanderTest {
 
         @Test
         void expandsSkillCommand() throws IOException {
-            Skill skill = createSkillWithFile("commit",
-                    "name: commit\ndescription: Git commits", "Commit instructions here.");
+            Skill skill = createSkillWithFile(
+                    "commit", "name: commit\ndescription: Git commits", "Commit instructions here.");
             registry.register(skill);
 
             String result = expander.expand("/skill:commit", registry);
@@ -64,8 +62,8 @@ class SkillExpanderTest {
 
         @Test
         void expandsSkillCommandWithArgs() throws IOException {
-            Skill skill = createSkillWithFile("commit",
-                    "name: commit\ndescription: Git commits", "Commit instructions.");
+            Skill skill =
+                    createSkillWithFile("commit", "name: commit\ndescription: Git commits", "Commit instructions.");
             registry.register(skill);
 
             String result = expander.expand("/skill:commit fix the login bug", registry);
@@ -103,8 +101,7 @@ class SkillExpanderTest {
 
         @Test
         void doesNotMatchMidLineCommand() throws IOException {
-            Skill skill = createSkillWithFile("commit",
-                    "name: commit\ndescription: Git commits", "Body.");
+            Skill skill = createSkillWithFile("commit", "name: commit\ndescription: Git commits", "Body.");
             registry.register(skill);
 
             String input = "Please run /skill:commit";
@@ -121,8 +118,7 @@ class SkillExpanderTest {
 
         @Test
         void includesLocationAttribute() throws IOException {
-            Skill skill = createSkillWithFile("review",
-                    "name: review\ndescription: Code review", "Review steps.");
+            Skill skill = createSkillWithFile("review", "name: review\ndescription: Code review", "Review steps.");
             registry.register(skill);
 
             String result = expander.expand("/skill:review", registry);
@@ -132,8 +128,7 @@ class SkillExpanderTest {
 
         @Test
         void includesRelativeReferenceLine() throws IOException {
-            Skill skill = createSkillWithFile("deploy",
-                    "name: deploy\ndescription: Deploy app", "Deploy steps.");
+            Skill skill = createSkillWithFile("deploy", "name: deploy\ndescription: Deploy app", "Deploy steps.");
             registry.register(skill);
 
             String result = expander.expand("/skill:deploy", registry);
@@ -143,8 +138,7 @@ class SkillExpanderTest {
 
         @Test
         void stripsFrontmatterFromBody() throws IOException {
-            Skill skill = createSkillWithFile("test-skill",
-                    "name: test-skill\ndescription: Testing", "Only the body.");
+            Skill skill = createSkillWithFile("test-skill", "name: test-skill\ndescription: Testing", "Only the body.");
             registry.register(skill);
 
             String result = expander.expand("/skill:test-skill", registry);
@@ -158,8 +152,7 @@ class SkillExpanderTest {
         void handlesFileWithNoFrontmatter() throws IOException {
             Skill skill = createSkillWithFile("plain", null, "Plain body content.");
             // Override with valid registration
-            Skill registered = new Skill("plain", "Plain skill",
-                    skill.filePath(), skill.baseDir(), "project", false);
+            Skill registered = new Skill("plain", "Plain skill", skill.filePath(), skill.baseDir(), "project", false);
             registry.register(registered);
 
             String result = expander.expand("/skill:plain", registry);

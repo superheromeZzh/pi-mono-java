@@ -11,7 +11,6 @@ import com.fasterxml.jackson.annotation.JsonValue;
  * Input modality supported by a model.
  */
 public enum InputModality {
-
     TEXT("text"),
     IMAGE("image");
 

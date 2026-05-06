@@ -4,9 +4,9 @@
 
 package com.huawei.hicampus.mate.matecampusclaw.codingagent.session;
 
-import com.huawei.hicampus.mate.matecampusclaw.ai.types.Message;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.huawei.hicampus.mate.matecampusclaw.ai.types.Message;
 
 import jakarta.annotation.Nullable;
 
@@ -15,14 +15,13 @@ import jakarta.annotation.Nullable;
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 public record SessionEntry(
-    @JsonProperty("id") String id,
-    @JsonProperty("parentId") @Nullable String parentId,
-    @JsonProperty("type") String type,
-    @JsonProperty("message") @Nullable Message message,
-    @JsonProperty("summary") @Nullable String summary,
-    @JsonProperty("branchName") @Nullable String branchName,
-    @JsonProperty("timestamp") long timestamp
-) {
+        @JsonProperty("id") String id,
+        @JsonProperty("parentId") @Nullable String parentId,
+        @JsonProperty("type") String type,
+        @JsonProperty("message") @Nullable Message message,
+        @JsonProperty("summary") @Nullable String summary,
+        @JsonProperty("branchName") @Nullable String branchName,
+        @JsonProperty("timestamp") long timestamp) {
     public static SessionEntry message(String id, @Nullable String parentId, Message message) {
         return new SessionEntry(id, parentId, "message", message, null, null, System.currentTimeMillis());
     }

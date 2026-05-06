@@ -25,8 +25,7 @@ public class KeybindingsComponent implements Component {
     /**
      * A single keybinding entry: a key combination and its description.
      */
-    public record Keybinding(String key, String description) {
-    }
+    public record Keybinding(String key, String description) {}
 
     private List<Keybinding> keybindings;
     private String separator;
@@ -53,8 +52,8 @@ public class KeybindingsComponent implements Component {
         this.keybindings = keybindings != null ? new ArrayList<>(keybindings) : new ArrayList<>();
         this.separator = "  |  ";
         // Default styling: bold keys, dim descriptions, dim separator
-        this.keyStyleFn = text -> "\033[1m" + text + "\033[0m";       // bold
-        this.descStyleFn = text -> "\033[2m" + text + "\033[0m";      // dim
+        this.keyStyleFn = text -> "\033[1m" + text + "\033[0m"; // bold
+        this.descStyleFn = text -> "\033[2m" + text + "\033[0m"; // dim
         this.separatorStyleFn = text -> "\033[2m" + text + "\033[0m"; // dim
     }
 
@@ -105,9 +104,7 @@ public class KeybindingsComponent implements Component {
     @Override
     public List<String> render(int width) {
         // Cache hit
-        if (cachedLines != null
-                && cachedWidth == width
-                && keybindings.equals(cachedKeybindings)) {
+        if (cachedLines != null && cachedWidth == width && keybindings.equals(cachedKeybindings)) {
             return cachedLines;
         }
 

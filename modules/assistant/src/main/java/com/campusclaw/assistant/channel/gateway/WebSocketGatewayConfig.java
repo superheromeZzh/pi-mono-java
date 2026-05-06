@@ -49,8 +49,8 @@ public class WebSocketGatewayConfig implements SmartLifecycle {
     private Channel serverChannel;
     private volatile boolean running = false;
 
-    public WebSocketGatewayConfig(WebSocketGatewayProperties properties, GatewayChannel gatewayChannel,
-                                  ObjectMapper objectMapper) {
+    public WebSocketGatewayConfig(
+            WebSocketGatewayProperties properties, GatewayChannel gatewayChannel, ObjectMapper objectMapper) {
         this.properties = properties;
         this.gatewayChannel = gatewayChannel;
         this.objectMapper = objectMapper;
@@ -74,34 +74,39 @@ public class WebSocketGatewayConfig implements SmartLifecycle {
             GatewayWebSocketHandler handler = gatewayWebSocketHandler();
 
             ServerBootstrap bootstrap = new ServerBootstrap();
-            bootstrap.group(bossGroup, workerGroup)
-                .channel(NioServerSocketChannel.class)
-                .handler(new LoggingHandler(LogLevel.INFO))
-                .childHandler(new ChannelInitializer<SocketChannel>() {
-                    @Override
-                    protected void initChannel(SocketChannel ch) throws Exception {
-                        ChannelPipeline pipeline = ch.pipeline();
+            bootstrap
+                    .group(bossGroup, workerGroup)
+                    .channel(NioServerSocketChannel.class)
+                    .handler(new LoggingHandler(LogLevel.INFO))
+                    .childHandler(new ChannelInitializer<SocketChannel>() {
+                        @Override
+                        protected void initChannel(SocketChannel ch) throws Exception {
+                            ChannelPipeline pipeline = ch.pipeline();
 
-                        // HTTP codec
-                        pipeline.addLast("httpCodec", new HttpServerCodec());
+                            // HTTP codec
+                            pipeline.addLast("httpCodec", new HttpServerCodec());
 
-                        // Aggregate HTTP messages
-                        pipeline.addLast("httpAggregator", new HttpObjectAggregator(65536));
+                            // Aggregate HTTP messages
+                            pipeline.addLast("httpAggregator", new HttpObjectAggregator(65536));
 
-                        // WebSocket protocol handler
-                        pipeline.addLast("websocketHandler", new WebSocketServerProtocolHandler(
-                            properties.getPath(), null, true, 65536, false, true
-                        ));
+                            // WebSocket protocol handler
+                            pipeline.addLast(
+                                    "websocketHandler",
+                                    new WebSocketServerProtocolHandler(
+                                            properties.getPath(), null, true, 65536, false, true));
 
-                        // Custom message handler
-                        pipeline.addLast("messageHandler", handler);
-                    }
-                })
-                .option(ChannelOption.SO_BACKLOG, 128)
-                .childOption(ChannelOption.SO_KEEPALIVE, true);
+                            // Custom message handler
+                            pipeline.addLast("messageHandler", handler);
+                        }
+                    })
+                    .option(ChannelOption.SO_BACKLOG, 128)
+                    .childOption(ChannelOption.SO_KEEPALIVE, true);
 
             // Bind and start to accept incoming connections
-            serverChannel = bootstrap.bind(new InetSocketAddress(properties.getPort())).sync().channel();
+            serverChannel = bootstrap
+                    .bind(new InetSocketAddress(properties.getPort()))
+                    .sync()
+                    .channel();
             running = true;
 
         } catch (Exception e) {

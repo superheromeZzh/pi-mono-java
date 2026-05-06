@@ -18,13 +18,7 @@ import java.nio.file.Path;
  * @param disableModelInvocation  if true, skill is not shown in system prompt
  */
 public record Skill(
-        String name,
-        String description,
-        Path filePath,
-        Path baseDir,
-        String source,
-        boolean disableModelInvocation
-) {
+        String name, String description, Path filePath, Path baseDir, String source, boolean disableModelInvocation) {
     /** Maximum allowed length for skill names. */
     public static final int MAX_NAME_LENGTH = 64;
 

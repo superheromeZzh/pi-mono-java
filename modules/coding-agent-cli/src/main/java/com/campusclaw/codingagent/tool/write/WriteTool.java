@@ -69,12 +69,10 @@ public class WriteTool implements AgentTool {
     @Override
     public JsonNode parameters() {
         ObjectNode props = MAPPER.createObjectNode();
-        props.set("path", MAPPER.createObjectNode()
-                .put("type", "string")
-                .put("description", "The file path to write"));
-        props.set("content", MAPPER.createObjectNode()
-                .put("type", "string")
-                .put("description", "The content to write to the file"));
+        props.set("path", MAPPER.createObjectNode().put("type", "string").put("description", "The file path to write"));
+        props.set(
+                "content",
+                MAPPER.createObjectNode().put("type", "string").put("description", "The content to write to the file"));
 
         return MAPPER.createObjectNode()
                 .put("type", "object")
@@ -84,11 +82,8 @@ public class WriteTool implements AgentTool {
 
     @Override
     public AgentToolResult execute(
-            String toolCallId,
-            Map<String, Object> params,
-            CancellationToken signal,
-            AgentToolUpdateCallback onUpdate
-    ) throws Exception {
+            String toolCallId, Map<String, Object> params, CancellationToken signal, AgentToolUpdateCallback onUpdate)
+            throws Exception {
         String pathInput = (String) params.get("path");
         String content = (String) params.get("content");
 
@@ -113,17 +108,11 @@ public class WriteTool implements AgentTool {
             }
             writeOperations.writeFile(resolvedPath, content);
 
-            return new AgentToolResult(
-                    List.<ContentBlock>of(new TextContent("Wrote " + pathInput)),
-                    null
-            );
+            return new AgentToolResult(List.<ContentBlock>of(new TextContent("Wrote " + pathInput)), null);
         });
     }
 
     private static AgentToolResult errorResult(String message) {
-        return new AgentToolResult(
-                List.<ContentBlock>of(new TextContent(message)),
-                null
-        );
+        return new AgentToolResult(List.<ContentBlock>of(new TextContent(message)), null);
     }
 }

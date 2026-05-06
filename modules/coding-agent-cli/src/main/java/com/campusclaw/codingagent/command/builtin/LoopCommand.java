@@ -98,16 +98,21 @@ public class LoopCommand implements SlashCommand {
         var sb = new StringBuilder();
         sb.append("Active loops (").append(loops.size()).append("):\n");
         for (var entry : loops) {
-            sb.append("  #").append(entry.id())
-              .append("  every ").append(formatInterval(entry.intervalMs()))
-              .append("  ").append(truncate(entry.prompt(), 60))
-              .append("\n");
+            sb.append("  #")
+                    .append(entry.id())
+                    .append("  every ")
+                    .append(formatInterval(entry.intervalMs()))
+                    .append("  ")
+                    .append(truncate(entry.prompt(), 60))
+                    .append("\n");
         }
         context.output().println(sb.toString().stripTrailing());
     }
 
     private void printUsage(SlashCommandContext context) {
-        context.output().println("""
+        context.output()
+                .println(
+                        """
             Usage:
               /loop [interval] <prompt>   Start a recurring prompt (default: 10m)
               /loop stop [id]             Stop one or all loops
@@ -119,7 +124,9 @@ public class LoopCommand implements SlashCommand {
               /loop 5m check deploy status
               /loop 30s output a random emoji
               /loop list
-              /loop stop 1""".stripIndent().stripTrailing());
+              /loop stop 1"""
+                                .stripIndent()
+                                .stripTrailing());
     }
 
     /**

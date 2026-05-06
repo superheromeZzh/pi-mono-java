@@ -48,10 +48,14 @@ public class ShareCommand implements SlashCommand {
 
             // Use gh CLI to create a gist
             var process = new ProcessBuilder(
-                    "gh", "gist", "create",
-                    "--desc", "CampusClaw session (" + messages.size() + " messages)",
-                    tmpFile.toString()
-            ).redirectErrorStream(true).start();
+                            "gh",
+                            "gist",
+                            "create",
+                            "--desc",
+                            "CampusClaw session (" + messages.size() + " messages)",
+                            tmpFile.toString())
+                    .redirectErrorStream(true)
+                    .start();
 
             String output = new String(process.getInputStream().readAllBytes()).trim();
             int exitCode = process.waitFor();

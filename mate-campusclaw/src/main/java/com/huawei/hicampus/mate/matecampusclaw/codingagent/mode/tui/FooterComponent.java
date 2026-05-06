@@ -88,7 +88,7 @@ public class FooterComponent implements Component {
     }
 
     @Override
-    public void invalidate() { }
+    public void invalidate() {}
 
     @Override
     public List<String> render(int width) {
@@ -175,9 +175,17 @@ public class FooterComponent implements Component {
                 sb.append(" ");
             }
             if (pct > 90) {
-                sb.append(ANSI_RESET).append(ANSI_RED).append(pctStr).append(ANSI_RESET).append(ANSI_DIM);
+                sb.append(ANSI_RESET)
+                        .append(ANSI_RED)
+                        .append(pctStr)
+                        .append(ANSI_RESET)
+                        .append(ANSI_DIM);
             } else if (pct > 70) {
-                sb.append(ANSI_RESET).append(ANSI_YELLOW).append(pctStr).append(ANSI_RESET).append(ANSI_DIM);
+                sb.append(ANSI_RESET)
+                        .append(ANSI_YELLOW)
+                        .append(pctStr)
+                        .append(ANSI_RESET)
+                        .append(ANSI_DIM);
             } else {
                 sb.append(pctStr);
             }

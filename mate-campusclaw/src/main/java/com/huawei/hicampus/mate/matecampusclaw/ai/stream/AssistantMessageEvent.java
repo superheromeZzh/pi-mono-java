@@ -4,12 +4,12 @@
 
 package com.huawei.hicampus.mate.matecampusclaw.ai.stream;
 
-import com.huawei.hicampus.mate.matecampusclaw.ai.types.AssistantMessage;
-import com.huawei.hicampus.mate.matecampusclaw.ai.types.StopReason;
-import com.huawei.hicampus.mate.matecampusclaw.ai.types.ToolCall;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import com.huawei.hicampus.mate.matecampusclaw.ai.types.AssistantMessage;
+import com.huawei.hicampus.mate.matecampusclaw.ai.types.StopReason;
+import com.huawei.hicampus.mate.matecampusclaw.ai.types.ToolCall;
 
 /**
  * Sealed union of events emitted during an LLM assistant message stream.
@@ -38,92 +38,87 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
     @JsonSubTypes.Type(value = AssistantMessageEvent.DoneEvent.class, name = "done"),
     @JsonSubTypes.Type(value = AssistantMessageEvent.ErrorEvent.class, name = "error")
 })
-public sealed interface AssistantMessageEvent permits
-    AssistantMessageEvent.StartEvent,
-    AssistantMessageEvent.TextStartEvent,
-    AssistantMessageEvent.TextDeltaEvent,
-    AssistantMessageEvent.TextEndEvent,
-    AssistantMessageEvent.ThinkingStartEvent,
-    AssistantMessageEvent.ThinkingDeltaEvent,
-    AssistantMessageEvent.ThinkingEndEvent,
-    AssistantMessageEvent.ToolCallStartEvent,
-    AssistantMessageEvent.ToolCallDeltaEvent,
-    AssistantMessageEvent.ToolCallEndEvent,
-    AssistantMessageEvent.DoneEvent,
-    AssistantMessageEvent.ErrorEvent {
+public sealed interface AssistantMessageEvent
+        permits AssistantMessageEvent.StartEvent,
+                AssistantMessageEvent.TextStartEvent,
+                AssistantMessageEvent.TextDeltaEvent,
+                AssistantMessageEvent.TextEndEvent,
+                AssistantMessageEvent.ThinkingStartEvent,
+                AssistantMessageEvent.ThinkingDeltaEvent,
+                AssistantMessageEvent.ThinkingEndEvent,
+                AssistantMessageEvent.ToolCallStartEvent,
+                AssistantMessageEvent.ToolCallDeltaEvent,
+                AssistantMessageEvent.ToolCallEndEvent,
+                AssistantMessageEvent.DoneEvent,
+                AssistantMessageEvent.ErrorEvent {
 
     // --- Stream lifecycle ---
 
     /** Stream begins; carries the initial partial assistant message. */
-    record StartEvent(
-        @JsonProperty("partial") AssistantMessage partial
-    ) implements AssistantMessageEvent {}
+    record StartEvent(@JsonProperty("partial") AssistantMessage partial) implements AssistantMessageEvent {}
 
     // --- Text content events ---
 
     /** A new text content block begins at the given index. */
     record TextStartEvent(
-        @JsonProperty("contentIndex") int contentIndex,
-        @JsonProperty("partial") AssistantMessage partial
-    ) implements AssistantMessageEvent {}
+            @JsonProperty("contentIndex") int contentIndex, @JsonProperty("partial") AssistantMessage partial)
+            implements AssistantMessageEvent {}
 
     /** Incremental text content delta. */
     record TextDeltaEvent(
-        @JsonProperty("contentIndex") int contentIndex,
-        @JsonProperty("delta") String delta,
-        @JsonProperty("partial") AssistantMessage partial
-    ) implements AssistantMessageEvent {}
+            @JsonProperty("contentIndex") int contentIndex,
+            @JsonProperty("delta") String delta,
+            @JsonProperty("partial") AssistantMessage partial)
+            implements AssistantMessageEvent {}
 
     /** Text content block at the given index is complete. */
     record TextEndEvent(
-        @JsonProperty("contentIndex") int contentIndex,
-        @JsonProperty("content") String content,
-        @JsonProperty("partial") AssistantMessage partial
-    ) implements AssistantMessageEvent {}
+            @JsonProperty("contentIndex") int contentIndex,
+            @JsonProperty("content") String content,
+            @JsonProperty("partial") AssistantMessage partial)
+            implements AssistantMessageEvent {}
 
     // --- Thinking content events ---
 
     /** A new thinking content block begins at the given index. */
     record ThinkingStartEvent(
-        @JsonProperty("contentIndex") int contentIndex,
-        @JsonProperty("partial") AssistantMessage partial
-    ) implements AssistantMessageEvent {}
+            @JsonProperty("contentIndex") int contentIndex, @JsonProperty("partial") AssistantMessage partial)
+            implements AssistantMessageEvent {}
 
     /** Incremental thinking content delta. */
     record ThinkingDeltaEvent(
-        @JsonProperty("contentIndex") int contentIndex,
-        @JsonProperty("delta") String delta,
-        @JsonProperty("partial") AssistantMessage partial
-    ) implements AssistantMessageEvent {}
+            @JsonProperty("contentIndex") int contentIndex,
+            @JsonProperty("delta") String delta,
+            @JsonProperty("partial") AssistantMessage partial)
+            implements AssistantMessageEvent {}
 
     /** Thinking content block at the given index is complete. */
     record ThinkingEndEvent(
-        @JsonProperty("contentIndex") int contentIndex,
-        @JsonProperty("content") String content,
-        @JsonProperty("partial") AssistantMessage partial
-    ) implements AssistantMessageEvent {}
+            @JsonProperty("contentIndex") int contentIndex,
+            @JsonProperty("content") String content,
+            @JsonProperty("partial") AssistantMessage partial)
+            implements AssistantMessageEvent {}
 
     // --- Tool call events ---
 
     /** A new tool call content block begins at the given index. */
     record ToolCallStartEvent(
-        @JsonProperty("contentIndex") int contentIndex,
-        @JsonProperty("partial") AssistantMessage partial
-    ) implements AssistantMessageEvent {}
+            @JsonProperty("contentIndex") int contentIndex, @JsonProperty("partial") AssistantMessage partial)
+            implements AssistantMessageEvent {}
 
     /** Incremental tool call arguments delta (JSON fragment). */
     record ToolCallDeltaEvent(
-        @JsonProperty("contentIndex") int contentIndex,
-        @JsonProperty("delta") String delta,
-        @JsonProperty("partial") AssistantMessage partial
-    ) implements AssistantMessageEvent {}
+            @JsonProperty("contentIndex") int contentIndex,
+            @JsonProperty("delta") String delta,
+            @JsonProperty("partial") AssistantMessage partial)
+            implements AssistantMessageEvent {}
 
     /** Tool call at the given index is complete with the final parsed ToolCall. */
     record ToolCallEndEvent(
-        @JsonProperty("contentIndex") int contentIndex,
-        @JsonProperty("toolCall") ToolCall toolCall,
-        @JsonProperty("partial") AssistantMessage partial
-    ) implements AssistantMessageEvent {}
+            @JsonProperty("contentIndex") int contentIndex,
+            @JsonProperty("toolCall") ToolCall toolCall,
+            @JsonProperty("partial") AssistantMessage partial)
+            implements AssistantMessageEvent {}
 
     // --- Completion events ---
 
@@ -133,10 +128,8 @@ public sealed interface AssistantMessageEvent permits
      * @param reason  the stop reason (stop, length, or toolUse)
      * @param message the final complete assistant message
      */
-    record DoneEvent(
-        @JsonProperty("reason") StopReason reason,
-        @JsonProperty("message") AssistantMessage message
-    ) implements AssistantMessageEvent {}
+    record DoneEvent(@JsonProperty("reason") StopReason reason, @JsonProperty("message") AssistantMessage message)
+            implements AssistantMessageEvent {}
 
     /**
      * Stream ended with an error.
@@ -144,8 +137,6 @@ public sealed interface AssistantMessageEvent permits
      * @param reason the error reason ("error" or "aborted")
      * @param error  the assistant message containing error details
      */
-    record ErrorEvent(
-        @JsonProperty("reason") String reason,
-        @JsonProperty("error") AssistantMessage error
-    ) implements AssistantMessageEvent {}
+    record ErrorEvent(@JsonProperty("reason") String reason, @JsonProperty("error") AssistantMessage error)
+            implements AssistantMessageEvent {}
 }

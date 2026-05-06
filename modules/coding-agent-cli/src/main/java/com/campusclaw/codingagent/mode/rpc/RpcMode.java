@@ -95,10 +95,12 @@ public class RpcMode {
                     emit(RpcEvent.response(cmd.id(), "ack", null));
                 }
                 case "get_state" -> {
-                    emit(RpcEvent.response(cmd.id(), "state", Map.of(
-                        "model", session.getModelId(),
-                        "isStreaming", session.isStreaming()
-                    )));
+                    emit(RpcEvent.response(
+                            cmd.id(),
+                            "state",
+                            Map.of(
+                                    "model", session.getModelId(),
+                                    "isStreaming", session.isStreaming())));
                 }
                 case "set_model" -> {
                     if (cmd.model() != null) {

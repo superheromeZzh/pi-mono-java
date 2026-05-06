@@ -51,8 +51,8 @@ public class CronRunLog {
         try {
             Files.createDirectories(runsDir);
             String json = mapper.writeValueAsString(record);
-            try (BufferedWriter writer = Files.newBufferedWriter(logFile, StandardCharsets.UTF_8,
-                    StandardOpenOption.CREATE, StandardOpenOption.APPEND)) {
+            try (BufferedWriter writer = Files.newBufferedWriter(
+                    logFile, StandardCharsets.UTF_8, StandardOpenOption.CREATE, StandardOpenOption.APPEND)) {
                 writer.write(json);
                 writer.newLine();
             }
@@ -92,6 +92,9 @@ public class CronRunLog {
 
     private static Path defaultRunsDir() {
         return Path.of(System.getProperty("user.home"))
-            .resolve(".campusclaw").resolve("agent").resolve("cron").resolve("runs");
+                .resolve(".campusclaw")
+                .resolve("agent")
+                .resolve("cron")
+                .resolve("runs");
     }
 }

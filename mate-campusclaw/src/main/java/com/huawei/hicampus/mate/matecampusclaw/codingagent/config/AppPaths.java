@@ -22,8 +22,7 @@ public final class AppPaths {
     public static final String CONFIG_DIR_NAME = ".campusclaw";
 
     /** User-level agent directory: {@code ~/.campusclaw/agent/}. */
-    public static final Path USER_AGENT_DIR = Path.of(
-            System.getProperty("user.home"), CONFIG_DIR_NAME, "agent");
+    public static final Path USER_AGENT_DIR = Path.of(System.getProperty("user.home"), CONFIG_DIR_NAME, "agent");
 
     /** User-level settings file: {@code ~/.campusclaw/agent/settings.json}. */
     public static final Path GLOBAL_SETTINGS = USER_AGENT_DIR.resolve("settings.json");
@@ -63,18 +62,12 @@ public final class AppPaths {
      * </pre>
      */
     public static void ensureUserDirs() {
-        Path[] dirs = {
-            USER_AGENT_DIR,
-            USER_SKILLS_DIR,
-            USER_AGENT_DIR.resolve(PROMPTS_SUBDIR),
-            SESSIONS_DIR
-        };
+        Path[] dirs = {USER_AGENT_DIR, USER_SKILLS_DIR, USER_AGENT_DIR.resolve(PROMPTS_SUBDIR), SESSIONS_DIR};
         for (Path dir : dirs) {
             try {
                 Files.createDirectories(dir);
             } catch (IOException e) {
-                LoggerFactory.getLogger(AppPaths.class)
-                    .warn("Failed to create directory: {}", dir, e);
+                LoggerFactory.getLogger(AppPaths.class).warn("Failed to create directory: {}", dir, e);
             }
         }
     }

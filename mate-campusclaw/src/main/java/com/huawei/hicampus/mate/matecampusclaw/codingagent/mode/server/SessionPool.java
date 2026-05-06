@@ -64,8 +64,7 @@ public class SessionPool {
             ModelRegistry modelRegistry,
             SystemPromptBuilder promptBuilder,
             List<AgentTool> tools,
-            SessionConfig baseConfig
-    ) {
+            SessionConfig baseConfig) {
         this(aiService, modelRegistry, promptBuilder, tools, baseConfig, null, false, true);
     }
 
@@ -76,8 +75,7 @@ public class SessionPool {
             List<AgentTool> tools,
             SessionConfig baseConfig,
             SandboxSkillParser sandboxParser,
-            boolean useSandbox
-    ) {
+            boolean useSandbox) {
         this(aiService, modelRegistry, promptBuilder, tools, baseConfig, sandboxParser, useSandbox, true);
     }
 
@@ -89,8 +87,7 @@ public class SessionPool {
             SessionConfig baseConfig,
             SandboxSkillParser sandboxParser,
             boolean useSandbox,
-            boolean persistenceEnabled
-    ) {
+            boolean persistenceEnabled) {
         this.aiService = aiService;
         this.modelRegistry = modelRegistry;
         this.promptBuilder = promptBuilder;
@@ -179,11 +176,12 @@ public class SessionPool {
 
     private AgentSession createSessionWithPersistence(String conversationId) {
         AgentSession session = new AgentSession(
-                aiService, modelRegistry, promptBuilder,
+                aiService,
+                modelRegistry,
+                promptBuilder,
                 new SkillLoader(sandboxParser, useSandbox),
                 new SkillExpander(sandboxParser, useSandbox),
-                tools
-        );
+                tools);
 
         if (!persistenceEnabled) {
             session.initialize(baseConfig);

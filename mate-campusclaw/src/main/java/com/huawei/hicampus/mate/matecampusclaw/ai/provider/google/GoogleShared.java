@@ -8,6 +8,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.huawei.hicampus.mate.matecampusclaw.ai.types.AssistantMessage;
 import com.huawei.hicampus.mate.matecampusclaw.ai.types.ContentBlock;
 import com.huawei.hicampus.mate.matecampusclaw.ai.types.Cost;
@@ -21,10 +25,6 @@ import com.huawei.hicampus.mate.matecampusclaw.ai.types.ToolCall;
 import com.huawei.hicampus.mate.matecampusclaw.ai.types.ToolResultMessage;
 import com.huawei.hicampus.mate.matecampusclaw.ai.types.Usage;
 import com.huawei.hicampus.mate.matecampusclaw.ai.types.UserMessage;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
 
 import jakarta.annotation.Nullable;
 
@@ -70,7 +70,8 @@ public final class GoogleShared {
                     var parts = MAPPER.createArrayNode();
                     for (var block : am.content()) {
                         switch (block) {
-                            case TextContent tc -> parts.add(MAPPER.createObjectNode().put("text", tc.text()));
+                            case TextContent tc ->
+                                parts.add(MAPPER.createObjectNode().put("text", tc.text()));
                             case ThinkingContent tc -> {
                                 if (tc.thinking() != null && !tc.thinking().isBlank()) {
                                     var part = MAPPER.createObjectNode();
@@ -171,7 +172,8 @@ public final class GoogleShared {
                     boolean isThinking = part.path("thought").asBoolean(false);
                     if (isThinking) {
                         String thinkingSig = part.has("thoughtSignature")
-                            ? part.get("thoughtSignature").asText() : null;
+                                ? part.get("thoughtSignature").asText()
+                                : null;
                         blocks.add(new ThinkingContent(part.get("text").asText(), thinkingSig, false));
                     } else {
                         blocks.add(new TextContent(part.get("text").asText()));
@@ -182,17 +184,17 @@ public final class GoogleShared {
                     Map<String, Object> args = Map.of();
                     if (fc.has("args")) {
                         try {
-                            args = MAPPER.convertValue(fc.get("args"),
-                                new TypeReference<>() {});
-                        } catch (Exception ignored) {}
+                            args = MAPPER.convertValue(fc.get("args"), new TypeReference<>() {});
+                        } catch (Exception ignored) {
+                        }
                     }
                     blocks.add(new ToolCall(java.util.UUID.randomUUID().toString(), name, args));
                 }
             }
         }
 
-        String finishReason = candidate.has("finishReason")
-            ? candidate.get("finishReason").asText() : null;
+        String finishReason =
+                candidate.has("finishReason") ? candidate.get("finishReason").asText() : null;
 
         Usage usage = null;
         var usageNode = chunk.path("usageMetadata");

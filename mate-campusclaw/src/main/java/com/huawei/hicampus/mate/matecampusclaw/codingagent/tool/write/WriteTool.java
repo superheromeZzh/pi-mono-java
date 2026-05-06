@@ -8,6 +8,9 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.huawei.hicampus.mate.matecampusclaw.agent.tool.AgentTool;
 import com.huawei.hicampus.mate.matecampusclaw.agent.tool.AgentToolResult;
 import com.huawei.hicampus.mate.matecampusclaw.agent.tool.AgentToolUpdateCallback;
@@ -17,9 +20,6 @@ import com.huawei.hicampus.mate.matecampusclaw.ai.types.TextContent;
 import com.huawei.hicampus.mate.matecampusclaw.codingagent.tool.ops.WriteOperations;
 import com.huawei.hicampus.mate.matecampusclaw.codingagent.util.FileMutationQueue;
 import com.huawei.hicampus.mate.matecampusclaw.codingagent.util.PathUtils;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -69,12 +69,10 @@ public class WriteTool implements AgentTool {
     @Override
     public JsonNode parameters() {
         ObjectNode props = MAPPER.createObjectNode();
-        props.set("path", MAPPER.createObjectNode()
-                .put("type", "string")
-                .put("description", "The file path to write"));
-        props.set("content", MAPPER.createObjectNode()
-                .put("type", "string")
-                .put("description", "The content to write to the file"));
+        props.set("path", MAPPER.createObjectNode().put("type", "string").put("description", "The file path to write"));
+        props.set(
+                "content",
+                MAPPER.createObjectNode().put("type", "string").put("description", "The content to write to the file"));
 
         return MAPPER.createObjectNode()
                 .put("type", "object")
@@ -84,11 +82,8 @@ public class WriteTool implements AgentTool {
 
     @Override
     public AgentToolResult execute(
-            String toolCallId,
-            Map<String, Object> params,
-            CancellationToken signal,
-            AgentToolUpdateCallback onUpdate
-    ) throws Exception {
+            String toolCallId, Map<String, Object> params, CancellationToken signal, AgentToolUpdateCallback onUpdate)
+            throws Exception {
         String pathInput = (String) params.get("path");
         String content = (String) params.get("content");
 
@@ -113,17 +108,11 @@ public class WriteTool implements AgentTool {
             }
             writeOperations.writeFile(resolvedPath, content);
 
-            return new AgentToolResult(
-                    List.<ContentBlock>of(new TextContent("Wrote " + pathInput)),
-                    null
-            );
+            return new AgentToolResult(List.<ContentBlock>of(new TextContent("Wrote " + pathInput)), null);
         });
     }
 
     private static AgentToolResult errorResult(String message) {
-        return new AgentToolResult(
-                List.<ContentBlock>of(new TextContent(message)),
-                null
-        );
+        return new AgentToolResult(List.<ContentBlock>of(new TextContent(message)), null);
     }
 }

@@ -230,8 +230,7 @@ class GlobToolTest {
             createFile("src/a.java");
             createFile("test/b.java");
 
-            var result = globTool.execute("c10",
-                    Map.of("pattern", "*.java", "path", "src"), null, null);
+            var result = globTool.execute("c10", Map.of("pattern", "*.java", "path", "src"), null, null);
 
             String text = extractText(result);
             assertTrue(text.contains("a.java"));
@@ -240,8 +239,7 @@ class GlobToolTest {
 
         @Test
         void pathTraversalReturnsError() throws Exception {
-            var result = globTool.execute("c11",
-                    Map.of("pattern", "*.txt", "path", "../../etc"), null, null);
+            var result = globTool.execute("c11", Map.of("pattern", "*.txt", "path", "../../etc"), null, null);
 
             assertTrue(extractText(result).contains("Error"));
         }
@@ -250,8 +248,7 @@ class GlobToolTest {
         void nonDirectoryReturnsError() throws Exception {
             createFile("file.txt");
 
-            var result = globTool.execute("c12",
-                    Map.of("pattern", "*.txt", "path", "file.txt"), null, null);
+            var result = globTool.execute("c12", Map.of("pattern", "*.txt", "path", "file.txt"), null, null);
 
             assertTrue(extractText(result).contains("not a directory"));
         }

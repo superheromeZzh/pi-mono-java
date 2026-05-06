@@ -17,9 +17,7 @@ import jakarta.annotation.Nullable;
  * @param high    token budget for high thinking
  */
 public record ThinkingBudgets(
-    @JsonProperty("minimal") @Nullable Integer minimal,
-    @JsonProperty("low") @Nullable Integer low,
-    @JsonProperty("medium") @Nullable Integer medium,
-    @JsonProperty("high") @Nullable Integer high
-) {
-}
+        @JsonProperty("minimal") @Nullable Integer minimal,
+        @JsonProperty("low") @Nullable Integer low,
+        @JsonProperty("medium") @Nullable Integer medium,
+        @JsonProperty("high") @Nullable Integer high) {}

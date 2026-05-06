@@ -11,9 +11,4 @@ package com.huawei.hicampus.mate.matecampusclaw.codingagent.tool.bash;
  * @param stdout   captured standard output
  * @param stderr   captured standard error
  */
-public record BashExecutionResult(
-        Integer exitCode,
-        String stdout,
-        String stderr
-) {
-}
+public record BashExecutionResult(Integer exitCode, String stdout, String stderr) {}

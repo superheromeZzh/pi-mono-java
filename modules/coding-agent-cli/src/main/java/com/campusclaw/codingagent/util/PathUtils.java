@@ -13,8 +13,7 @@ import java.nio.file.Path;
  */
 public final class PathUtils {
 
-    private PathUtils() {
-    }
+    private PathUtils() {}
 
     /**
      * Resolves an input path relative to the current working directory.

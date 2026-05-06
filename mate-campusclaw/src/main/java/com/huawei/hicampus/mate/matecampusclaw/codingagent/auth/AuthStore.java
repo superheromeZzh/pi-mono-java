@@ -15,10 +15,10 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.TreeMap;
 
-import com.huawei.hicampus.mate.matecampusclaw.ai.types.Provider;
-import com.huawei.hicampus.mate.matecampusclaw.codingagent.config.AppPaths;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.huawei.hicampus.mate.matecampusclaw.ai.types.Provider;
+import com.huawei.hicampus.mate.matecampusclaw.codingagent.config.AppPaths;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -107,8 +107,8 @@ public class AuthStore {
             return new LinkedHashMap<>();
         }
         try {
-            return MAPPER.readValue(Files.readString(authFile),
-                    new TypeReference<Map<String, Map<String, Object>>>() {});
+            return MAPPER.readValue(
+                    Files.readString(authFile), new TypeReference<Map<String, Map<String, Object>>>() {});
         } catch (Exception e) {
             log.warn("Failed to read auth file {}: {}", authFile, e.getMessage());
             return new LinkedHashMap<>();

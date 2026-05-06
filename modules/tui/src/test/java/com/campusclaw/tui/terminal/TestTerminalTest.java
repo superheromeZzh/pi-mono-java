@@ -382,8 +382,8 @@ class TestTerminalTest {
         @Test
         void outputIsUnmodifiable() {
             terminal.write("test");
-            assertThrows(UnsupportedOperationException.class,
-                    () -> terminal.getWrittenOutput().add("hack"));
+            assertThrows(UnsupportedOperationException.class, () -> terminal.getWrittenOutput()
+                    .add("hack"));
         }
 
         @Test

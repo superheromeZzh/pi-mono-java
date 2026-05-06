@@ -77,8 +77,10 @@ public class CronEngine {
                 scheduleJob(job);
             }
         }
-        log.info("Cron engine started with {} jobs ({} enabled)",
-            jobs.size(), jobs.stream().filter(CronJob::enabled).count());
+        log.info(
+                "Cron engine started with {} jobs ({} enabled)",
+                jobs.size(),
+                jobs.stream().filter(CronJob::enabled).count());
     }
 
     public void stop() {
@@ -135,10 +137,12 @@ public class CronEngine {
         // Update next run time in state
         long nextRunAtMs = System.currentTimeMillis() + delayMs;
         store.updateJob(job.withState(new CronJobState(
-            nextRunAtMs, job.state().runningAtMs(),
-            job.state().lastRunAtMs(), job.state().lastRunStatus(),
-            job.state().consecutiveErrors(), job.state().totalRuns()
-        )));
+                nextRunAtMs,
+                job.state().runningAtMs(),
+                job.state().lastRunAtMs(),
+                job.state().lastRunStatus(),
+                job.state().consecutiveErrors(),
+                job.state().totalRuns())));
 
         log.debug("Scheduled job {} to run in {}ms", job.name(), delayMs);
     }
@@ -194,10 +198,9 @@ public class CronEngine {
     private CronRunRecord executeJob(CronJob job) {
         // Mark as running
         store.updateJob(job.withState(new CronJobState(
-            job.state().nextRunAtMs(), System.currentTimeMillis(),
-            job.state().lastRunAtMs(), job.state().lastRunStatus(),
-            job.state().consecutiveErrors(), job.state().totalRuns()
-        )));
+                job.state().nextRunAtMs(), System.currentTimeMillis(),
+                job.state().lastRunAtMs(), job.state().lastRunStatus(),
+                job.state().consecutiveErrors(), job.state().totalRuns())));
 
         String runId = null;
         emit(new CronEvent.JobStarted(job.id(), job.name(), ""));
@@ -212,12 +215,12 @@ public class CronEngine {
             boolean shouldDisable = errors >= MAX_CONSECUTIVE_ERRORS;
 
             var newState = new CronJobState(
-                0, 0,
-                System.currentTimeMillis(),
-                success ? "success" : "failed",
-                errors,
-                job.state().totalRuns() + 1
-            );
+                    0,
+                    0,
+                    System.currentTimeMillis(),
+                    success ? "success" : "failed",
+                    errors,
+                    job.state().totalRuns() + 1);
 
             var updatedJob = job.withState(newState);
             if (shouldDisable) {
@@ -236,8 +239,8 @@ public class CronEngine {
             if (success) {
                 emit(new CronEvent.JobCompleted(job.id(), job.name(), runId, result.output()));
             } else {
-                emit(new CronEvent.JobFailed(job.id(), job.name(), runId,
-                    result.error() != null ? result.error() : "Unknown error"));
+                emit(new CronEvent.JobFailed(
+                        job.id(), job.name(), runId, result.error() != null ? result.error() : "Unknown error"));
             }
 
             return result;
@@ -247,24 +250,29 @@ public class CronEngine {
 
             int errors = job.state().consecutiveErrors() + 1;
             var newState = new CronJobState(
-                0, 0,
-                System.currentTimeMillis(), "failed",
-                errors, job.state().totalRuns() + 1
-            );
+                    0,
+                    0,
+                    System.currentTimeMillis(),
+                    "failed",
+                    errors,
+                    job.state().totalRuns() + 1);
             var updatedJob = job.withState(newState);
             if (errors >= MAX_CONSECUTIVE_ERRORS) {
                 updatedJob = updatedJob.withEnabled(false);
             }
             store.updateJob(updatedJob);
 
-            emit(new CronEvent.JobFailed(job.id(), job.name(),
-                runId != null ? runId : "", e.getMessage()));
+            emit(new CronEvent.JobFailed(job.id(), job.name(), runId != null ? runId : "", e.getMessage()));
 
             return new CronRunRecord(
-                runId != null ? runId : "", job.id(),
-                System.currentTimeMillis(), System.currentTimeMillis(),
-                CronRunRecord.RunStatus.FAILED, e.getMessage(), null, 0
-            );
+                    runId != null ? runId : "",
+                    job.id(),
+                    System.currentTimeMillis(),
+                    System.currentTimeMillis(),
+                    CronRunRecord.RunStatus.FAILED,
+                    e.getMessage(),
+                    null,
+                    0);
         }
     }
 
@@ -306,10 +314,7 @@ public class CronEngine {
                 long next = base + every.intervalMs();
                 // Apply exponential backoff if there are consecutive errors
                 if (job.state().consecutiveErrors() > 0) {
-                    long backoff = Math.min(
-                        1000L * (1L << job.state().consecutiveErrors()),
-                        3_600_000L
-                    );
+                    long backoff = Math.min(1000L * (1L << job.state().consecutiveErrors()), 3_600_000L);
                     next = Math.max(next, now + backoff);
                 }
                 yield Math.max(0, next - now);
@@ -317,9 +322,7 @@ public class CronEngine {
             case CronSchedule.CronExpr cron -> {
                 try {
                     var expr = CronExpression.parse(cron.expression());
-                    ZoneId zone = cron.timezone() != null
-                        ? ZoneId.of(cron.timezone())
-                        : ZoneId.systemDefault();
+                    ZoneId zone = cron.timezone() != null ? ZoneId.of(cron.timezone()) : ZoneId.systemDefault();
                     var next = expr.next(ZonedDateTime.now(zone));
                     if (next == null) {
                         yield -1L;
@@ -337,15 +340,18 @@ public class CronEngine {
         long now = System.currentTimeMillis();
         var jobs = new ArrayList<>(store.load());
         for (var job : jobs) {
-            if (job.state().runningAtMs() != 0
-                    && (now - job.state().runningAtMs()) > STALE_THRESHOLD_MS) {
-                log.warn("Clearing stale running mark for job {} (running since {})",
-                    job.name(), Instant.ofEpochMilli(job.state().runningAtMs()));
+            if (job.state().runningAtMs() != 0 && (now - job.state().runningAtMs()) > STALE_THRESHOLD_MS) {
+                log.warn(
+                        "Clearing stale running mark for job {} (running since {})",
+                        job.name(),
+                        Instant.ofEpochMilli(job.state().runningAtMs()));
                 store.updateJob(job.withState(new CronJobState(
-                    job.state().nextRunAtMs(), 0,
-                    job.state().lastRunAtMs(), "stale",
-                    job.state().consecutiveErrors(), job.state().totalRuns()
-                )));
+                        job.state().nextRunAtMs(),
+                        0,
+                        job.state().lastRunAtMs(),
+                        "stale",
+                        job.state().consecutiveErrors(),
+                        job.state().totalRuns())));
             }
         }
     }

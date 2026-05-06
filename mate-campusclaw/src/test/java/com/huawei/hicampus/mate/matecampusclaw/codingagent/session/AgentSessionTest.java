@@ -24,6 +24,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.huawei.hicampus.mate.matecampusclaw.agent.Agent;
 import com.huawei.hicampus.mate.matecampusclaw.agent.tool.AgentTool;
 import com.huawei.hicampus.mate.matecampusclaw.agent.tool.AgentToolResult;
@@ -35,8 +37,6 @@ import com.huawei.hicampus.mate.matecampusclaw.ai.types.*;
 import com.huawei.hicampus.mate.matecampusclaw.codingagent.prompt.SystemPromptBuilder;
 import com.huawei.hicampus.mate.matecampusclaw.codingagent.skill.SkillExpander;
 import com.huawei.hicampus.mate.matecampusclaw.codingagent.skill.SkillLoader;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -53,10 +53,14 @@ class AgentSessionTest {
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
-    @Mock CampusClawAiService piAiService;
-    @Mock SystemPromptBuilder promptBuilder;
+    @Mock
+    CampusClawAiService piAiService;
 
-    @TempDir Path tempDir;
+    @Mock
+    SystemPromptBuilder promptBuilder;
+
+    @TempDir
+    Path tempDir;
 
     ModelRegistry modelRegistry;
     SkillLoader skillLoader;
@@ -71,23 +75,33 @@ class AgentSessionTest {
         modelRegistry = new ModelRegistry();
         // Register test models (init() is package-private)
         modelRegistry.register(new Model(
-                "claude-sonnet-4-20250514", "Claude Sonnet 4",
-                Api.ANTHROPIC_MESSAGES, Provider.ANTHROPIC,
-                "https://api.anthropic.com", true,
+                "claude-sonnet-4-20250514",
+                "Claude Sonnet 4",
+                Api.ANTHROPIC_MESSAGES,
+                Provider.ANTHROPIC,
+                "https://api.anthropic.com",
+                true,
                 List.of(InputModality.TEXT, InputModality.IMAGE),
                 new ModelCost(3.0, 15.0, 0.3, 3.75),
-                200000, 16000, null, null,
-                null
-        ));
+                200000,
+                16000,
+                null,
+                null,
+                null));
         modelRegistry.register(new Model(
-                "gpt-4o", "GPT-4o",
-                Api.OPENAI_RESPONSES, Provider.OPENAI,
-                "https://api.openai.com", false,
+                "gpt-4o",
+                "GPT-4o",
+                Api.OPENAI_RESPONSES,
+                Provider.OPENAI,
+                "https://api.openai.com",
+                false,
                 List.of(InputModality.TEXT, InputModality.IMAGE),
                 new ModelCost(2.5, 10.0, 1.25, 2.5),
-                128000, 16384, null, null,
-                null
-        ));
+                128000,
+                16384,
+                null,
+                null,
+                null));
 
         skillLoader = new SkillLoader();
         skillExpander = new SkillExpander();
@@ -99,10 +113,13 @@ class AgentSessionTest {
 
     private AgentSession createSession() {
         return new TestableAgentSession(
-                piAiService, modelRegistry, promptBuilder,
-                skillLoader, skillExpander, tools,
-                tempDir.resolve(".user-skills-isolated")
-        );
+                piAiService,
+                modelRegistry,
+                promptBuilder,
+                skillLoader,
+                skillExpander,
+                tools,
+                tempDir.resolve(".user-skills-isolated"));
     }
 
     private SessionConfig config() {
@@ -176,8 +193,8 @@ class AgentSessionTest {
 
         @Test
         void throwsForUnknownModel() {
-            assertThrows(IllegalArgumentException.class,
-                    () -> session.initialize(configWithModel("nonexistent-model")));
+            assertThrows(
+                    IllegalArgumentException.class, () -> session.initialize(configWithModel("nonexistent-model")));
         }
 
         @Test
@@ -186,14 +203,12 @@ class AgentSessionTest {
 
             session.initialize(config());
 
-            assertThrows(IllegalStateException.class,
-                    () -> session.initialize(config()));
+            assertThrows(IllegalStateException.class, () -> session.initialize(config()));
         }
 
         @Test
         void throwsOnNullConfig() {
-            assertThrows(NullPointerException.class,
-                    () -> session.initialize(null));
+            assertThrows(NullPointerException.class, () -> session.initialize(null));
         }
 
         @Test
@@ -250,7 +265,9 @@ class AgentSessionTest {
             // Create a project-level skill
             Path skillDir = tempDir.resolve(".campusclaw/skills/test-skill");
             Files.createDirectories(skillDir);
-            Files.writeString(skillDir.resolve("SKILL.md"), """
+            Files.writeString(
+                    skillDir.resolve("SKILL.md"),
+                    """
                     ---
                     name: test-skill
                     description: A test skill
@@ -270,7 +287,9 @@ class AgentSessionTest {
         void includesVisibleSkillsInPromptConfig() throws IOException {
             Path skillDir = tempDir.resolve(".campusclaw/skills/visible-skill");
             Files.createDirectories(skillDir);
-            Files.writeString(skillDir.resolve("SKILL.md"), """
+            Files.writeString(
+                    skillDir.resolve("SKILL.md"),
+                    """
                     ---
                     name: visible-skill
                     description: A visible skill
@@ -295,7 +314,9 @@ class AgentSessionTest {
         void excludesHiddenSkillsFromPromptConfig() throws IOException {
             Path skillDir = tempDir.resolve(".campusclaw/skills/hidden-skill");
             Files.createDirectories(skillDir);
-            Files.writeString(skillDir.resolve("SKILL.md"), """
+            Files.writeString(
+                    skillDir.resolve("SKILL.md"),
+                    """
                     ---
                     name: hidden-skill
                     description: A hidden skill
@@ -329,8 +350,7 @@ class AgentSessionTest {
 
         @Test
         void throwsWhenNotInitialized() {
-            assertThrows(IllegalStateException.class,
-                    () -> session.prompt("hello"));
+            assertThrows(IllegalStateException.class, () -> session.prompt("hello"));
         }
 
         @Test
@@ -338,8 +358,7 @@ class AgentSessionTest {
             when(promptBuilder.build(any())).thenReturn("prompt");
             session.initialize(config());
 
-            assertThrows(NullPointerException.class,
-                    () -> session.prompt(null));
+            assertThrows(NullPointerException.class, () -> session.prompt(null));
         }
 
         @Test
@@ -366,7 +385,9 @@ class AgentSessionTest {
             // Set up a skill
             Path skillDir = tempDir.resolve(".campusclaw/skills/my-skill");
             Files.createDirectories(skillDir);
-            Files.writeString(skillDir.resolve("SKILL.md"), """
+            Files.writeString(
+                    skillDir.resolve("SKILL.md"),
+                    """
                     ---
                     name: my-skill
                     description: A test skill
@@ -416,8 +437,7 @@ class AgentSessionTest {
 
         @Test
         void throwsWhenNotInitialized() {
-            assertThrows(IllegalStateException.class,
-                    () -> session.abort());
+            assertThrows(IllegalStateException.class, () -> session.abort());
         }
 
         @Test
@@ -443,8 +463,7 @@ class AgentSessionTest {
 
         @Test
         void throwsWhenNotInitialized() {
-            assertThrows(IllegalStateException.class,
-                    () -> session.getHistory());
+            assertThrows(IllegalStateException.class, () -> session.getHistory());
         }
 
         @Test
@@ -467,8 +486,7 @@ class AgentSessionTest {
 
         @Test
         void throwsWhenNotInitialized() {
-            assertThrows(IllegalStateException.class,
-                    () -> session.getAgent());
+            assertThrows(IllegalStateException.class, () -> session.getAgent());
         }
 
         @Test
@@ -503,8 +521,7 @@ class AgentSessionTest {
 
         @Test
         void throwsForUnknown() {
-            assertThrows(IllegalArgumentException.class,
-                    () -> session.resolveModel("nonexistent"));
+            assertThrows(IllegalArgumentException.class, () -> session.resolveModel("nonexistent"));
         }
     }
 
@@ -548,8 +565,7 @@ class AgentSessionTest {
                 SkillLoader skillLoader,
                 SkillExpander skillExpander,
                 List<AgentTool> tools,
-                Path userSkillsDir
-        ) {
+                Path userSkillsDir) {
             super(piAiService, modelRegistry, promptBuilder, skillLoader, skillExpander, tools);
             this.userSkillsDir = userSkillsDir;
         }
@@ -580,13 +596,18 @@ class AgentSessionTest {
             this.description = description;
         }
 
-        @Override public String name() {
+        @Override
+        public String name() {
             return name;
         }
-        @Override public String label() {
+
+        @Override
+        public String label() {
             return name;
         }
-        @Override public String description() {
+
+        @Override
+        public String description() {
             return description;
         }
 
@@ -596,8 +617,11 @@ class AgentSessionTest {
         }
 
         @Override
-        public AgentToolResult execute(String toolCallId, Map<String, Object> params,
-                                       CancellationToken signal, AgentToolUpdateCallback onUpdate) {
+        public AgentToolResult execute(
+                String toolCallId,
+                Map<String, Object> params,
+                CancellationToken signal,
+                AgentToolUpdateCallback onUpdate) {
             return null;
         }
     }

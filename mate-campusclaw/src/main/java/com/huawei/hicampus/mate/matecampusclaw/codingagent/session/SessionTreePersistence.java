@@ -36,7 +36,8 @@ public class SessionTreePersistence {
         Path file = sessionDir.resolve(sessionName + ".jsonl");
         try {
             Files.createDirectories(sessionDir);
-            try (var writer = Files.newBufferedWriter(file, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)) {
+            try (var writer =
+                    Files.newBufferedWriter(file, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)) {
                 for (SessionEntry entry : tree.getAllEntries()) {
                     writer.write(MAPPER.writeValueAsString(entry));
                     writer.newLine();
@@ -97,11 +98,10 @@ public class SessionTreePersistence {
             return java.util.List.of();
         }
         try (var stream = Files.list(sessionDir)) {
-            return stream
-                .filter(p -> p.toString().endsWith(".jsonl"))
-                .map(p -> p.getFileName().toString().replace(".jsonl", ""))
-                .sorted()
-                .toList();
+            return stream.filter(p -> p.toString().endsWith(".jsonl"))
+                    .map(p -> p.getFileName().toString().replace(".jsonl", ""))
+                    .sorted()
+                    .toList();
         } catch (IOException e) {
             log.error("Failed to list sessions", e);
             return java.util.List.of();

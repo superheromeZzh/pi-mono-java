@@ -70,7 +70,8 @@ public class CampusClawAiService {
      * @return an event stream of assistant message events
      * @throws IllegalArgumentException if no provider is registered for the model's API
      */
-    public AssistantMessageEventStream streamSimple(Model model, Context context, @Nullable SimpleStreamOptions options) {
+    public AssistantMessageEventStream streamSimple(
+            Model model, Context context, @Nullable SimpleStreamOptions options) {
         var provider = resolveProvider(model);
         return provider.streamSimple(model, context, options);
     }
@@ -112,11 +113,7 @@ public class CampusClawAiService {
      */
     public Mono<AssistantMessage> complete(Model model, String userMessage) {
         Objects.requireNonNull(userMessage, "userMessage must not be null");
-        var context = new Context(
-            null,
-            List.of(new UserMessage(userMessage, System.currentTimeMillis())),
-            null
-        );
+        var context = new Context(null, List.of(new UserMessage(userMessage, System.currentTimeMillis())), null);
         return complete(model, context, null);
     }
 
@@ -136,8 +133,9 @@ public class CampusClawAiService {
 
     private ApiProvider resolveProvider(Model model) {
         Objects.requireNonNull(model, "model must not be null");
-        return providerRegistry.getProvider(model.api())
-            .orElseThrow(() -> new IllegalArgumentException(
-                "No ApiProvider registered for API: " + model.api().value()));
+        return providerRegistry
+                .getProvider(model.api())
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "No ApiProvider registered for API: " + model.api().value()));
     }
 }

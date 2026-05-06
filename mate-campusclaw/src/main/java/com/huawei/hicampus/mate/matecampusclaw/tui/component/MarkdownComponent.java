@@ -149,7 +149,8 @@ public class MarkdownComponent implements Component {
             }
 
             // --- Table (detect: line with |, followed by separator line) ---
-            if (line.contains("|") && i + 1 < rawLines.length
+            if (line.contains("|")
+                    && i + 1 < rawLines.length
                     && TABLE_SEPARATOR_PATTERN.matcher(rawLines[i + 1]).matches()) {
                 i = renderTable(rawLines, i, width, output);
                 continue;
@@ -187,8 +188,11 @@ public class MarkdownComponent implements Component {
                         || UNORDERED_LIST_PATTERN.matcher(pLine).matches()
                         || ORDERED_LIST_PATTERN.matcher(pLine).matches()
                         || BLOCKQUOTE_PATTERN.matcher(pLine).matches()
-                        || (pLine.contains("|") && i + 1 < rawLines.length
-                            && TABLE_SEPARATOR_PATTERN.matcher(rawLines[i + 1]).matches())) {
+                        || (pLine.contains("|")
+                                && i + 1 < rawLines.length
+                                && TABLE_SEPARATOR_PATTERN
+                                        .matcher(rawLines[i + 1])
+                                        .matches())) {
                     break;
                 }
                 if (para.length() > 0) {
@@ -209,11 +213,12 @@ public class MarkdownComponent implements Component {
 
     private void renderHeading(int level, String rawText, int width, List<String> out) {
         String styled = renderInline(rawText);
-        String formatted = switch (level) {
-            case 1 -> theme.heading1(styled);
-            case 2 -> theme.heading2(styled);
-            default -> theme.heading3(styled);
-        };
+        String formatted =
+                switch (level) {
+                    case 1 -> theme.heading1(styled);
+                    case 2 -> theme.heading2(styled);
+                    default -> theme.heading3(styled);
+                };
         List<String> wrapped = AnsiUtils.wrapTextWithAnsi(formatted, width);
         out.addAll(wrapped);
     }
@@ -279,8 +284,8 @@ public class MarkdownComponent implements Component {
         return i;
     }
 
-    private void renderListItem(String prefixWithBullet, String rawText, int width,
-                                int continuationIndent, List<String> out) {
+    private void renderListItem(
+            String prefixWithBullet, String rawText, int width, int continuationIndent, List<String> out) {
         String styled = renderInline(rawText);
         int contentWidth = Math.max(1, width - continuationIndent);
         List<String> wrapped = AnsiUtils.wrapTextWithAnsi(styled, contentWidth);
@@ -393,8 +398,7 @@ public class MarkdownComponent implements Component {
         }
         for (var row : rows) {
             for (int c = 0; c < numCols; c++) {
-                naturalWidths[c] = Math.max(naturalWidths[c],
-                        AnsiUtils.visibleWidth(renderInline(row.get(c))));
+                naturalWidths[c] = Math.max(naturalWidths[c], AnsiUtils.visibleWidth(renderInline(row.get(c))));
             }
         }
 
@@ -460,8 +464,7 @@ public class MarkdownComponent implements Component {
         return i;
     }
 
-    private void renderTableRow(List<String> cells, int[] colWidths, int numCols,
-                                boolean bold, List<String> out) {
+    private void renderTableRow(List<String> cells, int[] colWidths, int numCols, boolean bold, List<String> out) {
         // Wrap each cell and find max lines
         var wrappedCells = new ArrayList<List<String>>();
         int maxLines = 1;
@@ -538,49 +541,77 @@ public class MarkdownComponent implements Component {
         List<String> placeholders = new ArrayList<>();
 
         // 1. Inline code — no further formatting inside
-        text = replaceAll(text, INLINE_CODE, m -> {
-            String placeholder = "\0PH" + placeholders.size() + "\0";
-            placeholders.add(theme.code(m.group(1)));
-            return placeholder;
-        }, placeholders);
+        text = replaceAll(
+                text,
+                INLINE_CODE,
+                m -> {
+                    String placeholder = "\0PH" + placeholders.size() + "\0";
+                    placeholders.add(theme.code(m.group(1)));
+                    return placeholder;
+                },
+                placeholders);
 
         // 2. Links
-        text = replaceAll(text, LINK, m -> {
-            String placeholder = "\0PH" + placeholders.size() + "\0";
-            placeholders.add(theme.link(m.group(1)) + " " + theme.linkUrl("(" + m.group(2) + ")"));
-            return placeholder;
-        }, placeholders);
+        text = replaceAll(
+                text,
+                LINK,
+                m -> {
+                    String placeholder = "\0PH" + placeholders.size() + "\0";
+                    placeholders.add(theme.link(m.group(1)) + " " + theme.linkUrl("(" + m.group(2) + ")"));
+                    return placeholder;
+                },
+                placeholders);
 
         // 3. Strikethrough
-        text = replaceAll(text, STRIKETHROUGH, m -> {
-            String placeholder = "\0PH" + placeholders.size() + "\0";
-            placeholders.add(theme.strikethrough(m.group(1)));
-            return placeholder;
-        }, placeholders);
+        text = replaceAll(
+                text,
+                STRIKETHROUGH,
+                m -> {
+                    String placeholder = "\0PH" + placeholders.size() + "\0";
+                    placeholders.add(theme.strikethrough(m.group(1)));
+                    return placeholder;
+                },
+                placeholders);
 
         // 4. Bold (before italic to avoid ** matching as two *)
-        text = replaceAll(text, BOLD, m -> {
-            String inner = m.group(1);
-            return theme.bold(inner);
-        }, placeholders);
+        text = replaceAll(
+                text,
+                BOLD,
+                m -> {
+                    String inner = m.group(1);
+                    return theme.bold(inner);
+                },
+                placeholders);
 
         // 4b. Bold with underscores (__text__)
-        text = replaceAll(text, BOLD_UNDERSCORE, m -> {
-            String inner = m.group(1);
-            return theme.bold(inner);
-        }, placeholders);
+        text = replaceAll(
+                text,
+                BOLD_UNDERSCORE,
+                m -> {
+                    String inner = m.group(1);
+                    return theme.bold(inner);
+                },
+                placeholders);
 
         // 5. Italic
-        text = replaceAll(text, ITALIC, m -> {
-            String inner = m.group(1);
-            return theme.italic(inner);
-        }, placeholders);
+        text = replaceAll(
+                text,
+                ITALIC,
+                m -> {
+                    String inner = m.group(1);
+                    return theme.italic(inner);
+                },
+                placeholders);
 
         // 5b. Italic with underscores (_text_)
-        text = replaceAll(text, ITALIC_UNDERSCORE, m -> {
-            String inner = m.group(1);
-            return theme.italic(inner);
-        }, placeholders);
+        text = replaceAll(
+                text,
+                ITALIC_UNDERSCORE,
+                m -> {
+                    String inner = m.group(1);
+                    return theme.italic(inner);
+                },
+                placeholders);
 
         // Restore placeholders
         for (int i = 0; i < placeholders.size(); i++) {
@@ -593,9 +624,11 @@ public class MarkdownComponent implements Component {
     /**
      * Replaces all occurrences of a pattern, using a function to produce replacements.
      */
-    private static String replaceAll(String text, Pattern pattern,
-                                     java.util.function.Function<Matcher, String> replacer,
-                                     List<String> placeholders) {
+    private static String replaceAll(
+            String text,
+            Pattern pattern,
+            java.util.function.Function<Matcher, String> replacer,
+            List<String> placeholders) {
         Matcher m = pattern.matcher(text);
         StringBuilder sb = new StringBuilder();
         while (m.find()) {

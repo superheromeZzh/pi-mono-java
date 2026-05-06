@@ -10,8 +10,4 @@ package com.huawei.hicampus.mate.matecampusclaw.codingagent.tool.edit;
  * @param diff             unified diff of the changes made
  * @param firstChangedLine 1-indexed line number of the first change, or null
  */
-public record EditToolDetails(
-        String diff,
-        Integer firstChangedLine
-) {
-}
+public record EditToolDetails(String diff, Integer firstChangedLine) {}

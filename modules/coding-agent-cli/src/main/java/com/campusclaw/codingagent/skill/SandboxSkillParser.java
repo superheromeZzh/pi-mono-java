@@ -65,10 +65,7 @@ public class SandboxSkillParser {
             String parseScript = buildParseScript(base64Content);
 
             // 4. 在沙箱中执行解析
-            var result = sandboxClient.execute(
-                List.of("sh", "-c", parseScript),
-                ResourceLimits.defaults()
-            );
+            var result = sandboxClient.execute(List.of("sh", "-c", parseScript), ResourceLimits.defaults());
 
             if (result.isTimeout()) {
                 throw new SkillLoadException("Skill parsing timed out in sandbox: " + skillMdPath);
@@ -76,9 +73,7 @@ public class SandboxSkillParser {
 
             if (result.getExitCode() != 0) {
                 throw new SkillLoadException(
-                    "Skill parsing failed in sandbox: " + skillMdPath +
-                    "\nstderr: " + result.getStderr()
-                );
+                        "Skill parsing failed in sandbox: " + skillMdPath + "\nstderr: " + result.getStderr());
             }
 
             // 5. 解析沙箱返回的 JSON 结果
@@ -150,7 +145,8 @@ public class SandboxSkillParser {
 
             # 输出 JSON
             printf '{"name":"%%s","description":"%%s","disableModelInvocation":%%s}' "$name_escaped" "$desc_escaped" "$disable_bool"
-            """.formatted(base64Content);
+            """
+                .formatted(base64Content);
     }
 
     /**
@@ -177,17 +173,10 @@ public class SandboxSkillParser {
             }
             if (description.length() > Skill.MAX_DESCRIPTION_LENGTH) {
                 throw new SkillLoadException(
-                    "Skill description exceeds " + Skill.MAX_DESCRIPTION_LENGTH + " characters: " + filePath);
+                        "Skill description exceeds " + Skill.MAX_DESCRIPTION_LENGTH + " characters: " + filePath);
             }
 
-            return new Skill(
-                name,
-                description,
-                filePath,
-                filePath.getParent(),
-                source,
-                disableModelInvocation
-            );
+            return new Skill(name, description, filePath, filePath.getParent(), source, disableModelInvocation);
         } catch (Exception e) {
             throw new SkillLoadException("Failed to parse sandbox result: " + json, e);
         }
@@ -235,7 +224,8 @@ public class SandboxSkillParser {
             String base64Content = Base64.getEncoder().encodeToString(content.getBytes(StandardCharsets.UTF_8));
 
             // 3. 构建沙箱脚本：提取 body 部分 (POSIX sh 兼容)
-            String extractScript = """
+            String extractScript =
+                    """
                 # 解码 base64 内容
                 CONTENT=$(echo '%s' | base64 -d)
 
@@ -269,13 +259,11 @@ public class SandboxSkillParser {
                 }
 
                 strip_frontmatter "$CONTENT"
-                """.formatted(base64Content);
+                """
+                            .formatted(base64Content);
 
             // 4. 在沙箱中执行
-            var result = sandboxClient.execute(
-                List.of("sh", "-c", extractScript),
-                ResourceLimits.defaults()
-            );
+            var result = sandboxClient.execute(List.of("sh", "-c", extractScript), ResourceLimits.defaults());
 
             if (result.isTimeout()) {
                 throw new SkillLoadException("Skill body loading timed out in sandbox: " + skillMdPath);
@@ -283,9 +271,7 @@ public class SandboxSkillParser {
 
             if (result.getExitCode() != 0) {
                 throw new SkillLoadException(
-                    "Skill body loading failed in sandbox: " + skillMdPath +
-                    "\nstderr: " + result.getStderr()
-                );
+                        "Skill body loading failed in sandbox: " + skillMdPath + "\nstderr: " + result.getStderr());
             }
 
             return result.getStdout();
@@ -310,7 +296,8 @@ public class SandboxSkillParser {
             String content = Files.readString(skillMdPath, StandardCharsets.UTF_8);
             String base64Content = Base64.getEncoder().encodeToString(content.getBytes(StandardCharsets.UTF_8));
 
-            String validateScript = """
+            String validateScript =
+                    """
                 CONTENT=$(echo '%s' | base64 -d)
 
                 # 检查文件大小（最大 1MB）
@@ -333,12 +320,10 @@ public class SandboxSkillParser {
                 esac
 
                 echo "VALIDATION_PASSED"
-                """.formatted(base64Content);
+                """
+                            .formatted(base64Content);
 
-            var result = sandboxClient.execute(
-                List.of("sh", "-c", validateScript),
-                ResourceLimits.defaults()
-            );
+            var result = sandboxClient.execute(List.of("sh", "-c", validateScript), ResourceLimits.defaults());
 
             if (result.isTimeout()) {
                 return "Validation timed out";

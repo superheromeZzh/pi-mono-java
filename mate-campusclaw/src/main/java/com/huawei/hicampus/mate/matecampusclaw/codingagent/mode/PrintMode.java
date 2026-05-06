@@ -4,11 +4,11 @@
 
 package com.huawei.hicampus.mate.matecampusclaw.codingagent.mode;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.huawei.hicampus.mate.matecampusclaw.agent.event.MessageEndEvent;
 import com.huawei.hicampus.mate.matecampusclaw.ai.types.AssistantMessage;
 import com.huawei.hicampus.mate.matecampusclaw.ai.types.TextContent;
 import com.huawei.hicampus.mate.matecampusclaw.codingagent.session.AgentSession;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,7 +21,10 @@ public class PrintMode {
     private static final Logger log = LoggerFactory.getLogger(PrintMode.class);
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
-    public enum OutputFormat { TEXT, JSON }
+    public enum OutputFormat {
+        TEXT,
+        JSON
+    }
 
     private final AgentSession session;
     private final OutputFormat format;
@@ -33,7 +36,7 @@ public class PrintMode {
 
     public int run(String prompt) {
         var result = new StringBuilder();
-        var exitCode = new int[]{0};
+        var exitCode = new int[] {0};
 
         session.subscribe(event -> {
             if (format == OutputFormat.JSON) {

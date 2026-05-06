@@ -13,6 +13,9 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.huawei.hicampus.mate.matecampusclaw.agent.tool.AgentTool;
 import com.huawei.hicampus.mate.matecampusclaw.agent.tool.AgentToolResult;
 import com.huawei.hicampus.mate.matecampusclaw.agent.tool.AgentToolUpdateCallback;
@@ -22,9 +25,6 @@ import com.huawei.hicampus.mate.matecampusclaw.ai.types.TextContent;
 import com.huawei.hicampus.mate.matecampusclaw.codingagent.tool.ops.LsOperations;
 import com.huawei.hicampus.mate.matecampusclaw.codingagent.tool.ops.LsOperations.LsEntry;
 import com.huawei.hicampus.mate.matecampusclaw.codingagent.util.PathUtils;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -74,9 +74,11 @@ public class LsTool implements AgentTool {
     @Override
     public JsonNode parameters() {
         ObjectNode props = MAPPER.createObjectNode();
-        props.set("path", MAPPER.createObjectNode()
-                .put("type", "string")
-                .put("description", "Directory path to list (relative or absolute)"));
+        props.set(
+                "path",
+                MAPPER.createObjectNode()
+                        .put("type", "string")
+                        .put("description", "Directory path to list (relative or absolute)"));
 
         return MAPPER.createObjectNode()
                 .put("type", "object")
@@ -86,11 +88,8 @@ public class LsTool implements AgentTool {
 
     @Override
     public AgentToolResult execute(
-            String toolCallId,
-            Map<String, Object> params,
-            CancellationToken signal,
-            AgentToolUpdateCallback onUpdate
-    ) throws Exception {
+            String toolCallId, Map<String, Object> params, CancellationToken signal, AgentToolUpdateCallback onUpdate)
+            throws Exception {
         String pathInput = (String) params.get("path");
         if (pathInput == null || pathInput.isBlank()) {
             return errorResult("Error: path is required");
@@ -119,8 +118,7 @@ public class LsTool implements AgentTool {
         }
 
         // Sort: directories first, then alphabetical by name within each group
-        entries.sort(Comparator
-                .comparing((LsEntry e) -> !"directory".equals(e.type()))
+        entries.sort(Comparator.comparing((LsEntry e) -> !"directory".equals(e.type()))
                 .thenComparing(LsEntry::name, String.CASE_INSENSITIVE_ORDER));
 
         // Limit results
@@ -135,20 +133,18 @@ public class LsTool implements AgentTool {
                 sb.append('\n');
             }
             LsEntry entry = entries.get(i);
-            String typeFlag = switch (entry.type()) {
-                case "directory" -> "drw-";
-                case "symlink" -> "lrw-";
-                default -> "-rw-";
-            };
+            String typeFlag =
+                    switch (entry.type()) {
+                        case "directory" -> "drw-";
+                        case "symlink" -> "lrw-";
+                        default -> "-rw-";
+                    };
             String name = entry.name();
             if ("directory".equals(entry.type())) {
                 name = name + "/";
             }
-            sb.append(String.format("%s %5d  %s  %s",
-                    typeFlag,
-                    entry.size(),
-                    DATE_FORMAT.format(entry.lastModified()),
-                    name));
+            sb.append(String.format(
+                    "%s %5d  %s  %s", typeFlag, entry.size(), DATE_FORMAT.format(entry.lastModified()), name));
         }
 
         if (truncated) {
@@ -159,16 +155,10 @@ public class LsTool implements AgentTool {
     }
 
     private static AgentToolResult textResult(String text) {
-        return new AgentToolResult(
-                List.<ContentBlock>of(new TextContent(text)),
-                null
-        );
+        return new AgentToolResult(List.<ContentBlock>of(new TextContent(text)), null);
     }
 
     private static AgentToolResult errorResult(String message) {
-        return new AgentToolResult(
-                List.<ContentBlock>of(new TextContent(message)),
-                null
-        );
+        return new AgentToolResult(List.<ContentBlock>of(new TextContent(message)), null);
     }
 }

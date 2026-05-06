@@ -17,10 +17,9 @@ import jakarta.annotation.Nullable;
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 public record Theme(
-    @JsonProperty("name") String name,
-    @JsonProperty("colors") Map<String, String> colors,
-    @JsonProperty("description") @Nullable String description
-) {
+        @JsonProperty("name") String name,
+        @JsonProperty("colors") Map<String, String> colors,
+        @JsonProperty("description") @Nullable String description) {
     // Standard color keys
     public static final String PRIMARY = "primary";
     public static final String SECONDARY = "secondary";

@@ -185,9 +185,7 @@ public class Tui {
             }
             lastChanged = newLines.size() - 1;
         }
-        boolean appendStart = appendedLines
-                && firstChanged == previousLines.size()
-                && firstChanged > 0;
+        boolean appendStart = appendedLines && firstChanged == previousLines.size() && firstChanged > 0;
 
         // Nothing changed.
         if (firstChanged == -1) {

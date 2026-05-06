@@ -44,7 +44,6 @@ public class ForkCommand implements SlashCommand {
             sm.appendMessage(msg);
         }
 
-        context.output().println("Forked session " + oldId + " → " + newId
-                + " (" + messages.size() + " messages)");
+        context.output().println("Forked session " + oldId + " → " + newId + " (" + messages.size() + " messages)");
     }
 }

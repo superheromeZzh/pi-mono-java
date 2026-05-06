@@ -71,13 +71,11 @@ public class SessionCommand implements SlashCommand {
             }
         }
 
-        out.println("  Messages: " + messages.size()
-                + " (" + userCount + " user, " + assistantCount + " assistant, " + toolCount + " tool)");
-        out.println("  Tokens: ↑" + formatTokens((int) totalInput)
-                + " ↓" + formatTokens((int) totalOutput));
+        out.println("  Messages: " + messages.size() + " (" + userCount + " user, " + assistantCount + " assistant, "
+                + toolCount + " tool)");
+        out.println("  Tokens: ↑" + formatTokens((int) totalInput) + " ↓" + formatTokens((int) totalOutput));
         if (totalCacheRead > 0 || totalCacheWrite > 0) {
-            out.println("  Cache: R" + formatTokens((int) totalCacheRead)
-                    + " W" + formatTokens((int) totalCacheWrite));
+            out.println("  Cache: R" + formatTokens((int) totalCacheRead) + " W" + formatTokens((int) totalCacheWrite));
         }
         if (totalCost > 0) {
             out.println("  Cost: $" + String.format("%.4f", totalCost));
@@ -87,8 +85,8 @@ public class SessionCommand implements SlashCommand {
         if (model != null && model.contextWindow() > 0) {
             long used = totalInput + totalOutput;
             double pct = (double) used / model.contextWindow() * 100;
-            out.println("  Context usage: " + String.format("%.1f%%", pct)
-                    + " of " + formatTokens(model.contextWindow()));
+            out.println(
+                    "  Context usage: " + String.format("%.1f%%", pct) + " of " + formatTokens(model.contextWindow()));
         }
 
         // Skills and templates

@@ -110,7 +110,7 @@ public final class ImageUtils {
             ImageReader reader = readers.next();
             try {
                 reader.setInput(input);
-                return Optional.of(new int[]{reader.getWidth(0), reader.getHeight(0)});
+                return Optional.of(new int[] {reader.getWidth(0), reader.getHeight(0)});
             } finally {
                 reader.dispose();
             }
@@ -137,8 +137,14 @@ public final class ImageUtils {
     /** Check if file is likely an image based on extension. */
     public static boolean isImageFile(Path path) {
         String name = path.getFileName().toString().toLowerCase();
-        return name.endsWith(".png") || name.endsWith(".jpg") || name.endsWith(".jpeg")
-            || name.endsWith(".gif") || name.endsWith(".webp") || name.endsWith(".bmp")
-            || name.endsWith(".svg") || name.endsWith(".ico") || name.endsWith(".tiff");
+        return name.endsWith(".png")
+                || name.endsWith(".jpg")
+                || name.endsWith(".jpeg")
+                || name.endsWith(".gif")
+                || name.endsWith(".webp")
+                || name.endsWith(".bmp")
+                || name.endsWith(".svg")
+                || name.endsWith(".ico")
+                || name.endsWith(".tiff");
     }
 }

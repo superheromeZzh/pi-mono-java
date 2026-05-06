@@ -52,6 +52,7 @@ public class SessionManager {
      * polymorphically.
      */
     private final ObjectWriter messageWriter;
+
     private Path sessionFile;
     private String sessionId;
     private String lastEntryId;
@@ -117,15 +118,15 @@ public class SessionManager {
         }
 
         try (var stream = Files.list(sessionDir)) {
-            Optional<Path> latest = stream
-                    .filter(p -> p.toString().endsWith(".jsonl"))
+            Optional<Path> latest = stream.filter(p -> p.toString().endsWith(".jsonl"))
                     .sorted(Comparator.comparingLong((Path p) -> {
-                        try {
-                            return Files.getLastModifiedTime(p).toMillis();
-                        } catch (IOException e) {
-                            return 0;
-                        }
-                    }).reversed())
+                                try {
+                                    return Files.getLastModifiedTime(p).toMillis();
+                                } catch (IOException e) {
+                                    return 0;
+                                }
+                            })
+                            .reversed())
                     .findFirst();
 
             if (latest.isEmpty()) {
@@ -333,6 +334,7 @@ public class SessionManager {
     public String getSessionId() {
         return sessionId;
     }
+
     public Path getSessionFile() {
         return sessionFile;
     }

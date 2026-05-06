@@ -53,7 +53,7 @@ public class OneShotMode {
         Objects.requireNonNull(prompt, "prompt");
 
         // Subscribe for streaming output
-        var hasOutput = new boolean[]{false};
+        var hasOutput = new boolean[] {false};
         Runnable unsub = session.subscribe(event -> {
             if (event instanceof MessageUpdateEvent e) {
                 if (e.assistantMessageEvent() instanceof AssistantMessageEvent.TextDeltaEvent delta) {

@@ -59,12 +59,10 @@ public class BashExecutor {
         var stdoutBuf = new ByteArrayOutputStream();
         var stderrBuf = new ByteArrayOutputStream();
 
-        Thread stdoutDrainer = Thread.ofVirtual()
-                .name("bash-stdout-drainer")
-                .start(() -> drain(process.getInputStream(), stdoutBuf));
-        Thread stderrDrainer = Thread.ofVirtual()
-                .name("bash-stderr-drainer")
-                .start(() -> drain(process.getErrorStream(), stderrBuf));
+        Thread stdoutDrainer =
+                Thread.ofVirtual().name("bash-stdout-drainer").start(() -> drain(process.getInputStream(), stdoutBuf));
+        Thread stderrDrainer =
+                Thread.ofVirtual().name("bash-stderr-drainer").start(() -> drain(process.getErrorStream(), stderrBuf));
 
         boolean timedOut = false;
         try {
@@ -82,19 +80,15 @@ public class BashExecutor {
             killProcessTree(process);
             Thread.currentThread().interrupt();
             joinDrainers(stdoutDrainer, stderrDrainer);
-            return new BashExecutionResult(null,
-                    stdoutBuf.toString(StandardCharsets.UTF_8),
-                    stderrBuf.toString(StandardCharsets.UTF_8));
+            return new BashExecutionResult(
+                    null, stdoutBuf.toString(StandardCharsets.UTF_8), stderrBuf.toString(StandardCharsets.UTF_8));
         }
 
         joinDrainers(stdoutDrainer, stderrDrainer);
 
         Integer exitCode = timedOut ? null : process.exitValue();
         return new BashExecutionResult(
-                exitCode,
-                stdoutBuf.toString(StandardCharsets.UTF_8),
-                stderrBuf.toString(StandardCharsets.UTF_8)
-        );
+                exitCode, stdoutBuf.toString(StandardCharsets.UTF_8), stderrBuf.toString(StandardCharsets.UTF_8));
     }
 
     private static void drain(InputStream is, ByteArrayOutputStream out) {

@@ -35,13 +35,16 @@ class ToolAndContextTest {
 
         private JsonNode sampleSchema() {
             return mapper.createObjectNode()
-                .put("type", "object")
-                .<com.fasterxml.jackson.databind.node.ObjectNode>set("properties",
-                    mapper.createObjectNode()
-                        .set("query", mapper.createObjectNode()
-                            .put("type", "string")
-                            .put("description", "The search query")))
-                .set("required", mapper.createArrayNode().add("query"));
+                    .put("type", "object")
+                    .<com.fasterxml.jackson.databind.node.ObjectNode>set(
+                            "properties",
+                            mapper.createObjectNode()
+                                    .set(
+                                            "query",
+                                            mapper.createObjectNode()
+                                                    .put("type", "string")
+                                                    .put("description", "The search query")))
+                    .set("required", mapper.createArrayNode().add("query"));
         }
 
         @Test
@@ -51,7 +54,9 @@ class ToolAndContextTest {
             assertEquals("search", tool.name());
             assertEquals("Search the web", tool.description());
             assertEquals("object", tool.parameters().get("type").asText());
-            assertEquals("string", tool.parameters().get("properties").get("query").get("type").asText());
+            assertEquals(
+                    "string",
+                    tool.parameters().get("properties").get("query").get("type").asText());
         }
 
         @Test
@@ -66,7 +71,8 @@ class ToolAndContextTest {
 
         @Test
         void deserialization() throws JsonProcessingException {
-            var json = """
+            var json =
+                    """
                 {
                   "name": "read_file",
                   "description": "Read a file from disk",
@@ -82,7 +88,9 @@ class ToolAndContextTest {
             assertEquals("read_file", tool.name());
             assertEquals("Read a file from disk", tool.description());
             assertEquals("object", tool.parameters().get("type").asText());
-            assertEquals("string", tool.parameters().get("properties").get("path").get("type").asText());
+            assertEquals(
+                    "string",
+                    tool.parameters().get("properties").get("path").get("type").asText());
         }
 
         @Test
@@ -145,7 +153,8 @@ class ToolAndContextTest {
 
         @Test
         void deserialization() throws JsonProcessingException {
-            var json = """
+            var json =
+                    """
                 {
                   "systemPrompt": "You are a coding assistant.",
                   "messages": [
@@ -169,7 +178,8 @@ class ToolAndContextTest {
 
         @Test
         void deserializationWithoutOptionals() throws JsonProcessingException {
-            var json = """
+            var json =
+                    """
                 {
                   "messages": [
                     {"role": "user", "content": [{"type": "text", "text": "hi"}], "timestamp": 1000}
@@ -183,8 +193,8 @@ class ToolAndContextTest {
 
         @Test
         void roundTrip() throws JsonProcessingException {
-            var tool = new Tool("search", "Search the web",
-                mapper.createObjectNode().put("type", "object"));
+            var tool = new Tool(
+                    "search", "Search the web", mapper.createObjectNode().put("type", "object"));
             var ctx = new Context("system", List.of(new UserMessage("q", 1L)), List.of(tool));
             var json = mapper.writeValueAsString(ctx);
             var restored = mapper.readValue(json, Context.class);

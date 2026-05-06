@@ -15,6 +15,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.huawei.hicampus.mate.matecampusclaw.ai.stream.AssistantMessageEvent;
 import com.huawei.hicampus.mate.matecampusclaw.ai.types.AssistantMessage;
 import com.huawei.hicampus.mate.matecampusclaw.ai.types.Message;
@@ -23,9 +26,6 @@ import com.huawei.hicampus.mate.matecampusclaw.ai.types.TextContent;
 import com.huawei.hicampus.mate.matecampusclaw.ai.types.ToolResultMessage;
 import com.huawei.hicampus.mate.matecampusclaw.ai.types.Usage;
 import com.huawei.hicampus.mate.matecampusclaw.ai.types.UserMessage;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -46,27 +46,25 @@ class AgentEventTest {
 
     private AssistantMessage sampleAssistantMessage(StopReason reason) {
         return new AssistantMessage(
-            List.of(new TextContent("assistant")),
-            "anthropic-messages",
-            "anthropic",
-            "claude-opus-4-6",
-            null,
-            Usage.empty(),
-            reason,
-            null,
-            2000L
-        );
+                List.of(new TextContent("assistant")),
+                "anthropic-messages",
+                "anthropic",
+                "claude-opus-4-6",
+                null,
+                Usage.empty(),
+                reason,
+                null,
+                2000L);
     }
 
     private ToolResultMessage sampleToolResult(boolean isError) {
         return new ToolResultMessage(
-            "call-1",
-            "search",
-            List.of(new TextContent(isError ? "failed" : "done")),
-            Map.of("status", isError ? "error" : "ok"),
-            isError,
-            3000L
-        );
+                "call-1",
+                "search",
+                List.of(new TextContent(isError ? "failed" : "done")),
+                Map.of("status", isError ? "error" : "ok"),
+                isError,
+                3000L);
     }
 
     private AssistantMessageEvent sampleAssistantMessageEvent() {
@@ -160,7 +158,8 @@ class AgentEventTest {
 
             assertEquals("message_update", json.get("type").asText());
             assertEquals("assistant", json.get("message").get("role").asText());
-            assertEquals("text_delta", json.get("assistantMessageEvent").get("type").asText());
+            assertEquals(
+                    "text_delta", json.get("assistantMessageEvent").get("type").asText());
         }
 
         @Test
@@ -188,7 +187,8 @@ class AgentEventTest {
 
         @Test
         void turnEndEventFromJson() throws JsonProcessingException {
-            var json = """
+            var json =
+                    """
                 {
                   "type": "turn_end",
                   "message": {
@@ -240,7 +240,8 @@ class AgentEventTest {
 
         @Test
         void messageUpdateEventFromJson() throws JsonProcessingException {
-            var json = """
+            var json =
+                    """
                 {
                   "type": "message_update",
                   "message": {
@@ -310,7 +311,8 @@ class AgentEventTest {
 
         @Test
         void toolExecutionEndEventFromJson() throws JsonProcessingException {
-            var json = """
+            var json =
+                    """
                 {
                   "type": "tool_execution_end",
                   "toolCallId": "call-1",
@@ -336,17 +338,17 @@ class AgentEventTest {
         @Test
         void polymorphicEventListRoundTrip() throws JsonProcessingException {
             List<AgentEvent> events = List.of(
-                new AgentStartEvent(),
-                new MessageStartEvent(sampleUserMessage()),
-                new MessageUpdateEvent(sampleAssistantMessage(StopReason.STOP), sampleAssistantMessageEvent()),
-                new ToolExecutionStartEvent("call-1", "search", Map.of("q", "java")),
-                new ToolExecutionUpdateEvent("call-1", "search", Map.of("q", "java"), Map.of("progress", 50)),
-                new ToolExecutionEndEvent("call-1", "search", Map.of("items", 3), false),
-                new TurnEndEvent(sampleAssistantMessage(StopReason.STOP), List.of(sampleToolResult(false))),
-                new AgentEndEvent(List.of(sampleUserMessage(), sampleAssistantMessage(StopReason.STOP)))
-            );
+                    new AgentStartEvent(),
+                    new MessageStartEvent(sampleUserMessage()),
+                    new MessageUpdateEvent(sampleAssistantMessage(StopReason.STOP), sampleAssistantMessageEvent()),
+                    new ToolExecutionStartEvent("call-1", "search", Map.of("q", "java")),
+                    new ToolExecutionUpdateEvent("call-1", "search", Map.of("q", "java"), Map.of("progress", 50)),
+                    new ToolExecutionEndEvent("call-1", "search", Map.of("items", 3), false),
+                    new TurnEndEvent(sampleAssistantMessage(StopReason.STOP), List.of(sampleToolResult(false))),
+                    new AgentEndEvent(List.of(sampleUserMessage(), sampleAssistantMessage(StopReason.STOP))));
 
-            var json = mapper.writerFor(new TypeReference<List<AgentEvent>>() {}).writeValueAsString(events);
+            var json =
+                    mapper.writerFor(new TypeReference<List<AgentEvent>>() {}).writeValueAsString(events);
             List<AgentEvent> restored = mapper.readValue(json, new TypeReference<>() {});
 
             assertEquals(events.size(), restored.size());
@@ -364,31 +366,31 @@ class AgentEventTest {
     @Test
     void sealedPatternMatchingCoversAllVariants() {
         List<AgentEvent> events = List.of(
-            new AgentStartEvent(),
-            new AgentEndEvent(List.of(sampleUserMessage())),
-            new TurnStartEvent(),
-            new TurnEndEvent(sampleAssistantMessage(StopReason.STOP), List.of(sampleToolResult(false))),
-            new MessageStartEvent(sampleUserMessage()),
-            new MessageUpdateEvent(sampleAssistantMessage(StopReason.STOP), sampleAssistantMessageEvent()),
-            new MessageEndEvent(sampleAssistantMessage(StopReason.STOP)),
-            new ToolExecutionStartEvent("call-1", "search", Map.of("q", "java")),
-            new ToolExecutionUpdateEvent("call-1", "search", Map.of("q", "java"), Map.of("progress", 50)),
-            new ToolExecutionEndEvent("call-1", "search", Map.of("items", 3), false)
-        );
+                new AgentStartEvent(),
+                new AgentEndEvent(List.of(sampleUserMessage())),
+                new TurnStartEvent(),
+                new TurnEndEvent(sampleAssistantMessage(StopReason.STOP), List.of(sampleToolResult(false))),
+                new MessageStartEvent(sampleUserMessage()),
+                new MessageUpdateEvent(sampleAssistantMessage(StopReason.STOP), sampleAssistantMessageEvent()),
+                new MessageEndEvent(sampleAssistantMessage(StopReason.STOP)),
+                new ToolExecutionStartEvent("call-1", "search", Map.of("q", "java")),
+                new ToolExecutionUpdateEvent("call-1", "search", Map.of("q", "java"), Map.of("progress", 50)),
+                new ToolExecutionEndEvent("call-1", "search", Map.of("items", 3), false));
 
         for (var event : events) {
-            var type = switch (event) {
-                case AgentStartEvent e -> "agent_start";
-                case AgentEndEvent e -> "agent_end";
-                case TurnStartEvent e -> "turn_start";
-                case TurnEndEvent e -> "turn_end";
-                case MessageStartEvent e -> "message_start";
-                case MessageUpdateEvent e -> "message_update";
-                case MessageEndEvent e -> "message_end";
-                case ToolExecutionStartEvent e -> "tool_execution_start";
-                case ToolExecutionUpdateEvent e -> "tool_execution_update";
-                case ToolExecutionEndEvent e -> "tool_execution_end";
-            };
+            var type =
+                    switch (event) {
+                        case AgentStartEvent e -> "agent_start";
+                        case AgentEndEvent e -> "agent_end";
+                        case TurnStartEvent e -> "turn_start";
+                        case TurnEndEvent e -> "turn_end";
+                        case MessageStartEvent e -> "message_start";
+                        case MessageUpdateEvent e -> "message_update";
+                        case MessageEndEvent e -> "message_end";
+                        case ToolExecutionStartEvent e -> "tool_execution_start";
+                        case ToolExecutionUpdateEvent e -> "tool_execution_update";
+                        case ToolExecutionEndEvent e -> "tool_execution_end";
+                    };
 
             assertNotNull(type);
         }

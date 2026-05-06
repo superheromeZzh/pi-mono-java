@@ -32,17 +32,15 @@ public class Changelog {
 
     @JsonIgnoreProperties(ignoreUnknown = true)
     public record ChangelogEntry(
-        @JsonProperty("version") String version,
-        @JsonProperty("date") String date,
-        @JsonProperty("title") @Nullable String title,
-        @JsonProperty("changes") List<Change> changes
-    ) {}
+            @JsonProperty("version") String version,
+            @JsonProperty("date") String date,
+            @JsonProperty("title") @Nullable String title,
+            @JsonProperty("changes") List<Change> changes) {}
 
     @JsonIgnoreProperties(ignoreUnknown = true)
     public record Change(
-        @JsonProperty("type") String type,       // "feature", "fix", "improvement", "breaking"
-        @JsonProperty("description") String description
-    ) {}
+            @JsonProperty("type") String type, // "feature", "fix", "improvement", "breaking"
+            @JsonProperty("description") String description) {}
 
     private final List<ChangelogEntry> entries = new ArrayList<>();
     private @Nullable String lastReadVersion;
@@ -56,8 +54,7 @@ public class Changelog {
     /** Load changelog entries from a JSON file. */
     public void loadFromFile(Path path) {
         try {
-            List<ChangelogEntry> loaded = MAPPER.readValue(path.toFile(),
-                new TypeReference<List<ChangelogEntry>>() {});
+            List<ChangelogEntry> loaded = MAPPER.readValue(path.toFile(), new TypeReference<List<ChangelogEntry>>() {});
             entries.clear();
             entries.addAll(loaded);
             entries.sort((a, b) -> b.date().compareTo(a.date())); // newest first
@@ -73,8 +70,7 @@ public class Changelog {
                 log.debug("Changelog resource not found: {}", resourcePath);
                 return;
             }
-            List<ChangelogEntry> loaded = MAPPER.readValue(is,
-                new TypeReference<List<ChangelogEntry>>() {});
+            List<ChangelogEntry> loaded = MAPPER.readValue(is, new TypeReference<List<ChangelogEntry>>() {});
             entries.clear();
             entries.addAll(loaded);
             entries.sort((a, b) -> b.date().compareTo(a.date()));
@@ -126,14 +122,19 @@ public class Changelog {
         sb.append("\033[0m");
         sb.append(" \033[2m(").append(entry.date()).append(")\033[0m\n");
         for (Change change : entry.changes()) {
-            String icon = switch (change.type()) {
-                case "feature" -> "\033[32m✦\033[0m";
-                case "fix" -> "\033[31m✦\033[0m";
-                case "improvement" -> "\033[33m✦\033[0m";
-                case "breaking" -> "\033[91m⚠\033[0m";
-                default -> "•";
-            };
-            sb.append("  ").append(icon).append(" ").append(change.description()).append('\n');
+            String icon =
+                    switch (change.type()) {
+                        case "feature" -> "\033[32m✦\033[0m";
+                        case "fix" -> "\033[31m✦\033[0m";
+                        case "improvement" -> "\033[33m✦\033[0m";
+                        case "breaking" -> "\033[91m⚠\033[0m";
+                        default -> "•";
+                    };
+            sb.append("  ")
+                    .append(icon)
+                    .append(" ")
+                    .append(change.description())
+                    .append('\n');
         }
         return sb.toString();
     }

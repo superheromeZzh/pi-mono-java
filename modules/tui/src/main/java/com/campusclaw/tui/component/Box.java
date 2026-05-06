@@ -57,9 +57,14 @@ public class Box implements Component {
      * @param bgFn          background color function (null for none)
      * @param borderColorFn function to apply color to border characters (null for none)
      */
-    public Box(Component child, BorderStyle borderStyle, int padding,
-               int paddingX, int paddingY,
-               UnaryOperator<String> bgFn, UnaryOperator<String> borderColorFn) {
+    public Box(
+            Component child,
+            BorderStyle borderStyle,
+            int padding,
+            int paddingX,
+            int paddingY,
+            UnaryOperator<String> bgFn,
+            UnaryOperator<String> borderColorFn) {
         this.child = child;
         this.borderStyle = borderStyle;
         this.padding = padding;
@@ -103,8 +108,7 @@ public class Box implements Component {
 
         // --- Top border ---
         if (hasBorder) {
-            result.add(buildBorderLine(
-                    borderStyle.topLeft, borderStyle.horizontal, borderStyle.topRight, width));
+            result.add(buildBorderLine(borderStyle.topLeft, borderStyle.horizontal, borderStyle.topRight, width));
         }
 
         // --- Top padding ---
@@ -140,8 +144,7 @@ public class Box implements Component {
 
         // --- Bottom border ---
         if (hasBorder) {
-            result.add(buildBorderLine(
-                    borderStyle.bottomLeft, borderStyle.horizontal, borderStyle.bottomRight, width));
+            result.add(buildBorderLine(borderStyle.bottomLeft, borderStyle.horizontal, borderStyle.bottomRight, width));
         }
 
         return result;
@@ -152,9 +155,7 @@ public class Box implements Component {
      */
     private String buildBorderLine(char left, char horizontal, char right, int totalWidth) {
         int innerCount = Math.max(0, totalWidth - 2);
-        String line = String.valueOf(left)
-                + String.valueOf(horizontal).repeat(innerCount)
-                + String.valueOf(right);
+        String line = String.valueOf(left) + String.valueOf(horizontal).repeat(innerCount) + String.valueOf(right);
         return colorBorder(line);
     }
 

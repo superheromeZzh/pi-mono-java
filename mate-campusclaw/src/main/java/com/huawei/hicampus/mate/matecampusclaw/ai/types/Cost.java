@@ -16,12 +16,11 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  * @param total      total cost (sum of all components)
  */
 public record Cost(
-    @JsonProperty("input") double input,
-    @JsonProperty("output") double output,
-    @JsonProperty("cacheRead") double cacheRead,
-    @JsonProperty("cacheWrite") double cacheWrite,
-    @JsonProperty("total") double total
-) {
+        @JsonProperty("input") double input,
+        @JsonProperty("output") double output,
+        @JsonProperty("cacheRead") double cacheRead,
+        @JsonProperty("cacheWrite") double cacheWrite,
+        @JsonProperty("total") double total) {
 
     /** Returns a zero-valued Cost instance. */
     public static Cost empty() {

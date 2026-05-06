@@ -79,9 +79,9 @@ public class SettingsList<T> implements Component, Focusable {
         this.entries = entries != null ? new ArrayList<>(entries) : new ArrayList<>();
         this.selectedIndex = 0;
         // Default styling: dim keys, bold selected line
-        this.keyStyleFn = text -> "\033[2m" + text + "\033[0m";       // dim
+        this.keyStyleFn = text -> "\033[2m" + text + "\033[0m"; // dim
         this.valueStyleFn = UnaryOperator.identity();
-        this.selectedStyleFn = text -> "\033[1m" + text + "\033[0m";  // bold
+        this.selectedStyleFn = text -> "\033[1m" + text + "\033[0m"; // bold
         this.separatorStyleFn = text -> "\033[2m" + text + "\033[0m"; // dim
     }
 

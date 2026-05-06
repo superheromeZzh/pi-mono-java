@@ -12,8 +12,4 @@ import com.campusclaw.codingagent.util.TruncationUtils;
  * @param truncation     truncation metadata, if output was truncated
  * @param fullOutputPath path to the full untruncated output file, if truncation occurred
  */
-public record BashToolDetails(
-        TruncationUtils.TruncationResult truncation,
-        String fullOutputPath
-) {
-}
+public record BashToolDetails(TruncationUtils.TruncationResult truncation, String fullOutputPath) {}

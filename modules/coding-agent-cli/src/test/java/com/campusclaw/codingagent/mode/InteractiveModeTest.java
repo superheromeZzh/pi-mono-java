@@ -40,9 +40,14 @@ import org.mockito.quality.Strictness;
 @MockitoSettings(strictness = Strictness.LENIENT)
 class InteractiveModeTest {
 
-    @Mock AgentSession session;
-    @Mock Agent agent;
-    @Mock BashExecutor bashExecutor;
+    @Mock
+    AgentSession session;
+
+    @Mock
+    Agent agent;
+
+    @Mock
+    BashExecutor bashExecutor;
 
     TestTerminal terminal;
     AgentState state;
@@ -75,9 +80,14 @@ class InteractiveModeTest {
         void textDeltaUpdatesAssistantComponent() {
             var partial = new AssistantMessage(
                     List.of(new TextContent("Hello", null)),
-                    "messages", "anthropic", "model",
-                    null, Usage.empty(), null, null, 1L
-            );
+                    "messages",
+                    "anthropic",
+                    "model",
+                    null,
+                    Usage.empty(),
+                    null,
+                    null,
+                    1L);
             var delta = new AssistantMessageEvent.TextDeltaEvent(0, "Hello", partial);
             var event = new MessageUpdateEvent(partial, delta);
 
@@ -300,8 +310,7 @@ class InteractiveModeTest {
 
         @Test
         void promptIsSentToSession() {
-            when(session.prompt("hello"))
-                    .thenReturn(CompletableFuture.completedFuture(null));
+            when(session.prompt("hello")).thenReturn(CompletableFuture.completedFuture(null));
 
             var thread = new Thread(() -> {
                 sleep(200);
@@ -336,7 +345,8 @@ class InteractiveModeTest {
 
         @Test
         void throwsOnNullRegistry() {
-            assertThrows(NullPointerException.class, () -> new InteractiveMode(null, null, null, null, null, null, null));
+            assertThrows(
+                    NullPointerException.class, () -> new InteractiveMode(null, null, null, null, null, null, null));
         }
     }
 

@@ -81,15 +81,15 @@ public class SessionSelectorOverlay implements Component, Focusable {
         }
 
         try (var stream = Files.list(sessionDir)) {
-            return stream
-                    .filter(p -> p.toString().endsWith(".jsonl"))
+            return stream.filter(p -> p.toString().endsWith(".jsonl"))
                     .sorted(Comparator.comparingLong((Path p) -> {
-                        try {
-                            return Files.getLastModifiedTime(p).toMillis();
-                        } catch (IOException e) {
-                            return 0;
-                        }
-                    }).reversed())
+                                try {
+                                    return Files.getLastModifiedTime(p).toMillis();
+                                } catch (IOException e) {
+                                    return 0;
+                                }
+                            })
+                            .reversed())
                     .limit(20)
                     .map(p -> {
                         try {
@@ -129,8 +129,8 @@ public class SessionSelectorOverlay implements Component, Focusable {
     public List<String> render(int width) {
         var lines = new ArrayList<String>();
         lines.add("");
-        lines.add(" " + ANSI_BOLD + ANSI_ACCENT + "Resume Session" + ANSI_RESET
-                + ANSI_DIM + "  (↑↓ navigate, Enter select, Esc cancel)" + ANSI_RESET);
+        lines.add(" " + ANSI_BOLD + ANSI_ACCENT + "Resume Session" + ANSI_RESET + ANSI_DIM
+                + "  (↑↓ navigate, Enter select, Esc cancel)" + ANSI_RESET);
         lines.add("");
 
         if (empty) {

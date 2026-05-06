@@ -53,13 +53,12 @@ public class LoginCommand implements SlashCommand {
         String key = parts[1].trim();
         var providerOpt = Provider.tryFromValue(providerStr);
         if (providerOpt.isEmpty()) {
-            context.output().println("Unknown provider: " + providerStr
-                    + ". Run /providers to list known ids.");
+            context.output().println("Unknown provider: " + providerStr + ". Run /providers to list known ids.");
             return;
         }
         Provider provider = providerOpt.get();
         authStore.setApiKey(provider, key);
-        context.output().println("Saved API key for " + provider.value()
-                + " to ~/.campusclaw/agent/auth.json (mode 0600).");
+        context.output()
+                .println("Saved API key for " + provider.value() + " to ~/.campusclaw/agent/auth.json (mode 0600).");
     }
 }

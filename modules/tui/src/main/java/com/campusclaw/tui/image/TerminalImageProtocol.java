@@ -13,7 +13,12 @@ import java.util.Base64;
 public final class TerminalImageProtocol {
     private TerminalImageProtocol() {}
 
-    public enum Protocol { KITTY, ITERM2, SIXEL, NONE }
+    public enum Protocol {
+        KITTY,
+        ITERM2,
+        SIXEL,
+        NONE
+    }
 
     /** Detect the best available image protocol for the current terminal. */
     public static Protocol detect() {
@@ -116,10 +121,12 @@ public final class TerminalImageProtocol {
         Protocol protocol = detect();
         return switch (protocol) {
             case KITTY -> kittyImage(imageBytes, widthCells, heightCells);
-            case ITERM2 -> iterm2Image(imageBytes,
-                widthCells > 0 ? String.valueOf(widthCells) : "auto",
-                heightCells > 0 ? String.valueOf(heightCells) : "auto",
-                true);
+            case ITERM2 ->
+                iterm2Image(
+                        imageBytes,
+                        widthCells > 0 ? String.valueOf(widthCells) : "auto",
+                        heightCells > 0 ? String.valueOf(heightCells) : "auto",
+                        true);
             case SIXEL, NONE -> null;
         };
     }

@@ -15,9 +15,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  * @param cacheWrite cost per million cache-write tokens
  */
 public record ModelCost(
-    @JsonProperty("input") double input,
-    @JsonProperty("output") double output,
-    @JsonProperty("cacheRead") double cacheRead,
-    @JsonProperty("cacheWrite") double cacheWrite
-) {
-}
+        @JsonProperty("input") double input,
+        @JsonProperty("output") double output,
+        @JsonProperty("cacheRead") double cacheRead,
+        @JsonProperty("cacheWrite") double cacheWrite) {}

@@ -60,14 +60,19 @@ class AgentLoopIntegrationTest {
     @BeforeEach
     void setUp() {
         model = new Model(
-                "test-model", "Test Model",
-                Api.ANTHROPIC_MESSAGES, Provider.ANTHROPIC,
-                "https://example.com", true,
+                "test-model",
+                "Test Model",
+                Api.ANTHROPIC_MESSAGES,
+                Provider.ANTHROPIC,
+                "https://example.com",
+                true,
                 List.of(InputModality.TEXT),
                 new ModelCost(1.0, 2.0, 0.5, 0.25),
-                200_000, 4_096, null, null,
-                null
-        );
+                200_000,
+                4_096,
+                null,
+                null,
+                null);
         steeringQueue = new MessageQueue();
         followUpQueue = new MessageQueue();
         toolPipeline = new ToolExecutionPipeline();
@@ -83,9 +88,7 @@ class AgentLoopIntegrationTest {
 
         @Test
         void completesSimpleTextResponse() {
-            var provider = new ScriptedProvider(List.of(
-                    textReply("Hello! How can I help?")
-            ));
+            var provider = new ScriptedProvider(List.of(textReply("Hello! How can I help?")));
 
             var result = runLoop(provider, List.of(), "Hi there");
 
@@ -97,9 +100,7 @@ class AgentLoopIntegrationTest {
 
         @Test
         void emitsCorrectEventSequenceForTextResponse() {
-            var provider = new ScriptedProvider(List.of(
-                    textReply("Response")
-            ));
+            var provider = new ScriptedProvider(List.of(textReply("Response")));
 
             runLoop(provider, List.of(), "Hello");
 
@@ -110,13 +111,12 @@ class AgentLoopIntegrationTest {
                     AgentStartEvent.class,
                     TurnStartEvent.class,
                     MessageStartEvent.class, // user message
-                    MessageEndEvent.class,   // user message
+                    MessageEndEvent.class, // user message
                     MessageStartEvent.class, // assistant streaming start
                     MessageUpdateEvent.class,
-                    MessageEndEvent.class,   // assistant message end
+                    MessageEndEvent.class, // assistant message end
                     TurnEndEvent.class,
-                    AgentEndEvent.class
-            );
+                    AgentEndEvent.class);
         }
     }
 
@@ -130,10 +130,8 @@ class AgentLoopIntegrationTest {
         @Test
         void executesToolAndReturnsToLLM() {
             var bashTool = simpleTool("bash", "Run command");
-            var provider = new ScriptedProvider(List.of(
-                    toolCallReply("bash", Map.of("command", "ls")),
-                    textReply("Done! I found the files.")
-            ));
+            var provider = new ScriptedProvider(
+                    List.of(toolCallReply("bash", Map.of("command", "ls")), textReply("Done! I found the files.")));
 
             var result = runLoop(provider, List.of(bashTool), "List files");
 
@@ -154,10 +152,8 @@ class AgentLoopIntegrationTest {
         @Test
         void emitsToolExecutionEvents() {
             var bashTool = simpleTool("bash", "Run command");
-            var provider = new ScriptedProvider(List.of(
-                    toolCallReply("bash", Map.of("command", "ls")),
-                    textReply("Done")
-            ));
+            var provider =
+                    new ScriptedProvider(List.of(toolCallReply("bash", Map.of("command", "ls")), textReply("Done")));
 
             runLoop(provider, List.of(bashTool), "List files");
 
@@ -167,21 +163,21 @@ class AgentLoopIntegrationTest {
             var toolStart = events.stream()
                     .filter(ToolExecutionStartEvent.class::isInstance)
                     .map(ToolExecutionStartEvent.class::cast)
-                    .findFirst().orElseThrow();
+                    .findFirst()
+                    .orElseThrow();
             assertEquals("bash", toolStart.toolName());
         }
 
         @Test
         void emitsTwoTurnsForToolCallCycle() {
             var bashTool = simpleTool("bash", "Run command");
-            var provider = new ScriptedProvider(List.of(
-                    toolCallReply("bash", Map.of("command", "ls")),
-                    textReply("Done")
-            ));
+            var provider =
+                    new ScriptedProvider(List.of(toolCallReply("bash", Map.of("command", "ls")), textReply("Done")));
 
             runLoop(provider, List.of(bashTool), "Run ls");
 
-            long turnCount = events.stream().filter(TurnEndEvent.class::isInstance).count();
+            long turnCount =
+                    events.stream().filter(TurnEndEvent.class::isInstance).count();
             assertEquals(2, turnCount);
         }
     }
@@ -201,8 +197,7 @@ class AgentLoopIntegrationTest {
             var provider = new ScriptedProvider(List.of(
                     toolCallReply("read", Map.of("command", "cat file.txt")),
                     toolCallReply("write", Map.of("command", "echo hello > out.txt")),
-                    textReply("I read the file and wrote the output.")
-            ));
+                    textReply("I read the file and wrote the output.")));
 
             var result = runLoop(provider, List.of(readTool, writeTool), "Read and write");
 
@@ -216,11 +211,14 @@ class AgentLoopIntegrationTest {
             assertInstanceOf(AssistantMessage.class, result.get(5));
 
             // 3 turns: tool1, tool2, final text
-            long turnCount = events.stream().filter(TurnEndEvent.class::isInstance).count();
+            long turnCount =
+                    events.stream().filter(TurnEndEvent.class::isInstance).count();
             assertEquals(3, turnCount);
 
             // 2 tool executions
-            long toolExecCount = events.stream().filter(ToolExecutionStartEvent.class::isInstance).count();
+            long toolExecCount = events.stream()
+                    .filter(ToolExecutionStartEvent.class::isInstance)
+                    .count();
             assertEquals(2, toolExecCount);
         }
     }
@@ -236,18 +234,16 @@ class AgentLoopIntegrationTest {
         void injectsSteeringMessageAfterToolExecution() {
             var steeringTool = new SteeringAgentTool(steeringQueue);
             var provider = new ScriptedProvider(List.of(
-                    toolCallReply("steering_tool", Map.of("command", "search")),
-                    textReply("Steered response")
-            ));
+                    toolCallReply("steering_tool", Map.of("command", "search")), textReply("Steered response")));
 
             var result = runLoop(provider, List.of(steeringTool), "Do something");
 
             // user → assistant(tool) → tool_result → [steering injected] → assistant(text)
             assertEquals(5, result.size());
-            assertInstanceOf(UserMessage.class, result.get(0));    // "Do something"
+            assertInstanceOf(UserMessage.class, result.get(0)); // "Do something"
             assertInstanceOf(AssistantMessage.class, result.get(1)); // tool call
             assertInstanceOf(ToolResultMessage.class, result.get(2)); // tool result
-            assertInstanceOf(UserMessage.class, result.get(3));    // steering message
+            assertInstanceOf(UserMessage.class, result.get(3)); // steering message
             assertInstanceOf(AssistantMessage.class, result.get(4)); // "Steered response"
 
             assertEquals("injected steering", textOf(result.get(3)));
@@ -256,10 +252,8 @@ class AgentLoopIntegrationTest {
         @Test
         void steeringMessageAppearsInEventsAsMessageStartEnd() {
             var steeringTool = new SteeringAgentTool(steeringQueue);
-            var provider = new ScriptedProvider(List.of(
-                    toolCallReply("steering_tool", Map.of("command", "search")),
-                    textReply("OK")
-            ));
+            var provider = new ScriptedProvider(
+                    List.of(toolCallReply("steering_tool", Map.of("command", "search")), textReply("OK")));
 
             runLoop(provider, List.of(steeringTool), "Go");
 
@@ -286,10 +280,7 @@ class AgentLoopIntegrationTest {
         void processesFollowUpMessageAfterTextResponse() {
             followUpQueue.enqueue(new UserMessage("follow-up question", 2L));
 
-            var provider = new ScriptedProvider(List.of(
-                    textReply("First answer"),
-                    textReply("Follow-up answer")
-            ));
+            var provider = new ScriptedProvider(List.of(textReply("First answer"), textReply("Follow-up answer")));
 
             var result = runLoop(provider, List.of(), "Initial question");
 
@@ -301,20 +292,20 @@ class AgentLoopIntegrationTest {
             assertEquals("Follow-up answer", textOf(result.get(3)));
 
             // 2 turns
-            long turnCount = events.stream().filter(TurnEndEvent.class::isInstance).count();
+            long turnCount =
+                    events.stream().filter(TurnEndEvent.class::isInstance).count();
             assertEquals(2, turnCount);
         }
 
         @Test
         void noFollowUpMeansLoopEndsAfterTextResponse() {
-            var provider = new ScriptedProvider(List.of(
-                    textReply("Only answer")
-            ));
+            var provider = new ScriptedProvider(List.of(textReply("Only answer")));
 
             var result = runLoop(provider, List.of(), "Question");
 
             assertEquals(2, result.size());
-            long turnCount = events.stream().filter(TurnEndEvent.class::isInstance).count();
+            long turnCount =
+                    events.stream().filter(TurnEndEvent.class::isInstance).count();
             assertEquals(1, turnCount);
         }
     }
@@ -334,9 +325,7 @@ class AgentLoopIntegrationTest {
             var abortTool = new AbortingAgentTool(signal);
 
             var provider = new ScriptedProvider(List.of(
-                    toolCallReply("abort_tool", Map.of("command", "cancel")),
-                    textReply("This should not be reached")
-            ));
+                    toolCallReply("abort_tool", Map.of("command", "cancel")), textReply("This should not be reached")));
 
             var state = new AgentState();
             state.setSystemPrompt("system");
@@ -352,15 +341,9 @@ class AgentLoopIntegrationTest {
                     ToolExecutionMode.SEQUENTIAL,
                     steeringQueue,
                     followUpQueue,
-                    SimpleStreamOptions.empty()
-            ));
+                    SimpleStreamOptions.empty()));
 
-            var result = loop.run(
-                    List.of(new UserMessage("abort me", 1L)),
-                    context,
-                    events::add,
-                    signal
-            );
+            var result = loop.run(List.of(new UserMessage("abort me", 1L)), context, events::add, signal);
 
             // Loop should stop after tool execution due to cancellation
             // user → assistant(tool) → tool_result
@@ -384,10 +367,8 @@ class AgentLoopIntegrationTest {
         @Test
         void promptRunsFullCycleViaAgentFacade() throws Exception {
             var bashTool = simpleTool("bash", "Run command");
-            var provider = new ScriptedProvider(List.of(
-                    toolCallReply("bash", Map.of("command", "ls")),
-                    textReply("Found 3 files")
-            ));
+            var provider = new ScriptedProvider(
+                    List.of(toolCallReply("bash", Map.of("command", "ls")), textReply("Found 3 files")));
 
             var agent = new Agent(piAiService(provider));
             agent.setModel(model);
@@ -412,10 +393,8 @@ class AgentLoopIntegrationTest {
         void abortStopsRunningExecution() throws Exception {
             var signal = new CancellationToken();
             var slowTool = new SlowAgentTool();
-            var provider = new ScriptedProvider(List.of(
-                    toolCallReply("slow_tool", Map.of("command", "wait")),
-                    textReply("Should not appear")
-            ));
+            var provider = new ScriptedProvider(
+                    List.of(toolCallReply("slow_tool", Map.of("command", "wait")), textReply("Should not appear")));
 
             var agent = new Agent(piAiService(provider));
             agent.setModel(model);
@@ -467,12 +446,10 @@ class AgentLoopIntegrationTest {
             runLoop(provider, List.of(), "Hello");
 
             // Find the assistant message start/end (not user)
-            var msgStarts = events.stream()
-                    .filter(MessageStartEvent.class::isInstance)
-                    .toList();
-            var msgEnds = events.stream()
-                    .filter(MessageEndEvent.class::isInstance)
-                    .toList();
+            var msgStarts =
+                    events.stream().filter(MessageStartEvent.class::isInstance).toList();
+            var msgEnds =
+                    events.stream().filter(MessageEndEvent.class::isInstance).toList();
 
             assertTrue(msgStarts.size() >= 2); // user + assistant
             assertTrue(msgEnds.size() >= 2);
@@ -481,10 +458,8 @@ class AgentLoopIntegrationTest {
         @Test
         void toolExecutionStartPrecedesToolExecutionEnd() {
             var tool = simpleTool("bash", "Run command");
-            var provider = new ScriptedProvider(List.of(
-                    toolCallReply("bash", Map.of("command", "ls")),
-                    textReply("Done")
-            ));
+            var provider =
+                    new ScriptedProvider(List.of(toolCallReply("bash", Map.of("command", "ls")), textReply("Done")));
             runLoop(provider, List.of(tool), "Go");
 
             int toolStartIdx = indexOfFirst(ToolExecutionStartEvent.class);
@@ -497,10 +472,8 @@ class AgentLoopIntegrationTest {
         @Test
         void turnEndContainsToolResultsForToolTurn() {
             var tool = simpleTool("bash", "Run command");
-            var provider = new ScriptedProvider(List.of(
-                    toolCallReply("bash", Map.of("command", "ls")),
-                    textReply("Done")
-            ));
+            var provider =
+                    new ScriptedProvider(List.of(toolCallReply("bash", Map.of("command", "ls")), textReply("Done")));
             runLoop(provider, List.of(tool), "Go");
 
             var toolTurnEnd = events.stream()
@@ -516,16 +489,15 @@ class AgentLoopIntegrationTest {
         @Test
         void agentEndContainsFullMessageHistory() {
             var tool = simpleTool("bash", "Run command");
-            var provider = new ScriptedProvider(List.of(
-                    toolCallReply("bash", Map.of("command", "ls")),
-                    textReply("Done")
-            ));
+            var provider =
+                    new ScriptedProvider(List.of(toolCallReply("bash", Map.of("command", "ls")), textReply("Done")));
             runLoop(provider, List.of(tool), "Go");
 
             var agentEnd = events.stream()
                     .filter(AgentEndEvent.class::isInstance)
                     .map(AgentEndEvent.class::cast)
-                    .findFirst().orElseThrow();
+                    .findFirst()
+                    .orElseThrow();
 
             assertEquals(4, agentEnd.messages().size());
         }
@@ -541,10 +513,8 @@ class AgentLoopIntegrationTest {
         @Test
         void contextTransformerIsCalledEachTurn() {
             var callCount = new AtomicInteger();
-            var provider = new ScriptedProvider(List.of(
-                    toolCallReply("bash", Map.of("command", "ls")),
-                    textReply("Done")
-            ));
+            var provider =
+                    new ScriptedProvider(List.of(toolCallReply("bash", Map.of("command", "ls")), textReply("Done")));
             var tool = simpleTool("bash", "Run command");
 
             var state = new AgentState();
@@ -564,15 +534,9 @@ class AgentLoopIntegrationTest {
                     ToolExecutionMode.SEQUENTIAL,
                     steeringQueue,
                     followUpQueue,
-                    SimpleStreamOptions.empty()
-            ));
+                    SimpleStreamOptions.empty()));
 
-            loop.run(
-                    List.of(new UserMessage("Go", 1L)),
-                    context,
-                    events::add,
-                    new CancellationToken()
-            );
+            loop.run(List.of(new UserMessage("Go", 1L)), context, events::add, new CancellationToken());
 
             assertEquals(2, callCount.get()); // once per turn
         }
@@ -597,15 +561,9 @@ class AgentLoopIntegrationTest {
                 ToolExecutionMode.SEQUENTIAL,
                 steeringQueue,
                 followUpQueue,
-                SimpleStreamOptions.empty()
-        ));
+                SimpleStreamOptions.empty()));
 
-        return loop.run(
-                List.of(new UserMessage(prompt, 1L)),
-                context,
-                events::add,
-                new CancellationToken()
-        );
+        return loop.run(List.of(new UserMessage(prompt, 1L)), context, events::add, new CancellationToken());
     }
 
     private CampusClawAiService piAiService(ApiProvider provider) {
@@ -634,7 +592,8 @@ class AgentLoopIntegrationTest {
         if (message instanceof AssistantMessage am) {
             return ((TextContent) am.content().getFirst()).text();
         }
-        throw new IllegalArgumentException("Cannot extract text from " + message.getClass().getSimpleName());
+        throw new IllegalArgumentException(
+                "Cannot extract text from " + message.getClass().getSimpleName());
     }
 
     @SafeVarargs
@@ -648,9 +607,10 @@ class AgentLoopIntegrationTest {
                     break;
                 }
             }
-            assertTrue(idx >= 0,
-                    "Expected " + type.getSimpleName() + " after index " + lastIdx +
-                            " but not found. Events: " + eventNames());
+            assertTrue(
+                    idx >= 0,
+                    "Expected " + type.getSimpleName() + " after index " + lastIdx + " but not found. Events: "
+                            + eventNames());
             lastIdx = idx;
         }
     }
@@ -705,9 +665,8 @@ class AgentLoopIntegrationTest {
         public AssistantMessageEventStream streamSimple(Model model, Context context, SimpleStreamOptions options) {
             int idx = callIndex.getAndIncrement();
             if (idx >= script.size()) {
-                throw new IllegalStateException(
-                        "ScriptedProvider exhausted: called " + (idx + 1) + " times but only " +
-                                script.size() + " replies scripted");
+                throw new IllegalStateException("ScriptedProvider exhausted: called " + (idx + 1) + " times but only "
+                        + script.size() + " replies scripted");
             }
             var reply = script.get(idx);
 
@@ -722,9 +681,14 @@ class AgentLoopIntegrationTest {
             var toolCall = new ToolCall("tc-" + callIndex.get(), toolName, args);
             var msg = new AssistantMessage(
                     List.of(toolCall),
-                    model.api().value(), model.provider().value(), model.id(),
-                    null, Usage.empty(), StopReason.TOOL_USE, null, System.currentTimeMillis()
-            );
+                    model.api().value(),
+                    model.provider().value(),
+                    model.id(),
+                    null,
+                    Usage.empty(),
+                    StopReason.TOOL_USE,
+                    null,
+                    System.currentTimeMillis());
             stream.push(new AssistantMessageEvent.StartEvent(msg));
             stream.push(new AssistantMessageEvent.ToolCallEndEvent(0, toolCall, msg));
             stream.pushDone(StopReason.TOOL_USE, msg);
@@ -735,9 +699,14 @@ class AgentLoopIntegrationTest {
             var stream = new AssistantMessageEventStream();
             var msg = new AssistantMessage(
                     List.of(new TextContent(text, null)),
-                    model.api().value(), model.provider().value(), model.id(),
-                    null, Usage.empty(), StopReason.STOP, null, System.currentTimeMillis()
-            );
+                    model.api().value(),
+                    model.provider().value(),
+                    model.id(),
+                    null,
+                    Usage.empty(),
+                    StopReason.STOP,
+                    null,
+                    System.currentTimeMillis());
             stream.push(new AssistantMessageEvent.StartEvent(msg));
             stream.push(new AssistantMessageEvent.TextDeltaEvent(0, text, msg));
             stream.pushDone(StopReason.STOP, msg);
@@ -773,19 +742,22 @@ class AgentLoopIntegrationTest {
             public JsonNode parameters() {
                 return MAPPER.createObjectNode()
                         .put("type", "object")
-                        .<com.fasterxml.jackson.databind.node.ObjectNode>set("properties",
-                                MAPPER.createObjectNode().set("command",
-                                        MAPPER.createObjectNode().put("type", "string")))
+                        .<com.fasterxml.jackson.databind.node.ObjectNode>set(
+                                "properties",
+                                MAPPER.createObjectNode()
+                                        .set(
+                                                "command",
+                                                MAPPER.createObjectNode().put("type", "string")))
                         .set("required", MAPPER.createArrayNode().add("command"));
             }
 
             @Override
-            public AgentToolResult execute(String toolCallId, Map<String, Object> params,
-                                           CancellationToken signal, AgentToolUpdateCallback onUpdate) {
-                return new AgentToolResult(
-                        List.of(new TextContent("executed: " + params.get("command"))),
-                        null
-                );
+            public AgentToolResult execute(
+                    String toolCallId,
+                    Map<String, Object> params,
+                    CancellationToken signal,
+                    AgentToolUpdateCallback onUpdate) {
+                return new AgentToolResult(List.of(new TextContent("executed: " + params.get("command"))), null);
             }
         };
     }
@@ -818,17 +790,27 @@ class AgentLoopIntegrationTest {
 
         @Override
         public JsonNode parameters() {
-            return new ObjectMapper().createObjectNode()
+            return new ObjectMapper()
+                    .createObjectNode()
                     .put("type", "object")
-                    .<com.fasterxml.jackson.databind.node.ObjectNode>set("properties",
-                            new ObjectMapper().createObjectNode().set("command",
-                                    new ObjectMapper().createObjectNode().put("type", "string")))
+                    .<com.fasterxml.jackson.databind.node.ObjectNode>set(
+                            "properties",
+                            new ObjectMapper()
+                                    .createObjectNode()
+                                    .set(
+                                            "command",
+                                            new ObjectMapper()
+                                                    .createObjectNode()
+                                                    .put("type", "string")))
                     .set("required", new ObjectMapper().createArrayNode().add("command"));
         }
 
         @Override
-        public AgentToolResult execute(String toolCallId, Map<String, Object> params,
-                                       CancellationToken signal, AgentToolUpdateCallback onUpdate) {
+        public AgentToolResult execute(
+                String toolCallId,
+                Map<String, Object> params,
+                CancellationToken signal,
+                AgentToolUpdateCallback onUpdate) {
             steeringQueue.enqueue(new UserMessage("injected steering", System.currentTimeMillis()));
             return new AgentToolResult(List.of(new TextContent("tool executed")), null);
         }
@@ -862,17 +844,27 @@ class AgentLoopIntegrationTest {
 
         @Override
         public JsonNode parameters() {
-            return new ObjectMapper().createObjectNode()
+            return new ObjectMapper()
+                    .createObjectNode()
                     .put("type", "object")
-                    .<com.fasterxml.jackson.databind.node.ObjectNode>set("properties",
-                            new ObjectMapper().createObjectNode().set("command",
-                                    new ObjectMapper().createObjectNode().put("type", "string")))
+                    .<com.fasterxml.jackson.databind.node.ObjectNode>set(
+                            "properties",
+                            new ObjectMapper()
+                                    .createObjectNode()
+                                    .set(
+                                            "command",
+                                            new ObjectMapper()
+                                                    .createObjectNode()
+                                                    .put("type", "string")))
                     .set("required", new ObjectMapper().createArrayNode().add("command"));
         }
 
         @Override
-        public AgentToolResult execute(String toolCallId, Map<String, Object> params,
-                                       CancellationToken signal, AgentToolUpdateCallback onUpdate) {
+        public AgentToolResult execute(
+                String toolCallId,
+                Map<String, Object> params,
+                CancellationToken signal,
+                AgentToolUpdateCallback onUpdate) {
             this.signal.cancel();
             return new AgentToolResult(List.of(new TextContent("aborted")), null);
         }
@@ -902,11 +894,18 @@ class AgentLoopIntegrationTest {
 
         @Override
         public JsonNode parameters() {
-            return new ObjectMapper().createObjectNode()
+            return new ObjectMapper()
+                    .createObjectNode()
                     .put("type", "object")
-                    .<com.fasterxml.jackson.databind.node.ObjectNode>set("properties",
-                            new ObjectMapper().createObjectNode().set("command",
-                                    new ObjectMapper().createObjectNode().put("type", "string")))
+                    .<com.fasterxml.jackson.databind.node.ObjectNode>set(
+                            "properties",
+                            new ObjectMapper()
+                                    .createObjectNode()
+                                    .set(
+                                            "command",
+                                            new ObjectMapper()
+                                                    .createObjectNode()
+                                                    .put("type", "string")))
                     .set("required", new ObjectMapper().createArrayNode().add("command"));
         }
 
@@ -915,8 +914,11 @@ class AgentLoopIntegrationTest {
         }
 
         @Override
-        public AgentToolResult execute(String toolCallId, Map<String, Object> params,
-                                       CancellationToken signal, AgentToolUpdateCallback onUpdate) {
+        public AgentToolResult execute(
+                String toolCallId,
+                Map<String, Object> params,
+                CancellationToken signal,
+                AgentToolUpdateCallback onUpdate) {
             started.complete(null);
             // Wait for cancellation
             while (!signal.isCancelled()) {

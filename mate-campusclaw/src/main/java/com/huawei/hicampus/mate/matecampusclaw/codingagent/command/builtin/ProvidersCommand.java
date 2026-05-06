@@ -31,8 +31,7 @@ public class ProvidersCommand implements SlashCommand {
     private final SettingsManager settingsManager;
     private final AuthStore authStore;
 
-    public ProvidersCommand(ModelRegistry modelRegistry, SettingsManager settingsManager,
-                            AuthStore authStore) {
+    public ProvidersCommand(ModelRegistry modelRegistry, SettingsManager settingsManager, AuthStore authStore) {
         this.modelRegistry = modelRegistry;
         this.settingsManager = settingsManager;
         this.authStore = authStore;
@@ -56,8 +55,7 @@ public class ProvidersCommand implements SlashCommand {
         } catch (Exception e) {
             settings = Settings.empty();
         }
-        Map<String, Settings.ProviderConfig> providerCfg = settings.provider() != null
-                ? settings.provider() : Map.of();
+        Map<String, Settings.ProviderConfig> providerCfg = settings.provider() != null ? settings.provider() : Map.of();
         Map<String, String> auth = authStore.listSummary();
 
         Map<Provider, Integer> modelCounts = new LinkedHashMap<>();
@@ -75,15 +73,14 @@ public class ProvidersCommand implements SlashCommand {
         }
         rows.sort(Comparator.comparing(Provider::value));
 
-        context.output().println(String.format("%-20s %-7s %-10s %-7s",
-                "PROVIDER", "MODELS", "AUTH.JSON", "OVERRIDE"));
+        context.output().println(String.format("%-20s %-7s %-10s %-7s", "PROVIDER", "MODELS", "AUTH.JSON", "OVERRIDE"));
         for (Provider p : rows) {
             int count = modelCounts.getOrDefault(p, 0);
             boolean hasAuth = auth.containsKey(p.value());
             Settings.ProviderConfig cfg = providerCfg.get(p.value());
             String override = describeOverride(cfg);
-            context.output().println(String.format("%-20s %-7d %-10s %-7s",
-                    p.value(), count, hasAuth ? "yes" : "—", override));
+            context.output()
+                    .println(String.format("%-20s %-7d %-10s %-7s", p.value(), count, hasAuth ? "yes" : "—", override));
         }
 
         // Highlight settings.provider entries that don't map to any known Provider.

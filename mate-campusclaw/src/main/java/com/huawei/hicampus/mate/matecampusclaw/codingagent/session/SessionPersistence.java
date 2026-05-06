@@ -14,9 +14,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-import com.huawei.hicampus.mate.matecampusclaw.ai.types.Message;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.huawei.hicampus.mate.matecampusclaw.ai.types.Message;
 
 /**
  * Persists and restores agent session message history in JSONL format

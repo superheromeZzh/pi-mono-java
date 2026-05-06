@@ -16,16 +16,15 @@ import com.campusclaw.ai.types.ThinkingLevel;
  * Immutable snapshot of the current agent state.
  */
 public record AgentStateSnapshot(
-    String systemPrompt,
-    Model model,
-    ThinkingLevel thinkingLevel,
-    List<AgentTool> tools,
-    List<Message> messages,
-    boolean streaming,
-    Message streamMessage,
-    Set<String> pendingToolCalls,
-    String error
-) {
+        String systemPrompt,
+        Model model,
+        ThinkingLevel thinkingLevel,
+        List<AgentTool> tools,
+        List<Message> messages,
+        boolean streaming,
+        Message streamMessage,
+        Set<String> pendingToolCalls,
+        String error) {
 
     public AgentStateSnapshot {
         tools = List.copyOf(tools);

@@ -33,8 +33,12 @@ public class SkillPromptFormatter {
         for (Skill skill : visibleSkills) {
             sb.append("  <skill>\n");
             sb.append("    <name>").append(escapeXml(skill.name())).append("</name>\n");
-            sb.append("    <description>").append(escapeXml(skill.description())).append("</description>\n");
-            sb.append("    <location>").append(escapeXml(skill.filePath().toString())).append("</location>\n");
+            sb.append("    <description>")
+                    .append(escapeXml(skill.description()))
+                    .append("</description>\n");
+            sb.append("    <location>")
+                    .append(escapeXml(skill.filePath().toString()))
+                    .append("</location>\n");
             sb.append("  </skill>\n");
         }
 

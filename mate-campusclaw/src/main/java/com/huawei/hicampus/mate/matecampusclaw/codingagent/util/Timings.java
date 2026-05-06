@@ -27,40 +27,40 @@ public class Timings {
     private static final Logger log = LoggerFactory.getLogger(Timings.class);
 
     public record TimingSpan(
-        String name,
-        long startNanos,
-        long endNanos,
-        @Nullable String parentName,
-        @Nullable Map<String, String> metadata
-    ) {
+            String name,
+            long startNanos,
+            long endNanos,
+            @Nullable String parentName,
+            @Nullable Map<String, String> metadata) {
         public long durationNanos() {
             return endNanos - startNanos;
         }
+
         public double durationMs() {
             return durationNanos() / 1_000_000.0;
         }
+
         public double durationSecs() {
             return durationNanos() / 1_000_000_000.0;
         }
     }
 
     public record TimingStats(
-        String name,
-        int count,
-        double minMs,
-        double maxMs,
-        double avgMs,
-        double totalMs,
-        double p50Ms,
-        double p95Ms,
-        double p99Ms
-    ) {
+            String name,
+            int count,
+            double minMs,
+            double maxMs,
+            double avgMs,
+            double totalMs,
+            double p50Ms,
+            double p95Ms,
+            double p99Ms) {
         public String format() {
             if (count == 1) {
                 return String.format("%s: %.1fms", name, totalMs);
             }
-            return String.format("%s: %.1fms avg (min=%.1f, max=%.1f, p95=%.1f, n=%d)",
-                name, avgMs, minMs, maxMs, p95Ms, count);
+            return String.format(
+                    "%s: %.1fms avg (min=%.1f, max=%.1f, p95=%.1f, n=%d)", name, avgMs, minMs, maxMs, p95Ms, count);
         }
     }
 
@@ -130,10 +130,10 @@ public class Timings {
     /** Get statistics for a named span across all recordings. */
     public Optional<TimingStats> getStats(String name) {
         List<Double> durations = spans.stream()
-            .filter(s -> s.name().equals(name))
-            .map(TimingSpan::durationMs)
-            .sorted()
-            .toList();
+                .filter(s -> s.name().equals(name))
+                .map(TimingSpan::durationMs)
+                .sorted()
+                .toList();
 
         if (durations.isEmpty()) {
             return Optional.empty();
@@ -142,15 +142,15 @@ public class Timings {
         int n = durations.size();
         double sum = durations.stream().mapToDouble(d -> d).sum();
         return Optional.of(new TimingStats(
-            name, n,
-            durations.get(0),
-            durations.get(n - 1),
-            sum / n,
-            sum,
-            percentile(durations, 0.50),
-            percentile(durations, 0.95),
-            percentile(durations, 0.99)
-        ));
+                name,
+                n,
+                durations.get(0),
+                durations.get(n - 1),
+                sum / n,
+                sum,
+                percentile(durations, 0.50),
+                percentile(durations, 0.95),
+                percentile(durations, 0.99)));
     }
 
     /** Get all recorded spans. */

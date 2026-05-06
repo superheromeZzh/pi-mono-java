@@ -64,8 +64,7 @@ public class CronService {
         engine.addListener(listener);
     }
 
-    public CronJob createJob(String name, @Nullable String description,
-                              CronSchedule schedule, CronPayload payload) {
+    public CronJob createJob(String name, @Nullable String description, CronSchedule schedule, CronPayload payload) {
         var job = CronJob.create(name, description, schedule, payload);
         store.addJob(job);
         if (engine.isRunning()) {

@@ -41,21 +41,28 @@ class OpenAICompletionsProviderIntegrationTest {
 
     private Model testModel(String baseUrl) {
         return new Model(
-                "gpt-4o", "GPT-4o",
-                Api.OPENAI_COMPLETIONS, Provider.OPENAI,
-                baseUrl, false,
+                "gpt-4o",
+                "GPT-4o",
+                Api.OPENAI_COMPLETIONS,
+                Provider.OPENAI,
+                baseUrl,
+                false,
                 List.of(InputModality.TEXT, InputModality.IMAGE),
                 new ModelCost(2.5, 10.0, 1.25, 0.0),
-                128000, 16384, null, null,
-                null
-        );
+                128000,
+                16384,
+                null,
+                null,
+                null);
     }
 
     @BeforeEach
     void setUp() throws IOException {
         server = new MockWebServer();
         server.start();
-        provider = new OpenAICompletionsProvider(new com.huawei.hicampus.mate.matecampusclaw.ai.env.EnvProviderConfigResolver(new com.huawei.hicampus.mate.matecampusclaw.ai.env.EnvApiKeyResolver()));
+        provider = new OpenAICompletionsProvider(
+                new com.huawei.hicampus.mate.matecampusclaw.ai.env.EnvProviderConfigResolver(
+                        new com.huawei.hicampus.mate.matecampusclaw.ai.env.EnvApiKeyResolver()));
     }
 
     @AfterEach
@@ -76,13 +83,17 @@ class OpenAICompletionsProviderIntegrationTest {
 
         @Test
         void streamsTextResponse() throws Exception {
-            String sseBody = chunk("""
+            String sseBody = chunk(
+                            """
                     {"id":"chatcmpl-123","object":"chat.completion.chunk","created":1234567890,"model":"gpt-4o","choices":[{"index":0,"delta":{"role":"assistant","content":""},"finish_reason":null}]}""")
-                    + chunk("""
+                    + chunk(
+                            """
                     {"id":"chatcmpl-123","object":"chat.completion.chunk","created":1234567890,"model":"gpt-4o","choices":[{"index":0,"delta":{"content":"Hello"},"finish_reason":null}]}""")
-                    + chunk("""
+                    + chunk(
+                            """
                     {"id":"chatcmpl-123","object":"chat.completion.chunk","created":1234567890,"model":"gpt-4o","choices":[{"index":0,"delta":{"content":" world"},"finish_reason":null}]}""")
-                    + chunk("""
+                    + chunk(
+                            """
                     {"id":"chatcmpl-123","object":"chat.completion.chunk","created":1234567890,"model":"gpt-4o","choices":[{"index":0,"delta":{},"finish_reason":"stop"}],"usage":{"prompt_tokens":10,"completion_tokens":5,"total_tokens":15}}""")
                     + "data: [DONE]\n\n";
 
@@ -94,12 +105,10 @@ class OpenAICompletionsProviderIntegrationTest {
 
             String baseUrl = server.url("/").toString();
             var model = testModel(baseUrl);
-            var context = new Context(null,
-                    List.of(new UserMessage("Hi", 1L)), null);
+            var context = new Context(null, List.of(new UserMessage("Hi", 1L)), null);
             var eventStream = new AssistantMessageEventStream();
 
-            provider.executeStream(model, context, "test-api-key",
-                    null, null, null, eventStream);
+            provider.executeStream(model, context, "test-api-key", null, null, null, eventStream);
 
             var events = collectEvents(eventStream);
             var finalMsg = eventStream.result().block();
@@ -121,7 +130,8 @@ class OpenAICompletionsProviderIntegrationTest {
 
         @Test
         void verifiesRequestParameters() throws Exception {
-            String sseBody = chunk("""
+            String sseBody = chunk(
+                            """
                     {"id":"chatcmpl-456","object":"chat.completion.chunk","created":1234567890,"model":"gpt-4o","choices":[{"index":0,"delta":{"role":"assistant","content":"OK"},"finish_reason":"stop"}],"usage":{"prompt_tokens":5,"completion_tokens":1,"total_tokens":6}}""")
                     + "data: [DONE]\n\n";
 
@@ -133,12 +143,10 @@ class OpenAICompletionsProviderIntegrationTest {
 
             String baseUrl = server.url("/").toString();
             var model = testModel(baseUrl);
-            var context = new Context("Be concise.",
-                    List.of(new UserMessage("Hello", 1L)), null);
+            var context = new Context("Be concise.", List.of(new UserMessage("Hello", 1L)), null);
             var eventStream = new AssistantMessageEventStream();
 
-            provider.executeStream(model, context, "test-api-key",
-                    4096, 0.5, null, eventStream);
+            provider.executeStream(model, context, "test-api-key", 4096, 0.5, null, eventStream);
 
             eventStream.result().block();
 
@@ -158,13 +166,17 @@ class OpenAICompletionsProviderIntegrationTest {
 
         @Test
         void streamsToolCallResponse() throws Exception {
-            String sseBody = chunk("""
+            String sseBody = chunk(
+                            """
                     {"id":"chatcmpl-tc","object":"chat.completion.chunk","created":1234567890,"model":"gpt-4o","choices":[{"index":0,"delta":{"role":"assistant","tool_calls":[{"index":0,"id":"call_abc","type":"function","function":{"name":"bash","arguments":""}}]},"finish_reason":null}]}""")
-                    + chunk("""
+                    + chunk(
+                            """
                     {"id":"chatcmpl-tc","object":"chat.completion.chunk","created":1234567890,"model":"gpt-4o","choices":[{"index":0,"delta":{"tool_calls":[{"index":0,"function":{"arguments":"{\\"com"}}]},"finish_reason":null}]}""")
-                    + chunk("""
+                    + chunk(
+                            """
                     {"id":"chatcmpl-tc","object":"chat.completion.chunk","created":1234567890,"model":"gpt-4o","choices":[{"index":0,"delta":{"tool_calls":[{"index":0,"function":{"arguments":"mand\\":\\"ls\\"}"}}]},"finish_reason":null}]}""")
-                    + chunk("""
+                    + chunk(
+                            """
                     {"id":"chatcmpl-tc","object":"chat.completion.chunk","created":1234567890,"model":"gpt-4o","choices":[{"index":0,"delta":{},"finish_reason":"tool_calls"}],"usage":{"prompt_tokens":20,"completion_tokens":15,"total_tokens":35}}""")
                     + "data: [DONE]\n\n";
 
@@ -176,12 +188,10 @@ class OpenAICompletionsProviderIntegrationTest {
 
             String baseUrl = server.url("/").toString();
             var model = testModel(baseUrl);
-            var context = new Context(null,
-                    List.of(new UserMessage("Run ls", 1L)), null);
+            var context = new Context(null, List.of(new UserMessage("Run ls", 1L)), null);
             var eventStream = new AssistantMessageEventStream();
 
-            provider.executeStream(model, context, "test-api-key",
-                    null, null, null, eventStream);
+            provider.executeStream(model, context, "test-api-key", null, null, null, eventStream);
 
             var events = collectEvents(eventStream);
             var finalMsg = eventStream.result().block();
@@ -212,7 +222,8 @@ class OpenAICompletionsProviderIntegrationTest {
 
         @Test
         void tracksUsageWithCachedTokens() throws Exception {
-            String sseBody = chunk("""
+            String sseBody = chunk(
+                            """
                     {"id":"chatcmpl-u","object":"chat.completion.chunk","created":1234567890,"model":"gpt-4o","choices":[{"index":0,"delta":{"role":"assistant","content":"OK"},"finish_reason":"stop"}],"usage":{"prompt_tokens":100,"completion_tokens":5,"total_tokens":105,"prompt_tokens_details":{"cached_tokens":30}}}""")
                     + "data: [DONE]\n\n";
 
@@ -224,12 +235,10 @@ class OpenAICompletionsProviderIntegrationTest {
 
             String baseUrl = server.url("/").toString();
             var model = testModel(baseUrl);
-            var context = new Context(null,
-                    List.of(new UserMessage("Hello", 1L)), null);
+            var context = new Context(null, List.of(new UserMessage("Hello", 1L)), null);
             var eventStream = new AssistantMessageEventStream();
 
-            provider.executeStream(model, context, "test-api-key",
-                    null, null, null, eventStream);
+            provider.executeStream(model, context, "test-api-key", null, null, null, eventStream);
 
             var finalMsg = eventStream.result().block();
 
@@ -260,12 +269,10 @@ class OpenAICompletionsProviderIntegrationTest {
 
             String baseUrl = server.url("/").toString();
             var model = testModel(baseUrl);
-            var context = new Context(null,
-                    List.of(new UserMessage("Hello", 1L)), null);
+            var context = new Context(null, List.of(new UserMessage("Hello", 1L)), null);
             var eventStream = new AssistantMessageEventStream();
 
-            provider.executeStream(model, context, "test-api-key",
-                    null, null, null, eventStream);
+            provider.executeStream(model, context, "test-api-key", null, null, null, eventStream);
 
             assertThrows(Exception.class, () -> eventStream.result().block());
         }
@@ -273,12 +280,10 @@ class OpenAICompletionsProviderIntegrationTest {
         @Test
         void handlesMissingApiKey() {
             var model = testModel("http://localhost:1");
-            var context = new Context(null,
-                    List.of(new UserMessage("Hello", 1L)), null);
+            var context = new Context(null, List.of(new UserMessage("Hello", 1L)), null);
             var eventStream = new AssistantMessageEventStream();
 
-            provider.executeStream(model, context, null,
-                    null, null, null, eventStream);
+            provider.executeStream(model, context, null, null, null, null, eventStream);
 
             assertThrows(Exception.class, () -> eventStream.result().block());
         }
@@ -293,7 +298,8 @@ class OpenAICompletionsProviderIntegrationTest {
 
         @Test
         void mapsLengthStopReason() throws Exception {
-            String sseBody = chunk("""
+            String sseBody = chunk(
+                            """
                     {"id":"chatcmpl-len","object":"chat.completion.chunk","created":1234567890,"model":"gpt-4o","choices":[{"index":0,"delta":{"role":"assistant","content":"truncated"},"finish_reason":"length"}],"usage":{"prompt_tokens":10,"completion_tokens":100,"total_tokens":110}}""")
                     + "data: [DONE]\n\n";
 
@@ -305,12 +311,10 @@ class OpenAICompletionsProviderIntegrationTest {
 
             String baseUrl = server.url("/").toString();
             var model = testModel(baseUrl);
-            var context = new Context(null,
-                    List.of(new UserMessage("Write a long essay", 1L)), null);
+            var context = new Context(null, List.of(new UserMessage("Write a long essay", 1L)), null);
             var eventStream = new AssistantMessageEventStream();
 
-            provider.executeStream(model, context, "test-api-key",
-                    null, null, null, eventStream);
+            provider.executeStream(model, context, "test-api-key", null, null, null, eventStream);
 
             var finalMsg = eventStream.result().block();
 
@@ -320,7 +324,8 @@ class OpenAICompletionsProviderIntegrationTest {
 
         @Test
         void mapsContentFilterStopReason() throws Exception {
-            String sseBody = chunk("""
+            String sseBody = chunk(
+                            """
                     {"id":"chatcmpl-cf","object":"chat.completion.chunk","created":1234567890,"model":"gpt-4o","choices":[{"index":0,"delta":{"role":"assistant","content":""},"finish_reason":"content_filter"}],"usage":{"prompt_tokens":10,"completion_tokens":0,"total_tokens":10}}""")
                     + "data: [DONE]\n\n";
 
@@ -332,12 +337,10 @@ class OpenAICompletionsProviderIntegrationTest {
 
             String baseUrl = server.url("/").toString();
             var model = testModel(baseUrl);
-            var context = new Context(null,
-                    List.of(new UserMessage("Something", 1L)), null);
+            var context = new Context(null, List.of(new UserMessage("Something", 1L)), null);
             var eventStream = new AssistantMessageEventStream();
 
-            provider.executeStream(model, context, "test-api-key",
-                    null, null, null, eventStream);
+            provider.executeStream(model, context, "test-api-key", null, null, null, eventStream);
 
             var finalMsg = eventStream.result().block();
 
@@ -357,8 +360,9 @@ class OpenAICompletionsProviderIntegrationTest {
     }
 
     private <T> void assertHasEventType(List<AssistantMessageEvent> events, Class<T> type) {
-        assertTrue(events.stream().anyMatch(type::isInstance),
-                "Expected event of type " + type.getSimpleName() + " but none found in: " +
-                        events.stream().map(e -> e.getClass().getSimpleName()).toList());
+        assertTrue(
+                events.stream().anyMatch(type::isInstance),
+                "Expected event of type " + type.getSimpleName() + " but none found in: "
+                        + events.stream().map(e -> e.getClass().getSimpleName()).toList());
     }
 }

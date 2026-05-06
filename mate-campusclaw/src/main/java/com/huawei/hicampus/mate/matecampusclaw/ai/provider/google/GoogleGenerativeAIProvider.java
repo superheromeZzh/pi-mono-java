@@ -13,6 +13,9 @@ import java.net.http.HttpResponse;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.huawei.hicampus.mate.matecampusclaw.ai.provider.ApiProvider;
 import com.huawei.hicampus.mate.matecampusclaw.ai.stream.AssistantMessageEventStream;
 import com.huawei.hicampus.mate.matecampusclaw.ai.types.Api;
@@ -30,9 +33,6 @@ import com.huawei.hicampus.mate.matecampusclaw.ai.types.ThinkingContent;
 import com.huawei.hicampus.mate.matecampusclaw.ai.types.ThinkingLevel;
 import com.huawei.hicampus.mate.matecampusclaw.ai.types.ToolCall;
 import com.huawei.hicampus.mate.matecampusclaw.ai.types.Usage;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -53,7 +53,8 @@ public class GoogleGenerativeAIProvider implements ApiProvider {
 
     private final com.huawei.hicampus.mate.matecampusclaw.ai.env.ProviderConfigResolver providerConfigResolver;
 
-    public GoogleGenerativeAIProvider(com.huawei.hicampus.mate.matecampusclaw.ai.env.ProviderConfigResolver providerConfigResolver) {
+    public GoogleGenerativeAIProvider(
+            com.huawei.hicampus.mate.matecampusclaw.ai.env.ProviderConfigResolver providerConfigResolver) {
         this.providerConfigResolver = providerConfigResolver;
     }
 
@@ -68,7 +69,8 @@ public class GoogleGenerativeAIProvider implements ApiProvider {
     }
 
     @Override
-    public AssistantMessageEventStream streamSimple(Model model, Context context, @Nullable SimpleStreamOptions options) {
+    public AssistantMessageEventStream streamSimple(
+            Model model, Context context, @Nullable SimpleStreamOptions options) {
         var eventStream = new AssistantMessageEventStream();
 
         Thread.ofVirtual().start(() -> {
@@ -82,14 +84,17 @@ public class GoogleGenerativeAIProvider implements ApiProvider {
         return eventStream;
     }
 
-    private void executeStream(Model model, Context context, @Nullable SimpleStreamOptions options,
-                               AssistantMessageEventStream eventStream) {
+    private void executeStream(
+            Model model,
+            Context context,
+            @Nullable SimpleStreamOptions options,
+            AssistantMessageEventStream eventStream) {
         var providerConfig = providerConfigResolver.resolve(model.provider(), model);
         String apiKey = resolveApiKey(providerConfig, options);
         if (apiKey == null || apiKey.isBlank()) {
-            eventStream.error(new IllegalStateException(
-                "Google API key not found. Set GOOGLE_API_KEY or GOOGLE_CLOUD_API_KEY, "
-                    + "configure provider.google.apiKey in settings.json, or run /auth login."));
+            eventStream.error(
+                    new IllegalStateException("Google API key not found. Set GOOGLE_API_KEY or GOOGLE_CLOUD_API_KEY, "
+                            + "configure provider.google.apiKey in settings.json, or run /auth login."));
             return;
         }
 
@@ -104,10 +109,10 @@ public class GoogleGenerativeAIProvider implements ApiProvider {
                     .connectTimeout(java.time.Duration.ofSeconds(15))
                     .build();
             var request = HttpRequest.newBuilder()
-                .uri(URI.create(url))
-                .header("Content-Type", "application/json")
-                .POST(HttpRequest.BodyPublishers.ofString(requestBody.toString()))
-                .build();
+                    .uri(URI.create(url))
+                    .header("Content-Type", "application/json")
+                    .POST(HttpRequest.BodyPublishers.ofString(requestBody.toString()))
+                    .build();
 
             var response = client.send(request, HttpResponse.BodyHandlers.ofInputStream());
 
@@ -138,46 +143,90 @@ public class GoogleGenerativeAIProvider implements ApiProvider {
                         if (block instanceof ThinkingContent tc) {
                             if (!"thinking".equals(currentType[0])) {
                                 // Finish previous block
-                                finishCurrentBlock(currentType[0], blocks, textAcc, thinkingAcc, thinkingSig, eventStream, model, usage[0], stop[0]);
+                                finishCurrentBlock(
+                                        currentType[0],
+                                        blocks,
+                                        textAcc,
+                                        thinkingAcc,
+                                        thinkingSig,
+                                        eventStream,
+                                        model,
+                                        usage[0],
+                                        stop[0]);
                                 currentType[0] = "thinking";
                                 thinkingAcc.setLength(0);
                                 thinkingSig[0] = null;
                                 blocks.add(new ThinkingContent("", null, false));
-                                eventStream.push(new com.huawei.hicampus.mate.matecampusclaw.ai.stream.AssistantMessageEvent.ThinkingStartEvent(
-                                    blocks.size() - 1, buildMessage(model, blocks, usage[0], stop[0])));
+                                eventStream.push(
+                                        new com.huawei.hicampus.mate.matecampusclaw.ai.stream.AssistantMessageEvent
+                                                .ThinkingStartEvent(
+                                                blocks.size() - 1, buildMessage(model, blocks, usage[0], stop[0])));
                             }
                             thinkingAcc.append(tc.thinking());
                             if (tc.thinkingSignature() != null) {
                                 thinkingSig[0] = tc.thinkingSignature();
                             }
-                            blocks.set(blocks.size() - 1, new ThinkingContent(thinkingAcc.toString(), thinkingSig[0], false));
-                            eventStream.push(new com.huawei.hicampus.mate.matecampusclaw.ai.stream.AssistantMessageEvent.ThinkingDeltaEvent(
-                                blocks.size() - 1, tc.thinking(), buildMessage(model, blocks, usage[0], stop[0])));
+                            blocks.set(
+                                    blocks.size() - 1,
+                                    new ThinkingContent(thinkingAcc.toString(), thinkingSig[0], false));
+                            eventStream.push(
+                                    new com.huawei.hicampus.mate.matecampusclaw.ai.stream.AssistantMessageEvent
+                                            .ThinkingDeltaEvent(
+                                            blocks.size() - 1,
+                                            tc.thinking(),
+                                            buildMessage(model, blocks, usage[0], stop[0])));
 
                         } else if (block instanceof TextContent tc) {
                             if (!"text".equals(currentType[0])) {
-                                finishCurrentBlock(currentType[0], blocks, textAcc, thinkingAcc, thinkingSig, eventStream, model, usage[0], stop[0]);
+                                finishCurrentBlock(
+                                        currentType[0],
+                                        blocks,
+                                        textAcc,
+                                        thinkingAcc,
+                                        thinkingSig,
+                                        eventStream,
+                                        model,
+                                        usage[0],
+                                        stop[0]);
                                 currentType[0] = "text";
                                 textAcc.setLength(0);
                                 blocks.add(new TextContent("", null));
-                                eventStream.push(new com.huawei.hicampus.mate.matecampusclaw.ai.stream.AssistantMessageEvent.TextStartEvent(
-                                    blocks.size() - 1, buildMessage(model, blocks, usage[0], stop[0])));
+                                eventStream.push(
+                                        new com.huawei.hicampus.mate.matecampusclaw.ai.stream.AssistantMessageEvent
+                                                .TextStartEvent(
+                                                blocks.size() - 1, buildMessage(model, blocks, usage[0], stop[0])));
                             }
                             textAcc.append(tc.text());
                             blocks.set(blocks.size() - 1, new TextContent(textAcc.toString(), null));
-                            eventStream.pushTextDelta(blocks.size() - 1, tc.text(), buildMessage(model, blocks, usage[0], stop[0]));
+                            eventStream.pushTextDelta(
+                                    blocks.size() - 1, tc.text(), buildMessage(model, blocks, usage[0], stop[0]));
 
                         } else if (block instanceof ToolCall tc) {
-                            finishCurrentBlock(currentType[0], blocks, textAcc, thinkingAcc, thinkingSig, eventStream, model, usage[0], stop[0]);
+                            finishCurrentBlock(
+                                    currentType[0],
+                                    blocks,
+                                    textAcc,
+                                    thinkingAcc,
+                                    thinkingSig,
+                                    eventStream,
+                                    model,
+                                    usage[0],
+                                    stop[0]);
                             currentType[0] = null;
                             blocks.add(tc);
                             int idx = blocks.size() - 1;
-                            eventStream.push(new com.huawei.hicampus.mate.matecampusclaw.ai.stream.AssistantMessageEvent.ToolCallStartEvent(
-                                idx, buildMessage(model, blocks, usage[0], stop[0])));
-                            eventStream.push(new com.huawei.hicampus.mate.matecampusclaw.ai.stream.AssistantMessageEvent.ToolCallDeltaEvent(
-                                idx, MAPPER.writeValueAsString(tc.arguments()), buildMessage(model, blocks, usage[0], stop[0])));
-                            eventStream.push(new com.huawei.hicampus.mate.matecampusclaw.ai.stream.AssistantMessageEvent.ToolCallEndEvent(
-                                idx, tc, buildMessage(model, blocks, usage[0], stop[0])));
+                            eventStream.push(
+                                    new com.huawei.hicampus.mate.matecampusclaw.ai.stream.AssistantMessageEvent
+                                            .ToolCallStartEvent(idx, buildMessage(model, blocks, usage[0], stop[0])));
+                            eventStream.push(
+                                    new com.huawei.hicampus.mate.matecampusclaw.ai.stream.AssistantMessageEvent
+                                            .ToolCallDeltaEvent(
+                                            idx,
+                                            MAPPER.writeValueAsString(tc.arguments()),
+                                            buildMessage(model, blocks, usage[0], stop[0])));
+                            eventStream.push(
+                                    new com.huawei.hicampus.mate.matecampusclaw.ai.stream.AssistantMessageEvent
+                                            .ToolCallEndEvent(idx, tc, buildMessage(model, blocks, usage[0], stop[0])));
                         }
                     }
                     if (parsed.usage() != null) {
@@ -189,7 +238,8 @@ public class GoogleGenerativeAIProvider implements ApiProvider {
                 }
             }
             // Finish any open block
-            finishCurrentBlock(currentType[0], blocks, textAcc, thinkingAcc, thinkingSig, eventStream, model, usage[0], stop[0]);
+            finishCurrentBlock(
+                    currentType[0], blocks, textAcc, thinkingAcc, thinkingSig, eventStream, model, usage[0], stop[0]);
 
             // Override stop reason if tool calls present
             if (blocks.stream().anyMatch(b -> b instanceof ToolCall)) {
@@ -197,13 +247,23 @@ public class GoogleGenerativeAIProvider implements ApiProvider {
             }
 
             var cost = computeCost(model, usage[0]);
-            var finalUsage = new Usage(usage[0].input(), usage[0].output(),
-                usage[0].cacheRead(), usage[0].cacheWrite(), usage[0].totalTokens(), cost);
+            var finalUsage = new Usage(
+                    usage[0].input(),
+                    usage[0].output(),
+                    usage[0].cacheRead(),
+                    usage[0].cacheWrite(),
+                    usage[0].totalTokens(),
+                    cost);
             var finalMessage = new AssistantMessage(
-                List.copyOf(blocks),
-                Api.GOOGLE_GENERATIVE_AI.value(), model.provider().value(),
-                model.id(), null, finalUsage, stop[0], null, System.currentTimeMillis()
-            );
+                    List.copyOf(blocks),
+                    Api.GOOGLE_GENERATIVE_AI.value(),
+                    model.provider().value(),
+                    model.id(),
+                    null,
+                    finalUsage,
+                    stop[0],
+                    null,
+                    System.currentTimeMillis());
             eventStream.pushDone(stop[0], finalMessage);
 
         } catch (Exception e) {
@@ -213,10 +273,15 @@ public class GoogleGenerativeAIProvider implements ApiProvider {
 
     private AssistantMessage buildMessage(Model model, List<ContentBlock> blocks, Usage usage, StopReason stop) {
         return new AssistantMessage(
-            List.copyOf(blocks),
-            Api.GOOGLE_GENERATIVE_AI.value(), model.provider().value(),
-            model.id(), null, usage, stop, null, System.currentTimeMillis()
-        );
+                List.copyOf(blocks),
+                Api.GOOGLE_GENERATIVE_AI.value(),
+                model.provider().value(),
+                model.id(),
+                null,
+                usage,
+                stop,
+                null,
+                System.currentTimeMillis());
     }
 
     private ObjectNode buildRequestBody(Model model, Context context, @Nullable SimpleStreamOptions options) {
@@ -248,8 +313,10 @@ public class GoogleGenerativeAIProvider implements ApiProvider {
         }
 
         // Thinking / reasoning configuration
-        if (options != null && options.reasoning() != null
-                && options.reasoning() != ThinkingLevel.OFF && model.reasoning()) {
+        if (options != null
+                && options.reasoning() != null
+                && options.reasoning() != ThinkingLevel.OFF
+                && model.reasoning()) {
             var thinkingConfig = MAPPER.createObjectNode();
             thinkingConfig.put("includeThoughts", true);
             int budget = resolveGoogleThinkingBudget(model, options.reasoning(), options.thinkingBudgets());
@@ -264,8 +331,9 @@ public class GoogleGenerativeAIProvider implements ApiProvider {
         return body;
     }
 
-    private String resolveApiKey(com.huawei.hicampus.mate.matecampusclaw.ai.env.ResolvedProviderConfig providerConfig,
-                                 @Nullable SimpleStreamOptions options) {
+    private String resolveApiKey(
+            com.huawei.hicampus.mate.matecampusclaw.ai.env.ResolvedProviderConfig providerConfig,
+            @Nullable SimpleStreamOptions options) {
         if (options != null && options.apiKey() != null) {
             return options.apiKey();
         }
@@ -273,9 +341,15 @@ public class GoogleGenerativeAIProvider implements ApiProvider {
     }
 
     private void finishCurrentBlock(
-            String type, List<ContentBlock> blocks,
-            StringBuilder textAcc, StringBuilder thinkingAcc, String[] thinkingSig,
-            AssistantMessageEventStream eventStream, Model model, Usage usage, StopReason stop) {
+            String type,
+            List<ContentBlock> blocks,
+            StringBuilder textAcc,
+            StringBuilder thinkingAcc,
+            String[] thinkingSig,
+            AssistantMessageEventStream eventStream,
+            Model model,
+            Usage usage,
+            StopReason stop) {
         if (type == null || blocks.isEmpty()) {
             return;
         }
@@ -283,13 +357,14 @@ public class GoogleGenerativeAIProvider implements ApiProvider {
         if ("thinking".equals(type)) {
             String content = thinkingAcc.toString();
             blocks.set(idx, new ThinkingContent(content, thinkingSig[0], false));
-            eventStream.push(new com.huawei.hicampus.mate.matecampusclaw.ai.stream.AssistantMessageEvent.ThinkingEndEvent(
-                idx, content, buildMessage(model, blocks, usage, stop)));
+            eventStream.push(
+                    new com.huawei.hicampus.mate.matecampusclaw.ai.stream.AssistantMessageEvent.ThinkingEndEvent(
+                            idx, content, buildMessage(model, blocks, usage, stop)));
         } else if ("text".equals(type)) {
             String content = textAcc.toString();
             blocks.set(idx, new TextContent(content, null));
             eventStream.push(new com.huawei.hicampus.mate.matecampusclaw.ai.stream.AssistantMessageEvent.TextEndEvent(
-                idx, content, buildMessage(model, blocks, usage, stop)));
+                    idx, content, buildMessage(model, blocks, usage, stop)));
         }
     }
 
@@ -310,13 +385,14 @@ public class GoogleGenerativeAIProvider implements ApiProvider {
      */
     static int resolveGoogleThinkingBudget(Model model, ThinkingLevel level, @Nullable ThinkingBudgets budgets) {
         if (budgets != null) {
-            Integer custom = switch (level) {
-                case MINIMAL -> budgets.minimal();
-                case LOW -> budgets.low();
-                case MEDIUM -> budgets.medium();
-                case HIGH, XHIGH -> budgets.high();
-                default -> null;
-            };
+            Integer custom =
+                    switch (level) {
+                        case MINIMAL -> budgets.minimal();
+                        case LOW -> budgets.low();
+                        case MEDIUM -> budgets.medium();
+                        case HIGH, XHIGH -> budgets.high();
+                        default -> null;
+                    };
             if (custom != null) {
                 return custom;
             }

@@ -37,11 +37,7 @@ public class AgentContext {
     }
 
     public AgentContext(
-        String systemPrompt,
-        List<AgentTool> tools,
-        List<Message> messages,
-        AssistantMessage assistantMessage
-    ) {
+            String systemPrompt, List<AgentTool> tools, List<Message> messages, AssistantMessage assistantMessage) {
         this.state = new AgentState();
         this.state.setSystemPrompt(systemPrompt);
         this.state.setTools(tools);

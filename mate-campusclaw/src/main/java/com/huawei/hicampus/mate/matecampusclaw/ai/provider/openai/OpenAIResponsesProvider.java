@@ -9,6 +9,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.huawei.hicampus.mate.matecampusclaw.ai.provider.ApiProvider;
 import com.huawei.hicampus.mate.matecampusclaw.ai.stream.AssistantMessageEvent;
 import com.huawei.hicampus.mate.matecampusclaw.ai.stream.AssistantMessageEventStream;
@@ -29,9 +32,6 @@ import com.huawei.hicampus.mate.matecampusclaw.ai.types.ToolCall;
 import com.huawei.hicampus.mate.matecampusclaw.ai.types.ToolResultMessage;
 import com.huawei.hicampus.mate.matecampusclaw.ai.types.Usage;
 import com.huawei.hicampus.mate.matecampusclaw.ai.types.UserMessage;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.openai.client.OpenAIClient;
 import com.openai.client.okhttp.OpenAIOkHttpClient;
 import com.openai.core.http.StreamResponse;
@@ -75,7 +75,8 @@ public class OpenAIResponsesProvider implements ApiProvider {
 
     private final com.huawei.hicampus.mate.matecampusclaw.ai.env.ProviderConfigResolver providerConfigResolver;
 
-    public OpenAIResponsesProvider(com.huawei.hicampus.mate.matecampusclaw.ai.env.ProviderConfigResolver providerConfigResolver) {
+    public OpenAIResponsesProvider(
+            com.huawei.hicampus.mate.matecampusclaw.ai.env.ProviderConfigResolver providerConfigResolver) {
         this.providerConfigResolver = providerConfigResolver;
     }
 
@@ -85,9 +86,10 @@ public class OpenAIResponsesProvider implements ApiProvider {
     }
 
     @Override
-    public AssistantMessageEventStream stream(
-            Model model, Context context, @Nullable StreamOptions options) {
-        return doStream(model, context,
+    public AssistantMessageEventStream stream(Model model, Context context, @Nullable StreamOptions options) {
+        return doStream(
+                model,
+                context,
                 options != null ? options.apiKey() : null,
                 options != null ? options.maxTokens() : null,
                 options != null ? options.temperature() : null,
@@ -97,7 +99,9 @@ public class OpenAIResponsesProvider implements ApiProvider {
     @Override
     public AssistantMessageEventStream streamSimple(
             Model model, Context context, @Nullable SimpleStreamOptions options) {
-        return doStream(model, context,
+        return doStream(
+                model,
+                context,
                 options != null ? options.apiKey() : null,
                 options != null ? options.maxTokens() : null,
                 options != null ? options.temperature() : null,
@@ -105,7 +109,8 @@ public class OpenAIResponsesProvider implements ApiProvider {
     }
 
     private AssistantMessageEventStream doStream(
-            Model model, Context context,
+            Model model,
+            Context context,
             @Nullable String apiKey,
             @Nullable Integer maxTokens,
             @Nullable Double temperature,
@@ -125,7 +130,8 @@ public class OpenAIResponsesProvider implements ApiProvider {
     }
 
     void executeStream(
-            Model model, Context context,
+            Model model,
+            Context context,
             @Nullable String apiKey,
             @Nullable Integer maxTokens,
             @Nullable Double temperature,
@@ -135,8 +141,8 @@ public class OpenAIResponsesProvider implements ApiProvider {
         var providerConfig = providerConfigResolver.resolve(model.provider(), model);
         String resolvedApiKey = apiKey != null ? apiKey : providerConfig.apiKey();
         if (resolvedApiKey == null || resolvedApiKey.isBlank()) {
-            eventStream.error(new IllegalStateException(
-                    "OpenAI API key not found. Set OPENAI_API_KEY, configure provider."
+            eventStream.error(
+                    new IllegalStateException("OpenAI API key not found. Set OPENAI_API_KEY, configure provider."
                             + model.provider().value() + ".apiKey in settings.json, or run /auth login."));
             return;
         }
@@ -168,13 +174,13 @@ public class OpenAIResponsesProvider implements ApiProvider {
     }
 
     ResponseCreateParams buildParams(
-            Model model, Context context,
+            Model model,
+            Context context,
             @Nullable Integer maxTokens,
             @Nullable Double temperature,
             @Nullable com.huawei.hicampus.mate.matecampusclaw.ai.types.ThinkingLevel reasoning) {
 
-        int resolvedMaxTokens = maxTokens != null ? maxTokens
-                : Math.min(model.maxTokens(), 32000);
+        int resolvedMaxTokens = maxTokens != null ? maxTokens : Math.min(model.maxTokens(), 32000);
 
         var builder = ResponseCreateParams.builder()
                 .model(model.id())
@@ -202,11 +208,10 @@ public class OpenAIResponsesProvider implements ApiProvider {
             if (reasoning != null && reasoning != com.huawei.hicampus.mate.matecampusclaw.ai.types.ThinkingLevel.OFF) {
                 String effort = mapReasoningEffort(reasoning);
                 var reasoningObj = Map.of("effort", (Object) effort, "summary", (Object) "auto");
-                builder.putAdditionalBodyProperty("reasoning",
-                        com.openai.core.JsonValue.from(reasoningObj));
+                builder.putAdditionalBodyProperty("reasoning", com.openai.core.JsonValue.from(reasoningObj));
             } else {
-                builder.putAdditionalBodyProperty("reasoning",
-                        com.openai.core.JsonValue.from(Map.of("effort", "none")));
+                builder.putAdditionalBodyProperty(
+                        "reasoning", com.openai.core.JsonValue.from(Map.of("effort", "none")));
             }
         }
 
@@ -225,35 +230,39 @@ public class OpenAIResponsesProvider implements ApiProvider {
     }
 
     private void processStream(
-            OpenAIClient client, ResponseCreateParams params,
-            Model model, AssistantMessageEventStream eventStream) {
+            OpenAIClient client, ResponseCreateParams params, Model model, AssistantMessageEventStream eventStream) {
 
         var contentBlocks = new ArrayList<ContentBlock>();
-        var accumulatedUsage = new long[]{0, 0, 0, 0}; // input, output, cacheRead, cacheWrite
+        var accumulatedUsage = new long[] {0, 0, 0, 0}; // input, output, cacheRead, cacheWrite
         String[] responseId = {null};
         StopReason[] stopReason = {null};
 
         // Track output items by their outputIndex
-        var textAccumulators = new HashMap<Integer, StringBuilder>();    // outputIndex → text
+        var textAccumulators = new HashMap<Integer, StringBuilder>(); // outputIndex → text
         var thinkingAccumulators = new HashMap<Integer, StringBuilder>(); // outputIndex → thinking
         var toolAccumulators = new HashMap<Integer, ToolCallAccumulator>(); // outputIndex → tool
-        var outputIndexToContentIndex = new HashMap<Integer, Integer>();    // outputIndex → contentIndex
+        var outputIndexToContentIndex = new HashMap<Integer, Integer>(); // outputIndex → contentIndex
 
-        try (StreamResponse<ResponseStreamEvent> response =
-                     client.responses().createStreaming(params)) {
+        try (StreamResponse<ResponseStreamEvent> response = client.responses().createStreaming(params)) {
 
             response.stream().forEach(event -> {
 
                 // response.created — capture response ID
-                event.created().ifPresent(e ->
-                        responseId[0] = e.response().id());
+                event.created().ifPresent(e -> responseId[0] = e.response().id());
 
                 // response.output_item.added — start new content block
-                event.outputItemAdded().ifPresent(e ->
-                        handleOutputItemAdded(e, model, responseId[0],
-                                contentBlocks, accumulatedUsage, textAccumulators,
-                                thinkingAccumulators, toolAccumulators,
-                                outputIndexToContentIndex, eventStream));
+                event.outputItemAdded()
+                        .ifPresent(e -> handleOutputItemAdded(
+                                e,
+                                model,
+                                responseId[0],
+                                contentBlocks,
+                                accumulatedUsage,
+                                textAccumulators,
+                                thinkingAccumulators,
+                                toolAccumulators,
+                                outputIndexToContentIndex,
+                                eventStream));
 
                 // response.output_text.delta — text streaming
                 event.outputTextDelta().ifPresent(e -> {
@@ -265,13 +274,12 @@ public class OpenAIResponsesProvider implements ApiProvider {
                     var acc = textAccumulators.get(outputIdx);
                     if (acc != null) {
                         acc.append(e.delta());
-                        contentBlocks.set(contentIdx,
-                                new TextContent(acc.toString(), null));
+                        contentBlocks.set(contentIdx, new TextContent(acc.toString(), null));
                     }
                     eventStream.push(new AssistantMessageEvent.TextDeltaEvent(
-                            contentIdx, e.delta(),
-                            buildPartialMessage(model, responseId[0],
-                                    contentBlocks, accumulatedUsage, null)));
+                            contentIdx,
+                            e.delta(),
+                            buildPartialMessage(model, responseId[0], contentBlocks, accumulatedUsage, null)));
                 });
 
                 // response.reasoning_summary_text.delta — thinking streaming
@@ -284,13 +292,12 @@ public class OpenAIResponsesProvider implements ApiProvider {
                     var acc = thinkingAccumulators.get(outputIdx);
                     if (acc != null) {
                         acc.append(e.delta());
-                        contentBlocks.set(contentIdx,
-                                new ThinkingContent(acc.toString(), null, false));
+                        contentBlocks.set(contentIdx, new ThinkingContent(acc.toString(), null, false));
                     }
                     eventStream.push(new AssistantMessageEvent.ThinkingDeltaEvent(
-                            contentIdx, e.delta(),
-                            buildPartialMessage(model, responseId[0],
-                                    contentBlocks, accumulatedUsage, null)));
+                            contentIdx,
+                            e.delta(),
+                            buildPartialMessage(model, responseId[0], contentBlocks, accumulatedUsage, null)));
                 });
 
                 // response.function_call_arguments.delta — tool arg streaming
@@ -305,25 +312,31 @@ public class OpenAIResponsesProvider implements ApiProvider {
                         acc.arguments.append(e.delta());
                     }
                     eventStream.push(new AssistantMessageEvent.ToolCallDeltaEvent(
-                            contentIdx, e.delta(),
-                            buildPartialMessage(model, responseId[0],
-                                    contentBlocks, accumulatedUsage, null)));
+                            contentIdx,
+                            e.delta(),
+                            buildPartialMessage(model, responseId[0], contentBlocks, accumulatedUsage, null)));
                 });
 
                 // response.output_item.done — finalize content block
-                event.outputItemDone().ifPresent(e ->
-                        handleOutputItemDone(e, model, responseId[0],
-                                contentBlocks, accumulatedUsage, textAccumulators,
-                                thinkingAccumulators, toolAccumulators,
-                                outputIndexToContentIndex, eventStream));
+                event.outputItemDone()
+                        .ifPresent(e -> handleOutputItemDone(
+                                e,
+                                model,
+                                responseId[0],
+                                contentBlocks,
+                                accumulatedUsage,
+                                textAccumulators,
+                                thinkingAccumulators,
+                                toolAccumulators,
+                                outputIndexToContentIndex,
+                                eventStream));
 
                 // response.completed — finalize usage and emit done
                 event.completed().ifPresent(e -> {
                     var resp = e.response();
                     responseId[0] = resp.id();
                     resp.usage().ifPresent(u -> parseUsage(u, accumulatedUsage));
-                    resp.status().ifPresent(s ->
-                            stopReason[0] = mapResponseStatus(s, contentBlocks));
+                    resp.status().ifPresent(s -> stopReason[0] = mapResponseStatus(s, contentBlocks));
                 });
 
                 // response.failed — emit error
@@ -345,14 +358,16 @@ public class OpenAIResponsesProvider implements ApiProvider {
 
         // Emit final done event
         var finalStopReason = stopReason[0] != null ? stopReason[0] : StopReason.STOP;
-        var finalMessage = buildPartialMessage(model, responseId[0],
-                contentBlocks, accumulatedUsage, finalStopReason);
+        var finalMessage = buildPartialMessage(model, responseId[0], contentBlocks, accumulatedUsage, finalStopReason);
         eventStream.pushDone(finalStopReason, finalMessage);
     }
 
     private void handleOutputItemAdded(
-            ResponseOutputItemAddedEvent e, Model model, String responseId,
-            List<ContentBlock> contentBlocks, long[] usage,
+            ResponseOutputItemAddedEvent e,
+            Model model,
+            String responseId,
+            List<ContentBlock> contentBlocks,
+            long[] usage,
             Map<Integer, StringBuilder> textAccumulators,
             Map<Integer, StringBuilder> thinkingAccumulators,
             Map<Integer, ToolCallAccumulator> toolAccumulators,
@@ -368,8 +383,8 @@ public class OpenAIResponsesProvider implements ApiProvider {
             contentBlocks.add(new TextContent("", null));
             int contentIdx = contentBlocks.size() - 1;
             outputIndexToContentIndex.put(outputIdx, contentIdx);
-            eventStream.push(new AssistantMessageEvent.TextStartEvent(contentIdx,
-                    buildPartialMessage(model, responseId, contentBlocks, usage, null)));
+            eventStream.push(new AssistantMessageEvent.TextStartEvent(
+                    contentIdx, buildPartialMessage(model, responseId, contentBlocks, usage, null)));
 
         } else if (item.isReasoning()) {
             // Reasoning/thinking output — start thinking block
@@ -377,8 +392,8 @@ public class OpenAIResponsesProvider implements ApiProvider {
             contentBlocks.add(new ThinkingContent("", null, false));
             int contentIdx = contentBlocks.size() - 1;
             outputIndexToContentIndex.put(outputIdx, contentIdx);
-            eventStream.push(new AssistantMessageEvent.ThinkingStartEvent(contentIdx,
-                    buildPartialMessage(model, responseId, contentBlocks, usage, null)));
+            eventStream.push(new AssistantMessageEvent.ThinkingStartEvent(
+                    contentIdx, buildPartialMessage(model, responseId, contentBlocks, usage, null)));
 
         } else if (item.isFunctionCall()) {
             // Tool/function call output — start tool call block
@@ -390,14 +405,17 @@ public class OpenAIResponsesProvider implements ApiProvider {
             contentBlocks.add(new ToolCall(acc.id, acc.name, Map.of(), null));
             int contentIdx = contentBlocks.size() - 1;
             outputIndexToContentIndex.put(outputIdx, contentIdx);
-            eventStream.push(new AssistantMessageEvent.ToolCallStartEvent(contentIdx,
-                    buildPartialMessage(model, responseId, contentBlocks, usage, null)));
+            eventStream.push(new AssistantMessageEvent.ToolCallStartEvent(
+                    contentIdx, buildPartialMessage(model, responseId, contentBlocks, usage, null)));
         }
     }
 
     private void handleOutputItemDone(
-            ResponseOutputItemDoneEvent e, Model model, String responseId,
-            List<ContentBlock> contentBlocks, long[] usage,
+            ResponseOutputItemDoneEvent e,
+            Model model,
+            String responseId,
+            List<ContentBlock> contentBlocks,
+            long[] usage,
             Map<Integer, StringBuilder> textAccumulators,
             Map<Integer, StringBuilder> thinkingAccumulators,
             Map<Integer, ToolCallAccumulator> toolAccumulators,
@@ -413,17 +431,19 @@ public class OpenAIResponsesProvider implements ApiProvider {
 
         if (item.isMessage()) {
             String text = textAccumulators.containsKey(outputIdx)
-                    ? textAccumulators.get(outputIdx).toString() : "";
+                    ? textAccumulators.get(outputIdx).toString()
+                    : "";
             contentBlocks.set(contentIdx, new TextContent(text, null));
-            eventStream.push(new AssistantMessageEvent.TextEndEvent(contentIdx, text,
-                    buildPartialMessage(model, responseId, contentBlocks, usage, null)));
+            eventStream.push(new AssistantMessageEvent.TextEndEvent(
+                    contentIdx, text, buildPartialMessage(model, responseId, contentBlocks, usage, null)));
 
         } else if (item.isReasoning()) {
             String thinking = thinkingAccumulators.containsKey(outputIdx)
-                    ? thinkingAccumulators.get(outputIdx).toString() : "";
+                    ? thinkingAccumulators.get(outputIdx).toString()
+                    : "";
             contentBlocks.set(contentIdx, new ThinkingContent(thinking, null, false));
-            eventStream.push(new AssistantMessageEvent.ThinkingEndEvent(contentIdx, thinking,
-                    buildPartialMessage(model, responseId, contentBlocks, usage, null)));
+            eventStream.push(new AssistantMessageEvent.ThinkingEndEvent(
+                    contentIdx, thinking, buildPartialMessage(model, responseId, contentBlocks, usage, null)));
 
         } else if (item.isFunctionCall()) {
             var fn = item.asFunctionCall();
@@ -432,8 +452,8 @@ public class OpenAIResponsesProvider implements ApiProvider {
             Map<String, Object> args = parseToolArguments(argsJson);
             var toolCall = new ToolCall(fn.callId(), fn.name(), args, null);
             contentBlocks.set(contentIdx, toolCall);
-            eventStream.push(new AssistantMessageEvent.ToolCallEndEvent(contentIdx, toolCall,
-                    buildPartialMessage(model, responseId, contentBlocks, usage, null)));
+            eventStream.push(new AssistantMessageEvent.ToolCallEndEvent(
+                    contentIdx, toolCall, buildPartialMessage(model, responseId, contentBlocks, usage, null)));
         }
     }
 
@@ -462,11 +482,10 @@ public class OpenAIResponsesProvider implements ApiProvider {
             }
             // Images in user messages handled via content parts when needed
         }
-        return ResponseInputItem.ofEasyInputMessage(
-                EasyInputMessage.builder()
-                        .role(EasyInputMessage.Role.USER)
-                        .content(text.toString())
-                        .build());
+        return ResponseInputItem.ofEasyInputMessage(EasyInputMessage.builder()
+                .role(EasyInputMessage.Role.USER)
+                .content(text.toString())
+                .build());
     }
 
     private static void convertAssistantInput(AssistantMessage am, List<ResponseInputItem> result) {
@@ -477,21 +496,19 @@ public class OpenAIResponsesProvider implements ApiProvider {
                 textContent.append(tc.text());
             } else if (cb instanceof ToolCall tc) {
                 // Tool calls become function_call input items
-                result.add(ResponseInputItem.ofFunctionCall(
-                        ResponseFunctionToolCall.builder()
-                                .callId(tc.id())
-                                .name(tc.name())
-                                .arguments(serializeArguments(tc.arguments()))
-                                .build()));
+                result.add(ResponseInputItem.ofFunctionCall(ResponseFunctionToolCall.builder()
+                        .callId(tc.id())
+                        .name(tc.name())
+                        .arguments(serializeArguments(tc.arguments()))
+                        .build()));
             }
             // ThinkingContent is dropped for cross-provider compatibility
         }
         if (!textContent.isEmpty()) {
-            result.add(ResponseInputItem.ofEasyInputMessage(
-                    EasyInputMessage.builder()
-                            .role(EasyInputMessage.Role.ASSISTANT)
-                            .content(textContent.toString())
-                            .build()));
+            result.add(ResponseInputItem.ofEasyInputMessage(EasyInputMessage.builder()
+                    .role(EasyInputMessage.Role.ASSISTANT)
+                    .content(textContent.toString())
+                    .build()));
         }
     }
 
@@ -502,11 +519,10 @@ public class OpenAIResponsesProvider implements ApiProvider {
                 text.append(tc.text());
             }
         }
-        return ResponseInputItem.ofFunctionCallOutput(
-                ResponseInputItem.FunctionCallOutput.builder()
-                        .callId(tr.toolCallId())
-                        .output(text.toString())
-                        .build());
+        return ResponseInputItem.ofFunctionCallOutput(ResponseInputItem.FunctionCallOutput.builder()
+                .callId(tr.toolCallId())
+                .output(text.toString())
+                .build());
     }
 
     // -- Tool conversion (Responses API uses its own Tool type) --
@@ -518,18 +534,17 @@ public class OpenAIResponsesProvider implements ApiProvider {
             if (tool.parameters() != null) {
                 Map<String, Object> schemaMap = nodeToMap(tool.parameters());
                 for (var entry : schemaMap.entrySet()) {
-                    paramsBuilder.putAdditionalProperty(entry.getKey(),
-                            com.openai.core.JsonValue.from(entry.getValue()));
+                    paramsBuilder.putAdditionalProperty(
+                            entry.getKey(), com.openai.core.JsonValue.from(entry.getValue()));
                 }
             }
 
-            result.add(Tool.ofFunction(
-                    FunctionTool.builder()
-                            .name(tool.name())
-                            .description(tool.description())
-                            .parameters(paramsBuilder.build())
-                            .strict(false)
-                            .build()));
+            result.add(Tool.ofFunction(FunctionTool.builder()
+                    .name(tool.name())
+                    .description(tool.description())
+                    .parameters(paramsBuilder.build())
+                    .strict(false)
+                    .build()));
         }
         return result;
     }
@@ -538,12 +553,13 @@ public class OpenAIResponsesProvider implements ApiProvider {
 
     static StopReason mapResponseStatus(ResponseStatus status, List<ContentBlock> contentBlocks) {
         String val = status.asString();
-        StopReason reason = switch (val) {
-            case "completed" -> StopReason.STOP;
-            case "incomplete" -> StopReason.LENGTH;
-            case "failed", "cancelled" -> StopReason.ERROR;
-            default -> StopReason.STOP; // in_progress, queued
-        };
+        StopReason reason =
+                switch (val) {
+                    case "completed" -> StopReason.STOP;
+                    case "incomplete" -> StopReason.LENGTH;
+                    case "failed", "cancelled" -> StopReason.ERROR;
+                    default -> StopReason.STOP; // in_progress, queued
+                };
 
         // If the response completed normally but has tool calls, change to TOOL_USE
         if (reason == StopReason.STOP && hasToolCalls(contentBlocks)) {
@@ -575,13 +591,17 @@ public class OpenAIResponsesProvider implements ApiProvider {
     // -- Utility methods --
 
     private AssistantMessage buildPartialMessage(
-            Model model, String responseId,
-            List<ContentBlock> contentBlocks, long[] usage,
+            Model model,
+            String responseId,
+            List<ContentBlock> contentBlocks,
+            long[] usage,
             @Nullable StopReason stopReason) {
 
         var piUsage = new Usage(
-                (int) usage[0], (int) usage[1],
-                (int) usage[2], (int) usage[3],
+                (int) usage[0],
+                (int) usage[1],
+                (int) usage[2],
+                (int) usage[3],
                 (int) (usage[0] + usage[1] + usage[2]),
                 computeCost(model.cost(), usage));
 
@@ -602,7 +622,11 @@ public class OpenAIResponsesProvider implements ApiProvider {
         double outputCost = usage[1] * modelCost.output() / 1_000_000.0;
         double cacheReadCost = usage[2] * modelCost.cacheRead() / 1_000_000.0;
         double cacheWriteCost = usage[3] * modelCost.cacheWrite() / 1_000_000.0;
-        return new Cost(inputCost, outputCost, cacheReadCost, cacheWriteCost,
+        return new Cost(
+                inputCost,
+                outputCost,
+                cacheReadCost,
+                cacheWriteCost,
                 inputCost + outputCost + cacheReadCost + cacheWriteCost);
     }
 

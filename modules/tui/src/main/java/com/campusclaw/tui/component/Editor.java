@@ -46,7 +46,7 @@ public class Editor implements Component, Focusable {
     private static final String KEY_HOME = "\033[H";
     private static final String KEY_END = "\033[F";
     private static final String KEY_DELETE = "\033[3~";
-    private static final String KEY_BACKSPACE = "\177";  // DEL
+    private static final String KEY_BACKSPACE = "\177"; // DEL
     private static final String KEY_BACKSPACE_BS = "\010"; // BS
     private static final String KEY_ENTER = "\r";
     private static final String KEY_NEWLINE = "\n";
@@ -150,7 +150,7 @@ public class Editor implements Component, Focusable {
 
     /** Returns the current cursor position as [line, column]. */
     public int[] getCursorPosition() {
-        return new int[]{cursorLine, cursorCol};
+        return new int[] {cursorLine, cursorCol};
     }
 
     /** Sets the cursor position, clamped to valid range. */
@@ -230,8 +230,7 @@ public class Editor implements Component, Focusable {
 
             if (focused && ll.hasCursor && ll.cursorPos >= 0) {
                 String before = displayText.substring(0, Math.min(ll.cursorPos, displayText.length()));
-                String after = ll.cursorPos < displayText.length()
-                        ? displayText.substring(ll.cursorPos) : "";
+                String after = ll.cursorPos < displayText.length() ? displayText.substring(ll.cursorPos) : "";
 
                 if (!after.isEmpty()) {
                     // Cursor on a character — highlight it with inverse video
@@ -305,8 +304,8 @@ public class Editor implements Component, Focusable {
         }
 
         // --- Newline in submit mode: Shift+Enter or Alt+Enter ---
-        if (submitOnEnter && (KEY_SHIFT_ENTER_KITTY.equals(data)
-                || KEY_ALT_ENTER.equals(data) || KEY_ALT_NEWLINE.equals(data))) {
+        if (submitOnEnter
+                && (KEY_SHIFT_ENTER_KITTY.equals(data) || KEY_ALT_ENTER.equals(data) || KEY_ALT_NEWLINE.equals(data))) {
             addNewLine();
             return;
         }
@@ -610,8 +609,10 @@ public class Editor implements Component, Focusable {
             cursorCol = newCol;
         } else {
             // Cross-line delete: merge
-            deleted = lines.get(newLine).substring(newCol) + "\n" + lines.get(oldLine).substring(0, oldCol);
-            String merged = lines.get(newLine).substring(0, newCol) + lines.get(oldLine).substring(oldCol);
+            deleted = lines.get(newLine).substring(newCol) + "\n"
+                    + lines.get(oldLine).substring(0, oldCol);
+            String merged =
+                    lines.get(newLine).substring(0, newCol) + lines.get(oldLine).substring(oldCol);
             lines.set(newLine, merged);
             lines.remove(oldLine);
             cursorLine = newLine;
@@ -901,8 +902,7 @@ public class Editor implements Component, Focusable {
     // Layout (word wrap for rendering)
     // -------------------------------------------------------------------
 
-    private record LayoutLine(String text, boolean hasCursor, int cursorPos) {
-    }
+    private record LayoutLine(String text, boolean hasCursor, int cursorPos) {}
 
     private List<LayoutLine> layoutText(int contentWidth) {
         List<LayoutLine> result = new ArrayList<>();
@@ -960,8 +960,7 @@ public class Editor implements Component, Focusable {
     }
 
     /** Text chunk for word wrapping — tracks text and position in original line. */
-    private record TextChunk(String text, int startIndex, int endIndex) {
-    }
+    private record TextChunk(String text, int startIndex, int endIndex) {}
 
     /**
      * Word-wrap a single line into chunks.
@@ -986,7 +985,7 @@ public class Editor implements Component, Focusable {
         int start = bi.first();
         int end = bi.next();
         while (end != BreakIterator.DONE) {
-            boundaries.add(new int[]{start, end});
+            boundaries.add(new int[] {start, end});
             start = end;
             end = bi.next();
         }
@@ -1180,8 +1179,7 @@ public class Editor implements Component, Focusable {
     // Snapshot for undo
     // -------------------------------------------------------------------
 
-    private record EditorSnapshot(List<String> lines, int cursorLine, int cursorCol) {
-    }
+    private record EditorSnapshot(List<String> lines, int cursorLine, int cursorCol) {}
 
     private EditorSnapshot cloneSnapshot(EditorSnapshot snapshot) {
         return new EditorSnapshot(new ArrayList<>(snapshot.lines), snapshot.cursorLine, snapshot.cursorCol);

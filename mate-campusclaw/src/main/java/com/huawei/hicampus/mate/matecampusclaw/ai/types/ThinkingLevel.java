@@ -11,7 +11,6 @@ import com.fasterxml.jackson.annotation.JsonValue;
  * Level of extended thinking / reasoning to request from the model.
  */
 public enum ThinkingLevel {
-
     OFF("off"),
     MINIMAL("minimal"),
     LOW("low"),

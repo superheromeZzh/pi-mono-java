@@ -40,8 +40,7 @@ public class ModelSelectorOverlay implements Component, Focusable {
         this.currentModel = currentModel;
 
         this.allModels = new ArrayList<>(modelRegistry.getAllModels());
-        allModels.sort(Comparator.comparing((Model m) -> m.provider().value())
-                .thenComparing(Model::id));
+        allModels.sort(Comparator.comparing((Model m) -> m.provider().value()).thenComparing(Model::id));
 
         this.searchInput = new Input();
         searchInput.setPlaceholder("Search models...");
@@ -77,9 +76,7 @@ public class ModelSelectorOverlay implements Component, Focusable {
     }
 
     private String renderModelItem(Model model) {
-        String marker = ModelRegistry.modelsAreEqual(model, currentModel)
-                ? ANSI_ACCENT + "● " + ANSI_RESET
-                : "  ";
+        String marker = ModelRegistry.modelsAreEqual(model, currentModel) ? ANSI_ACCENT + "● " + ANSI_RESET : "  ";
         String provider = padRight(model.provider().value(), 14);
         String name = padRight(model.id(), 30);
         String ctx = padLeft(formatContext(model.contextWindow()), 6);
@@ -202,8 +199,8 @@ public class ModelSelectorOverlay implements Component, Focusable {
         var lines = new ArrayList<String>();
 
         lines.add("");
-        lines.add(" " + ANSI_BOLD + ANSI_ACCENT + "Select Model" + ANSI_RESET
-                + ANSI_DIM + "  (↑↓ navigate, Enter select, Esc cancel)" + ANSI_RESET);
+        lines.add(" " + ANSI_BOLD + ANSI_ACCENT + "Select Model" + ANSI_RESET + ANSI_DIM
+                + "  (↑↓ navigate, Enter select, Esc cancel)" + ANSI_RESET);
         lines.add("");
 
         var inputLines = searchInput.render(Math.max(1, width - 2));

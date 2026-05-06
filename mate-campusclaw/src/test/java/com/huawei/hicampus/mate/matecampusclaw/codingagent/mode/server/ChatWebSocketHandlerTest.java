@@ -29,6 +29,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.huawei.hicampus.mate.matecampusclaw.agent.event.AgentEndEvent;
 import com.huawei.hicampus.mate.matecampusclaw.agent.event.AgentEventListener;
 import com.huawei.hicampus.mate.matecampusclaw.agent.event.AgentStartEvent;
@@ -44,8 +46,6 @@ import com.huawei.hicampus.mate.matecampusclaw.ai.types.Usage;
 import com.huawei.hicampus.mate.matecampusclaw.ai.types.UserMessage;
 import com.huawei.hicampus.mate.matecampusclaw.codingagent.session.AgentSession;
 import com.huawei.hicampus.mate.matecampusclaw.codingagent.session.SessionManager;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -92,7 +92,7 @@ class ChatWebSocketHandlerTest {
         // Capture the event listener so the test can fire events back through it
         when(session.subscribe(any(AgentEventListener.class))).thenAnswer(invocation -> {
             listenerRef.set(invocation.getArgument(0));
-            return (Runnable) () -> { };
+            return (Runnable) () -> {};
         });
 
         // When the handler calls session.prompt(), run whatever event script the
@@ -111,8 +111,8 @@ class ChatWebSocketHandlerTest {
         server = HttpServer.create()
                 .host("127.0.0.1")
                 .port(0)
-                .route(r -> r.get("/api/ws/chat",
-                        (req, res) -> res.sendWebsocket((in, out) -> wsHandler.handle(in, out, null))))
+                .route(r -> r.get(
+                        "/api/ws/chat", (req, res) -> res.sendWebsocket((in, out) -> wsHandler.handle(in, out, null))))
                 .bindNow();
     }
 
@@ -157,9 +157,14 @@ class ChatWebSocketHandlerTest {
     void doneFrameCarriesFinalTextAndUsageAndStopReason() throws Exception {
         AssistantMessage assistantFinal = new AssistantMessage(
                 List.<ContentBlock>of(new TextContent("hello world", null)),
-                "messages", "anthropic", "sonnet",
-                null, Usage.empty(), StopReason.STOP, null, 123L
-        );
+                "messages",
+                "anthropic",
+                "sonnet",
+                null,
+                Usage.empty(),
+                StopReason.STOP,
+                null,
+                123L);
 
         promptScript = listener -> {
             listener.onEvent(new MessageStartEvent(assistantFinal));
@@ -172,7 +177,9 @@ class ChatWebSocketHandlerTest {
 
         JsonNode done = frames.get(frames.size() - 1);
         assertEquals("done", done.path("type").asText());
-        assertEquals("hello world", done.path("finalText").asText(),
+        assertEquals(
+                "hello world",
+                done.path("finalText").asText(),
                 "done frame should carry finalText extracted from the last AssistantMessage");
         assertEquals("stop", done.path("stopReason").asText());
         assertTrue(done.has("usage"), "done frame should include usage");
@@ -187,9 +194,14 @@ class ChatWebSocketHandlerTest {
         // MESSAGE_WRITER (writerFor(Message.class)) before embedding.
         AssistantMessage assistantFinal = new AssistantMessage(
                 List.<ContentBlock>of(new TextContent("hi back", null)),
-                "messages", "anthropic", "sonnet",
-                null, Usage.empty(), StopReason.STOP, null, 123L
-        );
+                "messages",
+                "anthropic",
+                "sonnet",
+                null,
+                Usage.empty(),
+                StopReason.STOP,
+                null,
+                123L);
         promptScript = listener -> {
             listener.onEvent(new MessageStartEvent(assistantFinal));
             listener.onEvent(new MessageUpdateEvent(assistantFinal, null));
@@ -204,8 +216,8 @@ class ChatWebSocketHandlerTest {
             assertTrue(i >= 0, ft + " frame must be present");
             JsonNode msg = frames.get(i).path("message");
             assertTrue(!msg.isMissingNode(), ft + " frame must carry a message field");
-            assertEquals("assistant", msg.path("role").asText(),
-                    ft + " frame's message must include role discriminator");
+            assertEquals(
+                    "assistant", msg.path("role").asText(), ft + " frame's message must include role discriminator");
         }
     }
 
@@ -213,9 +225,14 @@ class ChatWebSocketHandlerTest {
     void modelLevelErrorEmitsErrorFrameBeforeDone() throws Exception {
         AssistantMessage errorMsg = new AssistantMessage(
                 List.<ContentBlock>of(),
-                "messages", "anthropic", "sonnet",
-                null, Usage.empty(), StopReason.ERROR, "rate limited by upstream", 123L
-        );
+                "messages",
+                "anthropic",
+                "sonnet",
+                null,
+                Usage.empty(),
+                StopReason.ERROR,
+                "rate limited by upstream",
+                123L);
 
         promptScript = listener -> {
             listener.onEvent(new MessageStartEvent(errorMsg));
@@ -233,7 +250,8 @@ class ChatWebSocketHandlerTest {
         assertTrue(messageEndIdx >= 0, "message_end must be present");
         assertTrue(errorIdx > messageEndIdx, "error frame must follow message_end");
         assertTrue(doneIdx > errorIdx, "done must come after the error frame");
-        assertEquals("rate limited by upstream", frames.get(errorIdx).path("error").asText());
+        assertEquals(
+                "rate limited by upstream", frames.get(errorIdx).path("error").asText());
         assertEquals("error", frames.get(doneIdx).path("stopReason").asText());
     }
 
@@ -244,25 +262,39 @@ class ChatWebSocketHandlerTest {
         var modelRegistry = new com.huawei.hicampus.mate.matecampusclaw.ai.model.ModelRegistry();
         // The registry's @PostConstruct doesn't run outside Spring, so seed it manually.
         modelRegistry.register(new com.huawei.hicampus.mate.matecampusclaw.ai.types.Model(
-                "test-a", "Test A",
+                "test-a",
+                "Test A",
                 com.huawei.hicampus.mate.matecampusclaw.ai.types.Api.OPENAI_COMPLETIONS,
                 com.huawei.hicampus.mate.matecampusclaw.ai.types.Provider.OPENAI,
-                "https://example.com", false,
+                "https://example.com",
+                false,
                 List.of(com.huawei.hicampus.mate.matecampusclaw.ai.types.InputModality.TEXT),
                 new com.huawei.hicampus.mate.matecampusclaw.ai.types.ModelCost(1, 2, 0, 0),
-                128000, 4096, null, null, null));
+                128000,
+                4096,
+                null,
+                null,
+                null));
         modelRegistry.register(new com.huawei.hicampus.mate.matecampusclaw.ai.types.Model(
-                "test-b", "Test B",
+                "test-b",
+                "Test B",
                 com.huawei.hicampus.mate.matecampusclaw.ai.types.Api.OPENAI_COMPLETIONS,
                 com.huawei.hicampus.mate.matecampusclaw.ai.types.Provider.OPENAI,
-                "https://example.com", true,
+                "https://example.com",
+                true,
                 List.of(com.huawei.hicampus.mate.matecampusclaw.ai.types.InputModality.TEXT),
                 new com.huawei.hicampus.mate.matecampusclaw.ai.types.ModelCost(0, 0, 0, 0),
-                128000, 4096, null, null, null));
+                128000,
+                4096,
+                null,
+                null,
+                null));
 
         var settingsManager = mock(com.huawei.hicampus.mate.matecampusclaw.codingagent.settings.SettingsManager.class);
-        when(settingsManager.load()).thenReturn(com.huawei.hicampus.mate.matecampusclaw.codingagent.settings.Settings.empty());
-        var catalog = new com.huawei.hicampus.mate.matecampusclaw.codingagent.model.ModelCatalogService(modelRegistry, settingsManager);
+        when(settingsManager.load())
+                .thenReturn(com.huawei.hicampus.mate.matecampusclaw.codingagent.settings.Settings.empty());
+        var catalog = new com.huawei.hicampus.mate.matecampusclaw.codingagent.model.ModelCatalogService(
+                modelRegistry, settingsManager);
 
         when(session.getModelId()).thenReturn("test-a");
         ChatWebSocketHandler handler = new ChatWebSocketHandler(pool, catalog);
@@ -274,12 +306,11 @@ class ChatWebSocketHandlerTest {
         server = HttpServer.create()
                 .host("127.0.0.1")
                 .port(0)
-                .route(r -> r.get("/api/ws/chat",
-                        (req, res) -> res.sendWebsocket((in, out) -> handler.handle(in, out, null))))
+                .route(r -> r.get(
+                        "/api/ws/chat", (req, res) -> res.sendWebsocket((in, out) -> handler.handle(in, out, null))))
                 .bindNow();
 
-        JsonNode response = runRequestResponse(
-                "{\"type\":\"list_models\",\"id\":\"lm1\"}", "lm1");
+        JsonNode response = runRequestResponse("{\"type\":\"list_models\",\"id\":\"lm1\"}", "lm1");
 
         assertEquals("response", response.path("type").asText());
         assertTrue(response.path("success").asBoolean(), "list_models should succeed");
@@ -326,8 +357,14 @@ class ChatWebSocketHandlerTest {
 
         AssistantMessage assistantFinal = new AssistantMessage(
                 List.<ContentBlock>of(new TextContent("ok", null)),
-                "messages", "anthropic", "sonnet",
-                null, Usage.empty(), StopReason.STOP, null, 1L);
+                "messages",
+                "anthropic",
+                "sonnet",
+                null,
+                Usage.empty(),
+                StopReason.STOP,
+                null,
+                1L);
 
         promptScript = listener -> {
             listener.onEvent(new MessageStartEvent(assistantFinal));
@@ -345,8 +382,7 @@ class ChatWebSocketHandlerTest {
         SessionManager sm = mock(SessionManager.class);
         when(session.getSessionManager()).thenReturn(sm);
 
-        JsonNode response = runRequestResponse(
-                "{\"type\":\"new_session\",\"id\":\"ns1\"}", "ns1");
+        JsonNode response = runRequestResponse("{\"type\":\"new_session\",\"id\":\"ns1\"}", "ns1");
 
         assertEquals("response", response.path("type").asText());
         assertTrue(response.path("success").asBoolean(), "new_session should succeed");
@@ -363,8 +399,7 @@ class ChatWebSocketHandlerTest {
     @Test
     void newSessionKeepsConversationIdWhenPersistenceDisabled() throws Exception {
         // session.getSessionManager() returns null by default → persistence-off branch.
-        JsonNode response = runRequestResponse(
-                "{\"type\":\"new_session\",\"id\":\"ns2\"}", "ns2");
+        JsonNode response = runRequestResponse("{\"type\":\"new_session\",\"id\":\"ns2\"}", "ns2");
 
         assertTrue(response.path("success").asBoolean());
         // The returned id must be the same one assigned at handshake (no rotation
@@ -397,7 +432,8 @@ class ChatWebSocketHandlerTest {
                                         matched.set(node);
                                         latch.countDown();
                                     }
-                                } catch (Exception ignored) { }
+                                } catch (Exception ignored) {
+                                }
                             })
                             .takeUntil(frame -> {
                                 try {
@@ -414,7 +450,8 @@ class ChatWebSocketHandlerTest {
                 .timeout(Duration.ofSeconds(5))
                 .blockLast();
 
-        assertTrue(latch.await(5, TimeUnit.SECONDS),
+        assertTrue(
+                latch.await(5, TimeUnit.SECONDS),
                 "Expected a response with id=" + expectedId + " within 5s. Frames seen: " + raws);
         return matched.get();
     }
@@ -433,7 +470,10 @@ class ChatWebSocketHandlerTest {
                             .doOnNext(frame -> {
                                 raws.add(frame);
                                 try {
-                                    if ("done".equals(MAPPER.readTree(frame).path("type").asText())) {
+                                    if ("done"
+                                            .equals(MAPPER.readTree(frame)
+                                                    .path("type")
+                                                    .asText())) {
                                         sawDone.countDown();
                                     }
                                 } catch (Exception ignored) {
@@ -442,7 +482,10 @@ class ChatWebSocketHandlerTest {
                             })
                             .takeUntil(frame -> {
                                 try {
-                                    return "done".equals(MAPPER.readTree(frame).path("type").asText());
+                                    return "done"
+                                            .equals(MAPPER.readTree(frame)
+                                                    .path("type")
+                                                    .asText());
                                 } catch (Exception e) {
                                     return false;
                                 }
@@ -453,8 +496,7 @@ class ChatWebSocketHandlerTest {
                 .timeout(Duration.ofSeconds(5))
                 .blockLast();
 
-        assertTrue(sawDone.await(5, TimeUnit.SECONDS),
-                "Expected a `done` frame within 5s. Frames seen: " + raws);
+        assertTrue(sawDone.await(5, TimeUnit.SECONDS), "Expected a `done` frame within 5s. Frames seen: " + raws);
 
         List<JsonNode> parsed = new ArrayList<>();
         for (String raw : raws) {

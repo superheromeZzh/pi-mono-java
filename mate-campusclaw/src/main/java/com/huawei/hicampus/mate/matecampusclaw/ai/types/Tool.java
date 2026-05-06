@@ -15,8 +15,6 @@ import com.fasterxml.jackson.databind.JsonNode;
  * @param parameters  JSON Schema defining the tool's input parameters
  */
 public record Tool(
-    @JsonProperty("name") String name,
-    @JsonProperty("description") String description,
-    @JsonProperty("parameters") JsonNode parameters
-) {
-}
+        @JsonProperty("name") String name,
+        @JsonProperty("description") String description,
+        @JsonProperty("parameters") JsonNode parameters) {}

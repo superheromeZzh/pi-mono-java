@@ -11,12 +11,11 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public record ChatEventPayload(
-    @JsonProperty("runId") String runId,
-    @JsonProperty("sessionKey") String sessionKey,
-    @JsonProperty("seq") int seq,
-    @JsonProperty("state") String state,
-    @JsonProperty("message") Map<String, Object> message,
-    @JsonProperty("errorMessage") String errorMessage,
-    @JsonProperty("usage") Map<String, Object> usage,
-    @JsonProperty("stopReason") String stopReason
-) {}
+        @JsonProperty("runId") String runId,
+        @JsonProperty("sessionKey") String sessionKey,
+        @JsonProperty("seq") int seq,
+        @JsonProperty("state") String state,
+        @JsonProperty("message") Map<String, Object> message,
+        @JsonProperty("errorMessage") String errorMessage,
+        @JsonProperty("usage") Map<String, Object> usage,
+        @JsonProperty("stopReason") String stopReason) {}

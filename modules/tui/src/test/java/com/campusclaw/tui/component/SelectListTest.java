@@ -89,7 +89,8 @@ class SelectListTest {
         @Test
         void getItemsReturnsUnmodifiableView() {
             var list = createList(items("a", "b"));
-            assertThrows(UnsupportedOperationException.class, () -> list.getItems().add("c"));
+            assertThrows(
+                    UnsupportedOperationException.class, () -> list.getItems().add("c"));
         }
     }
 
@@ -618,11 +619,7 @@ class SelectListTest {
         @Test
         void recordItems() {
             record Fruit(String name, double price) {}
-            var fruits = List.of(
-                    new Fruit("Apple", 1.50),
-                    new Fruit("Banana", 0.75),
-                    new Fruit("Cherry", 3.00)
-            );
+            var fruits = List.of(new Fruit("Apple", 1.50), new Fruit("Banana", 0.75), new Fruit("Cherry", 3.00));
             var list = new SelectList<>(fruits, f -> f.name() + " $" + f.price(), 10, plainTheme);
             assertEquals("Apple", list.getSelectedItem().name());
             List<String> lines = list.render(40);

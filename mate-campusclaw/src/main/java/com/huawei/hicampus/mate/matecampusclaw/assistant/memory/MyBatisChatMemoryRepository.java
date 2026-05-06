@@ -9,12 +9,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.huawei.hicampus.mate.matecampusclaw.ai.types.AssistantMessage;
 import com.huawei.hicampus.mate.matecampusclaw.ai.types.Message;
 import com.huawei.hicampus.mate.matecampusclaw.ai.types.ToolResultMessage;
 import com.huawei.hicampus.mate.matecampusclaw.ai.types.UserMessage;
 import com.huawei.hicampus.mate.matecampusclaw.assistant.mapper.ChatMemoryMapper;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class MyBatisChatMemoryRepository implements ChatMemoryRepository {
 
@@ -35,7 +35,7 @@ public class MyBatisChatMemoryRepository implements ChatMemoryRepository {
                 messages.add(objectMapper.readValue(entity.content(), Message.class));
             } catch (Exception e) {
                 throw new UncheckedIOException(
-                    new java.io.IOException("Failed to parse message for conversation " + conversationId, e));
+                        new java.io.IOException("Failed to parse message for conversation " + conversationId, e));
             }
         }
         return messages;
@@ -59,7 +59,7 @@ public class MyBatisChatMemoryRepository implements ChatMemoryRepository {
                 content = objectMapper.writeValueAsString(message);
             } catch (Exception e) {
                 throw new UncheckedIOException(
-                    new java.io.IOException("Failed to serialize message for conversation " + conversationId, e));
+                        new java.io.IOException("Failed to serialize message for conversation " + conversationId, e));
             }
             String role = extractRole(message);
             mapper.insert(new ChatMemoryEntity(conversationId, role, content, nextSequence + i));

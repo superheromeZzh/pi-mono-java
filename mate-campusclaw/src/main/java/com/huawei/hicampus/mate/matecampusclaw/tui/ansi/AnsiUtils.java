@@ -15,8 +15,7 @@ import java.util.function.UnaryOperator;
  */
 public final class AnsiUtils {
 
-    private AnsiUtils() {
-    }
+    private AnsiUtils() {}
 
     // -------------------------------------------------------------------
     // ANSI escape code extraction
@@ -92,8 +91,7 @@ public final class AnsiUtils {
         return null;
     }
 
-    record AnsiCode(String code, int length) {
-    }
+    record AnsiCode(String code, int length) {}
 
     // -------------------------------------------------------------------
     // Character width calculation
@@ -551,7 +549,9 @@ public final class AnsiUtils {
         }
 
         // Trim trailing whitespace from all lines
-        return wrapped.isEmpty() ? List.of("") : wrapped.stream().map(AnsiUtils::trimEnd).toList();
+        return wrapped.isEmpty()
+                ? List.of("")
+                : wrapped.stream().map(AnsiUtils::trimEnd).toList();
     }
 
     private static List<String> breakLongWord(String word, int maxWidth, AnsiCodeTracker tracker) {
@@ -565,7 +565,7 @@ public final class AnsiUtils {
         while (i < word.length()) {
             AnsiCode ansi = extractAnsiCode(word, i);
             if (ansi != null) {
-                segments.add(new Object[]{0, ansi.code()});
+                segments.add(new Object[] {0, ansi.code()});
                 i += ansi.length();
             } else {
                 // Collect non-ANSI text and segment into graphemes
@@ -579,7 +579,7 @@ public final class AnsiUtils {
                 int start = bi.first();
                 int boundary = bi.next();
                 while (boundary != BreakIterator.DONE) {
-                    segments.add(new Object[]{1, portion.substring(start, boundary)});
+                    segments.add(new Object[] {1, portion.substring(start, boundary)});
                     start = boundary;
                     boundary = bi.next();
                 }

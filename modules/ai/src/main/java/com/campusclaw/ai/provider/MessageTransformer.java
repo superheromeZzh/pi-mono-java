@@ -54,8 +54,7 @@ public class MessageTransformer {
      * @return transformed messages
      */
     public static List<Message> transform(
-            List<Message> messages, Api targetApi,
-            String targetProvider, String targetModelId) {
+            List<Message> messages, Api targetApi, String targetProvider, String targetModelId) {
 
         // First pass: transform content blocks
         var transformed = new ArrayList<Message>(messages.size());
@@ -65,15 +64,15 @@ public class MessageTransformer {
             } else if (msg instanceof ToolResultMessage tr) {
                 String normalizedId = normalizeToolCallId(tr.toolCallId());
                 if (!normalizedId.equals(tr.toolCallId())) {
-                    transformed.add(new ToolResultMessage(normalizedId, tr.toolName(),
-                        tr.content(), tr.details(), tr.isError(), tr.timestamp()));
+                    transformed.add(new ToolResultMessage(
+                            normalizedId, tr.toolName(), tr.content(), tr.details(), tr.isError(), tr.timestamp()));
                 } else {
                     transformed.add(msg);
                 }
             } else if (msg instanceof AssistantMessage am) {
                 boolean isSameModel = targetProvider.equals(am.provider())
-                    && targetApi.value().equals(am.api())
-                    && targetModelId.equals(am.model());
+                        && targetApi.value().equals(am.api())
+                        && targetModelId.equals(am.model());
 
                 var transformedContent = new ArrayList<ContentBlock>();
                 for (ContentBlock cb : am.content()) {
@@ -86,7 +85,8 @@ public class MessageTransformer {
                             continue;
                         }
                         // Same model with signature: keep for replay
-                        if (isSameModel && tc.thinkingSignature() != null
+                        if (isSameModel
+                                && tc.thinkingSignature() != null
                                 && !tc.thinkingSignature().isEmpty()) {
                             transformedContent.add(cb);
                             continue;
@@ -134,9 +134,15 @@ public class MessageTransformer {
                 }
 
                 transformed.add(new AssistantMessage(
-                    transformedContent, am.api(), am.provider(), am.model(),
-                    am.responseId(), am.usage(), am.stopReason(), am.errorMessage(), am.timestamp()
-                ));
+                        transformedContent,
+                        am.api(),
+                        am.provider(),
+                        am.model(),
+                        am.responseId(),
+                        am.usage(),
+                        am.stopReason(),
+                        am.errorMessage(),
+                        am.timestamp()));
             }
         }
 
@@ -184,19 +190,16 @@ public class MessageTransformer {
     }
 
     private static void insertSyntheticResults(
-            List<Message> result,
-            List<ToolCall> pendingToolCalls,
-            Set<String> existingToolResultIds) {
+            List<Message> result, List<ToolCall> pendingToolCalls, Set<String> existingToolResultIds) {
         for (ToolCall tc : pendingToolCalls) {
             if (!existingToolResultIds.contains(tc.id())) {
                 result.add(new ToolResultMessage(
-                    tc.id(),
-                    tc.name(),
-                    List.of(new TextContent("No result provided")),
-                    null,
-                    true, // isError = true, matching TS behavior
-                    System.currentTimeMillis()
-                ));
+                        tc.id(),
+                        tc.name(),
+                        List.of(new TextContent("No result provided")),
+                        null,
+                        true, // isError = true, matching TS behavior
+                        System.currentTimeMillis()));
             }
         }
     }

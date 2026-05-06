@@ -64,7 +64,9 @@ import org.junit.jupiter.api.io.TempDir;
 @Timeout(30)
 class CliIntegrationTest {
 
-    @TempDir Path rawTempDir;
+    @TempDir
+    Path rawTempDir;
+
     private Path tempDir;
 
     private ScriptedMockProvider mockProvider;
@@ -81,14 +83,19 @@ class CliIntegrationTest {
         var providerRegistry = new ApiProviderRegistry(List.of(mockProvider));
         modelRegistry = new ModelRegistry();
         modelRegistry.register(new Model(
-                "claude-sonnet-4-20250514", "Claude Sonnet 4",
-                Api.ANTHROPIC_MESSAGES, Provider.ANTHROPIC,
-                "https://api.anthropic.com", true,
+                "claude-sonnet-4-20250514",
+                "Claude Sonnet 4",
+                Api.ANTHROPIC_MESSAGES,
+                Provider.ANTHROPIC,
+                "https://api.anthropic.com",
+                true,
                 List.of(InputModality.TEXT, InputModality.IMAGE),
                 new ModelCost(3.0, 15.0, 0.3, 3.75),
-                200_000, 16_000, null, null,
-                null
-        ));
+                200_000,
+                16_000,
+                null,
+                null,
+                null));
         piAiService = new CampusClawAiService(providerRegistry, modelRegistry);
         promptBuilder = new SystemPromptBuilder();
         objectMapper = new ObjectMapper();
@@ -103,8 +110,7 @@ class CliIntegrationTest {
                 new BashTool(new BashExecutor(), tempDir),
                 new ReadTool(readOps, tempDir),
                 new WriteTool(writeOps, mutationQueue, tempDir),
-                new EditTool(editOps, mutationQueue, tempDir)
-        );
+                new EditTool(editOps, mutationQueue, tempDir));
     }
 
     /** Combines read+write for EditTool. */
@@ -112,19 +118,28 @@ class CliIntegrationTest {
         private final LocalReadOperations read = new LocalReadOperations();
         private final LocalWriteOperations write = new LocalWriteOperations();
 
-        @Override public byte[] readFile(Path path) throws java.io.IOException {
+        @Override
+        public byte[] readFile(Path path) throws java.io.IOException {
             return read.readFile(path);
         }
-        @Override public boolean exists(Path path) {
+
+        @Override
+        public boolean exists(Path path) {
             return read.exists(path);
         }
-        @Override public String detectMimeType(Path path) throws java.io.IOException {
+
+        @Override
+        public String detectMimeType(Path path) throws java.io.IOException {
             return read.detectMimeType(path);
         }
-        @Override public void writeFile(Path path, String content) throws java.io.IOException {
+
+        @Override
+        public void writeFile(Path path, String content) throws java.io.IOException {
             write.writeFile(path, content);
         }
-        @Override public void mkdir(Path path) throws java.io.IOException {
+
+        @Override
+        public void mkdir(Path path) throws java.io.IOException {
             write.mkdir(path);
         }
     }
@@ -135,12 +150,8 @@ class CliIntegrationTest {
 
     private AgentSession createSession(String customPrompt) {
         var session = new AgentSession(
-                piAiService, modelRegistry, promptBuilder,
-                new SkillLoader(), new SkillExpander(), createTools()
-        );
-        session.initialize(new SessionConfig(
-                "claude-sonnet-4-20250514", tempDir, customPrompt, "one-shot"
-        ));
+                piAiService, modelRegistry, promptBuilder, new SkillLoader(), new SkillExpander(), createTools());
+        session.initialize(new SessionConfig("claude-sonnet-4-20250514", tempDir, customPrompt, "one-shot"));
         return session;
     }
 
@@ -215,8 +226,7 @@ class CliIntegrationTest {
         void bashToolEndToEnd() {
             mockProvider.setScript(List.of(
                     toolCallReply("bash", Map.of("command", "echo hello-world")),
-                    textReply("The command output was hello-world")
-            ));
+                    textReply("The command output was hello-world")));
 
             var session = createSession();
             session.prompt("Run echo").join();
@@ -236,9 +246,7 @@ class CliIntegrationTest {
             Files.writeString(testFile, "line1\nline2\nline3\n");
 
             mockProvider.setScript(List.of(
-                    toolCallReply("read", Map.of("path", testFile.toString())),
-                    textReply("The file has 3 lines")
-            ));
+                    toolCallReply("read", Map.of("path", testFile.toString())), textReply("The file has 3 lines")));
 
             var session = createSession();
             session.prompt("Read the file").join();
@@ -255,12 +263,8 @@ class CliIntegrationTest {
             Path targetFile = tempDir.resolve("test-write.txt");
 
             mockProvider.setScript(List.of(
-                    toolCallReply("write", Map.of(
-                            "path", targetFile.toString(),
-                            "content", "written by tool"
-                    )),
-                    textReply("File written successfully")
-            ));
+                    toolCallReply("write", Map.of("path", targetFile.toString(), "content", "written by tool")),
+                    textReply("File written successfully")));
 
             var session = createSession();
             session.prompt("Write a file").join();
@@ -279,13 +283,13 @@ class CliIntegrationTest {
             Files.writeString(editFile, "hello world\ngoodbye world\n");
 
             mockProvider.setScript(List.of(
-                    toolCallReply("edit", Map.of(
-                            "path", editFile.toString(),
-                            "oldText", "hello world",
-                            "newText", "hello universe"
-                    )),
-                    textReply("Edit applied")
-            ));
+                    toolCallReply(
+                            "edit",
+                            Map.of(
+                                    "path", editFile.toString(),
+                                    "oldText", "hello world",
+                                    "newText", "hello universe")),
+                    textReply("Edit applied")));
 
             var session = createSession();
             session.prompt("Edit the file").join();
@@ -304,13 +308,9 @@ class CliIntegrationTest {
             Path file = tempDir.resolve("multi-tool.txt");
 
             mockProvider.setScript(List.of(
-                    toolCallReply("write", Map.of(
-                            "path", file.toString(),
-                            "content", "initial content"
-                    )),
+                    toolCallReply("write", Map.of("path", file.toString(), "content", "initial content")),
                     toolCallReply("read", Map.of("path", file.toString())),
-                    textReply("The file contains: initial content")
-            ));
+                    textReply("The file contains: initial content")));
 
             var session = createSession();
             session.prompt("Write then read a file").join();
@@ -333,7 +333,9 @@ class CliIntegrationTest {
         void loadsSkillsFromProjectDirectory() throws Exception {
             Path skillDir = tempDir.resolve(".campusclaw/skills/test-skill");
             Files.createDirectories(skillDir);
-            Files.writeString(skillDir.resolve("SKILL.md"), """
+            Files.writeString(
+                    skillDir.resolve("SKILL.md"),
+                    """
                     ---
                     name: test-skill
                     description: A test skill for integration testing
@@ -351,7 +353,9 @@ class CliIntegrationTest {
         void expandsSkillCommandInPrompt() throws Exception {
             Path skillDir = tempDir.resolve(".campusclaw/skills/greet");
             Files.createDirectories(skillDir);
-            Files.writeString(skillDir.resolve("SKILL.md"), """
+            Files.writeString(
+                    skillDir.resolve("SKILL.md"),
+                    """
                     ---
                     name: greet
                     description: Greeting skill
@@ -375,7 +379,9 @@ class CliIntegrationTest {
         void disabledSkillNotVisibleInRegistry() throws Exception {
             Path skillDir = tempDir.resolve(".campusclaw/skills/hidden-skill");
             Files.createDirectories(skillDir);
-            Files.writeString(skillDir.resolve("SKILL.md"), """
+            Files.writeString(
+                    skillDir.resolve("SKILL.md"),
+                    """
                     ---
                     name: hidden-skill
                     description: A hidden skill
@@ -430,10 +436,8 @@ class CliIntegrationTest {
             Path file = tempDir.resolve("persist-tool.txt");
             Files.writeString(file, "some content");
 
-            mockProvider.setScript(List.of(
-                    toolCallReply("read", Map.of("file_path", file.toString())),
-                    textReply("Read complete")
-            ));
+            mockProvider.setScript(
+                    List.of(toolCallReply("read", Map.of("file_path", file.toString())), textReply("Read complete")));
 
             var session = createSession();
             session.prompt("Read file").join();
@@ -468,8 +472,8 @@ class CliIntegrationTest {
             var loaded = persistence.load(sessionFile);
 
             for (int i = 0; i < history.size(); i++) {
-                assertEquals(history.get(i).getClass(), loaded.get(i).getClass(),
-                        "Message type mismatch at index " + i);
+                assertEquals(
+                        history.get(i).getClass(), loaded.get(i).getClass(), "Message type mismatch at index " + i);
             }
         }
     }
@@ -491,7 +495,8 @@ class CliIntegrationTest {
                 .filter(ToolResultMessage.class::isInstance)
                 .map(ToolResultMessage.class::cast)
                 .filter(tr -> tr.toolName().equals(toolName))
-                .findFirst().orElse(null);
+                .findFirst()
+                .orElse(null);
     }
 
     private String contentText(Message message) {
@@ -547,9 +552,8 @@ class CliIntegrationTest {
         public AssistantMessageEventStream streamSimple(Model model, Context context, SimpleStreamOptions options) {
             int idx = callIndex.getAndIncrement();
             if (idx >= script.size()) {
-                throw new IllegalStateException(
-                        "ScriptedMockProvider exhausted: called " + (idx + 1) +
-                                " times but only " + script.size() + " replies scripted");
+                throw new IllegalStateException("ScriptedMockProvider exhausted: called " + (idx + 1)
+                        + " times but only " + script.size() + " replies scripted");
             }
             var reply = script.get(idx);
 
@@ -565,9 +569,14 @@ class CliIntegrationTest {
             var toolCall = new ToolCall("tc-" + idx, toolName, args);
             var msg = new AssistantMessage(
                     List.of(toolCall),
-                    model.api().value(), model.provider().value(), model.id(),
-                    null, Usage.empty(), StopReason.TOOL_USE, null, System.currentTimeMillis()
-            );
+                    model.api().value(),
+                    model.provider().value(),
+                    model.id(),
+                    null,
+                    Usage.empty(),
+                    StopReason.TOOL_USE,
+                    null,
+                    System.currentTimeMillis());
             stream.push(new AssistantMessageEvent.StartEvent(msg));
             stream.push(new AssistantMessageEvent.ToolCallEndEvent(0, toolCall, msg));
             stream.pushDone(StopReason.TOOL_USE, msg);
@@ -578,9 +587,14 @@ class CliIntegrationTest {
             var stream = new AssistantMessageEventStream();
             var msg = new AssistantMessage(
                     List.of(new TextContent(text, null)),
-                    model.api().value(), model.provider().value(), model.id(),
-                    null, Usage.empty(), StopReason.STOP, null, System.currentTimeMillis()
-            );
+                    model.api().value(),
+                    model.provider().value(),
+                    model.id(),
+                    null,
+                    Usage.empty(),
+                    StopReason.STOP,
+                    null,
+                    System.currentTimeMillis());
             stream.push(new AssistantMessageEvent.StartEvent(msg));
             stream.push(new AssistantMessageEvent.TextDeltaEvent(0, text, msg));
             stream.pushDone(StopReason.STOP, msg);

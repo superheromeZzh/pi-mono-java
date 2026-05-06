@@ -29,7 +29,8 @@ import org.slf4j.LoggerFactory;
 public class Compactor {
     private static final Logger log = LoggerFactory.getLogger(Compactor.class);
 
-    private static final String SUMMARIZATION_PROMPT = """
+    private static final String SUMMARIZATION_PROMPT =
+            """
         You are a conversation summarizer. Summarize the conversation so far in a way that preserves:
         1. All important decisions and their rationale
         2. Current state of the task being worked on
@@ -47,8 +48,10 @@ public class Compactor {
     private final CompactionConfig config;
     private final com.campusclaw.codingagent.resolver.AgentModelResolver agentModelResolver;
 
-    public Compactor(CampusClawAiService aiService, CompactionConfig config,
-                     com.campusclaw.codingagent.resolver.AgentModelResolver agentModelResolver) {
+    public Compactor(
+            CampusClawAiService aiService,
+            CompactionConfig config,
+            com.campusclaw.codingagent.resolver.AgentModelResolver agentModelResolver) {
         this.aiService = aiService;
         this.config = config;
         this.agentModelResolver = agentModelResolver;
@@ -107,15 +110,16 @@ public class Compactor {
 
         // Per-agent override: settings.agent.summarizer.model can route compaction
         // to a cheaper / faster model than the foreground chat.
-        Model summarizationModel = agentModelResolver != null
-                ? agentModelResolver.resolve(AGENT_NAME, model)
-                : model;
+        Model summarizationModel = agentModelResolver != null ? agentModelResolver.resolve(AGENT_NAME, model) : model;
 
         // Generate summary of old messages
         String summary = generateSummary(oldMessages, fileOps, summarizationModel);
 
-        log.info("Compacted {} messages into summary ({} chars), keeping {} recent messages",
-            oldMessages.size(), summary.length(), recentMessages.size());
+        log.info(
+                "Compacted {} messages into summary ({} chars), keeping {} recent messages",
+                oldMessages.size(),
+                summary.length(),
+                recentMessages.size());
 
         return new CompactionResult(summary, recentMessages, fileOps.filesRead(), fileOps.filesModified());
     }
@@ -124,7 +128,9 @@ public class Compactor {
         // Serialize messages to text for summarization
         var sb = new StringBuilder();
         sb.append("Files read: ").append(String.join(", ", fileOps.filesRead())).append("\n");
-        sb.append("Files modified: ").append(String.join(", ", fileOps.filesModified())).append("\n\n");
+        sb.append("Files modified: ")
+                .append(String.join(", ", fileOps.filesModified()))
+                .append("\n\n");
         sb.append("Conversation to summarize:\n\n");
 
         for (Message msg : messages) {
@@ -133,10 +139,7 @@ public class Compactor {
 
         try {
             var context = new Context(
-                SUMMARIZATION_PROMPT,
-                List.of(new UserMessage(sb.toString(), System.currentTimeMillis())),
-                null
-            );
+                    SUMMARIZATION_PROMPT, List.of(new UserMessage(sb.toString(), System.currentTimeMillis())), null);
 
             var result = aiService.completeSimple(model, context, null).block();
             if (result != null) {

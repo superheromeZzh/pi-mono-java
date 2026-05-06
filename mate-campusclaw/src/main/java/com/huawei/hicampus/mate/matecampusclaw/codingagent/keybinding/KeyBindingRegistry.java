@@ -25,7 +25,8 @@ import jakarta.annotation.PostConstruct;
 public class KeyBindingRegistry {
     private static final Logger log = LoggerFactory.getLogger(KeyBindingRegistry.class);
     private static final ObjectMapper MAPPER = new ObjectMapper();
-    private static final Path KEYBINDINGS_FILE = com.huawei.hicampus.mate.matecampusclaw.codingagent.config.AppPaths.KEYBINDINGS_FILE;
+    private static final Path KEYBINDINGS_FILE =
+            com.huawei.hicampus.mate.matecampusclaw.codingagent.config.AppPaths.KEYBINDINGS_FILE;
 
     private final Map<String, KeyBinding> bindings = new LinkedHashMap<>();
 
@@ -56,8 +57,7 @@ public class KeyBindingRegistry {
             return;
         }
         try {
-            Map<String, String> custom = MAPPER.readValue(
-                Files.readString(KEYBINDINGS_FILE), new TypeReference<>() {});
+            Map<String, String> custom = MAPPER.readValue(Files.readString(KEYBINDINGS_FILE), new TypeReference<>() {});
             custom.forEach((action, key) -> {
                 var existing = bindings.get(action);
                 if (existing != null) {
@@ -85,9 +85,9 @@ public class KeyBindingRegistry {
     /** Find the action bound to a given key combo. */
     public Optional<String> findAction(String key) {
         return bindings.values().stream()
-            .filter(b -> b.key().equalsIgnoreCase(key))
-            .map(KeyBinding::action)
-            .findFirst();
+                .filter(b -> b.key().equalsIgnoreCase(key))
+                .map(KeyBinding::action)
+                .findFirst();
     }
 
     public Collection<KeyBinding> getAll() {
