@@ -13,7 +13,11 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
 
-import com.campusclaw.ai.types.*;
+import com.campusclaw.ai.types.Api;
+import com.campusclaw.ai.types.InputModality;
+import com.campusclaw.ai.types.Model;
+import com.campusclaw.ai.types.ModelCost;
+import com.campusclaw.ai.types.Provider;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;

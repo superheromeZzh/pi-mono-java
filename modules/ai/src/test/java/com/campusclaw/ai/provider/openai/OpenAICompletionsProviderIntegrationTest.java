@@ -16,7 +16,16 @@ import java.util.List;
 
 import com.campusclaw.ai.stream.AssistantMessageEvent;
 import com.campusclaw.ai.stream.AssistantMessageEventStream;
-import com.campusclaw.ai.types.*;
+import com.campusclaw.ai.types.Api;
+import com.campusclaw.ai.types.Context;
+import com.campusclaw.ai.types.InputModality;
+import com.campusclaw.ai.types.Model;
+import com.campusclaw.ai.types.ModelCost;
+import com.campusclaw.ai.types.Provider;
+import com.campusclaw.ai.types.StopReason;
+import com.campusclaw.ai.types.TextContent;
+import com.campusclaw.ai.types.ToolCall;
+import com.campusclaw.ai.types.UserMessage;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;

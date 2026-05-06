@@ -9,9 +9,13 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
 
-import com.campusclaw.codingagent.mode.tui.*;
+import com.campusclaw.codingagent.mode.tui.AssistantMessageComponent;
+import com.campusclaw.codingagent.mode.tui.EditorContainer;
+import com.campusclaw.codingagent.mode.tui.FooterComponent;
+import com.campusclaw.codingagent.mode.tui.UserMessageComponent;
 import com.campusclaw.tui.Tui;
-import com.campusclaw.tui.component.*;
+import com.campusclaw.tui.component.Container;
+import com.campusclaw.tui.component.Text;
 import com.campusclaw.tui.terminal.TestTerminal;
 
 import org.junit.jupiter.api.Test;

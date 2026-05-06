@@ -21,7 +21,13 @@ import java.util.concurrent.CompletableFuture;
 
 import com.huawei.hicampus.mate.matecampusclaw.agent.Agent;
 import com.huawei.hicampus.mate.matecampusclaw.agent.state.AgentState;
-import com.huawei.hicampus.mate.matecampusclaw.ai.types.*;
+import com.huawei.hicampus.mate.matecampusclaw.ai.types.AssistantMessage;
+import com.huawei.hicampus.mate.matecampusclaw.ai.types.StopReason;
+import com.huawei.hicampus.mate.matecampusclaw.ai.types.TextContent;
+import com.huawei.hicampus.mate.matecampusclaw.ai.types.ToolCall;
+import com.huawei.hicampus.mate.matecampusclaw.ai.types.ToolResultMessage;
+import com.huawei.hicampus.mate.matecampusclaw.ai.types.Usage;
+import com.huawei.hicampus.mate.matecampusclaw.ai.types.UserMessage;
 import com.huawei.hicampus.mate.matecampusclaw.codingagent.session.AgentSession;
 
 import org.junit.jupiter.api.BeforeEach;

@@ -4,11 +4,26 @@
 
 package com.huawei.hicampus.mate.matecampusclaw.assistant.channel.gateway;
 
-import java.util.*;
-import java.util.concurrent.*;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import com.huawei.hicampus.mate.matecampusclaw.assistant.channel.gateway.protocol.*;
+import com.huawei.hicampus.mate.matecampusclaw.assistant.channel.gateway.protocol.ChatEventPayload;
+import com.huawei.hicampus.mate.matecampusclaw.assistant.channel.gateway.protocol.ConnectParams;
+import com.huawei.hicampus.mate.matecampusclaw.assistant.channel.gateway.protocol.ErrorBody;
+import com.huawei.hicampus.mate.matecampusclaw.assistant.channel.gateway.protocol.FeaturesInfo;
+import com.huawei.hicampus.mate.matecampusclaw.assistant.channel.gateway.protocol.GatewayFrame;
+import com.huawei.hicampus.mate.matecampusclaw.assistant.channel.gateway.protocol.HelloOkPayload;
+import com.huawei.hicampus.mate.matecampusclaw.assistant.channel.gateway.protocol.PolicyInfo;
+import com.huawei.hicampus.mate.matecampusclaw.assistant.channel.gateway.protocol.ServerInfo;
+import com.huawei.hicampus.mate.matecampusclaw.assistant.channel.gateway.protocol.SessionsSendParams;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 

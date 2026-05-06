@@ -28,7 +28,23 @@ import com.campusclaw.ai.provider.ApiProvider;
 import com.campusclaw.ai.provider.ApiProviderRegistry;
 import com.campusclaw.ai.stream.AssistantMessageEvent;
 import com.campusclaw.ai.stream.AssistantMessageEventStream;
-import com.campusclaw.ai.types.*;
+import com.campusclaw.ai.types.Api;
+import com.campusclaw.ai.types.AssistantMessage;
+import com.campusclaw.ai.types.ContentBlock;
+import com.campusclaw.ai.types.Context;
+import com.campusclaw.ai.types.InputModality;
+import com.campusclaw.ai.types.Message;
+import com.campusclaw.ai.types.Model;
+import com.campusclaw.ai.types.ModelCost;
+import com.campusclaw.ai.types.Provider;
+import com.campusclaw.ai.types.SimpleStreamOptions;
+import com.campusclaw.ai.types.StopReason;
+import com.campusclaw.ai.types.StreamOptions;
+import com.campusclaw.ai.types.TextContent;
+import com.campusclaw.ai.types.ToolCall;
+import com.campusclaw.ai.types.ToolResultMessage;
+import com.campusclaw.ai.types.Usage;
+import com.campusclaw.ai.types.UserMessage;
 import com.campusclaw.codingagent.prompt.SystemPromptBuilder;
 import com.campusclaw.codingagent.session.AgentSession;
 import com.campusclaw.codingagent.session.SessionConfig;
@@ -46,7 +62,10 @@ import com.campusclaw.codingagent.tool.write.WriteTool;
 import com.campusclaw.codingagent.util.FileMutationQueue;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 import org.junit.jupiter.api.io.TempDir;
 
 /**

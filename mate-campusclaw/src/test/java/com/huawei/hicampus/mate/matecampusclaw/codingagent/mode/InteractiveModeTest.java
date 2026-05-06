@@ -15,10 +15,12 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 import com.huawei.hicampus.mate.matecampusclaw.agent.Agent;
-import com.huawei.hicampus.mate.matecampusclaw.agent.event.*;
+import com.huawei.hicampus.mate.matecampusclaw.agent.event.MessageUpdateEvent;
 import com.huawei.hicampus.mate.matecampusclaw.agent.state.AgentState;
 import com.huawei.hicampus.mate.matecampusclaw.ai.stream.AssistantMessageEvent;
-import com.huawei.hicampus.mate.matecampusclaw.ai.types.*;
+import com.huawei.hicampus.mate.matecampusclaw.ai.types.AssistantMessage;
+import com.huawei.hicampus.mate.matecampusclaw.ai.types.TextContent;
+import com.huawei.hicampus.mate.matecampusclaw.ai.types.Usage;
 import com.huawei.hicampus.mate.matecampusclaw.codingagent.command.SlashCommandRegistry;
 import com.huawei.hicampus.mate.matecampusclaw.codingagent.command.builtin.HelpCommand;
 import com.huawei.hicampus.mate.matecampusclaw.codingagent.command.builtin.QuitCommand;
