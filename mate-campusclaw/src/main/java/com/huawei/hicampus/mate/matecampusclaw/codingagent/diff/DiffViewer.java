@@ -14,6 +14,7 @@ public class DiffViewer {
 
     /** ANSI color codes. */
     private static final String RED = "\033[31m";
+
     private static final String GREEN = "\033[32m";
     private static final String YELLOW = "\033[33m";
     private static final String CYAN = "\033[36m";
@@ -23,7 +24,12 @@ public class DiffViewer {
     private static final String BG_GREEN = "\033[42m";
     private static final String INVERSE = "\033[7m";
 
-    public enum LineType { SAME, ADDED, REMOVED, MODIFIED }
+    public enum LineType {
+        SAME,
+        ADDED,
+        REMOVED,
+        MODIFIED
+    }
 
     public record DiffLine(LineType type, int oldLineNum, int newLineNum, String oldText, String newText) {}
 
@@ -52,13 +58,36 @@ public class DiffViewer {
 
         for (DiffLine line : lines) {
             switch (line.type) {
-                case SAME -> sb.append(DIM).append("  ").append(line.oldText).append(RESET).append('\n');
-                case REMOVED -> sb.append(RED).append("- ").append(line.oldText).append(RESET).append('\n');
-                case ADDED -> sb.append(GREEN).append("+ ").append(line.newText).append(RESET).append('\n');
+                case SAME ->
+                    sb.append(DIM)
+                            .append("  ")
+                            .append(line.oldText)
+                            .append(RESET)
+                            .append('\n');
+                case REMOVED ->
+                    sb.append(RED)
+                            .append("- ")
+                            .append(line.oldText)
+                            .append(RESET)
+                            .append('\n');
+                case ADDED ->
+                    sb.append(GREEN)
+                            .append("+ ")
+                            .append(line.newText)
+                            .append(RESET)
+                            .append('\n');
                 case MODIFIED -> {
                     // Intra-line word diff with inverse highlighting (matching campusclaw)
-                    sb.append(RED).append("- ").append(highlightWordDiff(line.oldText, line.newText, RED)).append(RESET).append('\n');
-                    sb.append(GREEN).append("+ ").append(highlightWordDiff(line.newText, line.oldText, GREEN)).append(RESET).append('\n');
+                    sb.append(RED)
+                            .append("- ")
+                            .append(highlightWordDiff(line.oldText, line.newText, RED))
+                            .append(RESET)
+                            .append('\n');
+                    sb.append(GREEN)
+                            .append("+ ")
+                            .append(highlightWordDiff(line.newText, line.oldText, GREEN))
+                            .append(RESET)
+                            .append('\n');
                 }
             }
         }
@@ -72,8 +101,14 @@ public class DiffViewer {
         var sb = new StringBuilder();
         String separator = " │ ";
         String headerFmt = "%-" + colWidth + "s" + separator + "%-" + colWidth + "s";
-        sb.append(CYAN).append(String.format(headerFmt, "Old", "New")).append(RESET).append('\n');
-        sb.append("─".repeat(colWidth)).append("─┼─").append("─".repeat(colWidth)).append('\n');
+        sb.append(CYAN)
+                .append(String.format(headerFmt, "Old", "New"))
+                .append(RESET)
+                .append('\n');
+        sb.append("─".repeat(colWidth))
+                .append("─┼─")
+                .append("─".repeat(colWidth))
+                .append('\n');
 
         for (DiffLine line : lines) {
             String left = truncate(line.oldText != null ? line.oldText : "", colWidth);
@@ -82,17 +117,36 @@ public class DiffViewer {
             String rightFmt = "%-" + colWidth + "s";
 
             switch (line.type) {
-                case SAME -> sb.append(DIM)
-                    .append(String.format(leftFmt, left)).append(separator)
-                    .append(String.format(rightFmt, right)).append(RESET).append('\n');
-                case REMOVED -> sb.append(RED)
-                    .append(String.format(leftFmt, left)).append(RESET).append(separator)
-                    .append(String.format(rightFmt, "")).append('\n');
-                case ADDED -> sb.append(String.format(leftFmt, "")).append(separator)
-                    .append(GREEN).append(String.format(rightFmt, right)).append(RESET).append('\n');
-                case MODIFIED -> sb.append(RED)
-                    .append(String.format(leftFmt, left)).append(RESET).append(separator)
-                    .append(GREEN).append(String.format(rightFmt, right)).append(RESET).append('\n');
+                case SAME ->
+                    sb.append(DIM)
+                            .append(String.format(leftFmt, left))
+                            .append(separator)
+                            .append(String.format(rightFmt, right))
+                            .append(RESET)
+                            .append('\n');
+                case REMOVED ->
+                    sb.append(RED)
+                            .append(String.format(leftFmt, left))
+                            .append(RESET)
+                            .append(separator)
+                            .append(String.format(rightFmt, ""))
+                            .append('\n');
+                case ADDED ->
+                    sb.append(String.format(leftFmt, ""))
+                            .append(separator)
+                            .append(GREEN)
+                            .append(String.format(rightFmt, right))
+                            .append(RESET)
+                            .append('\n');
+                case MODIFIED ->
+                    sb.append(RED)
+                            .append(String.format(leftFmt, left))
+                            .append(RESET)
+                            .append(separator)
+                            .append(GREEN)
+                            .append(String.format(rightFmt, right))
+                            .append(RESET)
+                            .append('\n');
             }
         }
         return sb.toString();
@@ -117,13 +171,15 @@ public class DiffViewer {
     public record DiffSummary(int added, int removed, int modified, int unchanged) {
         public String format() {
             return GREEN + "+" + added + RESET + " "
-                + RED + "-" + removed + RESET + " "
-                + YELLOW + "~" + modified + RESET;
+                    + RED + "-" + removed + RESET + " "
+                    + YELLOW + "~" + modified + RESET;
         }
     }
 
     private static String truncate(String s, int maxLen) {
-        if (s.length() <= maxLen) { return s; }
+        if (s.length() <= maxLen) {
+            return s;
+        }
         return s.substring(0, maxLen - 1) + "…";
     }
 
@@ -133,8 +189,12 @@ public class DiffViewer {
      * Matching campusclaw's diffWords() intra-line highlighting behavior.
      */
     static String highlightWordDiff(String line, String other, String baseColor) {
-        if (line == null || line.isEmpty()) { return ""; }
-        if (other == null || other.isEmpty()) { return line; }
+        if (line == null || line.isEmpty()) {
+            return "";
+        }
+        if (other == null || other.isEmpty()) {
+            return line;
+        }
 
         // Split into words (preserving whitespace as separate tokens)
         var lineTokens = tokenize(line);
@@ -184,13 +244,17 @@ public class DiffViewer {
                 current.setLength(0);
                 inWord = false;
             } else if (!inWord && !isWs) {
-                if (!current.isEmpty()) { tokens.add(current.toString()); }
+                if (!current.isEmpty()) {
+                    tokens.add(current.toString());
+                }
                 current.setLength(0);
                 inWord = true;
             }
             current.append(ch);
         }
-        if (!current.isEmpty()) { tokens.add(current.toString()); }
+        if (!current.isEmpty()) {
+            tokens.add(current.toString());
+        }
         return tokens;
     }
 
@@ -212,7 +276,8 @@ public class DiffViewer {
         while (i < m && j < n) {
             if (a.get(i).equals(b.get(j))) {
                 result.add(a.get(i));
-                i++; j++;
+                i++;
+                j++;
             } else if (dp[i + 1][j] >= dp[i][j + 1]) {
                 i++;
             } else {
@@ -241,7 +306,8 @@ public class DiffViewer {
         while (i < m || j < n) {
             if (i < m && j < n && oldLines[i].equals(newLines[j])) {
                 result.add(new DiffLine(LineType.SAME, i + 1, j + 1, oldLines[i], newLines[j]));
-                i++; j++;
+                i++;
+                j++;
             } else if (j < n && (i >= m || dp[i][j + 1] >= dp[i + 1][j])) {
                 result.add(new DiffLine(LineType.ADDED, -1, j + 1, null, newLines[j]));
                 j++;

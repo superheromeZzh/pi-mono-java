@@ -9,8 +9,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public record ConnectParams(
-    @JsonProperty("minProtocol") Integer minProtocol,
-    @JsonProperty("maxProtocol") Integer maxProtocol,
-    @JsonProperty("client") ClientInfo client,
-    @JsonProperty("auth") AuthInfo auth
-) {}
+        @JsonProperty("minProtocol") Integer minProtocol,
+        @JsonProperty("maxProtocol") Integer maxProtocol,
+        @JsonProperty("client") ClientInfo client,
+        @JsonProperty("auth") AuthInfo auth) {}

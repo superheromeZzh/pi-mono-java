@@ -30,9 +30,8 @@ class TuiVisualTest {
         var footer = new FooterComponent();
 
         // Welcome
-        chatContainer.addChild(new Text(
-                "\033[1m\033[36mCampusClaw\033[0m\033[2m (glm-5)\033[0m\n"
-                        + "\033[2mType /help for commands, /quit to exit\033[0m"));
+        chatContainer.addChild(new Text("\033[1m\033[36mCampusClaw\033[0m\033[2m (glm-5)\033[0m\n"
+                + "\033[2mType /help for commands, /quit to exit\033[0m"));
 
         // User message
         chatContainer.addChild(new UserMessageComponent("你好，你是哪个大模型"));
@@ -141,12 +140,14 @@ class TuiVisualTest {
         var assistant = new AssistantMessageComponent();
         // First render: no content
         var lines1 = assistant.render(80);
-        assertTrue(String.join("\n", lines1.stream().map(this::stripAnsi).toList()).contains("..."));
+        assertTrue(
+                String.join("\n", lines1.stream().map(this::stripAnsi).toList()).contains("..."));
 
         // Second render: text arrives
         assistant.appendText("Hello");
         var lines2 = assistant.render(80);
-        assertFalse(String.join("\n", lines2.stream().map(this::stripAnsi).toList()).contains("..."));
+        assertFalse(
+                String.join("\n", lines2.stream().map(this::stripAnsi).toList()).contains("..."));
     }
 
     @Test
@@ -182,7 +183,6 @@ class TuiVisualTest {
     }
 
     private String stripAnsi(String s) {
-        return s.replaceAll("\033\\[[;\\d]*[a-zA-Z]", "")
-                .replaceAll("\033\\[\\d+;\\d+;\\d+;\\d+;\\d+m", "");
+        return s.replaceAll("\033\\[[;\\d]*[a-zA-Z]", "").replaceAll("\033\\[\\d+;\\d+;\\d+;\\d+;\\d+m", "");
     }
 }

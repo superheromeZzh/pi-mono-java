@@ -29,8 +29,8 @@ public final class GitUtils {
      */
     public static Optional<String> getCurrentBranch(Path workDir) {
         return runGit(workDir, "rev-parse", "--abbrev-ref", "HEAD")
-            .map(String::trim)
-            .filter(s -> !s.isEmpty());
+                .map(String::trim)
+                .filter(s -> !s.isEmpty());
     }
 
     /**
@@ -38,8 +38,8 @@ public final class GitUtils {
      */
     public static boolean hasUncommittedChanges(Path workDir) {
         return runGit(workDir, "status", "--porcelain")
-            .map(output -> !output.trim().isEmpty())
-            .orElse(false);
+                .map(output -> !output.trim().isEmpty())
+                .orElse(false);
     }
 
     /**
@@ -47,8 +47,8 @@ public final class GitUtils {
      */
     public static boolean isGitRepo(Path workDir) {
         return runGit(workDir, "rev-parse", "--is-inside-work-tree")
-            .map(output -> "true".equals(output.trim()))
-            .orElse(false);
+                .map(output -> "true".equals(output.trim()))
+                .orElse(false);
     }
 
     /**
@@ -56,18 +56,16 @@ public final class GitUtils {
      */
     public static Optional<Path> getRepoRoot(Path workDir) {
         return runGit(workDir, "rev-parse", "--show-toplevel")
-            .map(String::trim)
-            .filter(s -> !s.isEmpty())
-            .map(Path::of);
+                .map(String::trim)
+                .filter(s -> !s.isEmpty())
+                .map(Path::of);
     }
 
     /**
      * Returns the short commit hash of HEAD.
      */
     public static Optional<String> getHeadCommit(Path workDir) {
-        return runGit(workDir, "rev-parse", "--short", "HEAD")
-            .map(String::trim)
-            .filter(s -> !s.isEmpty());
+        return runGit(workDir, "rev-parse", "--short", "HEAD").map(String::trim).filter(s -> !s.isEmpty());
     }
 
     /**
@@ -75,26 +73,22 @@ public final class GitUtils {
      */
     public static List<String> getChangedFiles(Path workDir) {
         return runGit(workDir, "diff", "--name-only", "HEAD")
-            .map(output -> output.lines().filter(l -> !l.isBlank()).toList())
-            .orElse(List.of());
+                .map(output -> output.lines().filter(l -> !l.isBlank()).toList())
+                .orElse(List.of());
     }
 
     /**
      * Returns the configured user name from git config.
      */
     public static Optional<String> getUserName(Path workDir) {
-        return runGit(workDir, "config", "user.name")
-            .map(String::trim)
-            .filter(s -> !s.isEmpty());
+        return runGit(workDir, "config", "user.name").map(String::trim).filter(s -> !s.isEmpty());
     }
 
     /**
      * Returns the remote URL for 'origin'.
      */
     public static Optional<String> getRemoteUrl(Path workDir) {
-        return runGit(workDir, "remote", "get-url", "origin")
-            .map(String::trim)
-            .filter(s -> !s.isEmpty());
+        return runGit(workDir, "remote", "get-url", "origin").map(String::trim).filter(s -> !s.isEmpty());
     }
 
     /**
@@ -106,9 +100,7 @@ public final class GitUtils {
             command[0] = "git";
             System.arraycopy(args, 0, command, 1, args.length);
 
-            var pb = new ProcessBuilder(command)
-                .directory(workDir.toFile())
-                .redirectErrorStream(false);
+            var pb = new ProcessBuilder(command).directory(workDir.toFile()).redirectErrorStream(false);
 
             var process = pb.start();
             var stdout = new String(process.getInputStream().readAllBytes());

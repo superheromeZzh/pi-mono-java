@@ -16,7 +16,6 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import picocli.CommandLine;
 import picocli.CommandLine.IFactory;
 
-
 /**
  * CampusClaw — Spring Boot CLI application.
  * Bridges Picocli with Spring Boot via the picocli-spring-boot-starter.

@@ -48,42 +48,47 @@ public class HybridGrepTool implements AgentTool {
 
     @Override
     public String description() {
-        return "Search file contents using regular expressions. " +
-               "Use _executionMode parameter to force specific mode.";
+        return "Search file contents using regular expressions. "
+                + "Use _executionMode parameter to force specific mode.";
     }
 
     @Override
     public JsonNode parameters() {
         ObjectNode props = mapper.createObjectNode();
-        props.set("pattern", mapper.createObjectNode()
-            .put("type", "string")
-            .put("description", "Regular expression pattern to search for"));
-        props.set("path", mapper.createObjectNode()
-            .put("type", "string")
-            .put("description", "File or directory to search in (optional)"));
-        props.set("glob", mapper.createObjectNode()
-            .put("type", "string")
-            .put("description", "Glob pattern to filter files (optional)"));
+        props.set(
+                "pattern",
+                mapper.createObjectNode()
+                        .put("type", "string")
+                        .put("description", "Regular expression pattern to search for"));
+        props.set(
+                "path",
+                mapper.createObjectNode()
+                        .put("type", "string")
+                        .put("description", "File or directory to search in (optional)"));
+        props.set(
+                "glob",
+                mapper.createObjectNode()
+                        .put("type", "string")
+                        .put("description", "Glob pattern to filter files (optional)"));
         ArrayNode enumValues = mapper.createArrayNode();
         enumValues.add("local");
         enumValues.add("sandbox");
         enumValues.add("auto");
-        ObjectNode execModeNode = mapper.createObjectNode()
-            .put("type", "string");
+        ObjectNode execModeNode = mapper.createObjectNode().put("type", "string");
         execModeNode.set("enum", enumValues);
         execModeNode.put("description", "Override execution mode");
         props.set("_executionMode", execModeNode);
 
         return mapper.createObjectNode()
-            .put("type", "object")
-            .<ObjectNode>set("properties", props)
-            .set("required", mapper.createArrayNode().add("pattern"));
+                .put("type", "object")
+                .<ObjectNode>set("properties", props)
+                .set("required", mapper.createArrayNode().add("pattern"));
     }
 
     @Override
-    public AgentToolResult execute(String toolCallId, Map<String, Object> params,
-                                    CancellationToken signal,
-                                    AgentToolUpdateCallback onUpdate) throws Exception {
+    public AgentToolResult execute(
+            String toolCallId, Map<String, Object> params, CancellationToken signal, AgentToolUpdateCallback onUpdate)
+            throws Exception {
         ExecutionMode explicitMode = extractMode(params);
         return router.route(name(), params, explicitMode, signal, onUpdate);
     }

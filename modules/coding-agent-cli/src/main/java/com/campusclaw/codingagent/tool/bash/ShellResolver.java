@@ -118,8 +118,8 @@ public final class ShellResolver {
                     .redirectErrorStream(true)
                     .start();
             StringBuilder sb = new StringBuilder();
-            try (BufferedReader reader = new BufferedReader(
-                    new InputStreamReader(p.getInputStream(), StandardCharsets.UTF_8))) {
+            try (BufferedReader reader =
+                    new BufferedReader(new InputStreamReader(p.getInputStream(), StandardCharsets.UTF_8))) {
                 String line;
                 while ((line = reader.readLine()) != null) {
                     if (sb.length() == 0) {

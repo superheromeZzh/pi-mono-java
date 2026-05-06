@@ -43,34 +43,32 @@ public class ToolExecutionPipeline {
     }
 
     public ToolResultMessage execute(
-        AgentTool tool,
-        ToolCall toolCall,
-        Map<String, Object> validatedArgs,
-        AgentContext context,
-        CancellationToken signal,
-        AgentEventListener listener
-    ) {
+            AgentTool tool,
+            ToolCall toolCall,
+            Map<String, Object> validatedArgs,
+            AgentContext context,
+            CancellationToken signal,
+            AgentEventListener listener) {
         Objects.requireNonNull(tool, "tool");
         Objects.requireNonNull(toolCall, "toolCall");
         Objects.requireNonNull(validatedArgs, "validatedArgs");
         Objects.requireNonNull(context, "context");
         Objects.requireNonNull(signal, "signal");
 
-        AgentEventListener eventListener = listener != null ? listener : event -> {
-        };
+        AgentEventListener eventListener = listener != null ? listener : event -> {};
         var toolName = toolCall.name();
 
         try {
             var beforeResult = runBeforeHook(toolCall, validatedArgs, context);
             if (beforeResult != null && beforeResult.block()) {
                 return toToolResultMessage(
-                    toolCall,
-                    toolName,
-                    errorResult(beforeResult.reason() != null
-                        ? beforeResult.reason()
-                        : "Tool call blocked by beforeToolCall handler"),
-                    true
-                );
+                        toolCall,
+                        toolName,
+                        errorResult(
+                                beforeResult.reason() != null
+                                        ? beforeResult.reason()
+                                        : "Tool call blocked by beforeToolCall handler"),
+                        true);
             }
         } catch (Exception e) {
             return toToolResultMessage(toolCall, toolName, errorResult(messageForException(e)), true);
@@ -83,16 +81,11 @@ public class ToolExecutionPipeline {
         try {
             validateArguments(tool, validatedArgs);
             result = normalizeResult(tool.execute(
-                toolCall.id(),
-                validatedArgs,
-                signal,
-                partialResult -> eventListener.onEvent(new ToolExecutionUpdateEvent(
                     toolCall.id(),
-                    toolName,
                     validatedArgs,
-                    partialResult
-                ))
-            ));
+                    signal,
+                    partialResult -> eventListener.onEvent(
+                            new ToolExecutionUpdateEvent(toolCall.id(), toolName, validatedArgs, partialResult))));
         } catch (Exception e) {
             result = errorResult(messageForException(e));
             isError = true;
@@ -116,12 +109,11 @@ public class ToolExecutionPipeline {
     }
 
     public List<ToolResultMessage> executeAll(
-        List<ToolCallWithTool> calls,
-        ToolExecutionMode mode,
-        AgentContext context,
-        CancellationToken signal,
-        AgentEventListener listener
-    ) {
+            List<ToolCallWithTool> calls,
+            ToolExecutionMode mode,
+            AgentContext context,
+            CancellationToken signal,
+            AgentEventListener listener) {
         Objects.requireNonNull(calls, "calls");
         Objects.requireNonNull(context, "context");
         Objects.requireNonNull(signal, "signal");
@@ -137,11 +129,7 @@ public class ToolExecutionPipeline {
     }
 
     private List<ToolResultMessage> executeSequentially(
-        List<ToolCallWithTool> calls,
-        AgentContext context,
-        CancellationToken signal,
-        AgentEventListener listener
-    ) {
+            List<ToolCallWithTool> calls, AgentContext context, CancellationToken signal, AgentEventListener listener) {
         var results = new ArrayList<ToolResultMessage>(calls.size());
         for (var call : calls) {
             results.add(execute(call.tool(), call.toolCall(), call.validatedArgs(), context, signal, listener));
@@ -150,17 +138,12 @@ public class ToolExecutionPipeline {
     }
 
     private List<ToolResultMessage> executeInParallel(
-        List<ToolCallWithTool> calls,
-        AgentContext context,
-        CancellationToken signal,
-        AgentEventListener listener
-    ) {
+            List<ToolCallWithTool> calls, AgentContext context, CancellationToken signal, AgentEventListener listener) {
         try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
             var futures = new ArrayList<java.util.concurrent.Future<ToolResultMessage>>(calls.size());
             for (var call : calls) {
-                futures.add(executor.submit(() ->
-                    execute(call.tool(), call.toolCall(), call.validatedArgs(), context, signal, listener)
-                ));
+                futures.add(executor.submit(
+                        () -> execute(call.tool(), call.toolCall(), call.validatedArgs(), context, signal, listener)));
             }
 
             var results = new ArrayList<ToolResultMessage>(calls.size());
@@ -177,43 +160,29 @@ public class ToolExecutionPipeline {
     }
 
     private BeforeToolCallResult runBeforeHook(
-        ToolCall toolCall,
-        Map<String, Object> validatedArgs,
-        AgentContext context
-    ) throws Exception {
+            ToolCall toolCall, Map<String, Object> validatedArgs, AgentContext context) throws Exception {
         var handler = beforeToolCallHandler;
         if (handler == null) {
             return null;
         }
 
-        return handler.handle(new BeforeToolCallContext(
-            context.assistantMessage(),
-            toolCall,
-            validatedArgs,
-            context
-        ));
+        return handler.handle(new BeforeToolCallContext(context.assistantMessage(), toolCall, validatedArgs, context));
     }
 
     private AfterToolCallResult runAfterHook(
-        ToolCall toolCall,
-        Map<String, Object> validatedArgs,
-        AgentContext context,
-        AgentToolResult result,
-        boolean isError
-    ) throws Exception {
+            ToolCall toolCall,
+            Map<String, Object> validatedArgs,
+            AgentContext context,
+            AgentToolResult result,
+            boolean isError)
+            throws Exception {
         var handler = afterToolCallHandler;
         if (handler == null) {
             return null;
         }
 
         return handler.handle(new AfterToolCallContext(
-            context.assistantMessage(),
-            toolCall,
-            validatedArgs,
-            result,
-            isError,
-            context
-        ));
+                context.assistantMessage(), toolCall, validatedArgs, result, isError, context));
     }
 
     private void validateArguments(AgentTool tool, Map<String, Object> validatedArgs) {
@@ -221,10 +190,10 @@ public class ToolExecutionPipeline {
         var errors = schema.validate(objectMapper.valueToTree(validatedArgs));
         if (!errors.isEmpty()) {
             var message = errors.stream()
-                .map(Object::toString)
-                .sorted()
-                .reduce((left, right) -> left + "; " + right)
-                .orElse("Unknown schema validation error");
+                    .map(Object::toString)
+                    .sorted()
+                    .reduce((left, right) -> left + "; " + right)
+                    .orElse("Unknown schema validation error");
             throw new IllegalArgumentException("Tool arguments failed validation: " + message);
         }
     }
@@ -249,19 +218,9 @@ public class ToolExecutionPipeline {
     }
 
     private ToolResultMessage toToolResultMessage(
-        ToolCall toolCall,
-        String toolName,
-        AgentToolResult result,
-        boolean isError
-    ) {
+            ToolCall toolCall, String toolName, AgentToolResult result, boolean isError) {
         return new ToolResultMessage(
-            toolCall.id(),
-            toolName,
-            result.content(),
-            result.details(),
-            isError,
-            System.currentTimeMillis()
-        );
+                toolCall.id(), toolName, result.content(), result.details(), isError, System.currentTimeMillis());
     }
 
     private String messageForException(Exception e) {

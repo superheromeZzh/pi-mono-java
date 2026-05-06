@@ -27,34 +27,40 @@ public class Timings {
     private static final Logger log = LoggerFactory.getLogger(Timings.class);
 
     public record TimingSpan(
-        String name,
-        long startNanos,
-        long endNanos,
-        @Nullable String parentName,
-        @Nullable Map<String, String> metadata
-    ) {
-        public long durationNanos() { return endNanos - startNanos; }
-        public double durationMs() { return durationNanos() / 1_000_000.0; }
-        public double durationSecs() { return durationNanos() / 1_000_000_000.0; }
+            String name,
+            long startNanos,
+            long endNanos,
+            @Nullable String parentName,
+            @Nullable Map<String, String> metadata) {
+        public long durationNanos() {
+            return endNanos - startNanos;
+        }
+
+        public double durationMs() {
+            return durationNanos() / 1_000_000.0;
+        }
+
+        public double durationSecs() {
+            return durationNanos() / 1_000_000_000.0;
+        }
     }
 
     public record TimingStats(
-        String name,
-        int count,
-        double minMs,
-        double maxMs,
-        double avgMs,
-        double totalMs,
-        double p50Ms,
-        double p95Ms,
-        double p99Ms
-    ) {
+            String name,
+            int count,
+            double minMs,
+            double maxMs,
+            double avgMs,
+            double totalMs,
+            double p50Ms,
+            double p95Ms,
+            double p99Ms) {
         public String format() {
             if (count == 1) {
                 return String.format("%s: %.1fms", name, totalMs);
             }
-            return String.format("%s: %.1fms avg (min=%.1f, max=%.1f, p95=%.1f, n=%d)",
-                name, avgMs, minMs, maxMs, p95Ms, count);
+            return String.format(
+                    "%s: %.1fms avg (min=%.1f, max=%.1f, p95=%.1f, n=%d)", name, avgMs, minMs, maxMs, p95Ms, count);
         }
     }
 
@@ -65,13 +71,17 @@ public class Timings {
 
     /** Start a named timing span. */
     public void start(String name) {
-        if (!enabled) { return; }
+        if (!enabled) {
+            return;
+        }
         activeSpans.put(name, System.nanoTime());
     }
 
     /** Start a nested timing span with a parent. */
     public void start(String name, String parentName) {
-        if (!enabled) { return; }
+        if (!enabled) {
+            return;
+        }
         activeSpans.put(name, System.nanoTime());
         activeParents.put(name, parentName);
     }
@@ -83,7 +93,9 @@ public class Timings {
 
     /** End a timing span with optional metadata. */
     public @Nullable TimingSpan end(String name, @Nullable Map<String, String> metadata) {
-        if (!enabled) { return null; }
+        if (!enabled) {
+            return null;
+        }
         Long startNanos = activeSpans.remove(name);
         if (startNanos == null) {
             log.debug("No active timing span: {}", name);
@@ -118,25 +130,27 @@ public class Timings {
     /** Get statistics for a named span across all recordings. */
     public Optional<TimingStats> getStats(String name) {
         List<Double> durations = spans.stream()
-            .filter(s -> s.name().equals(name))
-            .map(TimingSpan::durationMs)
-            .sorted()
-            .toList();
+                .filter(s -> s.name().equals(name))
+                .map(TimingSpan::durationMs)
+                .sorted()
+                .toList();
 
-        if (durations.isEmpty()) { return Optional.empty(); }
+        if (durations.isEmpty()) {
+            return Optional.empty();
+        }
 
         int n = durations.size();
         double sum = durations.stream().mapToDouble(d -> d).sum();
         return Optional.of(new TimingStats(
-            name, n,
-            durations.get(0),
-            durations.get(n - 1),
-            sum / n,
-            sum,
-            percentile(durations, 0.50),
-            percentile(durations, 0.95),
-            percentile(durations, 0.99)
-        ));
+                name,
+                n,
+                durations.get(0),
+                durations.get(n - 1),
+                sum / n,
+                sum,
+                percentile(durations, 0.50),
+                percentile(durations, 0.95),
+                percentile(durations, 0.99)));
     }
 
     /** Get all recorded spans. */
@@ -184,10 +198,14 @@ public class Timings {
         this.enabled = enabled;
     }
 
-    public boolean isEnabled() { return enabled; }
+    public boolean isEnabled() {
+        return enabled;
+    }
 
     private static double percentile(List<Double> sorted, double p) {
-        if (sorted.isEmpty()) { return 0; }
+        if (sorted.isEmpty()) {
+            return 0;
+        }
         int index = (int) Math.ceil(p * sorted.size()) - 1;
         return sorted.get(Math.max(0, Math.min(index, sorted.size() - 1)));
     }

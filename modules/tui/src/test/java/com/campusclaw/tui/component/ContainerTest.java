@@ -80,7 +80,8 @@ class ContainerTest {
         void getChildrenIsUnmodifiable() {
             var container = new Container();
             container.addChild(new Text("x"));
-            assertThrows(UnsupportedOperationException.class,
+            assertThrows(
+                    UnsupportedOperationException.class,
                     () -> container.getChildren().add(new Text("y")));
         }
     }

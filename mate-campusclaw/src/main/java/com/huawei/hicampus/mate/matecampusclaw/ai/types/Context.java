@@ -18,8 +18,6 @@ import jakarta.annotation.Nullable;
  * @param tools        optional list of tools available for the LLM to invoke
  */
 public record Context(
-    @JsonProperty("systemPrompt") @Nullable String systemPrompt,
-    @JsonProperty("messages") List<Message> messages,
-    @JsonProperty("tools") @Nullable List<Tool> tools
-) {
-}
+        @JsonProperty("systemPrompt") @Nullable String systemPrompt,
+        @JsonProperty("messages") List<Message> messages,
+        @JsonProperty("tools") @Nullable List<Tool> tools) {}

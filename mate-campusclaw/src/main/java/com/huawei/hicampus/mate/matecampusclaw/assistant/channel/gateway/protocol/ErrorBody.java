@@ -11,9 +11,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public record ErrorBody(
-    @JsonProperty("code") String code,
-    @JsonProperty("message") String message,
-    @JsonProperty("details") Map<String, Object> details,
-    @JsonProperty("retryable") boolean retryable,
-    @JsonProperty("retryAfterMs") long retryAfterMs
-) {}
+        @JsonProperty("code") String code,
+        @JsonProperty("message") String message,
+        @JsonProperty("details") Map<String, Object> details,
+        @JsonProperty("retryable") boolean retryable,
+        @JsonProperty("retryAfterMs") long retryAfterMs) {}

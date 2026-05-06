@@ -65,8 +65,7 @@ public class ServerMode {
             SystemPromptBuilder promptBuilder,
             List<AgentTool> tools,
             SessionConfig baseConfig,
-            int port
-    ) {
+            int port) {
         this(aiService, modelRegistry, promptBuilder, tools, baseConfig, port, "localhost", null, false, null, true);
     }
 
@@ -80,10 +79,19 @@ public class ServerMode {
             String host,
             SandboxSkillParser sandboxParser,
             boolean useSandbox,
-            ModelCatalogService modelCatalog
-    ) {
-        this(aiService, modelRegistry, promptBuilder, tools, baseConfig, port, host,
-                sandboxParser, useSandbox, modelCatalog, true);
+            ModelCatalogService modelCatalog) {
+        this(
+                aiService,
+                modelRegistry,
+                promptBuilder,
+                tools,
+                baseConfig,
+                port,
+                host,
+                sandboxParser,
+                useSandbox,
+                modelCatalog,
+                true);
     }
 
     public ServerMode(
@@ -97,8 +105,7 @@ public class ServerMode {
             SandboxSkillParser sandboxParser,
             boolean useSandbox,
             ModelCatalogService modelCatalog,
-            boolean sessionPersistenceEnabled
-    ) {
+            boolean sessionPersistenceEnabled) {
         this.aiService = aiService;
         this.modelRegistry = modelRegistry;
         this.promptBuilder = promptBuilder;
@@ -113,8 +120,15 @@ public class ServerMode {
     }
 
     public void run() {
-        var sessionPool = new SessionPool(aiService, modelRegistry, promptBuilder, tools, baseConfig,
-                sandboxParser, useSandbox, sessionPersistenceEnabled);
+        var sessionPool = new SessionPool(
+                aiService,
+                modelRegistry,
+                promptBuilder,
+                tools,
+                baseConfig,
+                sandboxParser,
+                useSandbox,
+                sessionPersistenceEnabled);
         var chatHandler = new ChatHandler(sessionPool);
         var wsHandler = new ChatWebSocketHandler(sessionPool, modelCatalog);
         var conversationLister = new com.huawei.hicampus.mate.matecampusclaw.codingagent.session.ConversationLister();
@@ -124,11 +138,11 @@ public class ServerMode {
                 new SkillLoader(sandboxParser, useSandbox));
 
         RouterFunction<ServerResponse> routes = RouterFunctions.route()
-                .GET("/api/health", req ->
-                        ServerResponse.ok().bodyValue(Map.of("status", "ok")))
+                .GET("/api/health", req -> ServerResponse.ok().bodyValue(Map.of("status", "ok")))
                 .POST("/api/chat", chatHandler::chat)
                 .GET("/api/conversations", req -> ServerResponse.ok()
-                        .bodyValue(Map.of("conversations",
+                        .bodyValue(Map.of(
+                                "conversations",
                                 com.huawei.hicampus.mate.matecampusclaw.codingagent.session.ConversationLister.toWireFormat(
                                         conversationLister.listForServer()))))
                 .DELETE("/api/conversations/{id}", req -> {
@@ -137,8 +151,7 @@ public class ServerMode {
                     if (removed) {
                         return ServerResponse.ok().bodyValue(Map.of("message", "Removed conversation: " + id));
                     }
-                    return ServerResponse.status(404)
-                            .bodyValue(Map.of("error", "Conversation not found: " + id));
+                    return ServerResponse.status(404).bodyValue(Map.of("error", "Conversation not found: " + id));
                 })
                 .POST("/api/skills", skillHandler::upload)
                 .GET("/api/skills", skillHandler::list)

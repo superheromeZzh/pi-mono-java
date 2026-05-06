@@ -519,7 +519,8 @@ class AnsiUtilsTest {
             String text = "这是一段包含中文和English混合的文本";
             List<String> wrapped = AnsiUtils.wrapTextWithAnsi(text, 10);
             for (String line : wrapped) {
-                assertTrue(AnsiUtils.visibleWidth(line) <= 10,
+                assertTrue(
+                        AnsiUtils.visibleWidth(line) <= 10,
                         "Line exceeds max width: '" + line + "' width=" + AnsiUtils.visibleWidth(line));
             }
         }

@@ -15,9 +15,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  * @param timestamp Unix timestamp in milliseconds
  */
 public record UserMessage(
-    @JsonProperty("content") List<ContentBlock> content,
-    @JsonProperty("timestamp") long timestamp
-) implements Message {
+        @JsonProperty("content") List<ContentBlock> content, @JsonProperty("timestamp") long timestamp)
+        implements Message {
 
     /** Convenience constructor that wraps a plain text string into a single TextContent block. */
     public UserMessage(String text, long timestamp) {

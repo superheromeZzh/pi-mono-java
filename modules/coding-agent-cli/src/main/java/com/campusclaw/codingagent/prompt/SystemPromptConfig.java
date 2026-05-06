@@ -32,8 +32,7 @@ public record SystemPromptConfig(
         Map<String, String> env,
         List<ContextFile> contextFiles,
         String systemPromptOverride,
-        String appendSystemPrompt
-) {
+        String appendSystemPrompt) {
     public SystemPromptConfig {
         tools = tools != null ? List.copyOf(tools) : List.of();
         skills = skills != null ? List.copyOf(skills) : List.of();
@@ -43,12 +42,7 @@ public record SystemPromptConfig(
 
     /** Backwards-compatible constructor without context files, system override, or append. */
     public SystemPromptConfig(
-            List<AgentTool> tools,
-            List<Skill> skills,
-            Path cwd,
-            String customPrompt,
-            Map<String, String> env
-    ) {
+            List<AgentTool> tools, List<Skill> skills, Path cwd, String customPrompt, Map<String, String> env) {
         this(tools, skills, cwd, customPrompt, env, List.of(), null, null);
     }
 }

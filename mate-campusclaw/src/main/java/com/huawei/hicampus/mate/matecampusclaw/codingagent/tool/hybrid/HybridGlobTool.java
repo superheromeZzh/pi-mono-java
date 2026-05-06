@@ -48,39 +48,41 @@ public class HybridGlobTool implements AgentTool {
 
     @Override
     public String description() {
-        return "Find files matching a glob pattern. " +
-               "Use _executionMode parameter to force specific mode.";
+        return "Find files matching a glob pattern. " + "Use _executionMode parameter to force specific mode.";
     }
 
     @Override
     public JsonNode parameters() {
         ObjectNode props = mapper.createObjectNode();
-        props.set("pattern", mapper.createObjectNode()
-            .put("type", "string")
-            .put("description", "Glob pattern (e.g. '*.java', '**/*.txt')"));
-        props.set("path", mapper.createObjectNode()
-            .put("type", "string")
-            .put("description", "Starting directory (optional, defaults to cwd)"));
+        props.set(
+                "pattern",
+                mapper.createObjectNode()
+                        .put("type", "string")
+                        .put("description", "Glob pattern (e.g. '*.java', '**/*.txt')"));
+        props.set(
+                "path",
+                mapper.createObjectNode()
+                        .put("type", "string")
+                        .put("description", "Starting directory (optional, defaults to cwd)"));
         ArrayNode enumValues = mapper.createArrayNode();
         enumValues.add("local");
         enumValues.add("sandbox");
         enumValues.add("auto");
-        ObjectNode execModeNode = mapper.createObjectNode()
-            .put("type", "string");
+        ObjectNode execModeNode = mapper.createObjectNode().put("type", "string");
         execModeNode.set("enum", enumValues);
         execModeNode.put("description", "Override execution mode");
         props.set("_executionMode", execModeNode);
 
         return mapper.createObjectNode()
-            .put("type", "object")
-            .<ObjectNode>set("properties", props)
-            .set("required", mapper.createArrayNode().add("pattern"));
+                .put("type", "object")
+                .<ObjectNode>set("properties", props)
+                .set("required", mapper.createArrayNode().add("pattern"));
     }
 
     @Override
-    public AgentToolResult execute(String toolCallId, Map<String, Object> params,
-                                    CancellationToken signal,
-                                    AgentToolUpdateCallback onUpdate) throws Exception {
+    public AgentToolResult execute(
+            String toolCallId, Map<String, Object> params, CancellationToken signal, AgentToolUpdateCallback onUpdate)
+            throws Exception {
         ExecutionMode explicitMode = extractMode(params);
         return router.route(name(), params, explicitMode, signal, onUpdate);
     }

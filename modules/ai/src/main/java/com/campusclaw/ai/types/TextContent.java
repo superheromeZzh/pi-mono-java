@@ -15,9 +15,8 @@ import jakarta.annotation.Nullable;
  * @param textSignature optional signature metadata (provider-specific)
  */
 public record TextContent(
-    @JsonProperty("text") String text,
-    @JsonProperty("textSignature") @Nullable String textSignature
-) implements ContentBlock {
+        @JsonProperty("text") String text, @JsonProperty("textSignature") @Nullable String textSignature)
+        implements ContentBlock {
 
     public TextContent(String text) {
         this(text, null);

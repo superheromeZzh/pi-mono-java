@@ -32,7 +32,9 @@ public final class ConfigValueResolver {
      * @return the resolved value with placeholders expanded
      */
     public static String resolve(String value) {
-        if (value == null) { return null; }
+        if (value == null) {
+            return null;
+        }
 
         // Expand ~ to home directory
         if (value.startsWith("~")) {

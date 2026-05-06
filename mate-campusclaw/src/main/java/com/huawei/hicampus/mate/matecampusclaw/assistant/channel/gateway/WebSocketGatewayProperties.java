@@ -21,8 +21,8 @@ public class WebSocketGatewayProperties {
     private int tickIntervalMs = 30000;
     private int protocolVersion = 3;
     private String serverVersion = "1.0.0";
-    private int maxPayload = 16777216;       // 16MB
-    private int maxBufferedBytes = 1048576;  // 1MB
+    private int maxPayload = 16777216; // 16MB
+    private int maxBufferedBytes = 1048576; // 1MB
 
     public boolean isEnabled() {
         return enabled;

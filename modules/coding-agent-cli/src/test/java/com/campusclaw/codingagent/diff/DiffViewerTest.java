@@ -81,8 +81,7 @@ class DiffViewerTest {
         void modifiedLineHasInverseHighlighting() {
             // Manually create a MODIFIED diff line to test intra-line highlighting
             var lines = java.util.List.of(
-                    new DiffViewer.DiffLine(DiffViewer.LineType.MODIFIED, 1, 1, "return foo;", "return bar;")
-            );
+                    new DiffViewer.DiffLine(DiffViewer.LineType.MODIFIED, 1, 1, "return foo;", "return bar;"));
             String output = DiffViewer.formatUnified(lines, "test.java");
             // The output should contain inverse highlighting for the changed word
             assertTrue(output.contains("\033[7m"), "Modified line should have intra-line highlighting");

@@ -29,18 +29,17 @@ import jakarta.annotation.Nullable;
  * @param thinkingBudgets token budgets per thinking level
  */
 public record SimpleStreamOptions(
-    @JsonProperty("temperature") @Nullable Double temperature,
-    @JsonProperty("maxTokens") @Nullable Integer maxTokens,
-    @JsonProperty("apiKey") @Nullable String apiKey,
-    @JsonProperty("transport") @Nullable Transport transport,
-    @JsonProperty("cacheRetention") @Nullable CacheRetention cacheRetention,
-    @JsonProperty("sessionId") @Nullable String sessionId,
-    @JsonProperty("headers") @Nullable Map<String, String> headers,
-    @JsonProperty("maxRetryDelayMs") @Nullable Long maxRetryDelayMs,
-    @JsonProperty("metadata") @Nullable Map<String, Object> metadata,
-    @JsonProperty("reasoning") @Nullable ThinkingLevel reasoning,
-    @JsonProperty("thinkingBudgets") @Nullable ThinkingBudgets thinkingBudgets
-) {
+        @JsonProperty("temperature") @Nullable Double temperature,
+        @JsonProperty("maxTokens") @Nullable Integer maxTokens,
+        @JsonProperty("apiKey") @Nullable String apiKey,
+        @JsonProperty("transport") @Nullable Transport transport,
+        @JsonProperty("cacheRetention") @Nullable CacheRetention cacheRetention,
+        @JsonProperty("sessionId") @Nullable String sessionId,
+        @JsonProperty("headers") @Nullable Map<String, String> headers,
+        @JsonProperty("maxRetryDelayMs") @Nullable Long maxRetryDelayMs,
+        @JsonProperty("metadata") @Nullable Map<String, Object> metadata,
+        @JsonProperty("reasoning") @Nullable ThinkingLevel reasoning,
+        @JsonProperty("thinkingBudgets") @Nullable ThinkingBudgets thinkingBudgets) {
 
     /** Returns a SimpleStreamOptions with all fields null. */
     public static SimpleStreamOptions empty() {
@@ -55,34 +54,47 @@ public record SimpleStreamOptions(
     /** Creates a SimpleStreamOptions from a base {@link StreamOptions} with no reasoning config. */
     public static SimpleStreamOptions from(StreamOptions base) {
         return new SimpleStreamOptions(
-            base.temperature(), base.maxTokens(), base.apiKey(), base.transport(),
-            base.cacheRetention(), base.sessionId(), base.headers(),
-            base.maxRetryDelayMs(), base.metadata(), null, null
-        );
+                base.temperature(),
+                base.maxTokens(),
+                base.apiKey(),
+                base.transport(),
+                base.cacheRetention(),
+                base.sessionId(),
+                base.headers(),
+                base.maxRetryDelayMs(),
+                base.metadata(),
+                null,
+                null);
     }
 
     /** Returns the base {@link StreamOptions} portion (without reasoning fields). */
     public StreamOptions toStreamOptions() {
         return new StreamOptions(
-            temperature, maxTokens, apiKey, transport, cacheRetention,
-            sessionId, headers, maxRetryDelayMs, metadata
-        );
+                temperature,
+                maxTokens,
+                apiKey,
+                transport,
+                cacheRetention,
+                sessionId,
+                headers,
+                maxRetryDelayMs,
+                metadata);
     }
 
     /** Returns a new {@link Builder} pre-populated from this instance. */
     public Builder toBuilder() {
         return new Builder()
-            .temperature(temperature)
-            .maxTokens(maxTokens)
-            .apiKey(apiKey)
-            .transport(transport)
-            .cacheRetention(cacheRetention)
-            .sessionId(sessionId)
-            .headers(headers)
-            .maxRetryDelayMs(maxRetryDelayMs)
-            .metadata(metadata)
-            .reasoning(reasoning)
-            .thinkingBudgets(thinkingBudgets);
+                .temperature(temperature)
+                .maxTokens(maxTokens)
+                .apiKey(apiKey)
+                .transport(transport)
+                .cacheRetention(cacheRetention)
+                .sessionId(sessionId)
+                .headers(headers)
+                .maxRetryDelayMs(maxRetryDelayMs)
+                .metadata(metadata)
+                .reasoning(reasoning)
+                .thinkingBudgets(thinkingBudgets);
     }
 
     public static final class Builder {
@@ -157,10 +169,17 @@ public record SimpleStreamOptions(
 
         public SimpleStreamOptions build() {
             return new SimpleStreamOptions(
-                temperature, maxTokens, apiKey, transport, cacheRetention,
-                sessionId, headers, maxRetryDelayMs, metadata,
-                reasoning, thinkingBudgets
-            );
+                    temperature,
+                    maxTokens,
+                    apiKey,
+                    transport,
+                    cacheRetention,
+                    sessionId,
+                    headers,
+                    maxRetryDelayMs,
+                    metadata,
+                    reasoning,
+                    thinkingBudgets);
         }
     }
 }

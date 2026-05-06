@@ -53,9 +53,7 @@ public class SkillRegistry {
      * (i.e. those with {@code disableModelInvocation == false}).
      */
     public List<Skill> getVisibleSkills() {
-        return skills.values().stream()
-                .filter(s -> !s.disableModelInvocation())
-                .toList();
+        return skills.values().stream().filter(s -> !s.disableModelInvocation()).toList();
     }
 
     /**

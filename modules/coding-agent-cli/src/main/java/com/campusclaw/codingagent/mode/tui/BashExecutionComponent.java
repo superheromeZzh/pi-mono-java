@@ -19,8 +19,8 @@ public class BashExecutionComponent implements Component {
     // Colors matching campusclaw dark theme
     private static final String ANSI_BASH_COLOR = "\033[38;2;181;189;104m"; // bashMode green #b5bd68
     private static final String ANSI_BOLD = "\033[1m";
-    private static final String ANSI_GRAY = "\033[38;2;128;128;128m";      // gray #808080
-    private static final String ANSI_ERROR = "\033[38;2;204;102;102m";     // error #cc6666
+    private static final String ANSI_GRAY = "\033[38;2;128;128;128m"; // gray #808080
+    private static final String ANSI_ERROR = "\033[38;2;204;102;102m"; // error #cc6666
     private static final String ANSI_RESET = "\033[0m";
 
     private final String command;
@@ -90,5 +90,5 @@ public class BashExecutionComponent implements Component {
     }
 
     @Override
-    public void invalidate() { }
+    public void invalidate() {}
 }

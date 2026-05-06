@@ -11,7 +11,4 @@ import com.huawei.hicampus.mate.matecampusclaw.codingagent.util.TruncationUtils;
  *
  * @param truncation truncation metadata, if output was truncated
  */
-public record ReadToolDetails(
-        TruncationUtils.TruncationResult truncation
-) {
-}
+public record ReadToolDetails(TruncationUtils.TruncationResult truncation) {}

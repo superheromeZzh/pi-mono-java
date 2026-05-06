@@ -74,8 +74,7 @@ class BashExecutorTest {
 
         @Test
         void passesEnvironmentVariables() throws IOException {
-            var options = new BashExecutorOptions(
-                    Duration.ofSeconds(10), null, Map.of("MY_VAR", "value42"));
+            var options = new BashExecutorOptions(Duration.ofSeconds(10), null, Map.of("MY_VAR", "value42"));
             var result = executor.execute("echo $MY_VAR", tempDir, options);
             assertEquals(0, result.exitCode());
             assertEquals("value42\n", result.stdout());
@@ -213,7 +212,8 @@ class BashExecutorTest {
 
             mutable.put("K2", "V2");
             assertFalse(options.env().containsKey("K2"));
-            assertThrows(UnsupportedOperationException.class, () -> options.env().put("X", "Y"));
+            assertThrows(
+                    UnsupportedOperationException.class, () -> options.env().put("X", "Y"));
         }
     }
 }

@@ -84,7 +84,9 @@ public class Loader implements Component {
 
     @Override
     public List<String> render(int width) {
-        if (!visible) { return List.of(); }
+        if (!visible) {
+            return List.of();
+        }
 
         tick();
         String frame = style.frames[frameIndex];

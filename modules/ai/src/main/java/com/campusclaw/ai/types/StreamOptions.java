@@ -26,16 +26,15 @@ import jakarta.annotation.Nullable;
  * @param metadata        arbitrary metadata to attach to the request
  */
 public record StreamOptions(
-    @JsonProperty("temperature") @Nullable Double temperature,
-    @JsonProperty("maxTokens") @Nullable Integer maxTokens,
-    @JsonProperty("apiKey") @Nullable String apiKey,
-    @JsonProperty("transport") @Nullable Transport transport,
-    @JsonProperty("cacheRetention") @Nullable CacheRetention cacheRetention,
-    @JsonProperty("sessionId") @Nullable String sessionId,
-    @JsonProperty("headers") @Nullable Map<String, String> headers,
-    @JsonProperty("maxRetryDelayMs") @Nullable Long maxRetryDelayMs,
-    @JsonProperty("metadata") @Nullable Map<String, Object> metadata
-) {
+        @JsonProperty("temperature") @Nullable Double temperature,
+        @JsonProperty("maxTokens") @Nullable Integer maxTokens,
+        @JsonProperty("apiKey") @Nullable String apiKey,
+        @JsonProperty("transport") @Nullable Transport transport,
+        @JsonProperty("cacheRetention") @Nullable CacheRetention cacheRetention,
+        @JsonProperty("sessionId") @Nullable String sessionId,
+        @JsonProperty("headers") @Nullable Map<String, String> headers,
+        @JsonProperty("maxRetryDelayMs") @Nullable Long maxRetryDelayMs,
+        @JsonProperty("metadata") @Nullable Map<String, Object> metadata) {
 
     /** Returns a StreamOptions with all fields null. */
     public static StreamOptions empty() {
@@ -50,15 +49,15 @@ public record StreamOptions(
     /** Returns a new {@link Builder} pre-populated from this instance. */
     public Builder toBuilder() {
         return new Builder()
-            .temperature(temperature)
-            .maxTokens(maxTokens)
-            .apiKey(apiKey)
-            .transport(transport)
-            .cacheRetention(cacheRetention)
-            .sessionId(sessionId)
-            .headers(headers)
-            .maxRetryDelayMs(maxRetryDelayMs)
-            .metadata(metadata);
+                .temperature(temperature)
+                .maxTokens(maxTokens)
+                .apiKey(apiKey)
+                .transport(transport)
+                .cacheRetention(cacheRetention)
+                .sessionId(sessionId)
+                .headers(headers)
+                .maxRetryDelayMs(maxRetryDelayMs)
+                .metadata(metadata);
     }
 
     public static final class Builder {
@@ -121,9 +120,15 @@ public record StreamOptions(
 
         public StreamOptions build() {
             return new StreamOptions(
-                temperature, maxTokens, apiKey, transport, cacheRetention,
-                sessionId, headers, maxRetryDelayMs, metadata
-            );
+                    temperature,
+                    maxTokens,
+                    apiKey,
+                    transport,
+                    cacheRetention,
+                    sessionId,
+                    headers,
+                    maxRetryDelayMs,
+                    metadata);
         }
     }
 }

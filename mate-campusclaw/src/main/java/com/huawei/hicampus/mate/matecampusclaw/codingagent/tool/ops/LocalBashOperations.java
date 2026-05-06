@@ -44,21 +44,23 @@ public class LocalBashOperations implements BashOperations {
         }
 
         // Drain stdout/stderr in a background thread so waitFor timeout can fire
-        Thread drainer = new Thread(() -> {
-            try (InputStream is = process.getInputStream()) {
-                byte[] buffer = new byte[4096];
-                int bytesRead;
-                while ((bytesRead = is.read(buffer)) != -1) {
-                    if (options.onData() != null) {
-                        byte[] chunk = new byte[bytesRead];
-                        System.arraycopy(buffer, 0, chunk, 0, bytesRead);
-                        options.onData().accept(chunk);
+        Thread drainer = new Thread(
+                () -> {
+                    try (InputStream is = process.getInputStream()) {
+                        byte[] buffer = new byte[4096];
+                        int bytesRead;
+                        while ((bytesRead = is.read(buffer)) != -1) {
+                            if (options.onData() != null) {
+                                byte[] chunk = new byte[bytesRead];
+                                System.arraycopy(buffer, 0, chunk, 0, bytesRead);
+                                options.onData().accept(chunk);
+                            }
+                        }
+                    } catch (IOException ignored) {
+                        // Stream closed due to process destruction — expected on timeout/cancel
                     }
-                }
-            } catch (IOException ignored) {
-                // Stream closed due to process destruction — expected on timeout/cancel
-            }
-        }, "bash-output-drainer");
+                },
+                "bash-output-drainer");
         drainer.setDaemon(true);
         drainer.start();
 

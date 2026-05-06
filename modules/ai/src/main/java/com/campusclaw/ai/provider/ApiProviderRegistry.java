@@ -56,9 +56,10 @@ public class ApiProviderRegistry {
             for (var provider : springProviders) {
                 doRegister(provider, SPRING_SOURCE_ID);
             }
-            log.info("Registered {} Spring-managed ApiProvider(s): {}",
-                springProviders.size(),
-                springProviders.stream().map(p -> p.getApi().value()).toList());
+            log.info(
+                    "Registered {} Spring-managed ApiProvider(s): {}",
+                    springProviders.size(),
+                    springProviders.stream().map(p -> p.getApi().value()).toList());
         }
     }
 
@@ -97,7 +98,10 @@ public class ApiProviderRegistry {
         Objects.requireNonNull(provider, "provider must not be null");
         Objects.requireNonNull(sourceId, "sourceId must not be null");
         doRegister(provider, sourceId);
-        log.debug("Registered provider for api={} from source={}", provider.getApi().value(), sourceId);
+        log.debug(
+                "Registered provider for api={} from source={}",
+                provider.getApi().value(),
+                sourceId);
     }
 
     /**

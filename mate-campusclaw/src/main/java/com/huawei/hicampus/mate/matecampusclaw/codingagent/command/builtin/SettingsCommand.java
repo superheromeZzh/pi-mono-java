@@ -49,8 +49,8 @@ public class SettingsCommand implements SlashCommand {
 
         // Thinking
         var thinkingLevel = state.getThinkingLevel();
-        out.println("  Thinking: " + (thinkingLevel != null ? thinkingLevel.value()
-                : nvl(settings.defaultThinkingLevel(), "medium")));
+        out.println("  Thinking: "
+                + (thinkingLevel != null ? thinkingLevel.value() : nvl(settings.defaultThinkingLevel(), "medium")));
 
         // Transport & modes
         out.println("  Transport: " + nvl(settings.transport(), "auto"));
@@ -61,8 +61,10 @@ public class SettingsCommand implements SlashCommand {
         out.println("  Theme: " + nvl(settings.theme(), "default"));
 
         // UI
-        out.println("  Hide thinking block: " + (settings.hideThinkingBlock() != null ? settings.hideThinkingBlock() : false));
-        out.println("  Skill commands: " + (settings.enableSkillCommands() != null ? settings.enableSkillCommands() : true));
+        out.println("  Hide thinking block: "
+                + (settings.hideThinkingBlock() != null ? settings.hideThinkingBlock() : false));
+        out.println("  Skill commands: "
+                + (settings.enableSkillCommands() != null ? settings.enableSkillCommands() : true));
 
         // Shell
         if (settings.shellPath() != null) {
@@ -73,8 +75,12 @@ public class SettingsCommand implements SlashCommand {
         if (settings.compaction() != null) {
             var c = settings.compaction();
             out.println("  Compaction: " + (c.enabled() != null ? c.enabled() : true));
-            if (c.reserveTokens() != null) { out.println("    Reserve tokens: " + c.reserveTokens()); }
-            if (c.keepRecentTokens() != null) { out.println("    Keep recent: " + c.keepRecentTokens()); }
+            if (c.reserveTokens() != null) {
+                out.println("    Reserve tokens: " + c.reserveTokens());
+            }
+            if (c.keepRecentTokens() != null) {
+                out.println("    Keep recent: " + c.keepRecentTokens());
+            }
         } else {
             out.println("  Compaction: true (default)");
         }
@@ -83,7 +89,9 @@ public class SettingsCommand implements SlashCommand {
         if (settings.retry() != null) {
             var r = settings.retry();
             out.println("  Retry: " + (r.enabled() != null ? r.enabled() : false));
-            if (r.maxRetries() != null) { out.println("    Max retries: " + r.maxRetries()); }
+            if (r.maxRetries() != null) {
+                out.println("    Max retries: " + r.maxRetries());
+            }
         }
 
         // Context window

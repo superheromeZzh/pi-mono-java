@@ -21,10 +21,14 @@ public class LogoutCommand implements SlashCommand {
     }
 
     @Override
-    public String name() { return "logout"; }
+    public String name() {
+        return "logout";
+    }
 
     @Override
-    public String description() { return "Remove a persisted API key for a provider"; }
+    public String description() {
+        return "Remove a persisted API key for a provider";
+    }
 
     @Override
     public void execute(SlashCommandContext context, String arguments) {
@@ -35,8 +39,7 @@ public class LogoutCommand implements SlashCommand {
         }
         var providerOpt = Provider.tryFromValue(providerStr);
         if (providerOpt.isEmpty()) {
-            context.output().println("Unknown provider: " + providerStr
-                    + ". Run /providers to list known ids.");
+            context.output().println("Unknown provider: " + providerStr + ". Run /providers to list known ids.");
             return;
         }
         Provider provider = providerOpt.get();

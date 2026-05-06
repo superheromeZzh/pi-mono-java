@@ -87,7 +87,9 @@ public class AssistantMessageComponent implements Component {
 
         // Don't cache when showing animated spinner
         boolean showingSpinner = !complete && text.isEmpty() && thinking.isEmpty();
-        if (!showingSpinner && cachedLines != null && cachedWidth == width
+        if (!showingSpinner
+                && cachedLines != null
+                && cachedWidth == width
                 && cachedComplete == complete
                 && thinking.equals(cachedThinking)
                 && text.equals(cachedText)) {
@@ -122,7 +124,8 @@ public class AssistantMessageComponent implements Component {
         if (!complete && text.isEmpty() && thinking.isEmpty()) {
             String frame = SPINNER_FRAMES[spinnerFrame % SPINNER_FRAMES.length];
             spinnerFrame++;
-            lines.add(" " + ANSI_ACCENT + frame + ANSI_RESET + " " + ANSI_MUTED + "Working... (escape to interrupt)" + ANSI_RESET);
+            lines.add(" " + ANSI_ACCENT + frame + ANSI_RESET + " " + ANSI_MUTED + "Working... (escape to interrupt)"
+                    + ANSI_RESET);
         }
 
         cachedThinking = thinking;

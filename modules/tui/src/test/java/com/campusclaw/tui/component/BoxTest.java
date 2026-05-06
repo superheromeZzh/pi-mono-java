@@ -92,8 +92,7 @@ class BoxTest {
             var box = new Box(new Text("hi"), BorderStyle.SINGLE);
             List<String> lines = box.render(20);
             for (String line : lines) {
-                assertEquals(20, AnsiUtils.visibleWidth(line),
-                        "Line width mismatch: '" + line + "'");
+                assertEquals(20, AnsiUtils.visibleWidth(line), "Line width mismatch: '" + line + "'");
             }
         }
 
@@ -225,8 +224,7 @@ class BoxTest {
             var box = new Box(new Text("hello world"), BorderStyle.SINGLE, 1);
             List<String> lines = box.render(30);
             for (String line : lines) {
-                assertEquals(30, AnsiUtils.visibleWidth(line),
-                        "Width mismatch on: '" + line + "'");
+                assertEquals(30, AnsiUtils.visibleWidth(line), "Width mismatch on: '" + line + "'");
             }
         }
 
@@ -235,8 +233,7 @@ class BoxTest {
             var box = new Box(new Text("test"), BorderStyle.DOUBLE, 2);
             List<String> lines = box.render(40);
             for (String line : lines) {
-                assertEquals(40, AnsiUtils.visibleWidth(line),
-                        "Width mismatch on: '" + line + "'");
+                assertEquals(40, AnsiUtils.visibleWidth(line), "Width mismatch on: '" + line + "'");
             }
         }
 
@@ -245,8 +242,7 @@ class BoxTest {
             var box = new Box(new Text("hi"), BorderStyle.SINGLE);
             List<String> lines = box.render(6);
             for (String line : lines) {
-                assertEquals(6, AnsiUtils.visibleWidth(line),
-                        "Width mismatch on: '" + line + "'");
+                assertEquals(6, AnsiUtils.visibleWidth(line), "Width mismatch on: '" + line + "'");
             }
         }
     }

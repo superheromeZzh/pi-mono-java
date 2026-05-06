@@ -10,8 +10,7 @@ package com.huawei.hicampus.mate.matecampusclaw.codingagent.tool.edit;
  */
 final class FuzzyMatch {
 
-    private FuzzyMatch() {
-    }
+    private FuzzyMatch() {}
 
     /**
      * Result of a fuzzy match attempt.
@@ -19,8 +18,7 @@ final class FuzzyMatch {
      * @param start 0-indexed start position in the haystack
      * @param end   0-indexed end position (exclusive) in the haystack
      */
-    record Match(int start, int end) {
-    }
+    record Match(int start, int end) {}
 
     /**
      * Attempts to find needle in haystack using progressively relaxed matching:
@@ -48,7 +46,9 @@ final class FuzzyMatch {
      * Counts occurrences of needle in haystack (exact match).
      */
     static int countOccurrences(String haystack, String needle) {
-        if (needle.isEmpty()) { return 0; }
+        if (needle.isEmpty()) {
+            return 0;
+        }
         int count = 0;
         int idx = 0;
         while ((idx = haystack.indexOf(needle, idx)) >= 0) {

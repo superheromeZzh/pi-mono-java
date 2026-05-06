@@ -14,8 +14,7 @@ import java.util.List;
  */
 public final class TruncationUtils {
 
-    private TruncationUtils() {
-    }
+    private TruncationUtils() {}
 
     public record TruncationResult(
             boolean truncated,
@@ -24,9 +23,7 @@ public final class TruncationUtils {
             Integer maxLines,
             Integer maxBytes,
             boolean firstLineExceedsLimit,
-            String truncatedBy
-    ) {
-    }
+            String truncatedBy) {}
 
     /**
      * Truncates text from the head (beginning), keeping the last lines.
@@ -64,8 +61,8 @@ public final class TruncationUtils {
             truncatedByBytes = true;
         }
 
-        boolean firstLineExceedsLimit = !lines.isEmpty()
-                && lines.get(0).getBytes(StandardCharsets.UTF_8).length > maxBytes;
+        boolean firstLineExceedsLimit =
+                !lines.isEmpty() && lines.get(0).getBytes(StandardCharsets.UTF_8).length > maxBytes;
 
         boolean truncated = truncatedByLines || truncatedByBytes;
         String truncatedBy = null;
@@ -74,14 +71,7 @@ public final class TruncationUtils {
         }
 
         return new TruncationResult(
-                truncated,
-                lines.size(),
-                totalLines,
-                maxLines,
-                maxBytes,
-                firstLineExceedsLimit,
-                truncatedBy
-        );
+                truncated, lines.size(), totalLines, maxLines, maxBytes, firstLineExceedsLimit, truncatedBy);
     }
 
     /**
@@ -120,8 +110,8 @@ public final class TruncationUtils {
             truncatedByBytes = true;
         }
 
-        boolean firstLineExceedsLimit = !lines.isEmpty()
-                && lines.get(0).getBytes(StandardCharsets.UTF_8).length > maxBytes;
+        boolean firstLineExceedsLimit =
+                !lines.isEmpty() && lines.get(0).getBytes(StandardCharsets.UTF_8).length > maxBytes;
 
         boolean truncated = truncatedByLines || truncatedByBytes;
         String truncatedBy = null;
@@ -130,14 +120,7 @@ public final class TruncationUtils {
         }
 
         return new TruncationResult(
-                truncated,
-                lines.size(),
-                totalLines,
-                maxLines,
-                maxBytes,
-                firstLineExceedsLimit,
-                truncatedBy
-        );
+                truncated, lines.size(), totalLines, maxLines, maxBytes, firstLineExceedsLimit, truncatedBy);
     }
 
     /**

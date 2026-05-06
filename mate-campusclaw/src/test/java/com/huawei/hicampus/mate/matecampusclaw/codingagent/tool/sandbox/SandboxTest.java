@@ -29,10 +29,7 @@ public class SandboxTest {
         // 如果可用，执行一个测试命令
         if (client.isAvailable()) {
             System.out.println("\n执行测试命令: ls -la");
-            SandboxResult result = client.execute(
-                java.util.List.of("ls", "-la"),
-                ResourceLimits.defaults()
-            );
+            SandboxResult result = client.execute(java.util.List.of("ls", "-la"), ResourceLimits.defaults());
             System.out.println("退出码: " + result.getExitCode());
             System.out.println("输出:\n" + result.getStdout());
             if (!result.getStderr().isEmpty()) {

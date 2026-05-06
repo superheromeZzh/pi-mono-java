@@ -44,9 +44,7 @@ public class SettingsBackedProviderConfigResolver implements ProviderConfigResol
     private final AuthStore authStore;
 
     public SettingsBackedProviderConfigResolver(
-            SettingsManager settingsManager,
-            EnvApiKeyResolver envApiKeyResolver,
-            AuthStore authStore) {
+            SettingsManager settingsManager, EnvApiKeyResolver envApiKeyResolver, AuthStore authStore) {
         this.settingsManager = settingsManager;
         this.envApiKeyResolver = envApiKeyResolver;
         this.authStore = authStore;
@@ -72,15 +70,20 @@ public class SettingsBackedProviderConfigResolver implements ProviderConfigResol
     }
 
     private static Settings.ProviderConfig lookupProvider(Settings settings, Provider provider) {
-        if (settings.provider() == null) { return null; }
+        if (settings.provider() == null) {
+            return null;
+        }
         Settings.ProviderConfig direct = settings.provider().get(provider.value());
-        if (direct != null) { return direct; }
+        if (direct != null) {
+            return direct;
+        }
         // Allow case-insensitive / underscore-insensitive matching for the JSON key.
         for (var e : settings.provider().entrySet()) {
             String key = e.getKey();
-            if (key == null) { continue; }
-            if (key.equalsIgnoreCase(provider.value())
-                    || key.replace('_', '-').equalsIgnoreCase(provider.value())) {
+            if (key == null) {
+                continue;
+            }
+            if (key.equalsIgnoreCase(provider.value()) || key.replace('_', '-').equalsIgnoreCase(provider.value())) {
                 return e.getValue();
             }
         }
@@ -90,12 +93,16 @@ public class SettingsBackedProviderConfigResolver implements ProviderConfigResol
     private String resolveApiKey(Provider provider, Model model, Settings.ProviderConfig providerSettings) {
         // 1. auth.json (written by /auth login)
         String authKey = authStore.getApiKey(provider).orElse(null);
-        if (authKey != null && !authKey.isBlank()) { return authKey; }
+        if (authKey != null && !authKey.isBlank()) {
+            return authKey;
+        }
 
         // 2. settings.json#provider.<id>.apiKey (with ${ENV} expansion)
         if (providerSettings != null && providerSettings.apiKey() != null) {
             String resolved = ConfigValueResolver.resolve(providerSettings.apiKey());
-            if (resolved != null && !resolved.isBlank()) { return resolved; }
+            if (resolved != null && !resolved.isBlank()) {
+                return resolved;
+            }
         }
 
         // 3. Model-embedded
@@ -108,9 +115,13 @@ public class SettingsBackedProviderConfigResolver implements ProviderConfigResol
     }
 
     private static String resolveBaseUrl(Settings.ProviderConfig providerSettings) {
-        if (providerSettings == null) { return null; }
+        if (providerSettings == null) {
+            return null;
+        }
         String url = providerSettings.effectiveBaseUrl();
-        if (url == null || url.isBlank()) { return null; }
+        if (url == null || url.isBlank()) {
+            return null;
+        }
         return ConfigValueResolver.resolve(url);
     }
 }

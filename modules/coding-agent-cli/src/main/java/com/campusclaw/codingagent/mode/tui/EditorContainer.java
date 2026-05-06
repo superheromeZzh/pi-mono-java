@@ -28,12 +28,12 @@ public class EditorContainer implements Component, Focusable {
     // Bash mode border: green #b5bd68
     public static final String BORDER_BASH = "\033[38;2;181;189;104m";
     // Thinking level border colors (from campusclaw dark theme)
-    public static final String THINKING_OFF = "\033[38;2;80;80;80m";       // #505050
+    public static final String THINKING_OFF = "\033[38;2;80;80;80m"; // #505050
     public static final String THINKING_MINIMAL = "\033[38;2;110;110;110m"; // #6e6e6e
-    public static final String THINKING_LOW = "\033[38;2;95;135;175m";     // #5f87af
+    public static final String THINKING_LOW = "\033[38;2;95;135;175m"; // #5f87af
     public static final String THINKING_MEDIUM = "\033[38;2;129;162;190m"; // #81a2be
-    public static final String THINKING_HIGH = "\033[38;2;178;148;187m";   // #b294bb
-    public static final String THINKING_XHIGH = "\033[38;2;209;131;232m";  // #d183e8
+    public static final String THINKING_HIGH = "\033[38;2;178;148;187m"; // #b294bb
+    public static final String THINKING_XHIGH = "\033[38;2;209;131;232m"; // #d183e8
     // Legacy aliases
     public static final String CYAN = BORDER_DEFAULT;
     public static final String YELLOW = BORDER_BASH;
@@ -176,8 +176,7 @@ public class EditorContainer implements Component, Focusable {
         if (showingSuggestions && !filteredSuggestions.isEmpty()) {
             int total = filteredSuggestions.size();
             // Calculate visible window centered on selected item (matching pi-mono SelectList)
-            int startIndex = Math.max(0,
-                    Math.min(suggestionIndex - MAX_SUGGESTIONS / 2, total - MAX_SUGGESTIONS));
+            int startIndex = Math.max(0, Math.min(suggestionIndex - MAX_SUGGESTIONS / 2, total - MAX_SUGGESTIONS));
             int endIndex = Math.min(startIndex + MAX_SUGGESTIONS, total);
 
             for (int i = startIndex; i < endIndex; i++) {
@@ -187,14 +186,26 @@ public class EditorContainer implements Component, Focusable {
                 int availableWidth = Math.max(1, width - 2);
 
                 String display = "/" + suggestion.name();
-                if (suggestion.description() != null && !suggestion.description().isEmpty()) {
+                if (suggestion.description() != null
+                        && !suggestion.description().isEmpty()) {
                     String desc = " — " + suggestion.description();
                     int nameWidth = AnsiUtils.visibleWidth(display);
                     if (nameWidth + desc.length() > availableWidth) {
                         int remaining = availableWidth - nameWidth - 4;
                         if (remaining > 10) {
-                            desc = " — " + suggestion.description().substring(0, Math.min(remaining, suggestion.description().length()));
-                            if (remaining < suggestion.description().length()) { desc += "…"; }
+                            desc = " — "
+                                    + suggestion
+                                            .description()
+                                            .substring(
+                                                    0,
+                                                    Math.min(
+                                                            remaining,
+                                                            suggestion
+                                                                    .description()
+                                                                    .length()));
+                            if (remaining < suggestion.description().length()) {
+                                desc += "…";
+                            }
                         } else {
                             desc = "";
                         }
@@ -267,12 +278,16 @@ public class EditorContainer implements Component, Focusable {
     }
 
     private void cycleNext() {
-        if (filteredSuggestions.isEmpty()) { return; }
+        if (filteredSuggestions.isEmpty()) {
+            return;
+        }
         suggestionIndex = (suggestionIndex + 1) % filteredSuggestions.size();
     }
 
     private void cyclePrev() {
-        if (filteredSuggestions.isEmpty()) { return; }
+        if (filteredSuggestions.isEmpty()) {
+            return;
+        }
         suggestionIndex = suggestionIndex <= 0 ? filteredSuggestions.size() - 1 : suggestionIndex - 1;
     }
 

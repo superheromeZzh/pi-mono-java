@@ -66,17 +66,21 @@ public class LoopManager implements MessageSubmitter {
             throw new IllegalStateException("LoopManager not initialized — only available in interactive mode");
         }
         String id = String.valueOf(nextId.getAndIncrement());
-        var future = scheduler.scheduleAtFixedRate(() -> {
-            try {
-                if (executingPrompt != null && !executingPrompt.get()) {
-                    submitQueue.add(prompt);
-                } else {
-                    log.debug("Loop #{} skipped — agent is busy", id);
-                }
-            } catch (Exception e) {
-                log.warn("Loop #{} error: {}", id, e.getMessage());
-            }
-        }, intervalMs, intervalMs, TimeUnit.MILLISECONDS);
+        var future = scheduler.scheduleAtFixedRate(
+                () -> {
+                    try {
+                        if (executingPrompt != null && !executingPrompt.get()) {
+                            submitQueue.add(prompt);
+                        } else {
+                            log.debug("Loop #{} skipped — agent is busy", id);
+                        }
+                    } catch (Exception e) {
+                        log.warn("Loop #{} error: {}", id, e.getMessage());
+                    }
+                },
+                intervalMs,
+                intervalMs,
+                TimeUnit.MILLISECONDS);
         activeLoops.put(id, new LoopEntry(id, prompt, intervalMs, future));
         log.info("Started loop #{} (every {}ms): {}", id, intervalMs, prompt);
         return id;

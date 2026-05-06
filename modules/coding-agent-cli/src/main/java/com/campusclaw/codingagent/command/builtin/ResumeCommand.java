@@ -20,10 +20,14 @@ import com.campusclaw.codingagent.config.AppPaths;
 public class ResumeCommand implements SlashCommand {
 
     @Override
-    public String name() { return "resume"; }
+    public String name() {
+        return "resume";
+    }
 
     @Override
-    public String description() { return "Resume a different session"; }
+    public String description() {
+        return "Resume a different session";
+    }
 
     @Override
     public void execute(SlashCommandContext context, String arguments) {
@@ -51,12 +55,15 @@ public class ResumeCommand implements SlashCommand {
         }
 
         try (var stream = Files.list(sessionDir)) {
-            var files = stream
-                    .filter(p -> p.toString().endsWith(".jsonl"))
+            var files = stream.filter(p -> p.toString().endsWith(".jsonl"))
                     .sorted(Comparator.comparingLong((Path p) -> {
-                        try { return Files.getLastModifiedTime(p).toMillis(); }
-                        catch (IOException e) { return 0; }
-                    }).reversed())
+                                try {
+                                    return Files.getLastModifiedTime(p).toMillis();
+                                } catch (IOException e) {
+                                    return 0;
+                                }
+                            })
+                            .reversed())
                     .limit(10)
                     .toList();
 
@@ -77,8 +84,7 @@ public class ResumeCommand implements SlashCommand {
                             for (Message msg : messages) {
                                 context.session().getAgent().getState().appendMessage(msg);
                             }
-                            context.output().println("Resumed session " + name
-                                    + " (" + messages.size() + " messages)");
+                            context.output().println("Resumed session " + name + " (" + messages.size() + " messages)");
                         } else {
                             context.output().println("Session " + name + " has no messages.");
                         }
@@ -96,9 +102,10 @@ public class ResumeCommand implements SlashCommand {
                 try {
                     var mtime = Files.getLastModifiedTime(file);
                     long size = Files.size(file);
-                    context.output().println("  " + name + "  ("
-                            + mtime.toInstant().toString().substring(0, 16) + ", "
-                            + (size / 1024) + "KB)");
+                    context.output()
+                            .println("  " + name + "  ("
+                                    + mtime.toInstant().toString().substring(0, 16) + ", "
+                                    + (size / 1024) + "KB)");
                 } catch (IOException e) {
                     context.output().println("  " + name);
                 }

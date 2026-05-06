@@ -47,16 +47,21 @@ class SessionManagerTest {
     @Test
     void createSessionWithExternalIdUsesProvidedId() {
         SessionManager sm = new SessionManager();
-        String externalId = "ws-" + UUID.randomUUID().toString().replace("-", "").substring(0, 8);
+        String externalId =
+                "ws-" + UUID.randomUUID().toString().replace("-", "").substring(0, 8);
         String cwd = uniqueCwd();
 
         sm.createSession(cwd, externalId);
 
-        assertEquals(externalId, sm.getSessionId(),
+        assertEquals(
+                externalId,
+                sm.getSessionId(),
                 "createSession(cwd, id) must honour the external id rather than generating one");
         Path file = sm.getSessionFile();
         assertNotNull(file, "session file must be set after createSession");
-        assertEquals(externalId + ".jsonl", file.getFileName().toString(),
+        assertEquals(
+                externalId + ".jsonl",
+                file.getFileName().toString(),
                 "JSONL filename must equal the external id so reconnects can map back to it");
         createdDir = file.getParent();
         sm.close();
@@ -70,7 +75,8 @@ class SessionManagerTest {
         // helper, we should reconstruct the conversation by inferring roles
         // from surviving fields.
         String cwd = uniqueCwd();
-        String externalId = "legacy-" + UUID.randomUUID().toString().replace("-", "").substring(0, 8);
+        String externalId =
+                "legacy-" + UUID.randomUUID().toString().replace("-", "").substring(0, 8);
         SessionManager seeder = new SessionManager();
         seeder.createSession(cwd, externalId);
         Path file = seeder.getSessionFile();
@@ -82,33 +88,36 @@ class SessionManagerTest {
         // has toolCallId+toolName).
         var legacy = ""
                 + "{\"type\":\"message\",\"id\":\"u1\",\"timestamp\":\"2026-04-01T00:00:00Z\","
-                +   "\"message\":{\"content\":[{\"type\":\"text\",\"text\":\"hi from past\"}],\"timestamp\":1}}\n"
+                + "\"message\":{\"content\":[{\"type\":\"text\",\"text\":\"hi from past\"}],\"timestamp\":1}}\n"
                 + "{\"type\":\"message\",\"id\":\"a1\",\"parentId\":\"u1\",\"timestamp\":\"2026-04-01T00:00:01Z\","
-                +   "\"message\":{\"content\":[{\"type\":\"text\",\"text\":\"hello back\"}],"
-                +     "\"api\":\"messages\",\"provider\":\"anthropic\",\"model\":\"sonnet\","
-                +     "\"stopReason\":\"stop\",\"timestamp\":2}}\n"
+                + "\"message\":{\"content\":[{\"type\":\"text\",\"text\":\"hello back\"}],"
+                + "\"api\":\"messages\",\"provider\":\"anthropic\",\"model\":\"sonnet\","
+                + "\"stopReason\":\"stop\",\"timestamp\":2}}\n"
                 + "{\"type\":\"message\",\"id\":\"t1\",\"parentId\":\"a1\",\"timestamp\":\"2026-04-01T00:00:02Z\","
-                +   "\"message\":{\"toolCallId\":\"call-1\",\"toolName\":\"bash\","
-                +     "\"content\":[{\"type\":\"text\",\"text\":\"ok\"}],\"isError\":false,\"timestamp\":3}}\n";
+                + "\"message\":{\"toolCallId\":\"call-1\",\"toolName\":\"bash\","
+                + "\"content\":[{\"type\":\"text\",\"text\":\"ok\"}],\"isError\":false,\"timestamp\":3}}\n";
         Files.writeString(file, legacy, java.nio.file.StandardOpenOption.APPEND);
 
         SessionManager loader = new SessionManager();
         List<Message> restored = loader.loadSession(file);
 
-        assertEquals(3, restored.size(),
-                "all three legacy messages must be restored, not silently dropped");
-        assertTrue(restored.get(0) instanceof com.campusclaw.ai.types.UserMessage,
+        assertEquals(3, restored.size(), "all three legacy messages must be restored, not silently dropped");
+        assertTrue(
+                restored.get(0) instanceof com.campusclaw.ai.types.UserMessage,
                 "no role + bare content/timestamp → UserMessage");
-        assertTrue(restored.get(1) instanceof AssistantMessage,
+        assertTrue(
+                restored.get(1) instanceof AssistantMessage,
                 "no role but provider/model/stopReason → AssistantMessage");
-        assertTrue(restored.get(2) instanceof com.campusclaw.ai.types.ToolResultMessage,
+        assertTrue(
+                restored.get(2) instanceof com.campusclaw.ai.types.ToolResultMessage,
                 "no role but toolCallId+toolName → ToolResultMessage");
         loader.close();
     }
 
     @Test
     void appendsAndLoadsRoundTripWithExternalId() {
-        String externalId = "ws-" + UUID.randomUUID().toString().replace("-", "").substring(0, 8);
+        String externalId =
+                "ws-" + UUID.randomUUID().toString().replace("-", "").substring(0, 8);
         String cwd = uniqueCwd();
 
         SessionManager writer = new SessionManager();
@@ -119,8 +128,14 @@ class SessionManagerTest {
         UserMessage user = new UserMessage("hello", System.currentTimeMillis());
         AssistantMessage assistant = new AssistantMessage(
                 List.<ContentBlock>of(new TextContent("hi back", null)),
-                "messages", "anthropic", "sonnet",
-                null, Usage.empty(), StopReason.STOP, null, System.currentTimeMillis());
+                "messages",
+                "anthropic",
+                "sonnet",
+                null,
+                Usage.empty(),
+                StopReason.STOP,
+                null,
+                System.currentTimeMillis());
         writer.appendMessage(user);
         writer.appendMessage(assistant);
         writer.close();
@@ -131,7 +146,9 @@ class SessionManagerTest {
         assertEquals(2, restored.size(), "both user + assistant messages should be restored");
         assertTrue(restored.get(0) instanceof UserMessage, "first message must be UserMessage");
         assertTrue(restored.get(1) instanceof AssistantMessage, "second message must be AssistantMessage");
-        assertEquals(externalId, reader.getSessionId(),
+        assertEquals(
+                externalId,
+                reader.getSessionId(),
                 "loadSession should restore the externally-supplied sessionId from the header");
         reader.close();
     }

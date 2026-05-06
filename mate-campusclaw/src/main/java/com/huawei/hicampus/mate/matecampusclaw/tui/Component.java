@@ -27,8 +27,7 @@ public interface Component {
      *
      * @param data the raw input data (key sequence)
      */
-    default void handleInput(String data) {
-    }
+    default void handleInput(String data) {}
 
     /**
      * Whether this component wants to receive key release events (Kitty keyboard protocol).

@@ -34,8 +34,7 @@ public class DockerSandboxClient {
     private boolean dockerAvailable = false;
 
     @Autowired
-    public DockerSandboxClient(ToolExecutionProperties properties,
-                                SandboxSecurityPolicy securityPolicy) {
+    public DockerSandboxClient(ToolExecutionProperties properties, SandboxSecurityPolicy securityPolicy) {
         this.properties = properties;
         this.securityPolicy = securityPolicy;
         initialize();
@@ -85,25 +84,40 @@ public class DockerSandboxClient {
             // 先清理可能存在的旧容器
             cleanupOldWorkers();
 
-            String containerName = "campusclaw-worker-" + UUID.randomUUID().toString().substring(0, 8);
+            String containerName =
+                    "campusclaw-worker-" + UUID.randomUUID().toString().substring(0, 8);
             String workspace = properties.getSandboxWorkspacePath();
 
             // Start container with bash installation as part of startup
             // This ensures bash is available before any command execution
             // Note: We need network access to install bash via apk
             List<String> runCmd = List.of(
-                "run", "-d",
-                "--name", containerName,
-                "--memory", properties.getSandboxWorkerMemory(),
-                "--cpus", String.valueOf(properties.getSandboxWorkerCpu()),
-                "--security-opt", "no-new-privileges:true",
-                "--cap-drop", "ALL",
-                "--cap-add", "SETUID", "--cap-add", "SETGID", "--cap-add", "DAC_OVERRIDE",
-                "-v", workspace + ":/workspace",
-                "-w", "/workspace",
-                properties.getSandboxWorkerImage(),
-                "sh", "-c", "apk add --no-cache bash coreutils grep sed awk curl git 2>/dev/null || true; while true; do sleep 3600; done"
-            );
+                    "run",
+                    "-d",
+                    "--name",
+                    containerName,
+                    "--memory",
+                    properties.getSandboxWorkerMemory(),
+                    "--cpus",
+                    String.valueOf(properties.getSandboxWorkerCpu()),
+                    "--security-opt",
+                    "no-new-privileges:true",
+                    "--cap-drop",
+                    "ALL",
+                    "--cap-add",
+                    "SETUID",
+                    "--cap-add",
+                    "SETGID",
+                    "--cap-add",
+                    "DAC_OVERRIDE",
+                    "-v",
+                    workspace + ":/workspace",
+                    "-w",
+                    "/workspace",
+                    properties.getSandboxWorkerImage(),
+                    "sh",
+                    "-c",
+                    "apk add --no-cache bash coreutils grep sed awk curl git 2>/dev/null || true; while true; do sleep 3600; done");
 
             ProcessResult result = executeDockerCommand(runCmd);
             if (result.exitCode == 0) {
@@ -141,9 +155,8 @@ public class DockerSandboxClient {
      */
     private void cleanupOldWorkers() {
         try {
-            ProcessResult listResult = executeDockerCommand(List.of(
-                "ps", "-aq", "--filter", "name=campusclaw-worker-"
-            ));
+            ProcessResult listResult =
+                    executeDockerCommand(List.of("ps", "-aq", "--filter", "name=campusclaw-worker-"));
 
             if (listResult.exitCode == 0 && !listResult.stdout.isEmpty()) {
                 String[] containers = listResult.stdout.trim().split("\\s+");
@@ -167,9 +180,7 @@ public class DockerSandboxClient {
             return false;
         }
         // 检查容器是否存在且正在运行
-        ProcessResult result = executeDockerCommand(List.of(
-            "inspect", "-f", "{{.State.Running}}", workerContainerId
-        ));
+        ProcessResult result = executeDockerCommand(List.of("inspect", "-f", "{{.State.Running}}", workerContainerId));
         return result.exitCode == 0 && "true".equals(result.stdout.trim());
     }
 
@@ -222,9 +233,8 @@ public class DockerSandboxClient {
             ProcessResult result = executeDockerCommand(execCmd, limits.getTimeoutSeconds());
 
             // 如果执行失败且容器不存在，尝试重新创建并再次执行
-            if (result.exitCode != 0 &&
-                (result.stderr.contains("No such container") ||
-                 result.stderr.contains("is not running"))) {
+            if (result.exitCode != 0
+                    && (result.stderr.contains("No such container") || result.stderr.contains("is not running"))) {
                 log.warn("Worker container lost during execution, attempting recovery...");
 
                 // 重新创建 worker
@@ -247,11 +257,11 @@ public class DockerSandboxClient {
             }
 
             return SandboxResult.builder()
-                .stdout(result.stdout)
-                .stderr(result.stderr)
-                .exitCode(result.exitCode)
-                .executionTimeMs(executionTime)
-                .build();
+                    .stdout(result.stdout)
+                    .stderr(result.stderr)
+                    .exitCode(result.exitCode)
+                    .executionTimeMs(executionTime)
+                    .build();
 
         } catch (Exception e) {
             log.error("Failed to execute command in worker", e);
@@ -303,8 +313,8 @@ public class DockerSandboxClient {
             // This ensures bash is available for command execution in alpine
             if (requiresBash) {
                 String cmdString = command.get(2); // The actual command after "bash", "-c"
-                String setupAndRun = "apk add --no-cache bash 2>/dev/null; " +
-                                     shellPath + " -c '" + cmdString.replace("'", "'\"'\"'") + "'";
+                String setupAndRun = "apk add --no-cache bash 2>/dev/null; " + shellPath + " -c '"
+                        + cmdString.replace("'", "'\"'\"'") + "'";
                 runCmd.addAll(List.of("sh", "-c", setupAndRun));
             } else {
                 runCmd.addAll(command);
@@ -320,11 +330,11 @@ public class DockerSandboxClient {
             }
 
             return SandboxResult.builder()
-                .stdout(result.stdout)
-                .stderr(result.stderr)
-                .exitCode(result.exitCode)
-                .executionTimeMs(executionTime)
-                .build();
+                    .stdout(result.stdout)
+                    .stderr(result.stderr)
+                    .exitCode(result.exitCode)
+                    .executionTimeMs(executionTime)
+                    .build();
 
         } catch (Exception e) {
             log.error("Failed to execute command in ephemeral container", e);
@@ -367,8 +377,8 @@ public class DockerSandboxClient {
 
             // 读取输出
             Thread stdoutReader = new Thread(() -> {
-                try (BufferedReader reader = new BufferedReader(
-                        new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8))) {
+                try (BufferedReader reader =
+                        new BufferedReader(new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8))) {
                     String line;
                     while ((line = reader.readLine()) != null) {
                         stdout.append(line).append("\n");
@@ -379,8 +389,8 @@ public class DockerSandboxClient {
             });
 
             Thread stderrReader = new Thread(() -> {
-                try (BufferedReader reader = new BufferedReader(
-                        new InputStreamReader(process.getErrorStream(), StandardCharsets.UTF_8))) {
+                try (BufferedReader reader =
+                        new BufferedReader(new InputStreamReader(process.getErrorStream(), StandardCharsets.UTF_8))) {
                     String line;
                     while ((line = reader.readLine()) != null) {
                         stderr.append(line).append("\n");

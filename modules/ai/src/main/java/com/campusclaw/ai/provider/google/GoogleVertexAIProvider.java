@@ -66,7 +66,8 @@ public class GoogleVertexAIProvider implements ApiProvider {
     }
 
     @Override
-    public AssistantMessageEventStream streamSimple(Model model, Context context, @Nullable SimpleStreamOptions options) {
+    public AssistantMessageEventStream streamSimple(
+            Model model, Context context, @Nullable SimpleStreamOptions options) {
         var eventStream = new AssistantMessageEventStream();
 
         Thread.ofVirtual().start(() -> {
@@ -80,28 +81,32 @@ public class GoogleVertexAIProvider implements ApiProvider {
         return eventStream;
     }
 
-    private void executeStream(Model model, Context context, @Nullable SimpleStreamOptions options,
-                               AssistantMessageEventStream eventStream) {
+    private void executeStream(
+            Model model,
+            Context context,
+            @Nullable SimpleStreamOptions options,
+            AssistantMessageEventStream eventStream) {
         var providerConfig = providerConfigResolver.resolve(model.provider(), model);
         String apiKey = resolveApiKey(providerConfig, options);
         String projectId = System.getenv("GOOGLE_CLOUD_PROJECT");
         String location = System.getenv("GOOGLE_CLOUD_LOCATION");
-        if (location == null || location.isBlank()) { location = "us-central1"; }
+        if (location == null || location.isBlank()) {
+            location = "us-central1";
+        }
 
         String endpoint;
         if (model.baseUrl() != null) {
             endpoint = model.baseUrl() + "/models/" + model.id() + ":streamGenerateContent?alt=sse";
         } else if (projectId != null && !projectId.isBlank()) {
             endpoint = String.format(
-                "https://%s-aiplatform.googleapis.com/v1/projects/%s/locations/%s/publishers/google/models/%s:streamGenerateContent?alt=sse",
-                location, projectId, location, model.id()
-            );
+                    "https://%s-aiplatform.googleapis.com/v1/projects/%s/locations/%s/publishers/google/models/%s:streamGenerateContent?alt=sse",
+                    location, projectId, location, model.id());
         } else if (apiKey != null && !apiKey.isBlank()) {
-            endpoint = "https://generativelanguage.googleapis.com/v1beta/models/"
-                + model.id() + ":streamGenerateContent?alt=sse&key=" + apiKey;
+            endpoint = "https://generativelanguage.googleapis.com/v1beta/models/" + model.id()
+                    + ":streamGenerateContent?alt=sse&key=" + apiKey;
         } else {
             eventStream.error(new IllegalStateException(
-                "Google Cloud credentials not found. Set GOOGLE_CLOUD_PROJECT or GOOGLE_CLOUD_API_KEY."));
+                    "Google Cloud credentials not found. Set GOOGLE_CLOUD_PROJECT or GOOGLE_CLOUD_API_KEY."));
             return;
         }
 
@@ -109,9 +114,9 @@ public class GoogleVertexAIProvider implements ApiProvider {
 
         try {
             var requestBuilder = HttpRequest.newBuilder()
-                .uri(URI.create(endpoint))
-                .header("Content-Type", "application/json")
-                .POST(HttpRequest.BodyPublishers.ofString(requestBody.toString()));
+                    .uri(URI.create(endpoint))
+                    .header("Content-Type", "application/json")
+                    .POST(HttpRequest.BodyPublishers.ofString(requestBody.toString()));
 
             var client = HttpClient.newBuilder()
                     .connectTimeout(java.time.Duration.ofSeconds(15))
@@ -129,9 +134,13 @@ public class GoogleVertexAIProvider implements ApiProvider {
             try (var reader = new BufferedReader(new InputStreamReader(response.body()))) {
                 String line;
                 while ((line = reader.readLine()) != null) {
-                    if (line.isBlank() || !line.startsWith("data: ")) { continue; }
+                    if (line.isBlank() || !line.startsWith("data: ")) {
+                        continue;
+                    }
                     String data = line.substring(6).trim();
-                    if (data.equals("[DONE]")) { break; }
+                    if (data.equals("[DONE]")) {
+                        break;
+                    }
 
                     JsonNode chunk = MAPPER.readTree(data);
                     var parsed = GoogleShared.parseChunk(chunk);
@@ -139,66 +148,116 @@ public class GoogleVertexAIProvider implements ApiProvider {
                     for (var block : parsed.blocks()) {
                         if (block instanceof ThinkingContent tc) {
                             if (!"thinking".equals(currentType[0])) {
-                                finishCurrentBlock(currentType[0], blocks, textAcc, thinkingAcc, thinkingSig, eventStream, model, usage[0], stop[0]);
+                                finishCurrentBlock(
+                                        currentType[0],
+                                        blocks,
+                                        textAcc,
+                                        thinkingAcc,
+                                        thinkingSig,
+                                        eventStream,
+                                        model,
+                                        usage[0],
+                                        stop[0]);
                                 currentType[0] = "thinking";
                                 thinkingAcc.setLength(0);
                                 thinkingSig[0] = null;
                                 blocks.add(new ThinkingContent("", null, false));
                                 eventStream.push(new com.campusclaw.ai.stream.AssistantMessageEvent.ThinkingStartEvent(
-                                    blocks.size() - 1, buildMessage(model, blocks, usage[0], stop[0])));
+                                        blocks.size() - 1, buildMessage(model, blocks, usage[0], stop[0])));
                             }
                             thinkingAcc.append(tc.thinking());
-                            if (tc.thinkingSignature() != null) { thinkingSig[0] = tc.thinkingSignature(); }
-                            blocks.set(blocks.size() - 1, new ThinkingContent(thinkingAcc.toString(), thinkingSig[0], false));
+                            if (tc.thinkingSignature() != null) {
+                                thinkingSig[0] = tc.thinkingSignature();
+                            }
+                            blocks.set(
+                                    blocks.size() - 1,
+                                    new ThinkingContent(thinkingAcc.toString(), thinkingSig[0], false));
                             eventStream.push(new com.campusclaw.ai.stream.AssistantMessageEvent.ThinkingDeltaEvent(
-                                blocks.size() - 1, tc.thinking(), buildMessage(model, blocks, usage[0], stop[0])));
+                                    blocks.size() - 1, tc.thinking(), buildMessage(model, blocks, usage[0], stop[0])));
 
                         } else if (block instanceof TextContent tc) {
                             if (!"text".equals(currentType[0])) {
-                                finishCurrentBlock(currentType[0], blocks, textAcc, thinkingAcc, thinkingSig, eventStream, model, usage[0], stop[0]);
+                                finishCurrentBlock(
+                                        currentType[0],
+                                        blocks,
+                                        textAcc,
+                                        thinkingAcc,
+                                        thinkingSig,
+                                        eventStream,
+                                        model,
+                                        usage[0],
+                                        stop[0]);
                                 currentType[0] = "text";
                                 textAcc.setLength(0);
                                 blocks.add(new TextContent("", null));
                                 eventStream.push(new com.campusclaw.ai.stream.AssistantMessageEvent.TextStartEvent(
-                                    blocks.size() - 1, buildMessage(model, blocks, usage[0], stop[0])));
+                                        blocks.size() - 1, buildMessage(model, blocks, usage[0], stop[0])));
                             }
                             textAcc.append(tc.text());
                             blocks.set(blocks.size() - 1, new TextContent(textAcc.toString(), null));
-                            eventStream.pushTextDelta(blocks.size() - 1, tc.text(), buildMessage(model, blocks, usage[0], stop[0]));
+                            eventStream.pushTextDelta(
+                                    blocks.size() - 1, tc.text(), buildMessage(model, blocks, usage[0], stop[0]));
 
                         } else if (block instanceof ToolCall tc) {
-                            finishCurrentBlock(currentType[0], blocks, textAcc, thinkingAcc, thinkingSig, eventStream, model, usage[0], stop[0]);
+                            finishCurrentBlock(
+                                    currentType[0],
+                                    blocks,
+                                    textAcc,
+                                    thinkingAcc,
+                                    thinkingSig,
+                                    eventStream,
+                                    model,
+                                    usage[0],
+                                    stop[0]);
                             currentType[0] = null;
                             blocks.add(tc);
                             int idx = blocks.size() - 1;
                             eventStream.push(new com.campusclaw.ai.stream.AssistantMessageEvent.ToolCallStartEvent(
-                                idx, buildMessage(model, blocks, usage[0], stop[0])));
+                                    idx, buildMessage(model, blocks, usage[0], stop[0])));
                             try {
                                 eventStream.push(new com.campusclaw.ai.stream.AssistantMessageEvent.ToolCallDeltaEvent(
-                                    idx, MAPPER.writeValueAsString(tc.arguments()), buildMessage(model, blocks, usage[0], stop[0])));
-                            } catch (Exception ignored) {}
+                                        idx,
+                                        MAPPER.writeValueAsString(tc.arguments()),
+                                        buildMessage(model, blocks, usage[0], stop[0])));
+                            } catch (Exception ignored) {
+                            }
                             eventStream.push(new com.campusclaw.ai.stream.AssistantMessageEvent.ToolCallEndEvent(
-                                idx, tc, buildMessage(model, blocks, usage[0], stop[0])));
+                                    idx, tc, buildMessage(model, blocks, usage[0], stop[0])));
                         }
                     }
-                    if (parsed.usage() != null) { usage[0] = parsed.usage(); }
-                    if (parsed.finishReason() != null) { stop[0] = GoogleShared.mapFinishReason(parsed.finishReason()); }
+                    if (parsed.usage() != null) {
+                        usage[0] = parsed.usage();
+                    }
+                    if (parsed.finishReason() != null) {
+                        stop[0] = GoogleShared.mapFinishReason(parsed.finishReason());
+                    }
                 }
             }
-            finishCurrentBlock(currentType[0], blocks, textAcc, thinkingAcc, thinkingSig, eventStream, model, usage[0], stop[0]);
+            finishCurrentBlock(
+                    currentType[0], blocks, textAcc, thinkingAcc, thinkingSig, eventStream, model, usage[0], stop[0]);
 
             if (blocks.stream().anyMatch(b -> b instanceof ToolCall)) {
                 stop[0] = StopReason.TOOL_USE;
             }
 
             var cost = computeCost(model, usage[0]);
-            var finalUsage = new Usage(usage[0].input(), usage[0].output(),
-                usage[0].cacheRead(), usage[0].cacheWrite(), usage[0].totalTokens(), cost);
+            var finalUsage = new Usage(
+                    usage[0].input(),
+                    usage[0].output(),
+                    usage[0].cacheRead(),
+                    usage[0].cacheWrite(),
+                    usage[0].totalTokens(),
+                    cost);
             var finalMessage = new AssistantMessage(
-                List.copyOf(blocks),
-                Api.GOOGLE_VERTEX.value(), model.provider().value(),
-                model.id(), null, finalUsage, stop[0], null, System.currentTimeMillis()
-            );
+                    List.copyOf(blocks),
+                    Api.GOOGLE_VERTEX.value(),
+                    model.provider().value(),
+                    model.id(),
+                    null,
+                    finalUsage,
+                    stop[0],
+                    null,
+                    System.currentTimeMillis());
             eventStream.pushDone(stop[0], finalMessage);
 
         } catch (Exception e) {
@@ -208,10 +267,15 @@ public class GoogleVertexAIProvider implements ApiProvider {
 
     private AssistantMessage buildMessage(Model model, List<ContentBlock> blocks, Usage usage, StopReason stop) {
         return new AssistantMessage(
-            List.copyOf(blocks),
-            Api.GOOGLE_VERTEX.value(), model.provider().value(),
-            model.id(), null, usage, stop, null, System.currentTimeMillis()
-        );
+                List.copyOf(blocks),
+                Api.GOOGLE_VERTEX.value(),
+                model.provider().value(),
+                model.id(),
+                null,
+                usage,
+                stop,
+                null,
+                System.currentTimeMillis());
     }
 
     private ObjectNode buildRequestBody(Model model, Context context, @Nullable SimpleStreamOptions options) {
@@ -225,7 +289,9 @@ public class GoogleVertexAIProvider implements ApiProvider {
         }
         body.set("contents", GoogleShared.convertMessages(context.messages()));
         var tools = GoogleShared.convertTools(context.tools());
-        if (tools != null) { body.set("tools", tools); }
+        if (tools != null) {
+            body.set("tools", tools);
+        }
         var genConfig = MAPPER.createObjectNode();
         if (options != null && options.maxTokens() != null) {
             genConfig.put("maxOutputTokens", options.maxTokens());
@@ -237,12 +303,14 @@ public class GoogleVertexAIProvider implements ApiProvider {
         }
 
         // Thinking / reasoning configuration
-        if (options != null && options.reasoning() != null
-                && options.reasoning() != ThinkingLevel.OFF && model.reasoning()) {
+        if (options != null
+                && options.reasoning() != null
+                && options.reasoning() != ThinkingLevel.OFF
+                && model.reasoning()) {
             var thinkingConfig = MAPPER.createObjectNode();
             thinkingConfig.put("includeThoughts", true);
             int budget = GoogleGenerativeAIProvider.resolveGoogleThinkingBudget(
-                model, options.reasoning(), options.thinkingBudgets());
+                    model, options.reasoning(), options.thinkingBudgets());
             if (budget >= 0) {
                 thinkingConfig.put("thinkingBudget", budget);
             }
@@ -253,33 +321,45 @@ public class GoogleVertexAIProvider implements ApiProvider {
         return body;
     }
 
-    private String resolveApiKey(com.campusclaw.ai.env.ResolvedProviderConfig providerConfig,
-                                 @Nullable SimpleStreamOptions options) {
-        if (options != null && options.apiKey() != null) { return options.apiKey(); }
+    private String resolveApiKey(
+            com.campusclaw.ai.env.ResolvedProviderConfig providerConfig, @Nullable SimpleStreamOptions options) {
+        if (options != null && options.apiKey() != null) {
+            return options.apiKey();
+        }
         return providerConfig.apiKey();
     }
 
     private void finishCurrentBlock(
-            String type, List<ContentBlock> blocks,
-            StringBuilder textAcc, StringBuilder thinkingAcc, String[] thinkingSig,
-            AssistantMessageEventStream eventStream, Model model, Usage usage, StopReason stop) {
-        if (type == null || blocks.isEmpty()) { return; }
+            String type,
+            List<ContentBlock> blocks,
+            StringBuilder textAcc,
+            StringBuilder thinkingAcc,
+            String[] thinkingSig,
+            AssistantMessageEventStream eventStream,
+            Model model,
+            Usage usage,
+            StopReason stop) {
+        if (type == null || blocks.isEmpty()) {
+            return;
+        }
         int idx = blocks.size() - 1;
         if ("thinking".equals(type)) {
             String content = thinkingAcc.toString();
             blocks.set(idx, new ThinkingContent(content, thinkingSig[0], false));
             eventStream.push(new com.campusclaw.ai.stream.AssistantMessageEvent.ThinkingEndEvent(
-                idx, content, buildMessage(model, blocks, usage, stop)));
+                    idx, content, buildMessage(model, blocks, usage, stop)));
         } else if ("text".equals(type)) {
             String content = textAcc.toString();
             blocks.set(idx, new TextContent(content, null));
             eventStream.push(new com.campusclaw.ai.stream.AssistantMessageEvent.TextEndEvent(
-                idx, content, buildMessage(model, blocks, usage, stop)));
+                    idx, content, buildMessage(model, blocks, usage, stop)));
         }
     }
 
     private Cost computeCost(Model model, Usage usage) {
-        if (model.cost() == null) { return Cost.empty(); }
+        if (model.cost() == null) {
+            return Cost.empty();
+        }
         var mc = model.cost();
         double input = usage.input() * mc.input() / 1_000_000.0;
         double output = usage.output() * mc.output() / 1_000_000.0;

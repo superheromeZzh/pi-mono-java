@@ -27,10 +27,14 @@ public class LoginCommand implements SlashCommand {
     }
 
     @Override
-    public String name() { return "login"; }
+    public String name() {
+        return "login";
+    }
 
     @Override
-    public String description() { return "Persist an API key for a provider"; }
+    public String description() {
+        return "Persist an API key for a provider";
+    }
 
     @Override
     public void execute(SlashCommandContext context, String arguments) {
@@ -49,13 +53,12 @@ public class LoginCommand implements SlashCommand {
         String key = parts[1].trim();
         var providerOpt = Provider.tryFromValue(providerStr);
         if (providerOpt.isEmpty()) {
-            context.output().println("Unknown provider: " + providerStr
-                    + ". Run /providers to list known ids.");
+            context.output().println("Unknown provider: " + providerStr + ". Run /providers to list known ids.");
             return;
         }
         Provider provider = providerOpt.get();
         authStore.setApiKey(provider, key);
-        context.output().println("Saved API key for " + provider.value()
-                + " to ~/.campusclaw/agent/auth.json (mode 0600).");
+        context.output()
+                .println("Saved API key for " + provider.value() + " to ~/.campusclaw/agent/auth.json (mode 0600).");
     }
 }

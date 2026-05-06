@@ -40,18 +40,21 @@ public class ModelSelectorOverlay implements Component, Focusable {
         this.currentModel = currentModel;
 
         this.allModels = new ArrayList<>(modelRegistry.getAllModels());
-        allModels.sort(Comparator.comparing((Model m) -> m.provider().value())
-                .thenComparing(Model::id));
+        allModels.sort(Comparator.comparing((Model m) -> m.provider().value()).thenComparing(Model::id));
 
         this.searchInput = new Input();
         searchInput.setPlaceholder("Search models...");
 
         this.selectList = new SelectList<>(allModels, this::renderModelItem, 15);
         selectList.setOnSelect(model -> {
-            if (onSelect != null) { onSelect.accept(model); }
+            if (onSelect != null) {
+                onSelect.accept(model);
+            }
         });
         selectList.setOnCancel(() -> {
-            if (onCancel != null) { onCancel.run(); }
+            if (onCancel != null) {
+                onCancel.run();
+            }
         });
 
         if (currentModel != null) {
@@ -73,9 +76,7 @@ public class ModelSelectorOverlay implements Component, Focusable {
     }
 
     private String renderModelItem(Model model) {
-        String marker = ModelRegistry.modelsAreEqual(model, currentModel)
-                ? ANSI_ACCENT + "● " + ANSI_RESET
-                : "  ";
+        String marker = ModelRegistry.modelsAreEqual(model, currentModel) ? ANSI_ACCENT + "● " + ANSI_RESET : "  ";
         String provider = padRight(model.provider().value(), 14);
         String name = padRight(model.id(), 30);
         String ctx = padLeft(formatContext(model.contextWindow()), 6);
@@ -88,33 +89,53 @@ public class ModelSelectorOverlay implements Component, Focusable {
     }
 
     private static String formatContext(int tokens) {
-        if (tokens <= 0) { return "—"; }
-        if (tokens >= 1_000_000) { return (tokens / 1_000_000) + "M"; }
-        if (tokens >= 1_000) { return (tokens / 1_000) + "K"; }
+        if (tokens <= 0) {
+            return "—";
+        }
+        if (tokens >= 1_000_000) {
+            return (tokens / 1_000_000) + "M";
+        }
+        if (tokens >= 1_000) {
+            return (tokens / 1_000) + "K";
+        }
         return String.valueOf(tokens);
     }
 
     private static String formatCost(Model model) {
         var c = model.cost();
-        if (c == null) { return ""; }
-        if (c.input() == 0 && c.output() == 0) { return "free"; }
+        if (c == null) {
+            return "";
+        }
+        if (c.input() == 0 && c.output() == 0) {
+            return "free";
+        }
         return "$" + trimZero(c.input()) + "/$" + trimZero(c.output());
     }
 
     private static String trimZero(double v) {
-        if (v == Math.floor(v)) { return String.valueOf((long) v); }
+        if (v == Math.floor(v)) {
+            return String.valueOf((long) v);
+        }
         return String.format("%.2f", v);
     }
 
     private static String padRight(String s, int width) {
-        if (s == null) { s = ""; }
-        if (s.length() >= width) { return s.substring(0, width); }
+        if (s == null) {
+            s = "";
+        }
+        if (s.length() >= width) {
+            return s.substring(0, width);
+        }
         return s + " ".repeat(width - s.length());
     }
 
     private static String padLeft(String s, int width) {
-        if (s == null) { s = ""; }
-        if (s.length() >= width) { return s.substring(s.length() - width); }
+        if (s == null) {
+            s = "";
+        }
+        if (s.length() >= width) {
+            return s.substring(s.length() - width);
+        }
         return " ".repeat(width - s.length()) + s;
     }
 
@@ -126,7 +147,9 @@ public class ModelSelectorOverlay implements Component, Focusable {
         var scored = new ArrayList<ScoredModel>();
         for (Model m : allModels) {
             int s = scoreModel(query, m);
-            if (s >= 0) { scored.add(new ScoredModel(m, s)); }
+            if (s >= 0) {
+                scored.add(new ScoredModel(m, s));
+            }
         }
         scored.sort(Comparator.comparingInt(ScoredModel::score).reversed());
         selectList.setItems(scored.stream().map(ScoredModel::model).toList());
@@ -145,7 +168,9 @@ public class ModelSelectorOverlay implements Component, Focusable {
     @Override
     public void handleInput(String data) {
         if ("\033".equals(data) || "\003".equals(data)) {
-            if (onCancel != null) { onCancel.run(); }
+            if (onCancel != null) {
+                onCancel.run();
+            }
             return;
         }
         if ("\r".equals(data) || "\n".equals(data)) {
@@ -174,8 +199,8 @@ public class ModelSelectorOverlay implements Component, Focusable {
         var lines = new ArrayList<String>();
 
         lines.add("");
-        lines.add(" " + ANSI_BOLD + ANSI_ACCENT + "Select Model" + ANSI_RESET
-                + ANSI_DIM + "  (↑↓ navigate, Enter select, Esc cancel)" + ANSI_RESET);
+        lines.add(" " + ANSI_BOLD + ANSI_ACCENT + "Select Model" + ANSI_RESET + ANSI_DIM
+                + "  (↑↓ navigate, Enter select, Esc cancel)" + ANSI_RESET);
         lines.add("");
 
         var inputLines = searchInput.render(Math.max(1, width - 2));
@@ -194,7 +219,9 @@ public class ModelSelectorOverlay implements Component, Focusable {
     }
 
     @Override
-    public boolean isFocused() { return focused; }
+    public boolean isFocused() {
+        return focused;
+    }
 
     @Override
     public void setFocused(boolean focused) {

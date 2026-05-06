@@ -13,7 +13,6 @@ import com.fasterxml.jackson.annotation.JsonValue;
  * LLM provider identifier.
  */
 public enum Provider {
-
     ANTHROPIC("anthropic"),
     OPENAI("openai"),
     GOOGLE("google"),
@@ -67,7 +66,9 @@ public enum Provider {
      * {@code "azure_openai"}.
      */
     public static Optional<Provider> tryFromValue(String value) {
-        if (value == null || value.isBlank()) { return Optional.empty(); }
+        if (value == null || value.isBlank()) {
+            return Optional.empty();
+        }
         String normalized = value.toLowerCase().replace('_', '-');
         for (var p : values()) {
             if (p.value.toLowerCase().replace('_', '-').equals(normalized)) {

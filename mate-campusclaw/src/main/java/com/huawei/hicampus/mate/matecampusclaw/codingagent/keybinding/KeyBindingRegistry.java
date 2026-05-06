@@ -52,10 +52,11 @@ public class KeyBindingRegistry {
     }
 
     private void loadCustomBindings() {
-        if (!Files.exists(KEYBINDINGS_FILE)) { return; }
+        if (!Files.exists(KEYBINDINGS_FILE)) {
+            return;
+        }
         try {
-            Map<String, String> custom = MAPPER.readValue(
-                Files.readString(KEYBINDINGS_FILE), new TypeReference<>() {});
+            Map<String, String> custom = MAPPER.readValue(Files.readString(KEYBINDINGS_FILE), new TypeReference<>() {});
             custom.forEach((action, key) -> {
                 var existing = bindings.get(action);
                 if (existing != null) {
@@ -83,9 +84,9 @@ public class KeyBindingRegistry {
     /** Find the action bound to a given key combo. */
     public Optional<String> findAction(String key) {
         return bindings.values().stream()
-            .filter(b -> b.key().equalsIgnoreCase(key))
-            .map(KeyBinding::action)
-            .findFirst();
+                .filter(b -> b.key().equalsIgnoreCase(key))
+                .map(KeyBinding::action)
+                .findFirst();
     }
 
     public Collection<KeyBinding> getAll() {

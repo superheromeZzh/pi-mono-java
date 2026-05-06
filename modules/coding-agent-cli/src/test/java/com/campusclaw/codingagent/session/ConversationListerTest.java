@@ -50,8 +50,7 @@ class ConversationListerTest {
         // exist on disk.
         String cwd = "/tmp/clister-empty-" + UUID.randomUUID();
         List<ConversationLister.Entry> entries = lister.list(cwd);
-        assertTrue(entries.isEmpty(),
-                "lister must return an empty list when the sessions dir is missing");
+        assertTrue(entries.isEmpty(), "lister must return an empty list when the sessions dir is missing");
     }
 
     @Test
@@ -66,16 +65,21 @@ class ConversationListerTest {
         sm.appendMessage(new UserMessage("用 Java 写一个快速排序", System.currentTimeMillis()));
         sm.appendMessage(new AssistantMessage(
                 List.<ContentBlock>of(new TextContent("ok", null)),
-                "messages", "anthropic", "sonnet",
-                null, Usage.empty(), StopReason.STOP, null, System.currentTimeMillis()));
+                "messages",
+                "anthropic",
+                "sonnet",
+                null,
+                Usage.empty(),
+                StopReason.STOP,
+                null,
+                System.currentTimeMillis()));
         sm.close();
 
         List<ConversationLister.Entry> entries = lister.list(cwd);
         assertEquals(1, entries.size(), "exactly one conversation should be listed");
         ConversationLister.Entry entry = entries.get(0);
         assertEquals(id, entry.id(), "id must match the JSONL filename");
-        assertEquals("用 Java 写一个快速排序", entry.title(),
-                "title should come from the first user TextContent");
+        assertEquals("用 Java 写一个快速排序", entry.title(), "title should come from the first user TextContent");
         assertEquals(2, entry.messageCount(), "messageCount counts type:message entries only");
     }
 
@@ -90,8 +94,7 @@ class ConversationListerTest {
         sm.close();
 
         ConversationLister.Entry entry = lister.list(cwd).get(0);
-        assertEquals(id, entry.title(),
-                "with no user message, title should fall back to the id");
+        assertEquals(id, entry.title(), "with no user message, title should fall back to the id");
         assertEquals(0, entry.messageCount());
     }
 
@@ -105,7 +108,8 @@ class ConversationListerTest {
         createdDir = older.getSessionFile().getParent();
         older.appendMessage(new UserMessage("old prompt", 1L));
         older.close();
-        Files.setLastModifiedTime(older.getSessionFile(),
+        Files.setLastModifiedTime(
+                older.getSessionFile(),
                 java.nio.file.attribute.FileTime.fromMillis(System.currentTimeMillis() - 60_000));
 
         SessionManager newer = new SessionManager();
@@ -150,14 +154,15 @@ class ConversationListerTest {
         createdDir = file.getParent();
         seeder.close();
 
-        Files.writeString(file,
+        Files.writeString(
+                file,
                 "{\"type\":\"message\",\"id\":\"u1\",\"timestamp\":\"2026-04-01T00:00:00Z\","
                         + "\"message\":{\"content\":[{\"type\":\"text\",\"text\":\"用 Java 写一个快速排序\"}],\"timestamp\":1}}\n",
                 java.nio.file.StandardOpenOption.APPEND);
 
         ConversationLister.Entry entry = lister.list(cwd).get(0);
-        assertEquals("用 Java 写一个快速排序", entry.title(),
-                "title should be inferred from a legacy user message that lacks role");
+        assertEquals(
+                "用 Java 写一个快速排序", entry.title(), "title should be inferred from a legacy user message that lacks role");
     }
 
     @Test

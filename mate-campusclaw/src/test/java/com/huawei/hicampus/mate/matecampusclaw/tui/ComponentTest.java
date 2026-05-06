@@ -135,8 +135,7 @@ class ComponentTest {
         }
 
         @Override
-        public void invalidate() {
-        }
+        public void invalidate() {}
 
         @Override
         public boolean isFocused() {

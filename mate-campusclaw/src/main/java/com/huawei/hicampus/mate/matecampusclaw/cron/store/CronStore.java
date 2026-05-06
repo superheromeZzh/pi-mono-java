@@ -68,8 +68,7 @@ public class CronStore {
         lock.writeLock().lock();
         try {
             Files.createDirectories(jobsFile.getParent());
-            mapper.writerWithDefaultPrettyPrinter()
-                .writeValue(jobsFile.toFile(), new JobsFile(1, jobs));
+            mapper.writerWithDefaultPrettyPrinter().writeValue(jobsFile.toFile(), new JobsFile(1, jobs));
         } catch (IOException e) {
             log.error("Failed to save cron jobs to {}", jobsFile, e);
         } finally {
@@ -139,8 +138,7 @@ public class CronStore {
     private void saveUnsafe(List<CronJob> jobs) {
         try {
             Files.createDirectories(jobsFile.getParent());
-            mapper.writerWithDefaultPrettyPrinter()
-                .writeValue(jobsFile.toFile(), new JobsFile(1, jobs));
+            mapper.writerWithDefaultPrettyPrinter().writeValue(jobsFile.toFile(), new JobsFile(1, jobs));
         } catch (IOException e) {
             log.error("Failed to save cron jobs", e);
         }
@@ -155,8 +153,7 @@ public class CronStore {
         try {
             Files.createDirectories(jobsFile.getParent());
             Path lockPath = jobsFile.resolveSibling(jobsFile.getFileName() + ".lock");
-            var channel = FileChannel.open(lockPath,
-                    StandardOpenOption.CREATE, StandardOpenOption.WRITE);
+            var channel = FileChannel.open(lockPath, StandardOpenOption.CREATE, StandardOpenOption.WRITE);
             FileLock fileLock = channel.tryLock();
             if (fileLock == null) {
                 channel.close();
@@ -173,7 +170,9 @@ public class CronStore {
      * Release a previously acquired process lock.
      */
     public void releaseProcessLock(FileLock fileLock) {
-        if (fileLock == null) { return; }
+        if (fileLock == null) {
+            return;
+        }
         try {
             var channel = fileLock.channel();
             fileLock.release();
@@ -185,7 +184,10 @@ public class CronStore {
 
     private static Path defaultJobsPath() {
         return Path.of(System.getProperty("user.home"))
-            .resolve(".campusclaw").resolve("agent").resolve("cron").resolve("jobs.json");
+                .resolve(".campusclaw")
+                .resolve("agent")
+                .resolve("cron")
+                .resolve("jobs.json");
     }
 
     record JobsFile(int version, List<CronJob> jobs) {}

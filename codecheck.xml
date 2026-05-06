@@ -19,5 +19,22 @@
         <module name="NeedBraces">
             <property name="tokens" value="LITERAL_IF, LITERAL_ELSE, LITERAL_FOR, LITERAL_WHILE, LITERAL_DO"/>
         </module>
+
+        <!-- BracesPosition: 左大括号放行尾，右大括号另起一行（K&R 衔接除外）。 -->
+        <module name="LeftCurly">
+            <property name="option" value="eol"/>
+        </module>
+        <!-- 多块语句的中间收尾：} 与 else/catch/finally/while-of-do 同行。 -->
+        <module name="RightCurly">
+            <property name="id" value="RightCurlySame"/>
+            <property name="option" value="same"/>
+            <property name="tokens" value="LITERAL_TRY, LITERAL_CATCH, LITERAL_FINALLY, LITERAL_IF, LITERAL_ELSE, LITERAL_DO"/>
+        </module>
+        <!-- 定义体与其他独立块的收尾：} 单独一行（允许单行块如空构造器 `Foo() {}`）。 -->
+        <module name="RightCurly">
+            <property name="id" value="RightCurlyAlone"/>
+            <property name="option" value="alone_or_singleline"/>
+            <property name="tokens" value="METHOD_DEF, CTOR_DEF, CLASS_DEF, INTERFACE_DEF, ENUM_DEF, RECORD_DEF, ANNOTATION_DEF, STATIC_INIT, INSTANCE_INIT, COMPACT_CTOR_DEF, LITERAL_FOR, LITERAL_WHILE, LITERAL_SWITCH"/>
+        </module>
     </module>
 </module>

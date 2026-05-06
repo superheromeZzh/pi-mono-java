@@ -46,8 +46,7 @@ public class SkillManager {
      * Pattern to extract repository name from a git URL.
      * Handles: https://github.com/user/repo.git, git@github.com:user/repo.git, github.com/user/repo
      */
-    private static final Pattern REPO_NAME_PATTERN = Pattern.compile(
-            "(?:.*/|:)([^/]+?)(?:\\.git)?/?$");
+    private static final Pattern REPO_NAME_PATTERN = Pattern.compile("(?:.*/|:)([^/]+?)(?:\\.git)?/?$");
 
     private final Path skillsDir;
     private final SkillLoader skillLoader;
@@ -94,8 +93,8 @@ public class SkillManager {
         Path targetDir = skillsDir.resolve(repoName);
 
         if (Files.exists(targetDir)) {
-            throw new SkillInstallException("Directory already exists: " + targetDir
-                    + "\nUse 'campusclaw skill remove " + repoName + "' first, or choose a different name.");
+            throw new SkillInstallException("Directory already exists: " + targetDir + "\nUse 'campusclaw skill remove "
+                    + repoName + "' first, or choose a different name.");
         }
 
         // Clone
@@ -118,9 +117,8 @@ public class SkillManager {
             Path rootSkill = targetDir.resolve(SkillLoader.SKILL_FILENAME);
             if (!Files.isRegularFile(rootSkill)) {
                 deleteRecursively(targetDir);
-                throw new SkillInstallException(
-                        "No SKILL.md found in repository: " + gitUrl
-                                + "\nThe repository must contain at least one SKILL.md file.");
+                throw new SkillInstallException("No SKILL.md found in repository: " + gitUrl
+                        + "\nThe repository must contain at least one SKILL.md file.");
             }
         }
 
@@ -130,8 +128,7 @@ public class SkillManager {
                 InstalledSkillRecord.SOURCE_GIT,
                 gitUrl,
                 null,
-                Instant.now().toString()
-        );
+                Instant.now().toString());
         addToManifest(record);
 
         return repoName;
@@ -157,11 +154,12 @@ public class SkillManager {
         Path rootSkill = resolved.resolve(SkillLoader.SKILL_FILENAME);
         if (skills.isEmpty() && !Files.isRegularFile(rootSkill)) {
             throw new SkillInstallException(
-                    "No SKILL.md found in: " + resolved
-                            + "\nThe directory must contain at least one SKILL.md file.");
+                    "No SKILL.md found in: " + resolved + "\nThe directory must contain at least one SKILL.md file.");
         }
 
-        String linkName = resolved.getFileName().toString().toLowerCase()
+        String linkName = resolved.getFileName()
+                .toString()
+                .toLowerCase()
                 .replaceAll("[^a-z0-9-]", "-")
                 .replaceAll("-+", "-")
                 .replaceAll("^-|-$", "");
@@ -172,8 +170,8 @@ public class SkillManager {
 
         Path linkPath = skillsDir.resolve(linkName);
         if (Files.exists(linkPath)) {
-            throw new SkillInstallException("Directory already exists: " + linkPath
-                    + "\nUse 'campusclaw skill remove " + linkName + "' first.");
+            throw new SkillInstallException("Directory already exists: " + linkPath + "\nUse 'campusclaw skill remove "
+                    + linkName + "' first.");
         }
 
         try {
@@ -188,8 +186,7 @@ public class SkillManager {
                 InstalledSkillRecord.SOURCE_LINK,
                 null,
                 resolved.toString(),
-                Instant.now().toString()
-        );
+                Instant.now().toString());
         addToManifest(record);
 
         return linkName;
@@ -230,8 +227,7 @@ public class SkillManager {
 
         if (!isZip && !isTarGz) {
             throw new SkillInstallException(
-                    "Unsupported archive format: " + fileName
-                            + "\nSupported formats: .zip, .tar.gz, .tgz");
+                    "Unsupported archive format: " + fileName + "\nSupported formats: .zip, .tar.gz, .tgz");
         }
 
         // Derive skill name from archive filename (strip extension)
@@ -243,10 +239,8 @@ public class SkillManager {
         } else if (fileName.endsWith(".zip")) {
             baseName = fileName.substring(0, fileName.length() - 4);
         }
-        String skillName = baseName
-                .replaceAll("[^a-z0-9-]", "-")
-                .replaceAll("-+", "-")
-                .replaceAll("^-|-$", "");
+        String skillName =
+                baseName.replaceAll("[^a-z0-9-]", "-").replaceAll("-+", "-").replaceAll("^-|-$", "");
 
         if (skillName.isEmpty()) {
             throw new SkillInstallException("Cannot derive a valid skill name from: " + fileName);
@@ -254,8 +248,8 @@ public class SkillManager {
 
         Path targetDir = skillsDir.resolve(skillName);
         if (Files.exists(targetDir)) {
-            throw new SkillInstallException("Directory already exists: " + targetDir
-                    + "\nUse 'campusclaw skill remove " + skillName + "' first.");
+            throw new SkillInstallException("Directory already exists: " + targetDir + "\nUse 'campusclaw skill remove "
+                    + skillName + "' first.");
         }
 
         // Extract to a temp directory first, then move
@@ -280,9 +274,8 @@ public class SkillManager {
             List<Skill> skills = skillLoader.loadFromDirectory(extractRoot, "user");
             Path rootSkill = extractRoot.resolve(SkillLoader.SKILL_FILENAME);
             if (skills.isEmpty() && !Files.isRegularFile(rootSkill)) {
-                throw new SkillInstallException(
-                        "No SKILL.md found in archive: " + resolved
-                                + "\nThe archive must contain at least one SKILL.md file.");
+                throw new SkillInstallException("No SKILL.md found in archive: " + resolved
+                        + "\nThe archive must contain at least one SKILL.md file.");
             }
 
             // Check for skill name conflicts against already-installed skills
@@ -307,8 +300,7 @@ public class SkillManager {
                 InstalledSkillRecord.SOURCE_ARCHIVE,
                 null,
                 resolved.toString(),
-                Instant.now().toString()
-        );
+                Instant.now().toString());
         addToManifest(record);
 
         return skillName;
@@ -316,8 +308,8 @@ public class SkillManager {
 
     private void extractZip(Path zipFile, Path destDir) throws IOException {
         try (InputStream fis = Files.newInputStream(zipFile);
-             BufferedInputStream bis = new BufferedInputStream(fis);
-             ZipInputStream zis = new ZipInputStream(bis)) {
+                BufferedInputStream bis = new BufferedInputStream(fis);
+                ZipInputStream zis = new ZipInputStream(bis)) {
 
             ZipEntry entry;
             while ((entry = zis.getNextEntry()) != null) {
@@ -406,13 +398,7 @@ public class SkillManager {
     /**
      * Describes an installed skill for display.
      */
-    public record SkillInfo(
-            String name,
-            String sourceType,
-            String source,
-            String description,
-            boolean enabled
-    ) {}
+    public record SkillInfo(String name, String sourceType, String source, String description, boolean enabled) {}
 
     /**
      * Lists all skills in the skills directory, cross-referencing the manifest.
@@ -439,7 +425,9 @@ public class SkillManager {
             String source;
             if (record.isPresent()) {
                 sourceType = record.get().sourceType();
-                source = record.get().gitUrl() != null ? record.get().gitUrl() : record.get().localPath();
+                source = record.get().gitUrl() != null
+                        ? record.get().gitUrl()
+                        : record.get().localPath();
             } else {
                 // Check if it's a symlink
                 Path dirPath = skill.baseDir();
@@ -447,8 +435,8 @@ public class SkillManager {
                     sourceType = "link";
                     try {
                         source = Files.readSymbolicLink(
-                                Files.isSymbolicLink(dirPath) ? dirPath : skillsDir.resolve(topDir)
-                        ).toString();
+                                        Files.isSymbolicLink(dirPath) ? dirPath : skillsDir.resolve(topDir))
+                                .toString();
                     } catch (IOException e) {
                         source = "?";
                     }
@@ -478,8 +466,8 @@ public class SkillManager {
         Path targetDir = skillsDir.resolve(name);
 
         if (!Files.exists(targetDir) && !Files.isSymbolicLink(targetDir)) {
-            throw new SkillInstallException("Skill not found: " + name
-                    + "\nUse 'campusclaw skill list' to see installed skills.");
+            throw new SkillInstallException(
+                    "Skill not found: " + name + "\nUse 'campusclaw skill list' to see installed skills.");
         }
 
         // Remove from filesystem
@@ -513,8 +501,7 @@ public class SkillManager {
 
         // Check it's a git repo
         if (!Files.isDirectory(targetDir.resolve(".git"))) {
-            throw new SkillInstallException("Not a git-installed skill: " + name
-                    + " (no .git directory)");
+            throw new SkillInstallException("Not a git-installed skill: " + name + " (no .git directory)");
         }
 
         try {
@@ -558,8 +545,7 @@ public class SkillManager {
             Path tempFile = manifestPath.resolveSibling(MANIFEST_FILE + ".tmp");
             String json = MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(records);
             Files.writeString(tempFile, json);
-            Files.move(tempFile, manifestPath, StandardCopyOption.ATOMIC_MOVE,
-                    StandardCopyOption.REPLACE_EXISTING);
+            Files.move(tempFile, manifestPath, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
         } catch (IOException e) {
             log.error("Failed to save skill manifest: {}", manifestPath, e);
         }
@@ -587,7 +573,8 @@ public class SkillManager {
 
         Matcher m = REPO_NAME_PATTERN.matcher(url);
         if (m.find()) {
-            String name = m.group(1).toLowerCase()
+            String name = m.group(1)
+                    .toLowerCase()
                     .replaceAll("[^a-z0-9-]", "-")
                     .replaceAll("-+", "-")
                     .replaceAll("^-|-$", "");
@@ -618,7 +605,9 @@ public class SkillManager {
     }
 
     static void deleteRecursively(Path dir) {
-        if (dir == null || !Files.exists(dir)) { return; }
+        if (dir == null || !Files.exists(dir)) {
+            return;
+        }
         try {
             Files.walkFileTree(dir, new SimpleFileVisitor<>() {
                 @Override

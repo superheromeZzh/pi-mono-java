@@ -13,7 +13,12 @@ import java.util.Base64;
 public final class TerminalImageProtocol {
     private TerminalImageProtocol() {}
 
-    public enum Protocol { KITTY, ITERM2, SIXEL, NONE }
+    public enum Protocol {
+        KITTY,
+        ITERM2,
+        SIXEL,
+        NONE
+    }
 
     /** Detect the best available image protocol for the current terminal. */
     public static Protocol detect() {
@@ -21,10 +26,18 @@ public final class TerminalImageProtocol {
         String termProgram = System.getenv("TERM_PROGRAM");
         String kittyId = System.getenv("KITTY_WINDOW_ID");
 
-        if (kittyId != null) { return Protocol.KITTY; }
-        if ("iTerm.app".equals(termProgram) || "iTerm2".equals(termProgram)) { return Protocol.ITERM2; }
-        if ("WezTerm".equals(termProgram)) { return Protocol.ITERM2; } // WezTerm supports iTerm2 protocol
-        if (term != null && term.contains("sixel")) { return Protocol.SIXEL; }
+        if (kittyId != null) {
+            return Protocol.KITTY;
+        }
+        if ("iTerm.app".equals(termProgram) || "iTerm2".equals(termProgram)) {
+            return Protocol.ITERM2;
+        }
+        if ("WezTerm".equals(termProgram)) {
+            return Protocol.ITERM2;
+        } // WezTerm supports iTerm2 protocol
+        if (term != null && term.contains("sixel")) {
+            return Protocol.SIXEL;
+        }
         return Protocol.NONE;
     }
 
@@ -53,8 +66,12 @@ public final class TerminalImageProtocol {
             sb.append("\033_G");
             if (first) {
                 sb.append("a=T,f=100"); // action=transmit, format=PNG
-                if (width > 0) { sb.append(",c=").append(width); }
-                if (height > 0) { sb.append(",r=").append(height); }
+                if (width > 0) {
+                    sb.append(",c=").append(width);
+                }
+                if (height > 0) {
+                    sb.append(",r=").append(height);
+                }
                 first = false;
             }
             sb.append(more ? ",m=1" : ",m=0");
@@ -80,8 +97,12 @@ public final class TerminalImageProtocol {
         StringBuilder sb = new StringBuilder();
         sb.append("\033]1337;File=inline=1");
         sb.append(";size=").append(imageBytes.length);
-        if (width != null) { sb.append(";width=").append(width); }
-        if (height != null) { sb.append(";height=").append(height); }
+        if (width != null) {
+            sb.append(";width=").append(width);
+        }
+        if (height != null) {
+            sb.append(";height=").append(height);
+        }
         sb.append(";preserveAspectRatio=").append(preserveAR ? "1" : "0");
         sb.append(":").append(b64);
         sb.append("\007"); // BEL terminator
@@ -100,10 +121,12 @@ public final class TerminalImageProtocol {
         Protocol protocol = detect();
         return switch (protocol) {
             case KITTY -> kittyImage(imageBytes, widthCells, heightCells);
-            case ITERM2 -> iterm2Image(imageBytes,
-                widthCells > 0 ? String.valueOf(widthCells) : "auto",
-                heightCells > 0 ? String.valueOf(heightCells) : "auto",
-                true);
+            case ITERM2 ->
+                iterm2Image(
+                        imageBytes,
+                        widthCells > 0 ? String.valueOf(widthCells) : "auto",
+                        heightCells > 0 ? String.valueOf(heightCells) : "auto",
+                        true);
             case SIXEL, NONE -> null;
         };
     }

@@ -60,7 +60,9 @@ public class RpcMode {
             String line;
             while ((line = reader.readLine()) != null) {
                 line = line.trim();
-                if (line.isEmpty()) { continue; }
+                if (line.isEmpty()) {
+                    continue;
+                }
                 try {
                     var cmd = MAPPER.readValue(line, RpcCommand.class);
                     handleCommand(cmd);
@@ -93,10 +95,12 @@ public class RpcMode {
                     emit(RpcEvent.response(cmd.id(), "ack", null));
                 }
                 case "get_state" -> {
-                    emit(RpcEvent.response(cmd.id(), "state", Map.of(
-                        "model", session.getModelId(),
-                        "isStreaming", session.isStreaming()
-                    )));
+                    emit(RpcEvent.response(
+                            cmd.id(),
+                            "state",
+                            Map.of(
+                                    "model", session.getModelId(),
+                                    "isStreaming", session.isStreaming())));
                 }
                 case "set_model" -> {
                     if (cmd.model() != null) {

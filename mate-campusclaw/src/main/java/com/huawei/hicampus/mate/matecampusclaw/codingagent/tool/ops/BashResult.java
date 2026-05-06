@@ -9,5 +9,4 @@ package com.huawei.hicampus.mate.matecampusclaw.codingagent.tool.ops;
  *
  * @param exitCode the process exit code, or null if the process was killed/cancelled
  */
-public record BashResult(Integer exitCode) {
-}
+public record BashResult(Integer exitCode) {}

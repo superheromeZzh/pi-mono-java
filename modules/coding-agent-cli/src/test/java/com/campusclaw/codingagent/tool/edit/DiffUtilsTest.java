@@ -45,11 +45,8 @@ class DiffUtilsTest {
 
         @Test
         void includesContextLines() {
-            String diff = DiffUtils.computeUnifiedDiff(
-                    "1\n2\n3\n4\n5\n6\n7\n8\n",
-                    "1\n2\n3\nX\n5\n6\n7\n8\n",
-                    "test.txt"
-            );
+            String diff =
+                    DiffUtils.computeUnifiedDiff("1\n2\n3\n4\n5\n6\n7\n8\n", "1\n2\n3\nX\n5\n6\n7\n8\n", "test.txt");
             // Context lines should have space prefix
             assertTrue(diff.contains(" 3"));
             assertTrue(diff.contains(" 5"));

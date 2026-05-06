@@ -98,16 +98,21 @@ public class LoopCommand implements SlashCommand {
         var sb = new StringBuilder();
         sb.append("Active loops (").append(loops.size()).append("):\n");
         for (var entry : loops) {
-            sb.append("  #").append(entry.id())
-              .append("  every ").append(formatInterval(entry.intervalMs()))
-              .append("  ").append(truncate(entry.prompt(), 60))
-              .append("\n");
+            sb.append("  #")
+                    .append(entry.id())
+                    .append("  every ")
+                    .append(formatInterval(entry.intervalMs()))
+                    .append("  ")
+                    .append(truncate(entry.prompt(), 60))
+                    .append("\n");
         }
         context.output().println(sb.toString().stripTrailing());
     }
 
     private void printUsage(SlashCommandContext context) {
-        context.output().println("""
+        context.output()
+                .println(
+                        """
             Usage:
               /loop [interval] <prompt>   Start a recurring prompt (default: 10m)
               /loop stop [id]             Stop one or all loops
@@ -119,7 +124,9 @@ public class LoopCommand implements SlashCommand {
               /loop 5m check deploy status
               /loop 30s output a random emoji
               /loop list
-              /loop stop 1""".stripIndent().stripTrailing());
+              /loop stop 1"""
+                                .stripIndent()
+                                .stripTrailing());
     }
 
     /**
@@ -127,18 +134,24 @@ public class LoopCommand implements SlashCommand {
      * Returns -1 if not a valid interval.
      */
     static long parseInterval(String s) {
-        if (s == null || s.length() < 2) { return -1; }
+        if (s == null || s.length() < 2) {
+            return -1;
+        }
         // Extract trailing non-digit suffix
         int i = 0;
         while (i < s.length() && (Character.isDigit(s.charAt(i)) || s.charAt(i) == '.')) {
             i++;
         }
-        if (i == 0 || i == s.length()) { return -1; }
+        if (i == 0 || i == s.length()) {
+            return -1;
+        }
         String numStr = s.substring(0, i);
         String unit = s.substring(i).toLowerCase();
         try {
             long value = Long.parseLong(numStr);
-            if (value <= 0) { return -1; }
+            if (value <= 0) {
+                return -1;
+            }
             return switch (unit) {
                 case "s", "sec", "secs", "second", "seconds" -> value * 1000;
                 case "m", "min", "mins", "minute", "minutes" -> value * 60 * 1000;
@@ -151,9 +164,15 @@ public class LoopCommand implements SlashCommand {
     }
 
     static String formatInterval(long ms) {
-        if (ms >= 3_600_000 && ms % 3_600_000 == 0) { return (ms / 3_600_000) + "h"; }
-        if (ms >= 60_000 && ms % 60_000 == 0) { return (ms / 60_000) + "m"; }
-        if (ms >= 1000 && ms % 1000 == 0) { return (ms / 1000) + "s"; }
+        if (ms >= 3_600_000 && ms % 3_600_000 == 0) {
+            return (ms / 3_600_000) + "h";
+        }
+        if (ms >= 60_000 && ms % 60_000 == 0) {
+            return (ms / 60_000) + "m";
+        }
+        if (ms >= 1000 && ms % 1000 == 0) {
+            return (ms / 1000) + "s";
+        }
         return ms + "ms";
     }
 

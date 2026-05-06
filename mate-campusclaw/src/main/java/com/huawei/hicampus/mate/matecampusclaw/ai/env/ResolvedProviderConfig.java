@@ -20,9 +20,7 @@ import jakarta.annotation.Nullable;
  * @param headers optional extra HTTP headers
  */
 public record ResolvedProviderConfig(
-        @Nullable String apiKey,
-        @Nullable String baseUrl,
-        @Nullable Map<String, String> headers) {
+        @Nullable String apiKey, @Nullable String baseUrl, @Nullable Map<String, String> headers) {
 
     public static ResolvedProviderConfig empty() {
         return new ResolvedProviderConfig(null, null, null);
@@ -34,7 +32,9 @@ public record ResolvedProviderConfig(
 
     /** Returns the effective base URL: explicit override or the model's default. */
     public String resolveBaseUrl(Model model) {
-        if (baseUrl != null && !baseUrl.isBlank()) { return baseUrl; }
+        if (baseUrl != null && !baseUrl.isBlank()) {
+            return baseUrl;
+        }
         return model.baseUrl();
     }
 }

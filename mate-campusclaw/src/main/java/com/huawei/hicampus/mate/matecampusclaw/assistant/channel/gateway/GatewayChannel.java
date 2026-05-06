@@ -54,10 +54,9 @@ public class GatewayChannel implements Channel {
     record PendingRequest(String reqId, String channelId, String sessionKey) {}
 
     public GatewayChannel(
-        WebSocketGatewayProperties properties,
-        ChannelRegistry channelRegistry,
-        @Lazy @Autowired(required = false) MessageSubmitter messageSubmitter
-    ) {
+            WebSocketGatewayProperties properties,
+            ChannelRegistry channelRegistry,
+            @Lazy @Autowired(required = false) MessageSubmitter messageSubmitter) {
         this.properties = properties;
         this.channelRegistry = channelRegistry;
         this.messageSubmitter = messageSubmitter;
@@ -101,7 +100,9 @@ public class GatewayChannel implements Channel {
             sessionKeyToChannel.remove(sessionKey);
         }
         // Clean up pending requests for this channel
-        pendingSessionsSend.entrySet().removeIf(entry -> entry.getValue().channelId().equals(channelId));
+        pendingSessionsSend
+                .entrySet()
+                .removeIf(entry -> entry.getValue().channelId().equals(channelId));
     }
 
     /**
@@ -133,8 +134,8 @@ public class GatewayChannel implements Channel {
         }
 
         // Fallback: send error if no session available
-        completePendingSessionsSendForChannel(channelId, sessionKey,
-            "[Gateway] No active session. Message not processed.");
+        completePendingSessionsSendForChannel(
+                channelId, sessionKey, "[Gateway] No active session. Message not processed.");
     }
 
     /**
@@ -154,8 +155,7 @@ public class GatewayChannel implements Channel {
         // whichever channel has a pending request.
         for (Map.Entry<String, PendingRequest> entry : pendingSessionsSend.entrySet()) {
             PendingRequest pending = entry.getValue();
-            completePendingSessionsSend(pending.reqId(), pending.channelId(),
-                pending.sessionKey(), message);
+            completePendingSessionsSend(pending.reqId(), pending.channelId(), pending.sessionKey(), message);
         }
     }
 
@@ -184,10 +184,14 @@ public class GatewayChannel implements Channel {
      */
     public void sendDeltaToSession(String channelId, String sessionKey, String delta) {
         ChannelHandlerContext ctx = sessionContexts.get(channelId);
-        if (ctx == null) { return; }
+        if (ctx == null) {
+            return;
+        }
 
         GatewayWebSocketHandler handler = getHandler(channelId);
-        if (handler == null) { return; }
+        if (handler == null) {
+            return;
+        }
 
         String runId = UUID.randomUUID().toString();
         handler.sendEvent(ctx, "chat", runId, sessionKey, "delta", delta);
@@ -199,8 +203,7 @@ public class GatewayChannel implements Channel {
      * Complete a pending sessions.send request by sending a response frame
      * with the agent's result.
      */
-    private void completePendingSessionsSend(String reqId, String channelId, String sessionKey,
-                                              String resultMessage) {
+    private void completePendingSessionsSend(String reqId, String channelId, String sessionKey, String resultMessage) {
         pendingSessionsSend.remove(reqId);
 
         ChannelHandlerContext ctx = sessionContexts.get(channelId);
@@ -217,16 +220,22 @@ public class GatewayChannel implements Channel {
 
         String runId = UUID.randomUUID().toString();
         Map<String, Object> payload = Map.of(
-            "runId", runId,
-            "sessionKey", sessionKey,
-            "status", "final",
-            "message", Map.of(
-                "id", UUID.randomUUID().toString(),
-                "content", resultMessage,
-                "role", "assistant",
-                "timestamp", System.currentTimeMillis()
-            )
-        );
+                "runId",
+                runId,
+                "sessionKey",
+                sessionKey,
+                "status",
+                "final",
+                "message",
+                Map.of(
+                        "id",
+                        UUID.randomUUID().toString(),
+                        "content",
+                        resultMessage,
+                        "role",
+                        "assistant",
+                        "timestamp",
+                        System.currentTimeMillis()));
 
         handler.sendResponseFrame(ctx, reqId, payload);
     }
@@ -234,8 +243,7 @@ public class GatewayChannel implements Channel {
     /**
      * Complete all pending requests for a given channel (used for fallback/error cases).
      */
-    private void completePendingSessionsSendForChannel(String channelId, String sessionKey,
-                                                        String resultMessage) {
+    private void completePendingSessionsSendForChannel(String channelId, String sessionKey, String resultMessage) {
         pendingSessionsSend.entrySet().removeIf(entry -> {
             PendingRequest pending = entry.getValue();
             if (pending.channelId().equals(channelId)) {
@@ -248,7 +256,9 @@ public class GatewayChannel implements Channel {
 
     private GatewayWebSocketHandler getHandler(String channelId) {
         ChannelHandlerContext ctx = sessionContexts.get(channelId);
-        if (ctx == null) { return null; }
+        if (ctx == null) {
+            return null;
+        }
         try {
             return (GatewayWebSocketHandler) ctx.pipeline().get("messageHandler");
         } catch (Exception e) {

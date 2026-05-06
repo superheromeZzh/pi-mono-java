@@ -17,13 +17,12 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  * @param cost        monetary cost breakdown in USD
  */
 public record Usage(
-    @JsonProperty("input") int input,
-    @JsonProperty("output") int output,
-    @JsonProperty("cacheRead") int cacheRead,
-    @JsonProperty("cacheWrite") int cacheWrite,
-    @JsonProperty("totalTokens") int totalTokens,
-    @JsonProperty("cost") Cost cost
-) {
+        @JsonProperty("input") int input,
+        @JsonProperty("output") int output,
+        @JsonProperty("cacheRead") int cacheRead,
+        @JsonProperty("cacheWrite") int cacheWrite,
+        @JsonProperty("totalTokens") int totalTokens,
+        @JsonProperty("cost") Cost cost) {
 
     /** Returns a zero-valued Usage instance with an empty Cost. */
     public static Usage empty() {

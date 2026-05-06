@@ -39,7 +39,9 @@ public final class ImageUtils {
     public static BufferedImage resize(BufferedImage source, int maxDim) {
         int w = source.getWidth();
         int h = source.getHeight();
-        if (w <= maxDim && h <= maxDim) { return source; }
+        if (w <= maxDim && h <= maxDim) {
+            return source;
+        }
 
         double scale = Math.min((double) maxDim / w, (double) maxDim / h);
         int newW = (int) (w * scale);
@@ -98,13 +100,17 @@ public final class ImageUtils {
     /** Get image dimensions without fully loading the image. */
     public static Optional<int[]> getImageDimensions(Path path) {
         try (ImageInputStream input = ImageIO.createImageInputStream(path.toFile())) {
-            if (input == null) { return Optional.empty(); }
+            if (input == null) {
+                return Optional.empty();
+            }
             Iterator<ImageReader> readers = ImageIO.getImageReaders(input);
-            if (!readers.hasNext()) { return Optional.empty(); }
+            if (!readers.hasNext()) {
+                return Optional.empty();
+            }
             ImageReader reader = readers.next();
             try {
                 reader.setInput(input);
-                return Optional.of(new int[]{reader.getWidth(0), reader.getHeight(0)});
+                return Optional.of(new int[] {reader.getWidth(0), reader.getHeight(0)});
             } finally {
                 reader.dispose();
             }
@@ -131,8 +137,14 @@ public final class ImageUtils {
     /** Check if file is likely an image based on extension. */
     public static boolean isImageFile(Path path) {
         String name = path.getFileName().toString().toLowerCase();
-        return name.endsWith(".png") || name.endsWith(".jpg") || name.endsWith(".jpeg")
-            || name.endsWith(".gif") || name.endsWith(".webp") || name.endsWith(".bmp")
-            || name.endsWith(".svg") || name.endsWith(".ico") || name.endsWith(".tiff");
+        return name.endsWith(".png")
+                || name.endsWith(".jpg")
+                || name.endsWith(".jpeg")
+                || name.endsWith(".gif")
+                || name.endsWith(".webp")
+                || name.endsWith(".bmp")
+                || name.endsWith(".svg")
+                || name.endsWith(".ico")
+                || name.endsWith(".tiff");
     }
 }

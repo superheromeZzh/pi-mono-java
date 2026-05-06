@@ -27,8 +27,8 @@ import com.campusclaw.ai.types.UserMessage;
 public final class HtmlExporter {
 
     private static final Pattern ANSI_PATTERN = Pattern.compile("\033\\[([0-9;]*)m");
-    private static final DateTimeFormatter TIME_FMT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
-        .withZone(ZoneId.systemDefault());
+    private static final DateTimeFormatter TIME_FMT =
+            DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").withZone(ZoneId.systemDefault());
 
     private HtmlExporter() {}
 
@@ -50,8 +50,11 @@ public final class HtmlExporter {
         sb.append("</head>\n<body>\n");
         sb.append("<div class=\"container\">\n");
         sb.append("<h1>").append(escapeHtml(title)).append("</h1>\n");
-        sb.append("<p class=\"meta\">Model: ").append(escapeHtml(modelName))
-            .append(" | Exported: ").append(TIME_FMT.format(Instant.now())).append("</p>\n");
+        sb.append("<p class=\"meta\">Model: ")
+                .append(escapeHtml(modelName))
+                .append(" | Exported: ")
+                .append(TIME_FMT.format(Instant.now()))
+                .append("</p>\n");
 
         for (var message : messages) {
             renderMessage(sb, message);
@@ -66,7 +69,9 @@ public final class HtmlExporter {
             case UserMessage um -> {
                 sb.append("<div class=\"message user\">\n");
                 sb.append("<div class=\"role\">User</div>\n");
-                sb.append("<div class=\"content\">").append(ansiToHtml(escapeHtml(extractText(um.content())))).append("</div>\n");
+                sb.append("<div class=\"content\">")
+                        .append(ansiToHtml(escapeHtml(extractText(um.content()))))
+                        .append("</div>\n");
                 sb.append("</div>\n");
             }
             case AssistantMessage am -> {
@@ -75,20 +80,26 @@ public final class HtmlExporter {
                 for (var block : am.content()) {
                     switch (block) {
                         case TextContent tc ->
-                            sb.append("<div class=\"content\">").append(ansiToHtml(escapeHtml(tc.text()))).append("</div>\n");
+                            sb.append("<div class=\"content\">")
+                                    .append(ansiToHtml(escapeHtml(tc.text())))
+                                    .append("</div>\n");
                         case ThinkingContent tc ->
                             sb.append("<details class=\"thinking\"><summary>Thinking</summary><pre>")
-                                .append(escapeHtml(tc.thinking())).append("</pre></details>\n");
+                                    .append(escapeHtml(tc.thinking()))
+                                    .append("</pre></details>\n");
                         case ToolCall tc ->
-                            sb.append("<div class=\"tool-call\">Tool: <code>").append(escapeHtml(tc.name()))
-                                .append("</code></div>\n");
+                            sb.append("<div class=\"tool-call\">Tool: <code>")
+                                    .append(escapeHtml(tc.name()))
+                                    .append("</code></div>\n");
                         default -> {}
                     }
                 }
                 if (am.usage() != null) {
                     sb.append("<div class=\"usage\">Tokens: ")
-                        .append(am.usage().input()).append(" in / ")
-                        .append(am.usage().output()).append(" out</div>\n");
+                            .append(am.usage().input())
+                            .append(" in / ")
+                            .append(am.usage().output())
+                            .append(" out</div>\n");
                 }
                 sb.append("</div>\n");
             }
@@ -96,9 +107,9 @@ public final class HtmlExporter {
                 sb.append("<div class=\"message tool-result\">\n");
                 sb.append("<div class=\"role\">Tool Result</div>\n");
                 String trmText = extractText(trm.content());
-                sb.append("<pre class=\"content\">").append(escapeHtml(
-                    trmText.length() > 2000 ? trmText.substring(0, 2000) + "..." : trmText
-                )).append("</pre>\n");
+                sb.append("<pre class=\"content\">")
+                        .append(escapeHtml(trmText.length() > 2000 ? trmText.substring(0, 2000) + "..." : trmText))
+                        .append("</pre>\n");
                 sb.append("</div>\n");
             }
             default -> {}
@@ -109,7 +120,9 @@ public final class HtmlExporter {
      * Converts ANSI escape codes to HTML span elements with CSS classes.
      */
     public static String ansiToHtml(String text) {
-        if (text == null) { return ""; }
+        if (text == null) {
+            return "";
+        }
         Matcher matcher = ANSI_PATTERN.matcher(text);
         StringBuilder sb = new StringBuilder();
         boolean inSpan = false;
@@ -130,7 +143,9 @@ public final class HtmlExporter {
             }
         }
         matcher.appendTail(sb);
-        if (inSpan) { sb.append("</span>"); }
+        if (inSpan) {
+            sb.append("</span>");
+        }
         return sb.toString();
     }
 
@@ -162,19 +177,26 @@ public final class HtmlExporter {
     private static String extractText(List<ContentBlock> content) {
         var sb = new StringBuilder();
         for (var block : content) {
-            if (block instanceof TextContent tc) { sb.append(tc.text()); }
+            if (block instanceof TextContent tc) {
+                sb.append(tc.text());
+            }
         }
         return sb.toString();
     }
 
     private static String escapeHtml(String text) {
-        if (text == null) { return ""; }
-        return text.replace("&", "&amp;").replace("<", "&lt;")
-            .replace(">", "&gt;").replace("\"", "&quot;")
-            .replace("\n", "<br>");
+        if (text == null) {
+            return "";
+        }
+        return text.replace("&", "&amp;")
+                .replace("<", "&lt;")
+                .replace(">", "&gt;")
+                .replace("\"", "&quot;")
+                .replace("\n", "<br>");
     }
 
-    private static final String CSS = """
+    private static final String CSS =
+            """
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
                background: #1a1a2e; color: #e0e0e0; line-height: 1.6; }

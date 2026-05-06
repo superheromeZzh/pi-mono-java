@@ -43,9 +43,7 @@ public class AgentModelResolver {
      * if no override is configured or the override fails to resolve.
      */
     public Model resolve(String agentName, Model defaultModel) {
-        return findOverride(agentName)
-                .flatMap(this::lookupAcrossProviders)
-                .orElse(defaultModel);
+        return findOverride(agentName).flatMap(this::lookupAcrossProviders).orElse(defaultModel);
     }
 
     private Optional<String> findOverride(String agentName) {
@@ -55,7 +53,9 @@ public class AgentModelResolver {
         } catch (Exception e) {
             return Optional.empty();
         }
-        if (settings.agent() == null) { return Optional.empty(); }
+        if (settings.agent() == null) {
+            return Optional.empty();
+        }
         Settings.AgentConfig cfg = settings.agent().get(agentName);
         if (cfg == null || cfg.model() == null || cfg.model().isBlank()) {
             return Optional.empty();
@@ -67,10 +67,14 @@ public class AgentModelResolver {
         // Strip optional "provider/" prefix; ModelRegistry indexes by id within each provider.
         String stripped = modelId;
         int slash = stripped.indexOf('/');
-        if (slash >= 0) { stripped = stripped.substring(slash + 1); }
+        if (slash >= 0) {
+            stripped = stripped.substring(slash + 1);
+        }
         for (var provider : modelRegistry.getProviders()) {
             var found = modelRegistry.getModel(provider, stripped);
-            if (found.isPresent()) { return found; }
+            if (found.isPresent()) {
+                return found;
+            }
         }
         return Optional.empty();
     }

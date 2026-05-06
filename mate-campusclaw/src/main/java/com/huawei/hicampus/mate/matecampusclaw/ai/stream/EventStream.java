@@ -68,7 +68,9 @@ public class EventStream<T, R> {
      */
     public void push(T event) {
         synchronized (lock) {
-            if (done) { return; }
+            if (done) {
+                return;
+            }
 
             if (isComplete.test(event)) {
                 done = true;
@@ -94,7 +96,9 @@ public class EventStream<T, R> {
      */
     public void end(R result) {
         synchronized (lock) {
-            if (done) { return; }
+            if (done) {
+                return;
+            }
             done = true;
             resultSink.tryEmitValue(result);
             eventSink.tryEmitComplete();
@@ -110,7 +114,9 @@ public class EventStream<T, R> {
      */
     public void end() {
         synchronized (lock) {
-            if (done) { return; }
+            if (done) {
+                return;
+            }
             done = true;
             resultSink.tryEmitEmpty();
             eventSink.tryEmitComplete();
@@ -127,7 +133,9 @@ public class EventStream<T, R> {
      */
     public void error(Throwable e) {
         synchronized (lock) {
-            if (done) { return; }
+            if (done) {
+                return;
+            }
             done = true;
             resultSink.tryEmitError(e);
             eventSink.tryEmitError(e);

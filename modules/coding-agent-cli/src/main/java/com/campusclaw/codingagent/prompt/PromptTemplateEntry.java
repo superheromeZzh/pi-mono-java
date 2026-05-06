@@ -15,10 +15,4 @@ import java.nio.file.Path;
  * @param filePath    absolute path to the template file
  * @param source      where the template was found ("user" or "project")
  */
-public record PromptTemplateEntry(
-        String name,
-        String description,
-        String content,
-        Path filePath,
-        String source
-) {}
+public record PromptTemplateEntry(String name, String description, String content, Path filePath, String source) {}

@@ -14,8 +14,4 @@ import com.campusclaw.ai.types.ContentBlock;
  * @param content user-visible content returned by the tool
  * @param details optional implementation-specific structured details
  */
-public record AgentToolResult(
-    List<ContentBlock> content,
-    Object details
-) {
-}
+public record AgentToolResult(List<ContentBlock> content, Object details) {}

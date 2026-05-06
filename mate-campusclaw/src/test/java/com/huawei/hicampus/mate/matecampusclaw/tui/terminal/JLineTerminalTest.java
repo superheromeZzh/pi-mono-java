@@ -136,6 +136,5 @@ class JLineTerminalTest {
     }
 
     // Simple placeholder to avoid compile error for List<Consumer>
-    interface Consumer {
-    }
+    interface Consumer {}
 }

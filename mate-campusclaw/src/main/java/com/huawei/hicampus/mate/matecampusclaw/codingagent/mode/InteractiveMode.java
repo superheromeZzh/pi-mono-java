@@ -163,13 +163,14 @@ public class InteractiveMode {
         this.scopedModels = models != null ? models : List.of();
     }
 
-    public InteractiveMode(SlashCommandRegistry commandRegistry,
-                           BashExecutor bashExecutor,
-                           Compactor compactor,
-                           ModelRegistry modelRegistry,
-                           com.huawei.hicampus.mate.matecampusclaw.cron.CronService cronService,
-                           com.huawei.hicampus.mate.matecampusclaw.codingagent.loop.LoopManager loopManager,
-                           ApplicationContext applicationContext) {
+    public InteractiveMode(
+            SlashCommandRegistry commandRegistry,
+            BashExecutor bashExecutor,
+            Compactor compactor,
+            ModelRegistry modelRegistry,
+            com.huawei.hicampus.mate.matecampusclaw.cron.CronService cronService,
+            com.huawei.hicampus.mate.matecampusclaw.codingagent.loop.LoopManager loopManager,
+            ApplicationContext applicationContext) {
         this.commandRegistry = Objects.requireNonNull(commandRegistry, "commandRegistry");
         this.bashExecutor = bashExecutor;
         this.compactor = compactor;
@@ -209,32 +210,155 @@ public class InteractiveMode {
         String RST = "\033[0m";
         var wb = new StringBuilder();
         String version = CampusClawApplication.class.getPackage() != null
-                && CampusClawApplication.class.getPackage().getImplementationVersion() != null
-                ? CampusClawApplication.class.getPackage().getImplementationVersion() : "0.1.0";
-        wb.append("\033[1m\033[38;2;138;190;183mCampusClaw\033[0m").append(DIM).append(" v").append(version).append(RST).append("\n");
+                        && CampusClawApplication.class.getPackage().getImplementationVersion() != null
+                ? CampusClawApplication.class.getPackage().getImplementationVersion()
+                : "0.1.0";
+        wb.append("\033[1m\033[38;2;138;190;183mCampusClaw\033[0m")
+                .append(DIM)
+                .append(" v")
+                .append(version)
+                .append(RST)
+                .append("\n");
 
         // Keybinding hints (aligned with campusclaw) — key in dim, description in muted
-        wb.append(DIM).append(" escape").append(RST).append(MUTED).append(" to interrupt").append(RST).append("\n");
-        wb.append(DIM).append(" ctrl+c").append(RST).append(MUTED).append(" to clear").append(RST).append("\n");
-        wb.append(DIM).append(" ctrl+c twice").append(RST).append(MUTED).append(" to exit").append(RST).append("\n");
-        wb.append(DIM).append(" ctrl+d").append(RST).append(MUTED).append(" to exit (empty)").append(RST).append("\n");
-        wb.append(DIM).append(" ctrl+z").append(RST).append(MUTED).append(" to suspend").append(RST).append("\n");
-        wb.append(DIM).append(" ctrl+k").append(RST).append(MUTED).append(" to delete to end").append(RST).append("\n");
-        wb.append(DIM).append(" shift+tab").append(RST).append(MUTED).append(" to cycle thinking level").append(RST).append("\n");
-        wb.append(DIM).append(" ctrl+p/shift+ctrl+p").append(RST).append(MUTED).append(" to cycle models").append(RST).append("\n");
-        wb.append(DIM).append(" ctrl+l").append(RST).append(MUTED).append(" to select model").append(RST).append("\n");
-        wb.append(DIM).append(" ctrl+o").append(RST).append(MUTED).append(" to expand tools").append(RST).append("\n");
-        wb.append(DIM).append(" ctrl+t").append(RST).append(MUTED).append(" to expand thinking").append(RST).append("\n");
-        wb.append(DIM).append(" ctrl+g").append(RST).append(MUTED).append(" for external editor").append(RST).append("\n");
-        wb.append(DIM).append(" /").append(RST).append(MUTED).append(" for commands").append(RST).append("\n");
-        wb.append(DIM).append(" !").append(RST).append(MUTED).append(" to run bash").append(RST).append("\n");
-        wb.append(DIM).append(" !!").append(RST).append(MUTED).append(" to run bash (no context)").append(RST).append("\n");
-        wb.append(DIM).append(" alt+enter").append(RST).append(MUTED).append(" to queue follow-up").append(RST).append("\n");
-        wb.append(DIM).append(" alt+up").append(RST).append(MUTED).append(" to edit all queued messages").append(RST).append("\n");
-        wb.append(DIM).append(" ctrl+v").append(RST).append(MUTED).append(" to paste image").append(RST).append("\n");
-        wb.append(DIM).append(" drop files").append(RST).append(MUTED).append(" to attach").append(RST).append("\n");
+        wb.append(DIM)
+                .append(" escape")
+                .append(RST)
+                .append(MUTED)
+                .append(" to interrupt")
+                .append(RST)
+                .append("\n");
+        wb.append(DIM)
+                .append(" ctrl+c")
+                .append(RST)
+                .append(MUTED)
+                .append(" to clear")
+                .append(RST)
+                .append("\n");
+        wb.append(DIM)
+                .append(" ctrl+c twice")
+                .append(RST)
+                .append(MUTED)
+                .append(" to exit")
+                .append(RST)
+                .append("\n");
+        wb.append(DIM)
+                .append(" ctrl+d")
+                .append(RST)
+                .append(MUTED)
+                .append(" to exit (empty)")
+                .append(RST)
+                .append("\n");
+        wb.append(DIM)
+                .append(" ctrl+z")
+                .append(RST)
+                .append(MUTED)
+                .append(" to suspend")
+                .append(RST)
+                .append("\n");
+        wb.append(DIM)
+                .append(" ctrl+k")
+                .append(RST)
+                .append(MUTED)
+                .append(" to delete to end")
+                .append(RST)
+                .append("\n");
+        wb.append(DIM)
+                .append(" shift+tab")
+                .append(RST)
+                .append(MUTED)
+                .append(" to cycle thinking level")
+                .append(RST)
+                .append("\n");
+        wb.append(DIM)
+                .append(" ctrl+p/shift+ctrl+p")
+                .append(RST)
+                .append(MUTED)
+                .append(" to cycle models")
+                .append(RST)
+                .append("\n");
+        wb.append(DIM)
+                .append(" ctrl+l")
+                .append(RST)
+                .append(MUTED)
+                .append(" to select model")
+                .append(RST)
+                .append("\n");
+        wb.append(DIM)
+                .append(" ctrl+o")
+                .append(RST)
+                .append(MUTED)
+                .append(" to expand tools")
+                .append(RST)
+                .append("\n");
+        wb.append(DIM)
+                .append(" ctrl+t")
+                .append(RST)
+                .append(MUTED)
+                .append(" to expand thinking")
+                .append(RST)
+                .append("\n");
+        wb.append(DIM)
+                .append(" ctrl+g")
+                .append(RST)
+                .append(MUTED)
+                .append(" for external editor")
+                .append(RST)
+                .append("\n");
+        wb.append(DIM)
+                .append(" /")
+                .append(RST)
+                .append(MUTED)
+                .append(" for commands")
+                .append(RST)
+                .append("\n");
+        wb.append(DIM)
+                .append(" !")
+                .append(RST)
+                .append(MUTED)
+                .append(" to run bash")
+                .append(RST)
+                .append("\n");
+        wb.append(DIM)
+                .append(" !!")
+                .append(RST)
+                .append(MUTED)
+                .append(" to run bash (no context)")
+                .append(RST)
+                .append("\n");
+        wb.append(DIM)
+                .append(" alt+enter")
+                .append(RST)
+                .append(MUTED)
+                .append(" to queue follow-up")
+                .append(RST)
+                .append("\n");
+        wb.append(DIM)
+                .append(" alt+up")
+                .append(RST)
+                .append(MUTED)
+                .append(" to edit all queued messages")
+                .append(RST)
+                .append("\n");
+        wb.append(DIM)
+                .append(" ctrl+v")
+                .append(RST)
+                .append(MUTED)
+                .append(" to paste image")
+                .append(RST)
+                .append("\n");
+        wb.append(DIM)
+                .append(" drop files")
+                .append(RST)
+                .append(MUTED)
+                .append(" to attach")
+                .append(RST)
+                .append("\n");
         wb.append("\n");
-        wb.append(DIM).append(" CampusClaw can explain its own features and look up its docs. Ask it how to use or extend CampusClaw.").append(RST);
+        wb.append(DIM)
+                .append(
+                        " CampusClaw can explain its own features and look up its docs. Ask it how to use or extend CampusClaw.")
+                .append(RST);
         welcomeComponent = new Text(wb.toString());
         chatContainer.addChild(welcomeComponent);
 
@@ -277,19 +401,20 @@ public class InteractiveMode {
             }
             cronService.addListener(event -> {
                 String cronTag = "\033[38;2;102;178;178m[cron]\033[0m ";
-                String msg = switch (event) {
-                    case com.huawei.hicampus.mate.matecampusclaw.cron.model.CronEvent.JobStarted e ->
-                        cronTag + "Running: " + e.jobName();
-                    case com.huawei.hicampus.mate.matecampusclaw.cron.model.CronEvent.JobCompleted e -> {
-                        String line = cronTag + "Completed: " + e.jobName();
-                        if (e.output() != null && !e.output().isBlank()) {
-                            line += "\n" + e.output();
-                        }
-                        yield line;
-                    }
-                    case com.huawei.hicampus.mate.matecampusclaw.cron.model.CronEvent.JobFailed e ->
-                        cronTag + "Failed: " + e.jobName() + " — " + e.error();
-                };
+                String msg =
+                        switch (event) {
+                            case com.huawei.hicampus.mate.matecampusclaw.cron.model.CronEvent.JobStarted e ->
+                                cronTag + "Running: " + e.jobName();
+                            case com.huawei.hicampus.mate.matecampusclaw.cron.model.CronEvent.JobCompleted e -> {
+                                String line = cronTag + "Completed: " + e.jobName();
+                                if (e.output() != null && !e.output().isBlank()) {
+                                    line += "\n" + e.output();
+                                }
+                                yield line;
+                            }
+                            case com.huawei.hicampus.mate.matecampusclaw.cron.model.CronEvent.JobFailed e ->
+                                cronTag + "Failed: " + e.jobName() + " — " + e.error();
+                        };
                 synchronized (tuiLock) {
                     chatContainer.addChild(new Text(msg));
                     tui.render();
@@ -398,9 +523,15 @@ public class InteractiveMode {
                     try {
                         // Send SIGTSTP to self
                         ProcessHandle.current().pid();
-                        new ProcessBuilder("kill", "-TSTP", String.valueOf(ProcessHandle.current().pid()))
-                                .inheritIO().start().waitFor();
-                    } catch (Exception ignored) {}
+                        new ProcessBuilder(
+                                        "kill",
+                                        "-TSTP",
+                                        String.valueOf(ProcessHandle.current().pid()))
+                                .inheritIO()
+                                .start()
+                                .waitFor();
+                    } catch (Exception ignored) {
+                    }
                     tui.start();
                     tui.render();
                     i++;
@@ -433,7 +564,11 @@ public class InteractiveMode {
                         bashMode = false;
                         editorContainer.setBorderForThinkingLevel(
                                 session.getAgent().getState().getThinkingLevel() != null
-                                        ? session.getAgent().getState().getThinkingLevel().value() : "medium");
+                                        ? session.getAgent()
+                                                .getState()
+                                                .getThinkingLevel()
+                                                .value()
+                                        : "medium");
                         tui.render();
                     }
                     i++;
@@ -527,7 +662,11 @@ public class InteractiveMode {
                 } else {
                     editorContainer.setBorderForThinkingLevel(
                             session.getAgent().getState().getThinkingLevel() != null
-                                    ? session.getAgent().getState().getThinkingLevel().value() : "medium");
+                                    ? session.getAgent()
+                                            .getState()
+                                            .getThinkingLevel()
+                                            .value()
+                                    : "medium");
                 }
             }
 
@@ -561,7 +700,9 @@ public class InteractiveMode {
                     break;
                 }
 
-                if (eofFlag.get()) { break; }
+                if (eofFlag.get()) {
+                    break;
+                }
                 if (input == null || input.trim().isEmpty()) {
                     tui.render();
                     continue;
@@ -572,8 +713,12 @@ public class InteractiveMode {
                 editorContainer.clear();
                 bashMode = false;
                 editorContainer.setBorderForThinkingLevel(
-                                session.getAgent().getState().getThinkingLevel() != null
-                                        ? session.getAgent().getState().getThinkingLevel().value() : "medium");
+                        session.getAgent().getState().getThinkingLevel() != null
+                                ? session.getAgent()
+                                        .getState()
+                                        .getThinkingLevel()
+                                        .value()
+                                : "medium");
 
                 // Special overlay commands
                 if ("/resume".equals(trimmed)) {
@@ -596,42 +741,42 @@ public class InteractiveMode {
                 if (trimmed.startsWith("/") && !isSkillOrTemplate(trimmed, session)) {
                     try {
                         if (handleSlashCommand(trimmed, session)) {
-                        // Refresh state after commands that change it
-                        if (trimmed.startsWith("/new") || trimmed.startsWith("/reload")) {
-                            buildCommandSuggestions(session);
-                        }
-                        // Clear chat display and reset tokens on /new
-                        if (trimmed.equals("/new")) {
-                            chatContainer.clear();
-                            chatContainer.addChild(new Text(
-                                    "\033[38;2;138;190;183m\u2713 New session started\033[0m", 1, 1));
-                            footer.resetUsage();
-                            lastStatusComponent = null;
-                            // Create a new session file
-                            var sm = session.getSessionManager();
-                            if (sm != null) {
-                                sm.close();
-                                sm.createSession(cwd);
+                            // Refresh state after commands that change it
+                            if (trimmed.startsWith("/new") || trimmed.startsWith("/reload")) {
+                                buildCommandSuggestions(session);
                             }
-                        }
-                        // Update footer after model switch
-                        if (trimmed.startsWith("/model ")) {
-                            var newModel = session.getAgent().getState().getModel();
-                            if (newModel != null) {
-                                footer.setModel(
-                                        newModel.provider().name().toLowerCase(),
-                                        newModel.id(),
-                                        newModel.contextWindow() > 0 ? newModel.contextWindow() : 200000,
-                                        newModel.reasoning());
+                            // Clear chat display and reset tokens on /new
+                            if (trimmed.equals("/new")) {
+                                chatContainer.clear();
+                                chatContainer.addChild(
+                                        new Text("\033[38;2;138;190;183m\u2713 New session started\033[0m", 1, 1));
+                                footer.resetUsage();
+                                lastStatusComponent = null;
+                                // Create a new session file
+                                var sm = session.getSessionManager();
+                                if (sm != null) {
+                                    sm.close();
+                                    sm.createSession(cwd);
+                                }
                             }
+                            // Update footer after model switch
+                            if (trimmed.startsWith("/model ")) {
+                                var newModel = session.getAgent().getState().getModel();
+                                if (newModel != null) {
+                                    footer.setModel(
+                                            newModel.provider().name().toLowerCase(),
+                                            newModel.id(),
+                                            newModel.contextWindow() > 0 ? newModel.contextWindow() : 200000,
+                                            newModel.reasoning());
+                                }
+                            }
+                            // Update footer session name after /name command
+                            if (trimmed.startsWith("/name ")) {
+                                footer.setSessionName(trimmed.substring(6).trim());
+                            }
+                            tui.render();
+                            continue;
                         }
-                        // Update footer session name after /name command
-                        if (trimmed.startsWith("/name ")) {
-                            footer.setSessionName(trimmed.substring(6).trim());
-                        }
-                        tui.render();
-                        continue;
-                    }
                     } catch (com.huawei.hicampus.mate.matecampusclaw.codingagent.command.QuitException e) {
                         // Graceful exit requested via /quit command
                         break;
@@ -641,7 +786,9 @@ public class InteractiveMode {
                 // Bash mode: ! or !! prefix
                 if (trimmed.startsWith("!")) {
                     boolean excluded = trimmed.startsWith("!!");
-                    String command = excluded ? trimmed.substring(2).trim() : trimmed.substring(1).trim();
+                    String command = excluded
+                            ? trimmed.substring(2).trim()
+                            : trimmed.substring(1).trim();
                     if (!command.isEmpty()) {
                         handleBashCommand(command, excluded, cwd);
                         tui.render();
@@ -652,8 +799,8 @@ public class InteractiveMode {
                 // Follow-up: queue message while streaming
                 if (followUpFlag.get() && session.isStreaming()) {
                     session.getAgent().followUp(new UserMessage(trimmed, System.currentTimeMillis()));
-                    chatContainer.addChild(new Text(
-                            "\033[2m  ↳ Follow-up queued: " + truncateDisplay(trimmed, 60) + "\033[0m"));
+                    chatContainer.addChild(
+                            new Text("\033[2m  ↳ Follow-up queued: " + truncateDisplay(trimmed, 60) + "\033[0m"));
                     tui.render();
                     continue;
                 }
@@ -690,10 +837,7 @@ public class InteractiveMode {
 
     private boolean handleSlashCommand(String input, AgentSession session) {
         var outputLines = new ArrayList<String>();
-        SlashCommandContext context = new SlashCommandContext(
-                session,
-                outputLines::add
-        );
+        SlashCommandContext context = new SlashCommandContext(session, outputLines::add);
         boolean handled = commandRegistry.execute(input, context);
         if (handled) {
             // Don't echo slash commands as user messages (matching campusclaw behavior)
@@ -721,7 +865,9 @@ public class InteractiveMode {
                 output.append(result.stdout());
             }
             if (result.stderr() != null && !result.stderr().isEmpty()) {
-                if (!output.isEmpty()) { output.append("\n"); }
+                if (!output.isEmpty()) {
+                    output.append("\n");
+                }
                 output.append(result.stderr());
             }
 
@@ -738,7 +884,8 @@ public class InteractiveMode {
         chatContainer.addChild(userMessageComponent);
 
         // Snapshot agent history size so we can roll the turn back on abort.
-        int agentMessageCountBefore = session.getAgent().getState().getMessages().size();
+        int agentMessageCountBefore =
+                session.getAgent().getState().getMessages().size();
 
         // Persist user message to session file
         var sm = session.getSessionManager();
@@ -767,13 +914,17 @@ public class InteractiveMode {
             t.setDaemon(true);
             return t;
         });
-        spinnerTimer.scheduleAtFixedRate(() -> {
-            synchronized (tuiLock) {
-                if (currentAssistantMessage != null && !currentAssistantMessage.hasContent()) {
-                    tui.render();
-                }
-            }
-        }, 80, 80, TimeUnit.MILLISECONDS);
+        spinnerTimer.scheduleAtFixedRate(
+                () -> {
+                    synchronized (tuiLock) {
+                        if (currentAssistantMessage != null && !currentAssistantMessage.hasContent()) {
+                            tui.render();
+                        }
+                    }
+                },
+                80,
+                80,
+                TimeUnit.MILLISECONDS);
 
         Runnable unsub = session.getAgent().subscribe(event -> {
             synchronized (tuiLock) {
@@ -828,7 +979,7 @@ public class InteractiveMode {
                 if (replyText != null && !replyText.isEmpty()) {
                     try {
                         applicationContext.publishEvent(
-                            new com.huawei.hicampus.mate.matecampusclaw.assistant.channel.gateway.AgentResponseEvent(this, replyText));
+                                new com.huawei.hicampus.mate.matecampusclaw.assistant.channel.gateway.AgentResponseEvent(this, replyText));
                     } catch (Exception e) {
                         System.err.println("[InteractiveMode] Failed to publish AgentResponseEvent: " + e.getMessage());
                     }
@@ -837,7 +988,9 @@ public class InteractiveMode {
         }
         currentAssistantMessage = null;
 
-        if (unsub != null) { unsub.run(); }
+        if (unsub != null) {
+            unsub.run();
+        }
         tui.render();
     }
 
@@ -854,13 +1007,21 @@ public class InteractiveMode {
 
         ThinkingLevel[] levels = ModelRegistry.supportsXhigh(model)
                 ? ThinkingLevel.values()
-                : new ThinkingLevel[]{ThinkingLevel.OFF, ThinkingLevel.MINIMAL, ThinkingLevel.LOW,
-                        ThinkingLevel.MEDIUM, ThinkingLevel.HIGH};
+                : new ThinkingLevel[] {
+                    ThinkingLevel.OFF,
+                    ThinkingLevel.MINIMAL,
+                    ThinkingLevel.LOW,
+                    ThinkingLevel.MEDIUM,
+                    ThinkingLevel.HIGH
+                };
 
         var current = session.getAgent().getState().getThinkingLevel();
         int idx = 0;
         for (int j = 0; j < levels.length; j++) {
-            if (levels[j] == current) { idx = j; break; }
+            if (levels[j] == current) {
+                idx = j;
+                break;
+            }
         }
         var next = levels[(idx + 1) % levels.length];
         session.getAgent().setThinkingLevel(next);
@@ -868,7 +1029,9 @@ public class InteractiveMode {
         editorContainer.setBorderForThinkingLevel(next.value());
         // Persist thinking level change
         var sm = session.getSessionManager();
-        if (sm != null) { sm.appendThinkingLevelChange(next.value()); }
+        if (sm != null) {
+            sm.appendThinkingLevelChange(next.value());
+        }
         showStatus("Thinking: " + next.value());
     }
 
@@ -877,7 +1040,9 @@ public class InteractiveMode {
      * @param forward true for next, false for previous
      */
     private void cycleModel(AgentSession session, boolean forward) {
-        if (modelRegistry == null) { return; }
+        if (modelRegistry == null) {
+            return;
+        }
 
         // Use scoped models if available, otherwise all models
         List<Model> candidates;
@@ -886,8 +1051,8 @@ public class InteractiveMode {
         } else {
             candidates = modelRegistry.getAllModels();
             // Sort models by provider then id for stable ordering
-            candidates.sort(Comparator.comparing((Model m) -> m.provider().value())
-                    .thenComparing(Model::id));
+            candidates.sort(
+                    Comparator.comparing((Model m) -> m.provider().value()).thenComparing(Model::id));
         }
 
         if (candidates.size() <= 1) {
@@ -907,11 +1072,12 @@ public class InteractiveMode {
                 }
             }
         }
-        if (currentIdx == -1) { currentIdx = 0; }
+        if (currentIdx == -1) {
+            currentIdx = 0;
+        }
 
-        int nextIdx = forward
-                ? (currentIdx + 1) % allModels.size()
-                : (currentIdx - 1 + allModels.size()) % allModels.size();
+        int nextIdx =
+                forward ? (currentIdx + 1) % allModels.size() : (currentIdx - 1 + allModels.size()) % allModels.size();
         var newModel = allModels.get(nextIdx);
         session.getAgent().setModel(newModel);
 
@@ -928,11 +1094,14 @@ public class InteractiveMode {
         }
         editorContainer.setBorderForThinkingLevel(
                 session.getAgent().getState().getThinkingLevel() != null
-                        ? session.getAgent().getState().getThinkingLevel().value() : "off");
+                        ? session.getAgent().getState().getThinkingLevel().value()
+                        : "off");
 
         // Persist model change
         var sm = session.getSessionManager();
-        if (sm != null) { sm.appendModelChange(newModel.provider().value(), newModel.id()); }
+        if (sm != null) {
+            sm.appendModelChange(newModel.provider().value(), newModel.id());
+        }
 
         String thinkingStr = newModel.reasoning()
                 ? " • " + session.getAgent().getState().getThinkingLevel().value()
@@ -957,7 +1126,9 @@ public class InteractiveMode {
      * Shows the model selector overlay. Replaces the chat area until dismissed.
      */
     private void showModelSelector(AgentSession session) {
-        if (modelRegistry == null) { return; }
+        if (modelRegistry == null) {
+            return;
+        }
         var currentModel = session.getAgent().getState().getModel();
         var overlay = new ModelSelectorOverlay(modelRegistry, currentModel);
 
@@ -975,10 +1146,13 @@ public class InteractiveMode {
             }
             editorContainer.setBorderForThinkingLevel(
                     session.getAgent().getState().getThinkingLevel() != null
-                            ? session.getAgent().getState().getThinkingLevel().value() : "off");
+                            ? session.getAgent().getState().getThinkingLevel().value()
+                            : "off");
             // Persist model change
             var sm = session.getSessionManager();
-            if (sm != null) { sm.appendModelChange(model.provider().value(), model.id()); }
+            if (sm != null) {
+                sm.appendModelChange(model.provider().value(), model.id());
+            }
 
             dismissOverlay();
             showStatus("切换到 " + model.name());
@@ -1117,7 +1291,9 @@ public class InteractiveMode {
         }
 
         String currentText = editorContainer.getEditor().getText();
-        if (currentText == null) { currentText = ""; }
+        if (currentText == null) {
+            currentText = "";
+        }
 
         try {
             Path tmpFile = Files.createTempFile("campusclaw-editor-", ".pi.md");
@@ -1131,9 +1307,7 @@ public class InteractiveMode {
             var cmd = new ArrayList<>(List.of(parts));
             cmd.add(tmpFile.toString());
 
-            var process = new ProcessBuilder(cmd)
-                    .inheritIO()
-                    .start();
+            var process = new ProcessBuilder(cmd).inheritIO().start();
             process.waitFor();
 
             if (process.exitValue() == 0) {
@@ -1158,8 +1332,7 @@ public class InteractiveMode {
     private void pasteClipboardImage(AgentSession session) {
         try {
             // macOS: use osascript to check clipboard for image
-            var check = new ProcessBuilder("osascript", "-e",
-                    "the clipboard info for (class PNGf)")
+            var check = new ProcessBuilder("osascript", "-e", "the clipboard info for (class PNGf)")
                     .redirectErrorStream(true)
                     .start();
             String output = new String(check.getInputStream().readAllBytes()).trim();
@@ -1172,11 +1345,12 @@ public class InteractiveMode {
 
             // Save clipboard image to temp file
             Path tmpFile = Files.createTempFile("campusclaw-clipboard-", ".png");
-            var save = new ProcessBuilder("osascript", "-e",
-                    "set imgData to the clipboard as «class PNGf»\n" +
-                    "set fp to open for access POSIX file \"" + tmpFile + "\" with write permission\n" +
-                    "write imgData to fp\n" +
-                    "close access fp")
+            var save = new ProcessBuilder(
+                            "osascript",
+                            "-e",
+                            "set imgData to the clipboard as «class PNGf»\n" + "set fp to open for access POSIX file \""
+                                    + tmpFile + "\" with write permission\n" + "write imgData to fp\n"
+                                    + "close access fp")
                     .redirectErrorStream(true)
                     .start();
             save.waitFor();
@@ -1200,7 +1374,8 @@ public class InteractiveMode {
     private void showStatus(String message) {
         var children = chatContainer.getChildren();
         // Reuse last status component if it's the last child
-        if (lastStatusComponent != null && !children.isEmpty()
+        if (lastStatusComponent != null
+                && !children.isEmpty()
                 && children.get(children.size() - 1) == lastStatusComponent) {
             // Replace with new text
             chatContainer.removeChild(lastStatusComponent);
@@ -1222,7 +1397,9 @@ public class InteractiveMode {
                 }
             }
             case MessageUpdateEvent e -> {
-                if (currentAssistantMessage == null) { return; }
+                if (currentAssistantMessage == null) {
+                    return;
+                }
                 if (e.assistantMessageEvent() instanceof AssistantMessageEvent.TextDeltaEvent delta) {
                     currentAssistantMessage.appendText(delta.delta());
                 } else if (e.assistantMessageEvent() instanceof AssistantMessageEvent.ThinkingDeltaEvent thinking) {
@@ -1232,20 +1409,29 @@ public class InteractiveMode {
             case MessageEndEvent e -> {
                 if (e.message() instanceof AssistantMessage msg) {
                     if (msg.usage() != null) {
-                        double cost = msg.usage().cost() != null ? msg.usage().cost().total() : 0;
-                        footer.updateUsage(msg.usage().input(), msg.usage().output(),
-                                msg.usage().cacheRead(), msg.usage().cacheWrite(), cost);
+                        double cost =
+                                msg.usage().cost() != null ? msg.usage().cost().total() : 0;
+                        footer.updateUsage(
+                                msg.usage().input(),
+                                msg.usage().output(),
+                                msg.usage().cacheRead(),
+                                msg.usage().cacheWrite(),
+                                cost);
                     }
                     // Persist assistant message to session file
                     if (currentSession != null) {
                         var sm = currentSession.getSessionManager();
-                        if (sm != null) { sm.appendMessage(msg); }
+                        if (sm != null) {
+                            sm.appendMessage(msg);
+                        }
                         // Persist assistant message to ChatMemory (GaussDB)
                         if (chatMemoryStore != null) {
                             try {
                                 chatMemoryStore.append(sm.getSessionId(), List.of(msg));
                             } catch (Exception ex) {
-                                log.debug("Failed to persist assistant message to ChatMemory (DB unavailable?): {}", ex.getMessage());
+                                log.debug(
+                                        "Failed to persist assistant message to ChatMemory (DB unavailable?): {}",
+                                        ex.getMessage());
                             }
                         }
                     }
@@ -1270,15 +1456,19 @@ public class InteractiveMode {
                     tool.setComplete(e.isError(), e.result());
                 }
             }
-            default -> { }
+            default -> {}
         }
     }
 
     private void checkAutoCompaction(AgentSession session) {
-        if (compactor == null) { return; }
+        if (compactor == null) {
+            return;
+        }
 
         var model = session.getAgent().getState().getModel();
-        if (model == null || model.contextWindow() <= 0) { return; }
+        if (model == null || model.contextWindow() <= 0) {
+            return;
+        }
 
         var messages = session.getHistory();
         if (compactor.needsCompaction(messages, model.contextWindow())) {
@@ -1290,18 +1480,15 @@ public class InteractiveMode {
                 var newMessages = new ArrayList<Message>();
                 if (!result.summary().isEmpty()) {
                     newMessages.add(new UserMessage(
-                            "[Context compaction summary]\n" + result.summary(),
-                            System.currentTimeMillis()));
+                            "[Context compaction summary]\n" + result.summary(), System.currentTimeMillis()));
                 }
                 newMessages.addAll(result.retainedMessages());
                 session.getAgent().replaceMessages(newMessages);
 
                 int removed = messages.size() - result.retainedMessages().size();
-                chatContainer.addChild(new Text(
-                        "\033[2m  Compacted " + removed + " messages.\033[0m"));
+                chatContainer.addChild(new Text("\033[2m  Compacted " + removed + " messages.\033[0m"));
             } catch (Exception e) {
-                chatContainer.addChild(new Text(
-                        "\033[31m  Auto-compaction failed: " + e.getMessage() + "\033[0m"));
+                chatContainer.addChild(new Text("\033[31m  Auto-compaction failed: " + e.getMessage() + "\033[0m"));
             }
             tui.render();
         }
@@ -1316,7 +1503,9 @@ public class InteractiveMode {
     }
 
     private static String truncateDisplay(String s, int max) {
-        if (s.length() <= max) { return s; }
+        if (s.length() <= max) {
+            return s;
+        }
         return s.substring(0, max - 3) + "...";
     }
 
@@ -1325,13 +1514,17 @@ public class InteractiveMode {
      * with the file's content. Matches campusclaw TS @file behavior.
      */
     static String expandFileReferences(String input) {
-        if (input == null || !input.contains("@")) { return input; }
+        if (input == null || !input.contains("@")) {
+            return input;
+        }
 
         var sb = new StringBuilder();
         var tokens = input.split("\\s+");
         boolean first = true;
         for (String token : tokens) {
-            if (!first) { sb.append(' '); }
+            if (!first) {
+                sb.append(' ');
+            }
             first = false;
 
             if (token.startsWith("@") && token.length() > 1) {
@@ -1341,7 +1534,11 @@ public class InteractiveMode {
                     try {
                         sb.append(Files.readString(path));
                     } catch (IOException e) {
-                        sb.append("[Error reading ").append(filePath).append(": ").append(e.getMessage()).append("]");
+                        sb.append("[Error reading ")
+                                .append(filePath)
+                                .append(": ")
+                                .append(e.getMessage())
+                                .append("]");
                     }
                 } else {
                     sb.append(token); // Not a valid file, keep as-is
@@ -1359,13 +1556,17 @@ public class InteractiveMode {
      * of being processed as slash commands.
      */
     private boolean isSkillOrTemplate(String input, AgentSession session) {
-        if (input.startsWith("/skill:")) { return true; }
+        if (input.startsWith("/skill:")) {
+            return true;
+        }
 
         // Check if it matches a prompt template name
         int spaceIdx = input.indexOf(' ');
         String name = spaceIdx >= 0 ? input.substring(1, spaceIdx) : input.substring(1);
         for (PromptTemplateEntry template : session.getPromptTemplates()) {
-            if (template.name().equals(name)) { return true; }
+            if (template.name().equals(name)) {
+                return true;
+            }
         }
         return false;
     }
@@ -1384,16 +1585,14 @@ public class InteractiveMode {
 
         // 2. Skills as /skill:name commands
         for (Skill skill : session.getSkillRegistry().getAll()) {
-            suggestions.add(new CommandSuggestion(
-                    "skill:" + skill.name(),
-                    "[" + skill.source() + "] " + skill.description()));
+            suggestions.add(
+                    new CommandSuggestion("skill:" + skill.name(), "[" + skill.source() + "] " + skill.description()));
         }
 
         // 3. Prompt templates as /templatename commands
         for (PromptTemplateEntry template : session.getPromptTemplates()) {
-            suggestions.add(new CommandSuggestion(
-                    template.name(),
-                    "[" + template.source() + "] " + template.description()));
+            suggestions.add(
+                    new CommandSuggestion(template.name(), "[" + template.source() + "] " + template.description()));
         }
 
         // Sort alphabetically
@@ -1402,12 +1601,16 @@ public class InteractiveMode {
     }
 
     static int findEscapeSequenceEnd(String data, int start) {
-        if (start + 1 >= data.length()) { return start + 1; }
+        if (start + 1 >= data.length()) {
+            return start + 1;
+        }
         char second = data.charAt(start + 1);
         if (second == '[') {
             int j = start + 2;
             while (j < data.length()) {
-                if (data.charAt(j) >= 0x40 && data.charAt(j) <= 0x7E) { return j + 1; }
+                if (data.charAt(j) >= 0x40 && data.charAt(j) <= 0x7E) {
+                    return j + 1;
+                }
                 j++;
             }
             return data.length();

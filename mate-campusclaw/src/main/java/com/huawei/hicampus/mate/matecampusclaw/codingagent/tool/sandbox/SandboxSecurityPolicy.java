@@ -21,32 +21,31 @@ public class SandboxSecurityPolicy {
 
     // 危险命令模式
     private static final List<Pattern> DANGEROUS_PATTERNS = List.of(
-        Pattern.compile("rm\\s+-rf\\s+/"),
-        Pattern.compile("mkfs\\."),
-        Pattern.compile("dd\\s+if=/dev/zero"),
-        Pattern.compile(":\\(\\)\\{\\s*:|:&\\s*\\};:"),  // fork bomb
-        Pattern.compile("curl\\s+[^|]*\\|\\s*sh"),
-        Pattern.compile("wget\\s+[^|]*\\|\\s*sh"),
-        Pattern.compile("eval\\s+.*\\$\\(.*\\)"),
-        Pattern.compile(">\\s*/etc/"),
-        Pattern.compile("chmod\\s+777\\s+/"),
-        Pattern.compile("chmod\\s+-R\\s+777")
-    );
+            Pattern.compile("rm\\s+-rf\\s+/"),
+            Pattern.compile("mkfs\\."),
+            Pattern.compile("dd\\s+if=/dev/zero"),
+            Pattern.compile(":\\(\\)\\{\\s*:|:&\\s*\\};:"), // fork bomb
+            Pattern.compile("curl\\s+[^|]*\\|\\s*sh"),
+            Pattern.compile("wget\\s+[^|]*\\|\\s*sh"),
+            Pattern.compile("eval\\s+.*\\$\\(.*\\)"),
+            Pattern.compile(">\\s*/etc/"),
+            Pattern.compile("chmod\\s+777\\s+/"),
+            Pattern.compile("chmod\\s+-R\\s+777"));
 
     // 受保护路径
     private static final List<Pattern> PROTECTED_PATHS = List.of(
-        Pattern.compile("^/etc/.*"),
-        Pattern.compile("^/usr/.*"),
-        Pattern.compile("^/bin/.*"),
-        Pattern.compile("^/sbin/.*"),
-        Pattern.compile("^/lib.*"),
-        Pattern.compile("^/sys/.*"),
-        Pattern.compile("^/proc/.*"),
-        Pattern.compile("^/dev/.*"),
-        Pattern.compile("^/root/.*"),
-        Pattern.compile("\\.\\./.*"),
-        Pattern.compile("^/.*\\.\\./.*")  // 路径遍历
-    );
+            Pattern.compile("^/etc/.*"),
+            Pattern.compile("^/usr/.*"),
+            Pattern.compile("^/bin/.*"),
+            Pattern.compile("^/sbin/.*"),
+            Pattern.compile("^/lib.*"),
+            Pattern.compile("^/sys/.*"),
+            Pattern.compile("^/proc/.*"),
+            Pattern.compile("^/dev/.*"),
+            Pattern.compile("^/root/.*"),
+            Pattern.compile("\\.\\./.*"),
+            Pattern.compile("^/.*\\.\\./.*") // 路径遍历
+            );
 
     /**
      * 检查命令是否危险
@@ -104,9 +103,7 @@ public class SandboxSecurityPolicy {
      * 标准化路径
      */
     private String normalizePath(String path) {
-        return path.replaceAll("/+", "/")
-                  .replaceAll("/\\./", "/")
-                  .replaceAll("/+$", "");
+        return path.replaceAll("/+", "/").replaceAll("/\\./", "/").replaceAll("/+$", "");
     }
 
     /**
@@ -118,10 +115,8 @@ public class SandboxSecurityPolicy {
         }
         String base = command.trim().split("\\s+")[0].toLowerCase();
         return Set.of(
-            "cat", "head", "tail", "grep", "awk", "sed", "wc",
-            "ls", "pwd", "echo", "sort", "uniq", "find",
-            "which", "whoami", "id", "uname", "date",
-            "git", "diff", "patch"
-        ).contains(base);
+                        "cat", "head", "tail", "grep", "awk", "sed", "wc", "ls", "pwd", "echo", "sort", "uniq", "find",
+                        "which", "whoami", "id", "uname", "date", "git", "diff", "patch")
+                .contains(base);
     }
 }

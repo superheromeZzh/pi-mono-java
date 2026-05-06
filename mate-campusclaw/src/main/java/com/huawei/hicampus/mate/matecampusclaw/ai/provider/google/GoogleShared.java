@@ -70,7 +70,8 @@ public final class GoogleShared {
                     var parts = MAPPER.createArrayNode();
                     for (var block : am.content()) {
                         switch (block) {
-                            case TextContent tc -> parts.add(MAPPER.createObjectNode().put("text", tc.text()));
+                            case TextContent tc ->
+                                parts.add(MAPPER.createObjectNode().put("text", tc.text()));
                             case ThinkingContent tc -> {
                                 if (tc.thinking() != null && !tc.thinking().isBlank()) {
                                     var part = MAPPER.createObjectNode();
@@ -106,7 +107,9 @@ public final class GoogleShared {
                     var response = MAPPER.createObjectNode();
                     var sb = new StringBuilder();
                     for (var block : trm.content()) {
-                        if (block instanceof TextContent tc) { sb.append(tc.text()); }
+                        if (block instanceof TextContent tc) {
+                            sb.append(tc.text());
+                        }
                     }
                     String resultText = sb.toString();
                     if (trm.isError()) {
@@ -130,7 +133,9 @@ public final class GoogleShared {
      * Converts unified Tool definitions to Google function declarations.
      */
     public static ArrayNode convertTools(@Nullable List<Tool> tools) {
-        if (tools == null || tools.isEmpty()) { return null; }
+        if (tools == null || tools.isEmpty()) {
+            return null;
+        }
         var toolsArray = MAPPER.createArrayNode();
         var toolObj = MAPPER.createObjectNode();
         var functionDeclarations = MAPPER.createArrayNode();
@@ -167,7 +172,8 @@ public final class GoogleShared {
                     boolean isThinking = part.path("thought").asBoolean(false);
                     if (isThinking) {
                         String thinkingSig = part.has("thoughtSignature")
-                            ? part.get("thoughtSignature").asText() : null;
+                                ? part.get("thoughtSignature").asText()
+                                : null;
                         blocks.add(new ThinkingContent(part.get("text").asText(), thinkingSig, false));
                     } else {
                         blocks.add(new TextContent(part.get("text").asText()));
@@ -178,17 +184,17 @@ public final class GoogleShared {
                     Map<String, Object> args = Map.of();
                     if (fc.has("args")) {
                         try {
-                            args = MAPPER.convertValue(fc.get("args"),
-                                new TypeReference<>() {});
-                        } catch (Exception ignored) {}
+                            args = MAPPER.convertValue(fc.get("args"), new TypeReference<>() {});
+                        } catch (Exception ignored) {
+                        }
                     }
                     blocks.add(new ToolCall(java.util.UUID.randomUUID().toString(), name, args));
                 }
             }
         }
 
-        String finishReason = candidate.has("finishReason")
-            ? candidate.get("finishReason").asText() : null;
+        String finishReason =
+                candidate.has("finishReason") ? candidate.get("finishReason").asText() : null;
 
         Usage usage = null;
         var usageNode = chunk.path("usageMetadata");
@@ -210,7 +216,9 @@ public final class GoogleShared {
      * Maps Google finish reason to unified StopReason.
      */
     public static StopReason mapFinishReason(@Nullable String reason) {
-        if (reason == null) { return StopReason.STOP; }
+        if (reason == null) {
+            return StopReason.STOP;
+        }
         return switch (reason) {
             case "STOP" -> StopReason.STOP;
             case "MAX_TOKENS" -> StopReason.LENGTH;

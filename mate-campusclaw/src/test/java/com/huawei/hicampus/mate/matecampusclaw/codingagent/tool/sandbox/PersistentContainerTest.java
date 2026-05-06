@@ -37,9 +37,7 @@ public class PersistentContainerTest {
         if (client.isAvailable()) {
             System.out.println("\n2. 测试执行命令...");
             SandboxResult result = client.execute(
-                java.util.List.of("echo", "Hello from persistent container"),
-                ResourceLimits.defaults()
-            );
+                    java.util.List.of("echo", "Hello from persistent container"), ResourceLimits.defaults());
             System.out.println("   退出码: " + result.getExitCode());
             System.out.println("   输出: " + result.getStdout().trim());
 
@@ -58,15 +56,13 @@ public class PersistentContainerTest {
             Thread.sleep(1000);
 
             System.out.println("   再次执行命令（应该自动恢复）...");
-            result = client.execute(
-                java.util.List.of("echo", "Recovered!"),
-                ResourceLimits.defaults()
-            );
+            result = client.execute(java.util.List.of("echo", "Recovered!"), ResourceLimits.defaults());
             System.out.println("   退出码: " + result.getExitCode());
             System.out.println("   输出: " + result.getStdout().trim());
             System.out.println("   新 Worker ID: " + client.getWorkerContainerId());
 
-            if (result.getExitCode() == 0 && "Recovered!".equals(result.getStdout().trim())) {
+            if (result.getExitCode() == 0
+                    && "Recovered!".equals(result.getStdout().trim())) {
                 System.out.println("\n✓ 自动恢复测试通过!");
             } else {
                 System.out.println("\n✗ 自动恢复测试失败!");

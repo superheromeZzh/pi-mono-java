@@ -21,7 +21,10 @@ public class PrintMode {
     private static final Logger log = LoggerFactory.getLogger(PrintMode.class);
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
-    public enum OutputFormat { TEXT, JSON }
+    public enum OutputFormat {
+        TEXT,
+        JSON
+    }
 
     private final AgentSession session;
     private final OutputFormat format;
@@ -33,7 +36,7 @@ public class PrintMode {
 
     public int run(String prompt) {
         var result = new StringBuilder();
-        var exitCode = new int[]{0};
+        var exitCode = new int[] {0};
 
         session.subscribe(event -> {
             if (format == OutputFormat.JSON) {

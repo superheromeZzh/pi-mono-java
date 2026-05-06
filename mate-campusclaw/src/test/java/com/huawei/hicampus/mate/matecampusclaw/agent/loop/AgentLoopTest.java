@@ -76,24 +76,18 @@ class AgentLoopTest {
         var context = new AgentContext(state);
 
         var loop = new AgentLoop(new AgentLoopConfig(
-            piAiService(model, new ScenarioProvider()),
-            model,
-            new DefaultMessageConverter(),
-            transformer,
-            toolPipeline,
-            ToolExecutionMode.SEQUENTIAL,
-            steeringQueue,
-            followUpQueue,
-            SimpleStreamOptions.empty()
-        ));
+                piAiService(model, new ScenarioProvider()),
+                model,
+                new DefaultMessageConverter(),
+                transformer,
+                toolPipeline,
+                ToolExecutionMode.SEQUENTIAL,
+                steeringQueue,
+                followUpQueue,
+                SimpleStreamOptions.empty()));
 
         var events = new ArrayList<AgentEvent>();
-        var result = loop.run(
-            List.of(new UserMessage("prompt", 1L)),
-            context,
-            events::add,
-            new CancellationToken()
-        );
+        var result = loop.run(List.of(new UserMessage("prompt", 1L)), context, events::add, new CancellationToken());
 
         assertEquals(5, result.size());
         assertEquals("prompt", text((UserMessage) result.get(0)));
@@ -122,16 +116,15 @@ class AgentLoopTest {
         var context = new AgentContext(state);
 
         var loop = new AgentLoop(new AgentLoopConfig(
-            piAiService(model, new ScenarioProvider()),
-            model,
-            new DefaultMessageConverter(),
-            null,
-            new ToolExecutionPipeline(),
-            ToolExecutionMode.SEQUENTIAL,
-            steeringQueue,
-            followUpQueue,
-            SimpleStreamOptions.empty()
-        ));
+                piAiService(model, new ScenarioProvider()),
+                model,
+                new DefaultMessageConverter(),
+                null,
+                new ToolExecutionPipeline(),
+                ToolExecutionMode.SEQUENTIAL,
+                steeringQueue,
+                followUpQueue,
+                SimpleStreamOptions.empty()));
 
         var events = new ArrayList<AgentEvent>();
         var result = loop.continueLoop(context, events::add, new CancellationToken());
@@ -157,20 +150,19 @@ class AgentLoopTest {
 
     private Model sampleModel() {
         return new Model(
-            "test-model",
-            "Test Model",
-            Api.ANTHROPIC_MESSAGES,
-            Provider.ANTHROPIC,
-            "https://example.com",
-            true,
-            List.of(InputModality.TEXT),
-            new ModelCost(1.0, 2.0, 0.5, 0.25),
-            200_000,
-            4_096,
-            null,
-            null,
-            null
-        );
+                "test-model",
+                "Test Model",
+                Api.ANTHROPIC_MESSAGES,
+                Provider.ANTHROPIC,
+                "https://example.com",
+                true,
+                List.of(InputModality.TEXT),
+                new ModelCost(1.0, 2.0, 0.5, 0.25),
+                200_000,
+                4_096,
+                null,
+                null,
+                null);
     }
 
     private String text(UserMessage message) {
@@ -208,19 +200,20 @@ class AgentLoopTest {
         @Override
         public com.fasterxml.jackson.databind.JsonNode parameters() {
             return mapper.createObjectNode()
-                .put("type", "object")
-                .<com.fasterxml.jackson.databind.node.ObjectNode>set("properties",
-                    mapper.createObjectNode().set("query", mapper.createObjectNode().put("type", "string")))
-                .set("required", mapper.createArrayNode().add("query"));
+                    .put("type", "object")
+                    .<com.fasterxml.jackson.databind.node.ObjectNode>set(
+                            "properties",
+                            mapper.createObjectNode()
+                                    .set("query", mapper.createObjectNode().put("type", "string")))
+                    .set("required", mapper.createArrayNode().add("query"));
         }
 
         @Override
         public AgentToolResult execute(
-            String toolCallId,
-            Map<String, Object> params,
-            CancellationToken signal,
-            AgentToolUpdateCallback onUpdate
-        ) {
+                String toolCallId,
+                Map<String, Object> params,
+                CancellationToken signal,
+                AgentToolUpdateCallback onUpdate) {
             steeringQueue.enqueue(new UserMessage("steer", 3L));
             onUpdate.onUpdate(new AgentToolResult(List.of(new TextContent("partial tool")), null));
             return new AgentToolResult(List.of(new TextContent("tool result")), Map.of("query", params.get("query")));
@@ -235,7 +228,8 @@ class AgentLoopTest {
         }
 
         @Override
-        public AssistantMessageEventStream stream(Model model, Context context, com.huawei.hicampus.mate.matecampusclaw.ai.types.StreamOptions options) {
+        public AssistantMessageEventStream stream(
+                Model model, Context context, com.huawei.hicampus.mate.matecampusclaw.ai.types.StreamOptions options) {
             throw new UnsupportedOperationException("AgentLoop uses streamSimple");
         }
 
@@ -255,34 +249,33 @@ class AgentLoopTest {
             if (lastMessage instanceof ToolResultMessage) {
                 return textStream(model, "tool result reply");
             }
-            throw new IllegalStateException("Unexpected last message: " + lastMessage.getClass().getSimpleName());
+            throw new IllegalStateException(
+                    "Unexpected last message: " + lastMessage.getClass().getSimpleName());
         }
 
         private AssistantMessageEventStream toolCallStream(Model model, String toolName, Map<String, Object> args) {
             var stream = new AssistantMessageEventStream();
             var toolCall = new ToolCall("tool-call-1", toolName, args);
             var partial = new AssistantMessage(
-                List.of(toolCall),
-                model.api().value(),
-                model.provider().value(),
-                model.id(),
-                null,
-                Usage.empty(),
-                StopReason.TOOL_USE,
-                null,
-                10L
-            );
+                    List.of(toolCall),
+                    model.api().value(),
+                    model.provider().value(),
+                    model.id(),
+                    null,
+                    Usage.empty(),
+                    StopReason.TOOL_USE,
+                    null,
+                    10L);
             var done = new AssistantMessage(
-                List.of(toolCall),
-                model.api().value(),
-                model.provider().value(),
-                model.id(),
-                null,
-                Usage.empty(),
-                StopReason.TOOL_USE,
-                null,
-                11L
-            );
+                    List.of(toolCall),
+                    model.api().value(),
+                    model.provider().value(),
+                    model.id(),
+                    null,
+                    Usage.empty(),
+                    StopReason.TOOL_USE,
+                    null,
+                    11L);
             stream.push(new AssistantMessageEvent.StartEvent(partial));
             stream.push(new AssistantMessageEvent.ToolCallEndEvent(0, toolCall, partial));
             stream.push(new AssistantMessageEvent.DoneEvent(StopReason.TOOL_USE, done));
@@ -292,27 +285,25 @@ class AgentLoopTest {
         private AssistantMessageEventStream textStream(Model model, String text) {
             var stream = new AssistantMessageEventStream();
             var partial = new AssistantMessage(
-                List.of(new TextContent(text)),
-                model.api().value(),
-                model.provider().value(),
-                model.id(),
-                null,
-                Usage.empty(),
-                StopReason.STOP,
-                null,
-                20L
-            );
+                    List.of(new TextContent(text)),
+                    model.api().value(),
+                    model.provider().value(),
+                    model.id(),
+                    null,
+                    Usage.empty(),
+                    StopReason.STOP,
+                    null,
+                    20L);
             var done = new AssistantMessage(
-                List.of(new TextContent(text)),
-                model.api().value(),
-                model.provider().value(),
-                model.id(),
-                null,
-                Usage.empty(),
-                StopReason.STOP,
-                null,
-                21L
-            );
+                    List.of(new TextContent(text)),
+                    model.api().value(),
+                    model.provider().value(),
+                    model.id(),
+                    null,
+                    Usage.empty(),
+                    StopReason.STOP,
+                    null,
+                    21L);
             stream.push(new AssistantMessageEvent.StartEvent(partial));
             stream.push(new AssistantMessageEvent.TextDeltaEvent(0, text, partial));
             stream.push(new AssistantMessageEvent.DoneEvent(StopReason.STOP, done));

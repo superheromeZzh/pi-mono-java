@@ -50,21 +50,18 @@ public class ChatHandler {
             @JsonProperty("message") String message,
             @JsonProperty("conversation_id") @Nullable String conversationId,
             @JsonProperty("model") @Nullable String model,
-            @JsonProperty("thinking") @Nullable String thinking
-    ) {}
+            @JsonProperty("thinking") @Nullable String thinking) {}
 
     public Mono<ServerResponse> chat(ServerRequest request) {
         return request.bodyToMono(ChatRequest.class)
                 .flatMap(this::handleChat)
-                .onErrorResume(Exception.class, e ->
-                        ServerResponse.status(500)
-                                .bodyValue(Map.of("error", Agent.formatError(e))));
+                .onErrorResume(Exception.class, e -> ServerResponse.status(500)
+                        .bodyValue(Map.of("error", Agent.formatError(e))));
     }
 
     private Mono<ServerResponse> handleChat(ChatRequest req) {
         if (req.message() == null || req.message().isBlank()) {
-            return ServerResponse.badRequest()
-                    .bodyValue(Map.of("error", "message is required"));
+            return ServerResponse.badRequest().bodyValue(Map.of("error", "message is required"));
         }
 
         SessionPool.SessionRef ref = pool.getOrCreate(req.conversationId());
@@ -74,8 +71,10 @@ public class ChatHandler {
         if (session.isStreaming()) {
             return ServerResponse.status(409)
                     .bodyValue(Map.of(
-                            "error", "This conversation is already processing a prompt",
-                            "conversation_id", conversationId));
+                            "error",
+                            "This conversation is already processing a prompt",
+                            "conversation_id",
+                            conversationId));
         }
 
         // Per-request model (does not leak to other conversations)
@@ -83,8 +82,7 @@ public class ChatHandler {
             try {
                 session.setModel(req.model());
             } catch (Exception e) {
-                return ServerResponse.badRequest()
-                        .bodyValue(Map.of("error", "Invalid model: " + e.getMessage()));
+                return ServerResponse.badRequest().bodyValue(Map.of("error", "Invalid model: " + e.getMessage()));
             }
         }
 
@@ -102,33 +100,27 @@ public class ChatHandler {
             Runnable unsub = session.subscribe(event -> {
                 try {
                     if (event instanceof MessageStartEvent) {
-                        sink.next(sse("message_start",
-                                MAPPER.writeValueAsString(Map.of(
-                                        "conversation_id", conversationId))));
+                        sink.next(sse(
+                                "message_start", MAPPER.writeValueAsString(Map.of("conversation_id", conversationId))));
                     } else if (event instanceof MessageUpdateEvent mu) {
                         var msg = mu.message();
                         if (msg != null) {
-                            sink.next(sse("message_update",
-                                    MAPPER.writeValueAsString(Map.of("message", msg))));
+                            sink.next(sse("message_update", MAPPER.writeValueAsString(Map.of("message", msg))));
                         }
                     } else if (event instanceof MessageEndEvent me) {
                         var msg = me.message();
-                        sink.next(sse("message_end",
-                                MAPPER.writeValueAsString(Map.of(
-                                        "message", msg != null ? msg : ""))));
+                        sink.next(sse(
+                                "message_end", MAPPER.writeValueAsString(Map.of("message", msg != null ? msg : ""))));
                     } else if (event instanceof ToolExecutionStartEvent te) {
-                        sink.next(sse("tool_start",
+                        sink.next(sse(
+                                "tool_start",
                                 MAPPER.writeValueAsString(Map.of(
                                         "toolName", te.toolName(),
                                         "toolCallId", te.toolCallId()))));
                     } else if (event instanceof ToolExecutionEndEvent te) {
-                        sink.next(sse("tool_end",
-                                MAPPER.writeValueAsString(Map.of(
-                                        "toolCallId", te.toolCallId()))));
+                        sink.next(sse("tool_end", MAPPER.writeValueAsString(Map.of("toolCallId", te.toolCallId()))));
                     } else if (event instanceof AgentEndEvent) {
-                        sink.next(sse("done",
-                                MAPPER.writeValueAsString(Map.of(
-                                        "conversation_id", conversationId))));
+                        sink.next(sse("done", MAPPER.writeValueAsString(Map.of("conversation_id", conversationId))));
                         sink.complete();
                     }
                 } catch (Exception e) {
@@ -150,25 +142,21 @@ public class ChatHandler {
             future.whenComplete((v, ex) -> {
                 if (ex != null) {
                     try {
-                        sink.next(sse("error",
-                                MAPPER.writeValueAsString(Map.of(
-                                        "error", Agent.formatError(ex),
-                                        "conversation_id", conversationId))));
-                    } catch (Exception ignored) {}
+                        sink.next(sse(
+                                "error",
+                                MAPPER.writeValueAsString(
+                                        Map.of("error", Agent.formatError(ex), "conversation_id", conversationId))));
+                    } catch (Exception ignored) {
+                    }
                     sink.complete();
                 }
             });
         });
 
-        return ServerResponse.ok()
-                .contentType(MediaType.TEXT_EVENT_STREAM)
-                .body(events, ServerSentEvent.class);
+        return ServerResponse.ok().contentType(MediaType.TEXT_EVENT_STREAM).body(events, ServerSentEvent.class);
     }
 
     private static ServerSentEvent<String> sse(String eventType, String data) {
-        return ServerSentEvent.<String>builder()
-                .event(eventType)
-                .data(data)
-                .build();
+        return ServerSentEvent.<String>builder().event(eventType).data(data).build();
     }
 }

@@ -32,7 +32,9 @@ public class UserMessageComponent implements Component {
 
     @Override
     public List<String> render(int width) {
-        if (cachedLines != null && cachedWidth == width) { return cachedLines; }
+        if (cachedLines != null && cachedWidth == width) {
+            return cachedLines;
+        }
 
         var lines = new ArrayList<String>();
         lines.add(""); // spacer before

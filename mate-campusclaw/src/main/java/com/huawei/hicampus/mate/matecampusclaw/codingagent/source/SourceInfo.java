@@ -25,23 +25,23 @@ import jakarta.annotation.Nullable;
 public class SourceInfo {
 
     public enum SourceType {
-        BUILTIN,       // Shipped with the application
+        BUILTIN, // Shipped with the application
         GLOBAL_CONFIG, // From ~/.campusclaw/agent/ directory
-        PROJECT_CONFIG,// From .campusclaw/ in current project
-        PACKAGE,       // From an installed package
-        EXTENSION,     // From extension system
-        CUSTOM         // User-provided custom resource
+        PROJECT_CONFIG, // From .campusclaw/ in current project
+        PACKAGE, // From an installed package
+        EXTENSION, // From extension system
+        CUSTOM // User-provided custom resource
     }
 
     public record ResourceSource(
-        String resourceId,
-        String resourceType,   // "skill", "tool", "command", "setting", "keybinding"
-        SourceType sourceType,
-        @Nullable String packageName,
-        @Nullable Path filePath,
-        @Nullable Instant loadedAt,
-        int priority           // Higher priority overrides lower
-    ) implements Comparable<ResourceSource> {
+            String resourceId,
+            String resourceType, // "skill", "tool", "command", "setting", "keybinding"
+            SourceType sourceType,
+            @Nullable String packageName,
+            @Nullable Path filePath,
+            @Nullable Instant loadedAt,
+            int priority // Higher priority overrides lower
+            ) implements Comparable<ResourceSource> {
         @Override
         public int compareTo(ResourceSource other) {
             return Integer.compare(other.priority, this.priority); // Higher first
@@ -52,14 +52,15 @@ public class SourceInfo {
 
     /** Register a resource source. */
     public void register(ResourceSource source) {
-        registry.computeIfAbsent(source.resourceId(), k -> new ArrayList<>())
-            .add(source);
+        registry.computeIfAbsent(source.resourceId(), k -> new ArrayList<>()).add(source);
     }
 
     /** Get the effective source (highest priority) for a resource. */
     public Optional<ResourceSource> getEffective(String resourceId) {
         List<ResourceSource> sources = registry.get(resourceId);
-        if (sources == null || sources.isEmpty()) { return Optional.empty(); }
+        if (sources == null || sources.isEmpty()) {
+            return Optional.empty();
+        }
         return sources.stream().min(Comparator.naturalOrder()); // highest priority first
     }
 
@@ -77,10 +78,10 @@ public class SourceInfo {
     /** Get all resources of a given type. */
     public List<ResourceSource> getByType(String resourceType) {
         return registry.values().stream()
-            .flatMap(Collection::stream)
-            .filter(s -> s.resourceType().equals(resourceType))
-            .sorted()
-            .toList();
+                .flatMap(Collection::stream)
+                .filter(s -> s.resourceType().equals(resourceType))
+                .sorted()
+                .toList();
     }
 
     /** Detect conflicts (multiple sources for same resource). */
@@ -97,7 +98,10 @@ public class SourceInfo {
     /** Format a resource source for display. */
     public static String format(ResourceSource source) {
         StringBuilder sb = new StringBuilder();
-        sb.append(source.resourceId()).append(" (").append(source.resourceType()).append(")");
+        sb.append(source.resourceId())
+                .append(" (")
+                .append(source.resourceType())
+                .append(")");
         sb.append(" from ").append(source.sourceType().name().toLowerCase().replace('_', ' '));
         if (source.packageName() != null) {
             sb.append(" [").append(source.packageName()).append("]");

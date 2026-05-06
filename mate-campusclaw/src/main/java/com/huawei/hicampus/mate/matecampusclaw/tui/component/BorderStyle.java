@@ -8,7 +8,6 @@ package com.huawei.hicampus.mate.matecampusclaw.tui.component;
  * Border character sets for {@link Box}.
  */
 public enum BorderStyle {
-
     SINGLE('┌', '┐', '└', '┘', '─', '│'),
     DOUBLE('╔', '╗', '╚', '╝', '═', '║'),
     ROUNDED('╭', '╮', '╰', '╯', '─', '│');
@@ -20,8 +19,7 @@ public enum BorderStyle {
     final char horizontal;
     final char vertical;
 
-    BorderStyle(char topLeft, char topRight, char bottomLeft, char bottomRight,
-                char horizontal, char vertical) {
+    BorderStyle(char topLeft, char topRight, char bottomLeft, char bottomRight, char horizontal, char vertical) {
         this.topLeft = topLeft;
         this.topRight = topRight;
         this.bottomLeft = bottomLeft;

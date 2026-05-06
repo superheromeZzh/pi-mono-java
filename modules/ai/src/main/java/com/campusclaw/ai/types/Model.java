@@ -29,18 +29,16 @@ import jakarta.annotation.Nullable;
  * @param apiKey          optional API key embedded in the model (for custom models)
  */
 public record Model(
-    @JsonProperty("id") String id,
-    @JsonProperty("name") String name,
-    @JsonProperty("api") Api api,
-    @JsonProperty("provider") Provider provider,
-    @JsonProperty("baseUrl") String baseUrl,
-    @JsonProperty("reasoning") boolean reasoning,
-    @JsonProperty("inputModalities") List<InputModality> inputModalities,
-    @JsonProperty("cost") ModelCost cost,
-    @JsonProperty("contextWindow") int contextWindow,
-    @JsonProperty("maxTokens") int maxTokens,
-    @JsonProperty("headers") @Nullable Map<String, String> headers,
-    @JsonProperty("thinkingFormat") @Nullable String thinkingFormat,
-    @JsonProperty("apiKey") @Nullable String apiKey
-) {
-}
+        @JsonProperty("id") String id,
+        @JsonProperty("name") String name,
+        @JsonProperty("api") Api api,
+        @JsonProperty("provider") Provider provider,
+        @JsonProperty("baseUrl") String baseUrl,
+        @JsonProperty("reasoning") boolean reasoning,
+        @JsonProperty("inputModalities") List<InputModality> inputModalities,
+        @JsonProperty("cost") ModelCost cost,
+        @JsonProperty("contextWindow") int contextWindow,
+        @JsonProperty("maxTokens") int maxTokens,
+        @JsonProperty("headers") @Nullable Map<String, String> headers,
+        @JsonProperty("thinkingFormat") @Nullable String thinkingFormat,
+        @JsonProperty("apiKey") @Nullable String apiKey) {}

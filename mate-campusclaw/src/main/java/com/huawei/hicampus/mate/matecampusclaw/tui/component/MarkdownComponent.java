@@ -116,7 +116,9 @@ public class MarkdownComponent implements Component {
                     codeLines.add(rawLines[i]);
                     i++;
                 }
-                if (i < rawLines.length) { i++; } // skip closing ```
+                if (i < rawLines.length) {
+                    i++;
+                } // skip closing ```
 
                 renderCodeBlock(codeLines, lang, width, output);
                 continue;
@@ -147,7 +149,8 @@ public class MarkdownComponent implements Component {
             }
 
             // --- Table (detect: line with |, followed by separator line) ---
-            if (line.contains("|") && i + 1 < rawLines.length
+            if (line.contains("|")
+                    && i + 1 < rawLines.length
                     && TABLE_SEPARATOR_PATTERN.matcher(rawLines[i + 1]).matches()) {
                 i = renderTable(rawLines, i, width, output);
                 continue;
@@ -185,11 +188,16 @@ public class MarkdownComponent implements Component {
                         || UNORDERED_LIST_PATTERN.matcher(pLine).matches()
                         || ORDERED_LIST_PATTERN.matcher(pLine).matches()
                         || BLOCKQUOTE_PATTERN.matcher(pLine).matches()
-                        || (pLine.contains("|") && i + 1 < rawLines.length
-                            && TABLE_SEPARATOR_PATTERN.matcher(rawLines[i + 1]).matches())) {
+                        || (pLine.contains("|")
+                                && i + 1 < rawLines.length
+                                && TABLE_SEPARATOR_PATTERN
+                                        .matcher(rawLines[i + 1])
+                                        .matches())) {
                     break;
                 }
-                if (para.length() > 0) { para.append(' '); }
+                if (para.length() > 0) {
+                    para.append(' ');
+                }
                 para.append(pLine);
                 i++;
             }
@@ -205,11 +213,12 @@ public class MarkdownComponent implements Component {
 
     private void renderHeading(int level, String rawText, int width, List<String> out) {
         String styled = renderInline(rawText);
-        String formatted = switch (level) {
-            case 1 -> theme.heading1(styled);
-            case 2 -> theme.heading2(styled);
-            default -> theme.heading3(styled);
-        };
+        String formatted =
+                switch (level) {
+                    case 1 -> theme.heading1(styled);
+                    case 2 -> theme.heading2(styled);
+                    default -> theme.heading3(styled);
+                };
         List<String> wrapped = AnsiUtils.wrapTextWithAnsi(formatted, width);
         out.addAll(wrapped);
     }
@@ -275,8 +284,8 @@ public class MarkdownComponent implements Component {
         return i;
     }
 
-    private void renderListItem(String prefixWithBullet, String rawText, int width,
-                                int continuationIndent, List<String> out) {
+    private void renderListItem(
+            String prefixWithBullet, String rawText, int width, int continuationIndent, List<String> out) {
         String styled = renderInline(rawText);
         int contentWidth = Math.max(1, width - continuationIndent);
         List<String> wrapped = AnsiUtils.wrapTextWithAnsi(styled, contentWidth);
@@ -343,7 +352,9 @@ public class MarkdownComponent implements Component {
         String headerLine = rawLines[i++];
         List<String> headers = parseTableRow(headerLine);
         int numCols = headers.size();
-        if (numCols == 0) { return i; }
+        if (numCols == 0) {
+            return i;
+        }
 
         // Skip separator line
         if (i < rawLines.length && TABLE_SEPARATOR_PATTERN.matcher(rawLines[i]).matches()) {
@@ -354,11 +365,17 @@ public class MarkdownComponent implements Component {
         var rows = new ArrayList<List<String>>();
         while (i < rawLines.length) {
             String line = rawLines[i];
-            if (!line.contains("|") || line.isBlank()) { break; }
+            if (!line.contains("|") || line.isBlank()) {
+                break;
+            }
             List<String> row = parseTableRow(line);
             // Pad or truncate to match header column count
-            while (row.size() < numCols) { row.add(""); }
-            if (row.size() > numCols) { row = row.subList(0, numCols); }
+            while (row.size() < numCols) {
+                row.add("");
+            }
+            if (row.size() > numCols) {
+                row = row.subList(0, numCols);
+            }
             rows.add(row);
             i++;
         }
@@ -381,13 +398,14 @@ public class MarkdownComponent implements Component {
         }
         for (var row : rows) {
             for (int c = 0; c < numCols; c++) {
-                naturalWidths[c] = Math.max(naturalWidths[c],
-                        AnsiUtils.visibleWidth(renderInline(row.get(c))));
+                naturalWidths[c] = Math.max(naturalWidths[c], AnsiUtils.visibleWidth(renderInline(row.get(c))));
             }
         }
 
         int totalNatural = 0;
-        for (int w : naturalWidths) { totalNatural += w; }
+        for (int w : naturalWidths) {
+            totalNatural += w;
+        }
 
         int[] colWidths;
         if (totalNatural + borderOverhead <= width) {
@@ -400,7 +418,9 @@ public class MarkdownComponent implements Component {
             }
             // Distribute leftover
             int allocated = 0;
-            for (int w : colWidths) { allocated += w; }
+            for (int w : colWidths) {
+                allocated += w;
+            }
             int leftover = availableForCells - allocated;
             for (int c = 0; leftover > 0 && c < numCols; c++) {
                 colWidths[c]++;
@@ -410,7 +430,9 @@ public class MarkdownComponent implements Component {
 
         // Render top border
         var topParts = new ArrayList<String>();
-        for (int c = 0; c < numCols; c++) { topParts.add("─".repeat(colWidths[c])); }
+        for (int c = 0; c < numCols; c++) {
+            topParts.add("─".repeat(colWidths[c]));
+        }
         out.add("┌─" + String.join("─┬─", topParts) + "─┐");
 
         // Render header row (bold)
@@ -418,7 +440,9 @@ public class MarkdownComponent implements Component {
 
         // Render separator
         var sepParts = new ArrayList<String>();
-        for (int c = 0; c < numCols; c++) { sepParts.add("─".repeat(colWidths[c])); }
+        for (int c = 0; c < numCols; c++) {
+            sepParts.add("─".repeat(colWidths[c]));
+        }
         String separator = "├─" + String.join("─┼─", sepParts) + "─┤";
         out.add(separator);
 
@@ -432,21 +456,24 @@ public class MarkdownComponent implements Component {
 
         // Render bottom border
         var bottomParts = new ArrayList<String>();
-        for (int c = 0; c < numCols; c++) { bottomParts.add("─".repeat(colWidths[c])); }
+        for (int c = 0; c < numCols; c++) {
+            bottomParts.add("─".repeat(colWidths[c]));
+        }
         out.add("└─" + String.join("─┴─", bottomParts) + "─┘");
 
         return i;
     }
 
-    private void renderTableRow(List<String> cells, int[] colWidths, int numCols,
-                                boolean bold, List<String> out) {
+    private void renderTableRow(List<String> cells, int[] colWidths, int numCols, boolean bold, List<String> out) {
         // Wrap each cell and find max lines
         var wrappedCells = new ArrayList<List<String>>();
         int maxLines = 1;
         for (int c = 0; c < numCols; c++) {
             String styled = renderInline(cells.get(c));
             List<String> wrapped = AnsiUtils.wrapTextWithAnsi(styled, colWidths[c]);
-            if (wrapped.isEmpty()) { wrapped = List.of(""); }
+            if (wrapped.isEmpty()) {
+                wrapped = List.of("");
+            }
             wrappedCells.add(wrapped);
             maxLines = Math.max(maxLines, wrapped.size());
         }
@@ -454,7 +481,9 @@ public class MarkdownComponent implements Component {
         for (int lineIdx = 0; lineIdx < maxLines; lineIdx++) {
             var sb = new StringBuilder("│ ");
             for (int c = 0; c < numCols; c++) {
-                if (c > 0) { sb.append(" │ "); }
+                if (c > 0) {
+                    sb.append(" │ ");
+                }
                 List<String> cellLines = wrappedCells.get(c);
                 String text = lineIdx < cellLines.size() ? cellLines.get(lineIdx) : "";
                 int pad = Math.max(0, colWidths[c] - AnsiUtils.visibleWidth(text));
@@ -472,8 +501,12 @@ public class MarkdownComponent implements Component {
     private static List<String> parseTableRow(String line) {
         // Remove leading/trailing |
         String trimmed = line.strip();
-        if (trimmed.startsWith("|")) { trimmed = trimmed.substring(1); }
-        if (trimmed.endsWith("|")) { trimmed = trimmed.substring(0, trimmed.length() - 1); }
+        if (trimmed.startsWith("|")) {
+            trimmed = trimmed.substring(1);
+        }
+        if (trimmed.endsWith("|")) {
+            trimmed = trimmed.substring(0, trimmed.length() - 1);
+        }
         String[] parts = trimmed.split("\\|");
         var result = new ArrayList<String>();
         for (String part : parts) {
@@ -508,49 +541,77 @@ public class MarkdownComponent implements Component {
         List<String> placeholders = new ArrayList<>();
 
         // 1. Inline code — no further formatting inside
-        text = replaceAll(text, INLINE_CODE, m -> {
-            String placeholder = "\0PH" + placeholders.size() + "\0";
-            placeholders.add(theme.code(m.group(1)));
-            return placeholder;
-        }, placeholders);
+        text = replaceAll(
+                text,
+                INLINE_CODE,
+                m -> {
+                    String placeholder = "\0PH" + placeholders.size() + "\0";
+                    placeholders.add(theme.code(m.group(1)));
+                    return placeholder;
+                },
+                placeholders);
 
         // 2. Links
-        text = replaceAll(text, LINK, m -> {
-            String placeholder = "\0PH" + placeholders.size() + "\0";
-            placeholders.add(theme.link(m.group(1)) + " " + theme.linkUrl("(" + m.group(2) + ")"));
-            return placeholder;
-        }, placeholders);
+        text = replaceAll(
+                text,
+                LINK,
+                m -> {
+                    String placeholder = "\0PH" + placeholders.size() + "\0";
+                    placeholders.add(theme.link(m.group(1)) + " " + theme.linkUrl("(" + m.group(2) + ")"));
+                    return placeholder;
+                },
+                placeholders);
 
         // 3. Strikethrough
-        text = replaceAll(text, STRIKETHROUGH, m -> {
-            String placeholder = "\0PH" + placeholders.size() + "\0";
-            placeholders.add(theme.strikethrough(m.group(1)));
-            return placeholder;
-        }, placeholders);
+        text = replaceAll(
+                text,
+                STRIKETHROUGH,
+                m -> {
+                    String placeholder = "\0PH" + placeholders.size() + "\0";
+                    placeholders.add(theme.strikethrough(m.group(1)));
+                    return placeholder;
+                },
+                placeholders);
 
         // 4. Bold (before italic to avoid ** matching as two *)
-        text = replaceAll(text, BOLD, m -> {
-            String inner = m.group(1);
-            return theme.bold(inner);
-        }, placeholders);
+        text = replaceAll(
+                text,
+                BOLD,
+                m -> {
+                    String inner = m.group(1);
+                    return theme.bold(inner);
+                },
+                placeholders);
 
         // 4b. Bold with underscores (__text__)
-        text = replaceAll(text, BOLD_UNDERSCORE, m -> {
-            String inner = m.group(1);
-            return theme.bold(inner);
-        }, placeholders);
+        text = replaceAll(
+                text,
+                BOLD_UNDERSCORE,
+                m -> {
+                    String inner = m.group(1);
+                    return theme.bold(inner);
+                },
+                placeholders);
 
         // 5. Italic
-        text = replaceAll(text, ITALIC, m -> {
-            String inner = m.group(1);
-            return theme.italic(inner);
-        }, placeholders);
+        text = replaceAll(
+                text,
+                ITALIC,
+                m -> {
+                    String inner = m.group(1);
+                    return theme.italic(inner);
+                },
+                placeholders);
 
         // 5b. Italic with underscores (_text_)
-        text = replaceAll(text, ITALIC_UNDERSCORE, m -> {
-            String inner = m.group(1);
-            return theme.italic(inner);
-        }, placeholders);
+        text = replaceAll(
+                text,
+                ITALIC_UNDERSCORE,
+                m -> {
+                    String inner = m.group(1);
+                    return theme.italic(inner);
+                },
+                placeholders);
 
         // Restore placeholders
         for (int i = 0; i < placeholders.size(); i++) {
@@ -563,9 +624,11 @@ public class MarkdownComponent implements Component {
     /**
      * Replaces all occurrences of a pattern, using a function to produce replacements.
      */
-    private static String replaceAll(String text, Pattern pattern,
-                                     java.util.function.Function<Matcher, String> replacer,
-                                     List<String> placeholders) {
+    private static String replaceAll(
+            String text,
+            Pattern pattern,
+            java.util.function.Function<Matcher, String> replacer,
+            List<String> placeholders) {
         Matcher m = pattern.matcher(text);
         StringBuilder sb = new StringBuilder();
         while (m.find()) {

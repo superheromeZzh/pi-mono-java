@@ -48,10 +48,14 @@ public class TreeSelectorOverlay implements Component, Focusable {
             selectList.setSelectedIndex(items.size() - 1);
         }
         selectList.setOnSelect(item -> {
-            if (onSelect != null) { onSelect.accept(item); }
+            if (onSelect != null) {
+                onSelect.accept(item);
+            }
         });
         selectList.setOnCancel(() -> {
-            if (onCancel != null) { onCancel.run(); }
+            if (onCancel != null) {
+                onCancel.run();
+            }
         });
     }
 
@@ -99,26 +103,29 @@ public class TreeSelectorOverlay implements Component, Focusable {
     }
 
     private String renderItem(TreeItem item) {
-        String roleColor = switch (item.role) {
-            case "user" -> ANSI_USER;
-            case "assistant" -> ANSI_ASSISTANT;
-            default -> ANSI_DIM;
-        };
-        String roleLabel = switch (item.role) {
-            case "user" -> "U";
-            case "assistant" -> "A";
-            default -> "T";
-        };
-        return String.format("%s[%s]%s %s#%d%s %s",
-                roleColor, roleLabel, ANSI_RESET,
-                ANSI_DIM, item.index + 1, ANSI_RESET,
-                item.preview);
+        String roleColor =
+                switch (item.role) {
+                    case "user" -> ANSI_USER;
+                    case "assistant" -> ANSI_ASSISTANT;
+                    default -> ANSI_DIM;
+                };
+        String roleLabel =
+                switch (item.role) {
+                    case "user" -> "U";
+                    case "assistant" -> "A";
+                    default -> "T";
+                };
+        return String.format(
+                "%s[%s]%s %s#%d%s %s",
+                roleColor, roleLabel, ANSI_RESET, ANSI_DIM, item.index + 1, ANSI_RESET, item.preview);
     }
 
     @Override
     public void handleInput(String data) {
         if ("\033".equals(data) || "\003".equals(data)) {
-            if (onCancel != null) { onCancel.run(); }
+            if (onCancel != null) {
+                onCancel.run();
+            }
             return;
         }
         selectList.handleInput(data);
@@ -133,8 +140,8 @@ public class TreeSelectorOverlay implements Component, Focusable {
     public List<String> render(int width) {
         var lines = new ArrayList<String>();
         lines.add("");
-        lines.add(" " + ANSI_BOLD + ANSI_ACCENT + "Session Tree" + ANSI_RESET
-                + ANSI_DIM + "  (↑↓ navigate, Enter select, Esc cancel)" + ANSI_RESET);
+        lines.add(" " + ANSI_BOLD + ANSI_ACCENT + "Session Tree" + ANSI_RESET + ANSI_DIM
+                + "  (↑↓ navigate, Enter select, Esc cancel)" + ANSI_RESET);
         lines.add("");
 
         if (empty) {
@@ -150,7 +157,9 @@ public class TreeSelectorOverlay implements Component, Focusable {
     }
 
     @Override
-    public boolean isFocused() { return focused; }
+    public boolean isFocused() {
+        return focused;
+    }
 
     @Override
     public void setFocused(boolean focused) {

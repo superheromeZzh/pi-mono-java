@@ -23,8 +23,7 @@ import com.fasterxml.jackson.databind.SerializationFeature;
  */
 public class DebugCommand implements SlashCommand {
 
-    private static final ObjectMapper MAPPER = new ObjectMapper()
-            .enable(SerializationFeature.INDENT_OUTPUT);
+    private static final ObjectMapper MAPPER = new ObjectMapper().enable(SerializationFeature.INDENT_OUTPUT);
 
     @Override
     public String name() {
@@ -54,7 +53,9 @@ public class DebugCommand implements SlashCommand {
         }
 
         var thinkingLevel = state.getThinkingLevel();
-        sb.append("Thinking: ").append(thinkingLevel != null ? thinkingLevel.value() : "off").append("\n");
+        sb.append("Thinking: ")
+                .append(thinkingLevel != null ? thinkingLevel.value() : "off")
+                .append("\n");
         sb.append("Streaming: ").append(state.isStreaming()).append("\n");
 
         String error = state.getError();
@@ -85,8 +86,8 @@ public class DebugCommand implements SlashCommand {
             // ignore
         }
 
-        String filename = "debug-" + LocalDateTime.now().format(
-                DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss")) + ".log";
+        String filename =
+                "debug-" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss")) + ".log";
         Path debugFile = debugDir.resolve(filename);
 
         try (BufferedWriter writer = Files.newBufferedWriter(debugFile)) {

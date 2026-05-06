@@ -19,51 +19,52 @@ import jakarta.annotation.Nullable;
 public class FooterDataProvider {
 
     public record FooterData(
-        String modelName,
-        @Nullable String providerName,
-        @Nullable ThinkingLevel thinkingLevel,
-        @Nullable TokenStats tokenStats,
-        @Nullable SessionStats sessionStats,
-        List<FooterHint> hints,
-        boolean isStreaming
-    ) {}
+            String modelName,
+            @Nullable String providerName,
+            @Nullable ThinkingLevel thinkingLevel,
+            @Nullable TokenStats tokenStats,
+            @Nullable SessionStats sessionStats,
+            List<FooterHint> hints,
+            boolean isStreaming) {}
 
     public record TokenStats(
-        int inputTokens,
-        int outputTokens,
-        int cacheReadTokens,
-        int totalTokens,
-        double totalCostUsd
-    ) {
+            int inputTokens, int outputTokens, int cacheReadTokens, int totalTokens, double totalCostUsd) {
         public static TokenStats from(Usage usage) {
             double cost = usage.cost() != null ? usage.cost().total() : 0.0;
-            return new TokenStats(usage.input(), usage.output(),
-                usage.cacheRead(), usage.totalTokens(), cost);
+            return new TokenStats(usage.input(), usage.output(), usage.cacheRead(), usage.totalTokens(), cost);
         }
 
         public String formatTokens() {
-            if (totalTokens < 1000) { return totalTokens + " tok"; }
-            if (totalTokens < 1_000_000) { return String.format("%.1fK tok", totalTokens / 1000.0); }
+            if (totalTokens < 1000) {
+                return totalTokens + " tok";
+            }
+            if (totalTokens < 1_000_000) {
+                return String.format("%.1fK tok", totalTokens / 1000.0);
+            }
             return String.format("%.1fM tok", totalTokens / 1_000_000.0);
         }
 
         public String formatCost() {
-            if (totalCostUsd < 0.01) { return String.format("$%.4f", totalCostUsd); }
-            if (totalCostUsd < 1.0) { return String.format("$%.3f", totalCostUsd); }
+            if (totalCostUsd < 0.01) {
+                return String.format("$%.4f", totalCostUsd);
+            }
+            if (totalCostUsd < 1.0) {
+                return String.format("$%.3f", totalCostUsd);
+            }
             return String.format("$%.2f", totalCostUsd);
         }
     }
 
-    public record SessionStats(
-        int turnCount,
-        int messageCount,
-        long sessionDurationMs
-    ) {
+    public record SessionStats(int turnCount, int messageCount, long sessionDurationMs) {
         public String formatDuration() {
             long seconds = sessionDurationMs / 1000;
-            if (seconds < 60) { return seconds + "s"; }
+            if (seconds < 60) {
+                return seconds + "s";
+            }
             long minutes = seconds / 60;
-            if (minutes < 60) { return minutes + "m " + (seconds % 60) + "s"; }
+            if (minutes < 60) {
+                return minutes + "m " + (seconds % 60) + "s";
+            }
             long hours = minutes / 60;
             return hours + "h " + (minutes % 60) + "m";
         }
@@ -82,12 +83,11 @@ public class FooterDataProvider {
     private volatile SessionStats sessionStats = null;
     private volatile boolean streaming = false;
     private final List<FooterHint> defaultHints = List.of(
-        new FooterHint("Ctrl+C", "clear"),
-        new FooterHint("Ctrl+D", "exit"),
-        new FooterHint("Shift+Tab", "thinking"),
-        new FooterHint("Ctrl+P", "model"),
-        new FooterHint("Esc", "interrupt")
-    );
+            new FooterHint("Ctrl+C", "clear"),
+            new FooterHint("Ctrl+D", "exit"),
+            new FooterHint("Shift+Tab", "thinking"),
+            new FooterHint("Ctrl+P", "model"),
+            new FooterHint("Esc", "interrupt"));
 
     /** Update model info. */
     public void setModel(Model model) {
@@ -117,8 +117,8 @@ public class FooterDataProvider {
 
     /** Get current footer data snapshot. */
     public FooterData getFooterData() {
-        return new FooterData(modelName, providerName, thinkingLevel,
-            tokenStats, sessionStats, defaultHints, streaming);
+        return new FooterData(
+                modelName, providerName, thinkingLevel, tokenStats, sessionStats, defaultHints, streaming);
     }
 
     /** Format the footer as a single-line status bar. */

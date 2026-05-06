@@ -54,8 +54,7 @@ class LocalReadOperationsTest {
 
         @Test
         void throwsOnNonExistentFile() {
-            assertThrows(NoSuchFileException.class, () ->
-                    ops.readFile(tempDir.resolve("missing.txt")));
+            assertThrows(NoSuchFileException.class, () -> ops.readFile(tempDir.resolve("missing.txt")));
         }
     }
 

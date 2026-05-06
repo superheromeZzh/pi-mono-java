@@ -115,8 +115,10 @@ class CronStoreTest {
     }
 
     private CronJob createJob(String name) {
-        return CronJob.create(name, null,
-            new CronSchedule.Every(60000L),
-            new CronPayload.AgentPrompt("do something", null, null, null));
+        return CronJob.create(
+                name,
+                null,
+                new CronSchedule.Every(60000L),
+                new CronPayload.AgentPrompt("do something", null, null, null));
     }
 }

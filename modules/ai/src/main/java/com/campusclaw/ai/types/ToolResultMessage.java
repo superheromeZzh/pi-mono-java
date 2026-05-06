@@ -21,11 +21,10 @@ import jakarta.annotation.Nullable;
  * @param timestamp  Unix timestamp in milliseconds
  */
 public record ToolResultMessage(
-    @JsonProperty("toolCallId") String toolCallId,
-    @JsonProperty("toolName") String toolName,
-    @JsonProperty("content") List<ContentBlock> content,
-    @JsonProperty("details") @Nullable Object details,
-    @JsonProperty("isError") boolean isError,
-    @JsonProperty("timestamp") long timestamp
-) implements Message {
-}
+        @JsonProperty("toolCallId") String toolCallId,
+        @JsonProperty("toolName") String toolName,
+        @JsonProperty("content") List<ContentBlock> content,
+        @JsonProperty("details") @Nullable Object details,
+        @JsonProperty("isError") boolean isError,
+        @JsonProperty("timestamp") long timestamp)
+        implements Message {}

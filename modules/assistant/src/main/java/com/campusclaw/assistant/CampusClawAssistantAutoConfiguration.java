@@ -22,10 +22,7 @@ import org.springframework.context.annotation.ComponentScan;
 @AutoConfiguration
 @ComponentScan
 @MapperScan("com.campusclaw.assistant.mapper")
-@EnableConfigurationProperties({
-    AssistantProperties.class,
-    WebSocketGatewayProperties.class
-})
+@EnableConfigurationProperties({AssistantProperties.class, WebSocketGatewayProperties.class})
 public class CampusClawAssistantAutoConfiguration {
 
     @Bean

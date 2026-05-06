@@ -61,9 +61,13 @@ public class AuthStore {
     /** Reads the API key persisted for {@code provider}, or empty if none. */
     public Optional<String> getApiKey(Provider provider) {
         var entry = read().get(provider.value());
-        if (entry == null) { return Optional.empty(); }
+        if (entry == null) {
+            return Optional.empty();
+        }
         Object key = entry.get("key");
-        if (key instanceof String s && !s.isBlank()) { return Optional.of(s); }
+        if (key instanceof String s && !s.isBlank()) {
+            return Optional.of(s);
+        }
         return Optional.empty();
     }
 
@@ -80,7 +84,9 @@ public class AuthStore {
     /** Removes any persisted credential for {@code provider}. */
     public boolean remove(Provider provider) {
         var all = read();
-        if (all.remove(provider.value()) == null) { return false; }
+        if (all.remove(provider.value()) == null) {
+            return false;
+        }
         write(all);
         return true;
     }
@@ -97,10 +103,12 @@ public class AuthStore {
 
     @SuppressWarnings("unchecked")
     private Map<String, Map<String, Object>> read() {
-        if (!Files.exists(authFile)) { return new LinkedHashMap<>(); }
+        if (!Files.exists(authFile)) {
+            return new LinkedHashMap<>();
+        }
         try {
-            return MAPPER.readValue(Files.readString(authFile),
-                    new TypeReference<Map<String, Map<String, Object>>>() {});
+            return MAPPER.readValue(
+                    Files.readString(authFile), new TypeReference<Map<String, Map<String, Object>>>() {});
         } catch (Exception e) {
             log.warn("Failed to read auth file {}: {}", authFile, e.getMessage());
             return new LinkedHashMap<>();

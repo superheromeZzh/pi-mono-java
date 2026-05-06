@@ -73,33 +73,20 @@ public class AgentLoop {
     }
 
     public List<Message> run(
-        List<Message> prompts,
-        AgentContext context,
-        AgentEventListener listener,
-        CancellationToken signal
-    ) {
+            List<Message> prompts, AgentContext context, AgentEventListener listener, CancellationToken signal) {
         return runInternal(prompts != null ? prompts : List.of(), context, listener, signal);
     }
 
-    public List<Message> continueLoop(
-        AgentContext context,
-        AgentEventListener listener,
-        CancellationToken signal
-    ) {
+    public List<Message> continueLoop(AgentContext context, AgentEventListener listener, CancellationToken signal) {
         return runInternal(List.of(), context, listener, signal);
     }
 
     private List<Message> runInternal(
-        List<Message> prompts,
-        AgentContext context,
-        AgentEventListener listener,
-        CancellationToken signal
-    ) {
+            List<Message> prompts, AgentContext context, AgentEventListener listener, CancellationToken signal) {
         Objects.requireNonNull(context, "context");
         Objects.requireNonNull(signal, "signal");
 
-        AgentEventListener eventListener = listener != null ? listener : event -> {
-        };
+        AgentEventListener eventListener = listener != null ? listener : event -> {};
 
         if (!prompts.isEmpty()) {
             context.appendMessages(prompts);
@@ -135,8 +122,8 @@ public class AgentLoop {
                     // Execute resolved tools via pipeline
                     var toolResults = new ArrayList<ToolResultMessage>();
                     if (!resolved.isEmpty()) {
-                        toolResults.addAll(toolPipeline.executeAll(
-                            resolved, toolExecutionMode, context, signal, eventListener));
+                        toolResults.addAll(
+                                toolPipeline.executeAll(resolved, toolExecutionMode, context, signal, eventListener));
                     }
                     // Add error results for unknown tools
                     toolResults.addAll(unknownResults);
@@ -176,18 +163,10 @@ public class AgentLoop {
         }
     }
 
-    private AssistantMessage invokeModel(
-        AgentContext context,
-        AgentEventListener listener,
-        CancellationToken signal
-    ) {
+    private AssistantMessage invokeModel(AgentContext context, AgentEventListener listener, CancellationToken signal) {
         var transformedMessages = transformMessages(context.messages(), signal);
         var llmMessages = convertToLlm.convert(transformedMessages);
-        var llmContext = new Context(
-            context.systemPrompt(),
-            llmMessages,
-            toLlmTools(context.tools())
-        );
+        var llmContext = new Context(context.systemPrompt(), llmMessages, toLlmTools(context.tools()));
 
         var stream = streamFunction.stream(model, llmContext, streamOptions);
 
@@ -199,10 +178,10 @@ public class AgentLoop {
         AssistantMessage assistantMessage = null;
         var assistantStarted = false;
 
-        for (var event : stream.asFlux()
-                .takeUntilOther(cancelSink.asMono())
-                .toIterable()) {
-            if (signal.isCancelled()) { break; }
+        for (var event : stream.asFlux().takeUntilOther(cancelSink.asMono()).toIterable()) {
+            if (signal.isCancelled()) {
+                break;
+            }
             var currentMessage = extractAssistantMessage(event);
             if (!assistantStarted) {
                 listener.onEvent(new MessageStartEvent(currentMessage));
@@ -218,16 +197,19 @@ public class AgentLoop {
             // Synthesize an ABORTED message so the outer loop terminates cleanly
             // instead of falling through to result().block() (which would hang on the torn-down stream).
             var aborted = new AssistantMessage(
-                assistantMessage != null ? assistantMessage.content() : List.of(),
-                assistantMessage != null ? assistantMessage.api() : model.api().value(),
-                assistantMessage != null ? assistantMessage.provider() : model.provider().value(),
-                assistantMessage != null ? assistantMessage.model() : model.id(),
-                assistantMessage != null ? assistantMessage.responseId() : null,
-                assistantMessage != null ? assistantMessage.usage() : null,
-                StopReason.ABORTED,
-                null,
-                System.currentTimeMillis()
-            );
+                    assistantMessage != null ? assistantMessage.content() : List.of(),
+                    assistantMessage != null
+                            ? assistantMessage.api()
+                            : model.api().value(),
+                    assistantMessage != null
+                            ? assistantMessage.provider()
+                            : model.provider().value(),
+                    assistantMessage != null ? assistantMessage.model() : model.id(),
+                    assistantMessage != null ? assistantMessage.responseId() : null,
+                    assistantMessage != null ? assistantMessage.usage() : null,
+                    StopReason.ABORTED,
+                    null,
+                    System.currentTimeMillis());
             if (!assistantStarted) {
                 listener.onEvent(new MessageStartEvent(aborted));
             }
@@ -266,8 +248,8 @@ public class AgentLoop {
         }
 
         return tools.stream()
-            .map(tool -> new Tool(tool.name(), tool.description(), tool.parameters()))
-            .toList();
+                .map(tool -> new Tool(tool.name(), tool.description(), tool.parameters()))
+                .toList();
     }
 
     private List<ToolCall> extractToolCalls(AssistantMessage assistantMessage) {
@@ -285,8 +267,10 @@ public class AgentLoop {
      * Unknown tools get an error result instead of throwing, matching TS behavior.
      */
     private void resolveToolCallsSafe(
-            List<ToolCall> toolCalls, List<AgentTool> tools,
-            List<ToolCallWithTool> resolved, List<ToolResultMessage> unknownResults) {
+            List<ToolCall> toolCalls,
+            List<AgentTool> tools,
+            List<ToolCallWithTool> resolved,
+            List<ToolResultMessage> unknownResults) {
 
         var toolsByName = new LinkedHashMap<String, AgentTool>();
         for (var tool : tools) {
@@ -305,8 +289,7 @@ public class AgentLoop {
                         List.of(new TextContent("Tool " + toolCall.name() + " not found", null)),
                         null,
                         true,
-                        System.currentTimeMillis()
-                ));
+                        System.currentTimeMillis()));
             }
         }
     }
@@ -314,7 +297,9 @@ public class AgentLoop {
     private List<Message> drainSteeringMessages() {
         if (getSteeringMessages != null) {
             var msgs = getSteeringMessages.get();
-            if (msgs != null && !msgs.isEmpty()) { return msgs; }
+            if (msgs != null && !msgs.isEmpty()) {
+                return msgs;
+            }
         }
         return steeringQueue.drain();
     }
@@ -322,7 +307,9 @@ public class AgentLoop {
     private List<Message> drainFollowUpMessages() {
         if (getFollowUpMessages != null) {
             var msgs = getFollowUpMessages.get();
-            if (msgs != null && !msgs.isEmpty()) { return msgs; }
+            if (msgs != null && !msgs.isEmpty()) {
+                return msgs;
+            }
         }
         return followUpQueue.drain();
     }

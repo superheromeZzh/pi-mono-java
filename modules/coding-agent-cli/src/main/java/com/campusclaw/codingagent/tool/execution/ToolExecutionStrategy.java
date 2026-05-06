@@ -19,11 +19,8 @@ public interface ToolExecutionStrategy {
      * 执行工具调用
      */
     AgentToolResult execute(
-        String toolName,
-        Map<String, Object> params,
-        CancellationToken signal,
-        AgentToolUpdateCallback onUpdate
-    ) throws Exception;
+            String toolName, Map<String, Object> params, CancellationToken signal, AgentToolUpdateCallback onUpdate)
+            throws Exception;
 
     /**
      * 获取策略名称

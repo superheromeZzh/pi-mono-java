@@ -18,5 +18,4 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
     @JsonSubTypes.Type(value = ThinkingContent.class, name = "thinking"),
     @JsonSubTypes.Type(value = ToolCall.class, name = "toolCall")
 })
-public sealed interface ContentBlock permits TextContent, ImageContent, ThinkingContent, ToolCall {
-}
+public sealed interface ContentBlock permits TextContent, ImageContent, ThinkingContent, ToolCall {}

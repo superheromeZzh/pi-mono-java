@@ -49,7 +49,9 @@ public class CustomModelLoader {
         } catch (Exception e) {
             return;
         }
-        if (settings.customModels() == null || settings.customModels().isEmpty()) { return; }
+        if (settings.customModels() == null || settings.customModels().isEmpty()) {
+            return;
+        }
 
         List<Model> toRegister = new ArrayList<>();
         for (Settings.CustomModelConfig cfg : settings.customModels()) {
@@ -72,11 +74,15 @@ public class CustomModelLoader {
         List<InputModality> modalities = new ArrayList<>();
         if (cfg.inputModalities() != null) {
             for (String m : cfg.inputModalities()) {
-                try { modalities.add(InputModality.valueOf(m.toUpperCase())); }
-                catch (IllegalArgumentException ignored) {}
+                try {
+                    modalities.add(InputModality.valueOf(m.toUpperCase()));
+                } catch (IllegalArgumentException ignored) {
+                }
             }
         }
-        if (modalities.isEmpty()) { modalities.add(InputModality.TEXT); }
+        if (modalities.isEmpty()) {
+            modalities.add(InputModality.TEXT);
+        }
         return new Model(
                 cfg.id(),
                 cfg.name() != null ? cfg.name() : cfg.id(),
@@ -90,7 +96,6 @@ public class CustomModelLoader {
                 cfg.maxTokens() != null ? cfg.maxTokens() : 8192,
                 null,
                 cfg.thinkingFormat(),
-                ConfigValueResolver.resolve(cfg.apiKey())
-        );
+                ConfigValueResolver.resolve(cfg.apiKey()));
     }
 }

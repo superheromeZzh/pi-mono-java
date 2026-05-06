@@ -11,7 +11,6 @@ import com.fasterxml.jackson.annotation.JsonValue;
  * API protocol used to communicate with an LLM provider.
  */
 public enum Api {
-
     ANTHROPIC_MESSAGES("anthropic-messages"),
     OPENAI_RESPONSES("openai-responses"),
     OPENAI_COMPLETIONS("openai-completions"),

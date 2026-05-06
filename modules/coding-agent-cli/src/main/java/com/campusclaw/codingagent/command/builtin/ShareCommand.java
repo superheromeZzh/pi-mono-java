@@ -19,10 +19,14 @@ import com.campusclaw.codingagent.export.HtmlExporter;
 public class ShareCommand implements SlashCommand {
 
     @Override
-    public String name() { return "share"; }
+    public String name() {
+        return "share";
+    }
 
     @Override
-    public String description() { return "Share session as a secret GitHub gist"; }
+    public String description() {
+        return "Share session as a secret GitHub gist";
+    }
 
     @Override
     public void execute(SlashCommandContext context, String arguments) {
@@ -44,10 +48,14 @@ public class ShareCommand implements SlashCommand {
 
             // Use gh CLI to create a gist
             var process = new ProcessBuilder(
-                    "gh", "gist", "create",
-                    "--desc", "CampusClaw session (" + messages.size() + " messages)",
-                    tmpFile.toString()
-            ).redirectErrorStream(true).start();
+                            "gh",
+                            "gist",
+                            "create",
+                            "--desc",
+                            "CampusClaw session (" + messages.size() + " messages)",
+                            tmpFile.toString())
+                    .redirectErrorStream(true)
+                    .start();
 
             String output = new String(process.getInputStream().readAllBytes()).trim();
             int exitCode = process.waitFor();

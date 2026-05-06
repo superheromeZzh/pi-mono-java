@@ -43,12 +43,7 @@ public class ConversationLister {
     private final ObjectMapper mapper = new ObjectMapper();
 
     /** Listed conversation entry. Wire-format-friendly via Jackson. */
-    public record Entry(
-            String id,
-            String title,
-            int messageCount,
-            String createdAt,
-            String updatedAt) {}
+    public record Entry(String id, String title, int messageCount, String createdAt, String updatedAt) {}
 
     /**
      * Lists every {@code .jsonl} session file under the directory derived from
@@ -63,13 +58,12 @@ public class ConversationLister {
 
         List<Entry> entries = new ArrayList<>();
         try (var stream = Files.list(dir)) {
-            stream.filter(p -> p.toString().endsWith(".jsonl"))
-                    .forEach(p -> {
-                        Entry e = readEntry(p);
-                        if (e != null) {
-                            entries.add(e);
-                        }
-                    });
+            stream.filter(p -> p.toString().endsWith(".jsonl")).forEach(p -> {
+                Entry e = readEntry(p);
+                if (e != null) {
+                    entries.add(e);
+                }
+            });
         } catch (IOException e) {
             log.warn("Failed to list session directory: {}", dir, e);
             return List.of();

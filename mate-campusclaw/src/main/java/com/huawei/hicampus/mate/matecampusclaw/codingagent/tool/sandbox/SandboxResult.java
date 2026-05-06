@@ -26,24 +26,21 @@ public class SandboxResult {
 
     public static SandboxResult error(String message, String stderr) {
         return SandboxResult.builder()
-            .errorMessage(message)
-            .stderr(stderr)
-            .exitCode(-1)
-            .build();
+                .errorMessage(message)
+                .stderr(stderr)
+                .exitCode(-1)
+                .build();
     }
 
     public static SandboxResult timeout(int timeoutSeconds) {
         return SandboxResult.builder()
-            .timeout(true)
-            .errorMessage("Execution timed out after " + timeoutSeconds + " seconds")
-            .exitCode(-1)
-            .build();
+                .timeout(true)
+                .errorMessage("Execution timed out after " + timeoutSeconds + " seconds")
+                .exitCode(-1)
+                .build();
     }
 
     public static SandboxResult success(String stdout) {
-        return SandboxResult.builder()
-            .stdout(stdout)
-            .exitCode(0)
-            .build();
+        return SandboxResult.builder().stdout(stdout).exitCode(0).build();
     }
 }

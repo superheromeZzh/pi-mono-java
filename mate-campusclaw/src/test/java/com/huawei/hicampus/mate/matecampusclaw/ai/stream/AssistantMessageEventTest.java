@@ -34,16 +34,15 @@ class AssistantMessageEventTest {
     /** Creates a minimal AssistantMessage for use in event tests. */
     private AssistantMessage sampleMessage(StopReason reason) {
         return new AssistantMessage(
-            List.of(new TextContent("hello")),
-            "anthropic-messages",
-            "anthropic",
-            "claude-opus-4-6",
-            null,
-            Usage.empty(),
-            reason,
-            null,
-            System.currentTimeMillis()
-        );
+                List.of(new TextContent("hello")),
+                "anthropic-messages",
+                "anthropic",
+                "claude-opus-4-6",
+                null,
+                Usage.empty(),
+                reason,
+                null,
+                System.currentTimeMillis());
     }
 
     private AssistantMessage samplePartial() {
@@ -264,7 +263,7 @@ class AssistantMessageEventTest {
         void textDeltaEventFromJson() throws JsonProcessingException {
             var json = """
                 {"type":"text_delta","contentIndex":1,"delta":"chunk","partial":%s}"""
-                .formatted(partialJson());
+                    .formatted(partialJson());
             var event = mapper.readValue(json, AssistantMessageEvent.class);
             assertInstanceOf(TextDeltaEvent.class, event);
             var delta = (TextDeltaEvent) event;
@@ -274,9 +273,10 @@ class AssistantMessageEventTest {
 
         @Test
         void thinkingEndEventFromJson() throws JsonProcessingException {
-            var json = """
+            var json =
+                    """
                 {"type":"thinking_end","contentIndex":0,"content":"full thought","partial":%s}"""
-                .formatted(partialJson());
+                            .formatted(partialJson());
             var event = mapper.readValue(json, AssistantMessageEvent.class);
             assertInstanceOf(ThinkingEndEvent.class, event);
             assertEquals("full thought", ((ThinkingEndEvent) event).content());
@@ -286,7 +286,7 @@ class AssistantMessageEventTest {
         void toolCallStartEventFromJson() throws JsonProcessingException {
             var json = """
                 {"type":"toolcall_start","contentIndex":3,"partial":%s}"""
-                .formatted(partialJson());
+                    .formatted(partialJson());
             var event = mapper.readValue(json, AssistantMessageEvent.class);
             assertInstanceOf(ToolCallStartEvent.class, event);
             assertEquals(3, ((ToolCallStartEvent) event).contentIndex());
@@ -294,10 +294,12 @@ class AssistantMessageEventTest {
 
         @Test
         void toolCallEndEventFromJson() throws JsonProcessingException {
-            var json = """
+            var json =
+                    """
                 {"type":"toolcall_end","contentIndex":2,
                  "toolCall":{"type":"toolCall","id":"c1","name":"search","arguments":{"q":"test"},"thoughtSignature":null},
-                 "partial":%s}""".formatted(partialJson());
+                 "partial":%s}"""
+                            .formatted(partialJson());
             var event = mapper.readValue(json, AssistantMessageEvent.class);
             assertInstanceOf(ToolCallEndEvent.class, event);
             var tce = (ToolCallEndEvent) event;
@@ -308,8 +310,7 @@ class AssistantMessageEventTest {
         @Test
         void doneEventFromJson() throws JsonProcessingException {
             var json = """
-                {"type":"done","reason":"toolUse","message":%s}"""
-                .formatted(partialJson());
+                {"type":"done","reason":"toolUse","message":%s}""".formatted(partialJson());
             var event = mapper.readValue(json, AssistantMessageEvent.class);
             assertInstanceOf(DoneEvent.class, event);
             assertEquals(StopReason.TOOL_USE, ((DoneEvent) event).reason());
@@ -318,8 +319,7 @@ class AssistantMessageEventTest {
         @Test
         void errorEventFromJson() throws JsonProcessingException {
             var json = """
-                {"type":"error","reason":"error","error":%s}"""
-                .formatted(partialJson());
+                {"type":"error","reason":"error","error":%s}""".formatted(partialJson());
             var event = mapper.readValue(json, AssistantMessageEvent.class);
             assertInstanceOf(ErrorEvent.class, event);
             assertEquals("error", ((ErrorEvent) event).reason());
@@ -337,7 +337,9 @@ class AssistantMessageEventTest {
             var json = mapper.writeValueAsString(original);
             var restored = mapper.readValue(json, AssistantMessageEvent.class);
             assertInstanceOf(StartEvent.class, restored);
-            assertEquals(original.partial().model(), ((StartEvent) restored).partial().model());
+            assertEquals(
+                    original.partial().model(),
+                    ((StartEvent) restored).partial().model());
         }
 
         @Test
@@ -366,35 +368,35 @@ class AssistantMessageEventTest {
         var partial = samplePartial();
         var toolCall = new ToolCall("c1", "search", Map.of());
         List<AssistantMessageEvent> events = List.of(
-            new StartEvent(partial),
-            new TextStartEvent(0, partial),
-            new TextDeltaEvent(0, "d", partial),
-            new TextEndEvent(0, "text", partial),
-            new ThinkingStartEvent(0, partial),
-            new ThinkingDeltaEvent(0, "d", partial),
-            new ThinkingEndEvent(0, "thought", partial),
-            new ToolCallStartEvent(1, partial),
-            new ToolCallDeltaEvent(1, "{}", partial),
-            new ToolCallEndEvent(1, toolCall, partial),
-            new DoneEvent(StopReason.STOP, partial),
-            new ErrorEvent("error", partial)
-        );
+                new StartEvent(partial),
+                new TextStartEvent(0, partial),
+                new TextDeltaEvent(0, "d", partial),
+                new TextEndEvent(0, "text", partial),
+                new ThinkingStartEvent(0, partial),
+                new ThinkingDeltaEvent(0, "d", partial),
+                new ThinkingEndEvent(0, "thought", partial),
+                new ToolCallStartEvent(1, partial),
+                new ToolCallDeltaEvent(1, "{}", partial),
+                new ToolCallEndEvent(1, toolCall, partial),
+                new DoneEvent(StopReason.STOP, partial),
+                new ErrorEvent("error", partial));
 
         for (var event : events) {
-            var label = switch (event) {
-                case StartEvent e -> "start";
-                case TextStartEvent e -> "text_start";
-                case TextDeltaEvent e -> "text_delta";
-                case TextEndEvent e -> "text_end";
-                case ThinkingStartEvent e -> "thinking_start";
-                case ThinkingDeltaEvent e -> "thinking_delta";
-                case ThinkingEndEvent e -> "thinking_end";
-                case ToolCallStartEvent e -> "toolcall_start";
-                case ToolCallDeltaEvent e -> "toolcall_delta";
-                case ToolCallEndEvent e -> "toolcall_end";
-                case DoneEvent e -> "done";
-                case ErrorEvent e -> "error";
-            };
+            var label =
+                    switch (event) {
+                        case StartEvent e -> "start";
+                        case TextStartEvent e -> "text_start";
+                        case TextDeltaEvent e -> "text_delta";
+                        case TextEndEvent e -> "text_end";
+                        case ThinkingStartEvent e -> "thinking_start";
+                        case ThinkingDeltaEvent e -> "thinking_delta";
+                        case ThinkingEndEvent e -> "thinking_end";
+                        case ToolCallStartEvent e -> "toolcall_start";
+                        case ToolCallDeltaEvent e -> "toolcall_delta";
+                        case ToolCallEndEvent e -> "toolcall_end";
+                        case DoneEvent e -> "done";
+                        case ErrorEvent e -> "error";
+                    };
             assertNotNull(label);
         }
     }

@@ -28,7 +28,8 @@ import org.junit.jupiter.api.io.TempDir;
 
 class SessionPersistenceTest {
 
-    @TempDir Path tempDir;
+    @TempDir
+    Path tempDir;
 
     ObjectMapper mapper;
     SessionPersistence persistence;
@@ -48,17 +49,18 @@ class SessionPersistenceTest {
     private AssistantMessage assistantMsg(String text) {
         return new AssistantMessage(
                 List.of(new TextContent(text, null)),
-                "messages", "anthropic", "claude-sonnet-4",
-                null, Usage.empty(), StopReason.STOP, null, 2000L
-        );
+                "messages",
+                "anthropic",
+                "claude-sonnet-4",
+                null,
+                Usage.empty(),
+                StopReason.STOP,
+                null,
+                2000L);
     }
 
     private ToolResultMessage toolResultMsg(String toolCallId, String toolName, String text, boolean isError) {
-        return new ToolResultMessage(
-                toolCallId, toolName,
-                List.of(new TextContent(text, null)),
-                null, isError, 3000L
-        );
+        return new ToolResultMessage(toolCallId, toolName, List.of(new TextContent(text, null)), null, isError, 3000L);
     }
 
     // -------------------------------------------------------------------
@@ -71,10 +73,7 @@ class SessionPersistenceTest {
         @Test
         void savesMessagesToJsonlFile() throws IOException {
             Path file = tempDir.resolve("session.jsonl");
-            List<Message> messages = List.of(
-                    userMsg("Hello"),
-                    assistantMsg("Hi there")
-            );
+            List<Message> messages = List.of(userMsg("Hello"), assistantMsg("Hi there"));
 
             persistence.save("sess-1", messages, file);
 
@@ -115,28 +114,24 @@ class SessionPersistenceTest {
         void createsParentDirectories() {
             Path file = tempDir.resolve("deep/nested/dir/session.jsonl");
 
-            assertDoesNotThrow(
-                    () -> persistence.save("sess-1", List.of(userMsg("test")), file));
+            assertDoesNotThrow(() -> persistence.save("sess-1", List.of(userMsg("test")), file));
 
             assertTrue(Files.exists(file));
         }
 
         @Test
         void throwsOnNullSessionId() {
-            assertThrows(NullPointerException.class,
-                    () -> persistence.save(null, List.of(), tempDir.resolve("f")));
+            assertThrows(NullPointerException.class, () -> persistence.save(null, List.of(), tempDir.resolve("f")));
         }
 
         @Test
         void throwsOnNullMessages() {
-            assertThrows(NullPointerException.class,
-                    () -> persistence.save("s", null, tempDir.resolve("f")));
+            assertThrows(NullPointerException.class, () -> persistence.save("s", null, tempDir.resolve("f")));
         }
 
         @Test
         void throwsOnNullPath() {
-            assertThrows(NullPointerException.class,
-                    () -> persistence.save("s", List.of(), null));
+            assertThrows(NullPointerException.class, () -> persistence.save("s", List.of(), null));
         }
     }
 
@@ -182,8 +177,7 @@ class SessionPersistenceTest {
         @Test
         void loadsToolResultMessage() throws IOException {
             Path file = tempDir.resolve("session.jsonl");
-            persistence.save("sess-1",
-                    List.of(toolResultMsg("tc-1", "bash", "output", false)), file);
+            persistence.save("sess-1", List.of(toolResultMsg("tc-1", "bash", "output", false)), file);
 
             List<Message> loaded = persistence.load(file);
 
@@ -198,8 +192,7 @@ class SessionPersistenceTest {
         @Test
         void loadsToolResultWithErrorFlag() throws IOException {
             Path file = tempDir.resolve("session.jsonl");
-            persistence.save("sess-1",
-                    List.of(toolResultMsg("tc-2", "bash", "error output", true)), file);
+            persistence.save("sess-1", List.of(toolResultMsg("tc-2", "bash", "error output", true)), file);
 
             List<Message> loaded = persistence.load(file);
 
@@ -223,8 +216,7 @@ class SessionPersistenceTest {
                     userMsg("Build the app"),
                     assistantMsg("Sure, I'll use the bash tool."),
                     toolResultMsg("tc-1", "bash", "Build succeeded", false),
-                    assistantMsg("Build completed successfully.")
-            );
+                    assistantMsg("Build completed successfully."));
 
             persistence.save("sess-round", original, file);
             List<Message> loaded = persistence.load(file);
@@ -243,11 +235,15 @@ class SessionPersistenceTest {
             AssistantMessage original = new AssistantMessage(
                     List.of(
                             new TextContent("Here is the result", null),
-                            new ToolCall("tc-1", "read", Map.of("path", "/foo.txt"), null)
-                    ),
-                    "messages", "anthropic", "claude-sonnet-4",
-                    "resp-123", Usage.empty(), StopReason.TOOL_USE, null, 5000L
-            );
+                            new ToolCall("tc-1", "read", Map.of("path", "/foo.txt"), null)),
+                    "messages",
+                    "anthropic",
+                    "claude-sonnet-4",
+                    "resp-123",
+                    Usage.empty(),
+                    StopReason.TOOL_USE,
+                    null,
+                    5000L);
 
             persistence.save("sess-cb", List.of(original), file);
             List<Message> loaded = persistence.load(file);
@@ -280,9 +276,14 @@ class SessionPersistenceTest {
             Usage usage = new Usage(100, 200, 50, 25, 375, new Cost(0.01, 0.02, 0.005, 0.003, 0.038));
             AssistantMessage original = new AssistantMessage(
                     List.of(new TextContent("test")),
-                    "messages", "anthropic", "m", null, usage,
-                    StopReason.STOP, null, 1L
-            );
+                    "messages",
+                    "anthropic",
+                    "m",
+                    null,
+                    usage,
+                    StopReason.STOP,
+                    null,
+                    1L);
 
             persistence.save("sess-u", List.of(original), file);
             AssistantMessage loaded = (AssistantMessage) persistence.load(file).get(0);
@@ -303,8 +304,7 @@ class SessionPersistenceTest {
         @Test
         void throwsOnNonexistentFile() {
             Path file = tempDir.resolve("nonexistent.jsonl");
-            assertThrows(SessionPersistenceException.class,
-                    () -> persistence.load(file));
+            assertThrows(SessionPersistenceException.class, () -> persistence.load(file));
         }
 
         @Test
@@ -312,14 +312,12 @@ class SessionPersistenceTest {
             Path file = tempDir.resolve("bad.jsonl");
             Files.writeString(file, "not valid json\n");
 
-            assertThrows(SessionPersistenceException.class,
-                    () -> persistence.load(file));
+            assertThrows(SessionPersistenceException.class, () -> persistence.load(file));
         }
 
         @Test
         void throwsOnNullInputPath() {
-            assertThrows(NullPointerException.class,
-                    () -> persistence.load(null));
+            assertThrows(NullPointerException.class, () -> persistence.load(null));
         }
 
         @Test
@@ -341,8 +339,7 @@ class SessionPersistenceTest {
             String validLine = mapper.writeValueAsString(userMsg("ok"));
             Files.writeString(file, validLine + "\n{bad json}\n");
 
-            var ex = assertThrows(SessionPersistenceException.class,
-                    () -> persistence.load(file));
+            var ex = assertThrows(SessionPersistenceException.class, () -> persistence.load(file));
             assertTrue(ex.getMessage().contains("line 2"));
         }
     }

@@ -31,14 +31,19 @@ class BedrockProviderTest {
 
     private Model testModel() {
         return new Model(
-                "anthropic.claude-sonnet-4-20250514-v1:0", "Claude Sonnet 4 (Bedrock)",
-                Api.BEDROCK_CONVERSE_STREAM, Provider.AMAZON_BEDROCK,
-                null, false,
+                "anthropic.claude-sonnet-4-20250514-v1:0",
+                "Claude Sonnet 4 (Bedrock)",
+                Api.BEDROCK_CONVERSE_STREAM,
+                Provider.AMAZON_BEDROCK,
+                null,
+                false,
                 List.of(InputModality.TEXT, InputModality.IMAGE),
                 new ModelCost(3.0, 15.0, 0.3, 3.75),
-                200000, 8192, null, null,
-                null
-        );
+                200000,
+                8192,
+                null,
+                null,
+                null);
     }
 
     // -------------------------------------------------------------------
@@ -75,9 +80,14 @@ class BedrockProviderTest {
         void convertsAssistantMessageWithText() {
             var am = new AssistantMessage(
                     List.of(new TextContent("Hi there", null)),
-                    "bedrock-converse-stream", "amazon-bedrock",
+                    "bedrock-converse-stream",
+                    "amazon-bedrock",
                     "anthropic.claude-sonnet-4-20250514-v1:0",
-                    null, Usage.empty(), StopReason.STOP, null, 1L);
+                    null,
+                    Usage.empty(),
+                    StopReason.STOP,
+                    null,
+                    1L);
             var result = BedrockProvider.convertMessages(List.of(am));
 
             assertEquals(1, result.size());
@@ -89,12 +99,15 @@ class BedrockProviderTest {
             var am = new AssistantMessage(
                     List.of(
                             new TextContent("Let me check", null),
-                            new ToolCall("toolu_123", "bash",
-                                    Map.of("command", "ls"), null)
-                    ),
-                    "bedrock-converse-stream", "amazon-bedrock",
+                            new ToolCall("toolu_123", "bash", Map.of("command", "ls"), null)),
+                    "bedrock-converse-stream",
+                    "amazon-bedrock",
                     "anthropic.claude-sonnet-4-20250514-v1:0",
-                    null, Usage.empty(), StopReason.TOOL_USE, null, 1L);
+                    null,
+                    Usage.empty(),
+                    StopReason.TOOL_USE,
+                    null,
+                    1L);
             var result = BedrockProvider.convertMessages(List.of(am));
 
             assertEquals(1, result.size());
@@ -105,8 +118,8 @@ class BedrockProviderTest {
 
         @Test
         void convertsToolResultMessage() {
-            var tr = new ToolResultMessage("toolu_123", "bash",
-                    List.of(new TextContent("file1.txt\nfile2.txt")), null, false, 1L);
+            var tr = new ToolResultMessage(
+                    "toolu_123", "bash", List.of(new TextContent("file1.txt\nfile2.txt")), null, false, 1L);
             var result = BedrockProvider.convertMessages(List.of(tr));
 
             assertEquals(1, result.size());
@@ -126,11 +139,15 @@ class BedrockProviderTest {
                     new UserMessage("Hello", 1L),
                     new AssistantMessage(
                             List.of(new TextContent("Hi")),
-                            "bedrock-converse-stream", "amazon-bedrock",
+                            "bedrock-converse-stream",
+                            "amazon-bedrock",
                             "anthropic.claude-sonnet-4-20250514-v1:0",
-                            null, Usage.empty(), StopReason.STOP, null, 2L),
-                    new UserMessage("How?", 3L)
-            );
+                            null,
+                            Usage.empty(),
+                            StopReason.STOP,
+                            null,
+                            2L),
+                    new UserMessage("How?", 3L));
             var result = BedrockProvider.convertMessages(messages);
 
             assertEquals(3, result.size());
@@ -140,13 +157,15 @@ class BedrockProviderTest {
         void convertsThinkingToTextFallbackWhenSignatureMissing() {
             // Anthropic Claude with missing signature: thinking falls back to plain text
             var am = new AssistantMessage(
-                    List.of(
-                            new ThinkingContent("thinking...", null, false),
-                            new TextContent("Answer", null)
-                    ),
-                    "bedrock-converse-stream", "amazon-bedrock",
+                    List.of(new ThinkingContent("thinking...", null, false), new TextContent("Answer", null)),
+                    "bedrock-converse-stream",
+                    "amazon-bedrock",
                     "anthropic.claude-sonnet-4-20250514-v1:0",
-                    null, Usage.empty(), StopReason.STOP, null, 1L);
+                    null,
+                    Usage.empty(),
+                    StopReason.STOP,
+                    null,
+                    1L);
             var result = BedrockProvider.convertMessages(List.of(am));
 
             assertEquals(1, result.size());
@@ -184,8 +203,7 @@ class BedrockProviderTest {
             ObjectNode params = MAPPER.createObjectNode();
             var tools = List.of(
                     new com.campusclaw.ai.types.Tool("read", "Read file", params),
-                    new com.campusclaw.ai.types.Tool("write", "Write file", params)
-            );
+                    new com.campusclaw.ai.types.Tool("write", "Write file", params));
             var result = BedrockProvider.convertTools(tools);
 
             assertEquals(2, result.size());
@@ -216,68 +234,57 @@ class BedrockProviderTest {
 
         @Test
         void mapsEndTurnToStop() {
-            assertEquals(StopReason.STOP,
-                    BedrockProvider.mapStopReason("end_turn"));
+            assertEquals(StopReason.STOP, BedrockProvider.mapStopReason("end_turn"));
         }
 
         @Test
         void mapsStopSequenceToStop() {
-            assertEquals(StopReason.STOP,
-                    BedrockProvider.mapStopReason("stop_sequence"));
+            assertEquals(StopReason.STOP, BedrockProvider.mapStopReason("stop_sequence"));
         }
 
         @Test
         void mapsToolUse() {
-            assertEquals(StopReason.TOOL_USE,
-                    BedrockProvider.mapStopReason("tool_use"));
+            assertEquals(StopReason.TOOL_USE, BedrockProvider.mapStopReason("tool_use"));
         }
 
         @Test
         void mapsMaxTokensToLength() {
-            assertEquals(StopReason.LENGTH,
-                    BedrockProvider.mapStopReason("max_tokens"));
+            assertEquals(StopReason.LENGTH, BedrockProvider.mapStopReason("max_tokens"));
         }
 
         @Test
         void mapsModelContextWindowExceededToLength() {
-            assertEquals(StopReason.LENGTH,
-                    BedrockProvider.mapStopReason("model_context_window_exceeded"));
+            assertEquals(StopReason.LENGTH, BedrockProvider.mapStopReason("model_context_window_exceeded"));
         }
 
         @Test
         void mapsContentFilteredToError() {
-            assertEquals(StopReason.ERROR,
-                    BedrockProvider.mapStopReason("content_filtered"));
+            assertEquals(StopReason.ERROR, BedrockProvider.mapStopReason("content_filtered"));
         }
 
         @Test
         void mapsGuardrailIntervenedToError() {
-            assertEquals(StopReason.ERROR,
-                    BedrockProvider.mapStopReason("guardrail_intervened"));
+            assertEquals(StopReason.ERROR, BedrockProvider.mapStopReason("guardrail_intervened"));
         }
 
         @Test
         void mapsMalformedModelOutputToError() {
-            assertEquals(StopReason.ERROR,
-                    BedrockProvider.mapStopReason("malformed_model_output"));
+            assertEquals(StopReason.ERROR, BedrockProvider.mapStopReason("malformed_model_output"));
         }
 
         @Test
         void mapsMalformedToolUseToError() {
-            assertEquals(StopReason.ERROR,
-                    BedrockProvider.mapStopReason("malformed_tool_use"));
+            assertEquals(StopReason.ERROR, BedrockProvider.mapStopReason("malformed_tool_use"));
         }
 
         @Test
         void mapsNullToStop() {
-            assertEquals(StopReason.STOP,
-                    BedrockProvider.mapStopReason(null));
+            assertEquals(StopReason.STOP, BedrockProvider.mapStopReason(null));
         }
 
         @Test
         void mapsUnknownToStop() {
-            assertEquals(StopReason.STOP,
-                    BedrockProvider.mapStopReason("unknown_reason"));
+            assertEquals(StopReason.STOP, BedrockProvider.mapStopReason("unknown_reason"));
         }
     }
 
@@ -300,9 +307,9 @@ class BedrockProviderTest {
             BedrockProvider.parseUsage(usage, accumulated);
 
             assertEquals(1000, accumulated[0]); // input
-            assertEquals(500, accumulated[1]);   // output
-            assertEquals(0, accumulated[2]);     // cacheRead
-            assertEquals(0, accumulated[3]);     // cacheWrite
+            assertEquals(500, accumulated[1]); // output
+            assertEquals(0, accumulated[2]); // cacheRead
+            assertEquals(0, accumulated[3]); // cacheWrite
         }
 
         @Test
@@ -318,10 +325,10 @@ class BedrockProviderTest {
 
             BedrockProvider.parseUsage(usage, accumulated);
 
-            assertEquals(800, accumulated[0]);  // input - cacheRead
-            assertEquals(500, accumulated[1]);  // output
-            assertEquals(200, accumulated[2]);  // cacheRead
-            assertEquals(50, accumulated[3]);   // cacheWrite
+            assertEquals(800, accumulated[0]); // input - cacheRead
+            assertEquals(500, accumulated[1]); // output
+            assertEquals(200, accumulated[2]); // cacheRead
+            assertEquals(50, accumulated[3]); // cacheWrite
         }
 
         @Test
@@ -369,8 +376,7 @@ class BedrockProviderTest {
 
             Cost cost = BedrockProvider.computeCost(modelCost, usage);
 
-            assertEquals(cost.input() + cost.output() + cost.cacheRead() + cost.cacheWrite(),
-                    cost.total(), 0.0001);
+            assertEquals(cost.input() + cost.output() + cost.cacheRead() + cost.cacheWrite(), cost.total(), 0.0001);
         }
 
         @Test
@@ -501,11 +507,9 @@ class BedrockProviderTest {
 
         @Test
         void buildsBasicRequest() {
-            var context = new Context(null,
-                    List.of(new UserMessage("Hello", 1L)), null);
+            var context = new Context(null, List.of(new UserMessage("Hello", 1L)), null);
 
-            var request = provider.buildRequest(
-                    testModel(), context, null, null, null, null);
+            var request = provider.buildRequest(testModel(), context, null, null, null, null);
 
             assertNotNull(request);
             assertEquals("anthropic.claude-sonnet-4-20250514-v1:0", request.modelId());
@@ -513,11 +517,9 @@ class BedrockProviderTest {
 
         @Test
         void usesProvidedMaxTokens() {
-            var context = new Context(null,
-                    List.of(new UserMessage("Hello", 1L)), null);
+            var context = new Context(null, List.of(new UserMessage("Hello", 1L)), null);
 
-            var request = provider.buildRequest(
-                    testModel(), context, 4096, null, null, null);
+            var request = provider.buildRequest(testModel(), context, 4096, null, null, null);
 
             assertNotNull(request);
             assertEquals(4096, request.inferenceConfig().maxTokens());
@@ -525,11 +527,9 @@ class BedrockProviderTest {
 
         @Test
         void setsTemperature() {
-            var context = new Context(null,
-                    List.of(new UserMessage("Hello", 1L)), null);
+            var context = new Context(null, List.of(new UserMessage("Hello", 1L)), null);
 
-            var request = provider.buildRequest(
-                    testModel(), context, null, 0.7, null, null);
+            var request = provider.buildRequest(testModel(), context, null, 0.7, null, null);
 
             assertNotNull(request);
             assertEquals(0.7f, request.inferenceConfig().temperature(), 0.01);
@@ -537,11 +537,9 @@ class BedrockProviderTest {
 
         @Test
         void setsSystemPrompt() {
-            var context = new Context("Be helpful.",
-                    List.of(new UserMessage("Hello", 1L)), null);
+            var context = new Context("Be helpful.", List.of(new UserMessage("Hello", 1L)), null);
 
-            var request = provider.buildRequest(
-                    testModel(), context, null, null, null, null);
+            var request = provider.buildRequest(testModel(), context, null, null, null, null);
 
             assertNotNull(request);
             assertFalse(request.system().isEmpty());
@@ -551,11 +549,9 @@ class BedrockProviderTest {
         void setsToolsWhenPresent() {
             ObjectNode toolParams = MAPPER.createObjectNode();
             var tools = List.of(new com.campusclaw.ai.types.Tool("bash", "Run commands", toolParams));
-            var context = new Context(null,
-                    List.of(new UserMessage("Hello", 1L)), tools);
+            var context = new Context(null, List.of(new UserMessage("Hello", 1L)), tools);
 
-            var request = provider.buildRequest(
-                    testModel(), context, null, null, null, null);
+            var request = provider.buildRequest(testModel(), context, null, null, null, null);
 
             assertNotNull(request);
             assertNotNull(request.toolConfig());
@@ -564,22 +560,18 @@ class BedrockProviderTest {
 
         @Test
         void omitsSystemPromptWhenNull() {
-            var context = new Context(null,
-                    List.of(new UserMessage("Hello", 1L)), null);
+            var context = new Context(null, List.of(new UserMessage("Hello", 1L)), null);
 
-            var request = provider.buildRequest(
-                    testModel(), context, null, null, null, null);
+            var request = provider.buildRequest(testModel(), context, null, null, null, null);
 
             assertTrue(request.system().isEmpty());
         }
 
         @Test
         void omitsToolConfigWhenNoTools() {
-            var context = new Context(null,
-                    List.of(new UserMessage("Hello", 1L)), null);
+            var context = new Context(null, List.of(new UserMessage("Hello", 1L)), null);
 
-            var request = provider.buildRequest(
-                    testModel(), context, null, null, null, null);
+            var request = provider.buildRequest(testModel(), context, null, null, null, null);
 
             assertNull(request.toolConfig());
         }
@@ -594,8 +586,7 @@ class BedrockProviderTest {
 
         @Test
         void streamReturnsEventStream() {
-            var context = new Context(null,
-                    List.of(new UserMessage("Hello", 1L)), null);
+            var context = new Context(null, List.of(new UserMessage("Hello", 1L)), null);
 
             var stream = provider.stream(testModel(), context, null);
             assertNotNull(stream);
@@ -604,8 +595,7 @@ class BedrockProviderTest {
 
         @Test
         void streamSimpleReturnsEventStream() {
-            var context = new Context(null,
-                    List.of(new UserMessage("Hello", 1L)), null);
+            var context = new Context(null, List.of(new UserMessage("Hello", 1L)), null);
 
             var stream = provider.streamSimple(testModel(), context, null);
             assertNotNull(stream);

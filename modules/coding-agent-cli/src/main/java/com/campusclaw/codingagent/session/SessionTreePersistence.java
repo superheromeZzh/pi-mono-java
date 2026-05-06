@@ -36,7 +36,8 @@ public class SessionTreePersistence {
         Path file = sessionDir.resolve(sessionName + ".jsonl");
         try {
             Files.createDirectories(sessionDir);
-            try (var writer = Files.newBufferedWriter(file, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)) {
+            try (var writer =
+                    Files.newBufferedWriter(file, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)) {
                 for (SessionEntry entry : tree.getAllEntries()) {
                     writer.write(MAPPER.writeValueAsString(entry));
                     writer.newLine();
@@ -66,13 +67,17 @@ public class SessionTreePersistence {
     public SessionTree load(String sessionName) {
         Path file = sessionDir.resolve(sessionName + ".jsonl");
         SessionTree tree = new SessionTree();
-        if (!Files.exists(file)) { return tree; }
+        if (!Files.exists(file)) {
+            return tree;
+        }
 
         try (var reader = Files.newBufferedReader(file)) {
             String line;
             while ((line = reader.readLine()) != null) {
                 line = line.trim();
-                if (line.isEmpty()) { continue; }
+                if (line.isEmpty()) {
+                    continue;
+                }
                 try {
                     SessionEntry entry = MAPPER.readValue(line, SessionEntry.class);
                     tree.addEntry(entry);
@@ -89,13 +94,14 @@ public class SessionTreePersistence {
 
     /** List all available session names. */
     public java.util.List<String> listSessions() {
-        if (!Files.isDirectory(sessionDir)) { return java.util.List.of(); }
+        if (!Files.isDirectory(sessionDir)) {
+            return java.util.List.of();
+        }
         try (var stream = Files.list(sessionDir)) {
-            return stream
-                .filter(p -> p.toString().endsWith(".jsonl"))
-                .map(p -> p.getFileName().toString().replace(".jsonl", ""))
-                .sorted()
-                .toList();
+            return stream.filter(p -> p.toString().endsWith(".jsonl"))
+                    .map(p -> p.getFileName().toString().replace(".jsonl", ""))
+                    .sorted()
+                    .toList();
         } catch (IOException e) {
             log.error("Failed to list sessions", e);
             return java.util.List.of();

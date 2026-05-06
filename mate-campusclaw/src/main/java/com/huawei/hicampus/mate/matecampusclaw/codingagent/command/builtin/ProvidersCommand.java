@@ -31,18 +31,21 @@ public class ProvidersCommand implements SlashCommand {
     private final SettingsManager settingsManager;
     private final AuthStore authStore;
 
-    public ProvidersCommand(ModelRegistry modelRegistry, SettingsManager settingsManager,
-                            AuthStore authStore) {
+    public ProvidersCommand(ModelRegistry modelRegistry, SettingsManager settingsManager, AuthStore authStore) {
         this.modelRegistry = modelRegistry;
         this.settingsManager = settingsManager;
         this.authStore = authStore;
     }
 
     @Override
-    public String name() { return "providers"; }
+    public String name() {
+        return "providers";
+    }
 
     @Override
-    public String description() { return "List known providers and their auth/baseURL state"; }
+    public String description() {
+        return "List known providers and their auth/baseURL state";
+    }
 
     @Override
     public void execute(SlashCommandContext context, String arguments) {
@@ -52,8 +55,7 @@ public class ProvidersCommand implements SlashCommand {
         } catch (Exception e) {
             settings = Settings.empty();
         }
-        Map<String, Settings.ProviderConfig> providerCfg = settings.provider() != null
-                ? settings.provider() : Map.of();
+        Map<String, Settings.ProviderConfig> providerCfg = settings.provider() != null ? settings.provider() : Map.of();
         Map<String, String> auth = authStore.listSummary();
 
         Map<Provider, Integer> modelCounts = new LinkedHashMap<>();
@@ -71,36 +73,47 @@ public class ProvidersCommand implements SlashCommand {
         }
         rows.sort(Comparator.comparing(Provider::value));
 
-        context.output().println(String.format("%-20s %-7s %-10s %-7s",
-                "PROVIDER", "MODELS", "AUTH.JSON", "OVERRIDE"));
+        context.output().println(String.format("%-20s %-7s %-10s %-7s", "PROVIDER", "MODELS", "AUTH.JSON", "OVERRIDE"));
         for (Provider p : rows) {
             int count = modelCounts.getOrDefault(p, 0);
             boolean hasAuth = auth.containsKey(p.value());
             Settings.ProviderConfig cfg = providerCfg.get(p.value());
             String override = describeOverride(cfg);
-            context.output().println(String.format("%-20s %-7d %-10s %-7s",
-                    p.value(), count, hasAuth ? "yes" : "—", override));
+            context.output()
+                    .println(String.format("%-20s %-7d %-10s %-7s", p.value(), count, hasAuth ? "yes" : "—", override));
         }
 
         // Highlight settings.provider entries that don't map to any known Provider.
         List<String> unknown = new ArrayList<>();
         for (String key : providerCfg.keySet()) {
-            if (Provider.tryFromValue(key).isEmpty()) { unknown.add(key); }
+            if (Provider.tryFromValue(key).isEmpty()) {
+                unknown.add(key);
+            }
         }
         if (!unknown.isEmpty()) {
             context.output().println("");
             context.output().println("settings.provider entries not matching any built-in provider:");
-            for (String k : unknown) { context.output().println("  " + k); }
+            for (String k : unknown) {
+                context.output().println("  " + k);
+            }
             context.output().println("(They are ignored today; see Phase 5 follow-up to register custom providers.)");
         }
     }
 
     private static String describeOverride(Settings.ProviderConfig cfg) {
-        if (cfg == null) { return "—"; }
+        if (cfg == null) {
+            return "—";
+        }
         var bits = new ArrayList<String>();
-        if (cfg.apiKey() != null && !cfg.apiKey().isBlank()) { bits.add("apiKey"); }
-        if (cfg.effectiveBaseUrl() != null) { bits.add("baseURL"); }
-        if (cfg.headers() != null && !cfg.headers().isEmpty()) { bits.add("headers"); }
+        if (cfg.apiKey() != null && !cfg.apiKey().isBlank()) {
+            bits.add("apiKey");
+        }
+        if (cfg.effectiveBaseUrl() != null) {
+            bits.add("baseURL");
+        }
+        if (cfg.headers() != null && !cfg.headers().isEmpty()) {
+            bits.add("headers");
+        }
         return bits.isEmpty() ? "—" : String.join("+", bits);
     }
 }

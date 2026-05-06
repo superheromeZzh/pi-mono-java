@@ -15,14 +15,13 @@ import jakarta.annotation.Nullable;
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 public record SessionEntry(
-    @JsonProperty("id") String id,
-    @JsonProperty("parentId") @Nullable String parentId,
-    @JsonProperty("type") String type,
-    @JsonProperty("message") @Nullable Message message,
-    @JsonProperty("summary") @Nullable String summary,
-    @JsonProperty("branchName") @Nullable String branchName,
-    @JsonProperty("timestamp") long timestamp
-) {
+        @JsonProperty("id") String id,
+        @JsonProperty("parentId") @Nullable String parentId,
+        @JsonProperty("type") String type,
+        @JsonProperty("message") @Nullable Message message,
+        @JsonProperty("summary") @Nullable String summary,
+        @JsonProperty("branchName") @Nullable String branchName,
+        @JsonProperty("timestamp") long timestamp) {
     public static SessionEntry message(String id, @Nullable String parentId, Message message) {
         return new SessionEntry(id, parentId, "message", message, null, null, System.currentTimeMillis());
     }

@@ -48,39 +48,36 @@ public class HybridWriteTool implements AgentTool {
 
     @Override
     public String description() {
-        return "Write or create files. Protected paths automatically use sandbox. " +
-               "Use _executionMode parameter to force specific mode.";
+        return "Write or create files. Protected paths automatically use sandbox. "
+                + "Use _executionMode parameter to force specific mode.";
     }
 
     @Override
     public JsonNode parameters() {
         ObjectNode props = mapper.createObjectNode();
-        props.set("path", mapper.createObjectNode()
-            .put("type", "string")
-            .put("description", "File path to write"));
-        props.set("content", mapper.createObjectNode()
-            .put("type", "string")
-            .put("description", "Content to write to the file"));
+        props.set("path", mapper.createObjectNode().put("type", "string").put("description", "File path to write"));
+        props.set(
+                "content",
+                mapper.createObjectNode().put("type", "string").put("description", "Content to write to the file"));
         ArrayNode enumValues = mapper.createArrayNode();
         enumValues.add("local");
         enumValues.add("sandbox");
         enumValues.add("auto");
-        ObjectNode execModeNode = mapper.createObjectNode()
-            .put("type", "string");
+        ObjectNode execModeNode = mapper.createObjectNode().put("type", "string");
         execModeNode.set("enum", enumValues);
         execModeNode.put("description", "Override execution mode");
         props.set("_executionMode", execModeNode);
 
         return mapper.createObjectNode()
-            .put("type", "object")
-            .<ObjectNode>set("properties", props)
-            .set("required", mapper.createArrayNode().add("path").add("content"));
+                .put("type", "object")
+                .<ObjectNode>set("properties", props)
+                .set("required", mapper.createArrayNode().add("path").add("content"));
     }
 
     @Override
-    public AgentToolResult execute(String toolCallId, Map<String, Object> params,
-                                    CancellationToken signal,
-                                    AgentToolUpdateCallback onUpdate) throws Exception {
+    public AgentToolResult execute(
+            String toolCallId, Map<String, Object> params, CancellationToken signal, AgentToolUpdateCallback onUpdate)
+            throws Exception {
         ExecutionMode explicitMode = extractMode(params);
         return router.route(name(), params, explicitMode, signal, onUpdate);
     }

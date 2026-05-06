@@ -27,15 +27,19 @@ import org.slf4j.LoggerFactory;
 public class ProxyConfig {
     private static final Logger log = LoggerFactory.getLogger(ProxyConfig.class);
 
-    public enum ProxyType { HTTP, SOCKS5, DIRECT }
+    public enum ProxyType {
+        HTTP,
+        SOCKS5,
+        DIRECT
+    }
 
     public record ProxyEntry(
-        ProxyType type,
-        String host,
-        int port,
-        String username,   // nullable
-        String password    // nullable
-    ) {
+            ProxyType type,
+            String host,
+            int port,
+            String username, // nullable
+            String password // nullable
+            ) {
         /** Convert to java.net.Proxy. */
         public Proxy toJavaProxy() {
             return switch (type) {
@@ -95,10 +99,11 @@ public class ProxyConfig {
             }
         }
         if (config.httpProxy != null || config.httpsProxy != null) {
-            log.info("Proxy configured: HTTP={}, HTTPS={}, NO_PROXY={}",
-                config.httpProxy != null ? config.httpProxy.toUrl() : "none",
-                config.httpsProxy != null ? config.httpsProxy.toUrl() : "none",
-                config.noProxy);
+            log.info(
+                    "Proxy configured: HTTP={}, HTTPS={}, NO_PROXY={}",
+                    config.httpProxy != null ? config.httpProxy.toUrl() : "none",
+                    config.httpsProxy != null ? config.httpsProxy.toUrl() : "none",
+                    config.noProxy);
         }
         return config;
     }
@@ -132,10 +137,18 @@ public class ProxyConfig {
     public boolean shouldBypass(String host) {
         String lowerHost = host.toLowerCase();
         for (String pattern : noProxy) {
-            if (pattern.equals("*")) { return true; }
-            if (pattern.startsWith(".") && lowerHost.endsWith(pattern)) { return true; }
-            if (lowerHost.equals(pattern)) { return true; }
-            if (lowerHost.endsWith("." + pattern)) { return true; }
+            if (pattern.equals("*")) {
+                return true;
+            }
+            if (pattern.startsWith(".") && lowerHost.endsWith(pattern)) {
+                return true;
+            }
+            if (lowerHost.equals(pattern)) {
+                return true;
+            }
+            if (lowerHost.endsWith("." + pattern)) {
+                return true;
+            }
         }
         return false;
     }
@@ -145,12 +158,25 @@ public class ProxyConfig {
         return httpProxy != null || httpsProxy != null;
     }
 
-    public ProxyEntry getHttpProxy() { return httpProxy; }
-    public ProxyEntry getHttpsProxy() { return httpsProxy; }
-    public List<String> getNoProxy() { return Collections.unmodifiableList(noProxy); }
+    public ProxyEntry getHttpProxy() {
+        return httpProxy;
+    }
 
-    public void setHttpProxy(ProxyEntry proxy) { this.httpProxy = proxy; }
-    public void setHttpsProxy(ProxyEntry proxy) { this.httpsProxy = proxy; }
+    public ProxyEntry getHttpsProxy() {
+        return httpsProxy;
+    }
+
+    public List<String> getNoProxy() {
+        return Collections.unmodifiableList(noProxy);
+    }
+
+    public void setHttpProxy(ProxyEntry proxy) {
+        this.httpProxy = proxy;
+    }
+
+    public void setHttpsProxy(ProxyEntry proxy) {
+        this.httpsProxy = proxy;
+    }
 
     /** Install as system-wide proxy selector. */
     public void installAsDefault() {
@@ -164,6 +190,7 @@ public class ProxyConfig {
                 }
                 return List.of(Proxy.NO_PROXY);
             }
+
             @Override
             public void connectFailed(URI uri, SocketAddress sa, IOException ioe) {
                 log.warn("Proxy connection failed: {} via {}", uri, sa, ioe);
@@ -171,15 +198,15 @@ public class ProxyConfig {
         });
         // Install authenticator if needed
         if ((httpProxy != null && httpProxy.username() != null)
-            || (httpsProxy != null && httpsProxy.username() != null)) {
+                || (httpsProxy != null && httpsProxy.username() != null)) {
             Authenticator.setDefault(new Authenticator() {
                 @Override
                 protected PasswordAuthentication getPasswordAuthentication() {
-                    ProxyEntry proxy = getRequestingProtocol().equalsIgnoreCase("https")
-                        ? httpsProxy : httpProxy;
+                    ProxyEntry proxy = getRequestingProtocol().equalsIgnoreCase("https") ? httpsProxy : httpProxy;
                     if (proxy != null && proxy.username() != null) {
-                        return new PasswordAuthentication(proxy.username(),
-                            proxy.password() != null ? proxy.password().toCharArray() : new char[0]);
+                        return new PasswordAuthentication(
+                                proxy.username(),
+                                proxy.password() != null ? proxy.password().toCharArray() : new char[0]);
                     }
                     return null;
                 }
@@ -190,7 +217,9 @@ public class ProxyConfig {
 
     /** Parse a proxy URL string like http://user:pass@host:port */
     static ProxyEntry parseProxyUrl(String url) {
-        if (url == null || url.isBlank()) { return null; }
+        if (url == null || url.isBlank()) {
+            return null;
+        }
         try {
             // Handle socks5:// prefix
             ProxyType type = ProxyType.HTTP;
@@ -202,8 +231,12 @@ public class ProxyConfig {
             URI uri = URI.create(parseUrl);
             String host = uri.getHost();
             int port = uri.getPort();
-            if (host == null) { return null; }
-            if (port < 0) { port = 8080; }
+            if (host == null) {
+                return null;
+            }
+            if (port < 0) {
+                port = 8080;
+            }
             String username = null;
             String password = null;
             String userInfo = uri.getUserInfo();
@@ -275,10 +308,13 @@ public class ProxyConfig {
     private static String regQuery(String valueName) {
         try {
             var process = new ProcessBuilder(
-                    "reg", "query",
-                    "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings",
-                    "/v", valueName
-            ).redirectErrorStream(true).start();
+                            "reg",
+                            "query",
+                            "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings",
+                            "/v",
+                            valueName)
+                    .redirectErrorStream(true)
+                    .start();
             String output = new String(process.getInputStream().readAllBytes());
             int exitCode = process.waitFor();
             return exitCode == 0 ? output : null;
@@ -288,9 +324,13 @@ public class ProxyConfig {
     }
 
     private static ProxyEntry parseHostPort(String hostPort) {
-        if (hostPort == null || hostPort.isBlank()) { return null; }
+        if (hostPort == null || hostPort.isBlank()) {
+            return null;
+        }
         // If it already looks like a URL, delegate to parseProxyUrl
-        if (hostPort.contains("://")) { return parseProxyUrl(hostPort); }
+        if (hostPort.contains("://")) {
+            return parseProxyUrl(hostPort);
+        }
         int colon = hostPort.lastIndexOf(':');
         if (colon > 0) {
             String host = hostPort.substring(0, colon);
@@ -310,7 +350,9 @@ public class ProxyConfig {
 
     private static String coalesce(String... values) {
         for (String v : values) {
-            if (v != null && !v.isBlank()) { return v; }
+            if (v != null && !v.isBlank()) {
+                return v;
+            }
         }
         return null;
     }

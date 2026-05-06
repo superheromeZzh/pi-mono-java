@@ -63,8 +63,8 @@ public class SkillHandler {
             String filename = filePart.filename();
             if (!filename.endsWith(".zip") && !filename.endsWith(".tar.gz") && !filename.endsWith(".tgz")) {
                 return ServerResponse.badRequest()
-                        .bodyValue(Map.of("error",
-                                "Unsupported format: " + filename + ". Supported: .zip, .tar.gz, .tgz"));
+                        .bodyValue(Map.of(
+                                "error", "Unsupported format: " + filename + ". Supported: .zip, .tar.gz, .tgz"));
             }
 
             return Mono.fromCallable(() -> Files.createTempFile("skill-upload-", ".tmp"))
@@ -72,12 +72,10 @@ public class SkillHandler {
                             .then(Mono.fromCallable(() -> importAndDescribe(tempFile, filename))
                                     .subscribeOn(Schedulers.boundedElastic())))
                     .flatMap(result -> ServerResponse.ok().bodyValue(result))
-                    .onErrorResume(SkillConflictException.class, e ->
-                            ServerResponse.status(409).bodyValue(Map.of(
-                                    "error", "Skill name conflict",
-                                    "conflicts", e.conflicts())))
-                    .onErrorResume(SkillInstallException.class, e ->
-                            ServerResponse.badRequest().bodyValue(Map.of("error", e.getMessage())))
+                    .onErrorResume(SkillConflictException.class, e -> ServerResponse.status(409)
+                            .bodyValue(Map.of("error", "Skill name conflict", "conflicts", e.conflicts())))
+                    .onErrorResume(SkillInstallException.class, e -> ServerResponse.badRequest()
+                            .bodyValue(Map.of("error", e.getMessage())))
                     .onErrorResume(Exception.class, e -> {
                         log.error("Skill upload failed", e);
                         return ServerResponse.status(500)
@@ -93,8 +91,8 @@ public class SkillHandler {
         return Mono.fromCallable(skillManager::list)
                 .subscribeOn(Schedulers.boundedElastic())
                 .flatMap(skills -> ServerResponse.ok().bodyValue(skills))
-                .onErrorResume(Exception.class, e ->
-                        ServerResponse.status(500).bodyValue(Map.of("error", e.getMessage())));
+                .onErrorResume(
+                        Exception.class, e -> ServerResponse.status(500).bodyValue(Map.of("error", e.getMessage())));
     }
 
     /**
@@ -108,10 +106,10 @@ public class SkillHandler {
                 })
                 .subscribeOn(Schedulers.boundedElastic())
                 .flatMap(result -> ServerResponse.ok().bodyValue(result))
-                .onErrorResume(SkillInstallException.class, e ->
-                        ServerResponse.badRequest().bodyValue(Map.of("error", e.getMessage())))
-                .onErrorResume(Exception.class, e ->
-                        ServerResponse.status(500).bodyValue(Map.of("error", e.getMessage())));
+                .onErrorResume(SkillInstallException.class, e -> ServerResponse.badRequest()
+                        .bodyValue(Map.of("error", e.getMessage())))
+                .onErrorResume(
+                        Exception.class, e -> ServerResponse.status(500).bodyValue(Map.of("error", e.getMessage())));
     }
 
     /** POST /api/skills/{name}/enable — enable a skill by its skill name (idempotent). */
@@ -141,18 +139,17 @@ public class SkillHandler {
                 .subscribeOn(Schedulers.boundedElastic())
                 .flatMap(result -> {
                     if (result.notFound) {
-                        return ServerResponse.status(404)
-                                .bodyValue(Map.of("error", "Skill not found: " + result.name));
+                        return ServerResponse.status(404).bodyValue(Map.of("error", "Skill not found: " + result.name));
                     }
-                    return ServerResponse.ok().bodyValue(Map.of(
-                            "name", result.name,
-                            "enabled", result.enabled,
-                            "hint", RELOAD_HINT));
+                    return ServerResponse.ok()
+                            .bodyValue(Map.of(
+                                    "name", result.name,
+                                    "enabled", result.enabled,
+                                    "hint", RELOAD_HINT));
                 })
                 .onErrorResume(Exception.class, e -> {
                     log.error("Failed to toggle skill {}", name, e);
-                    return ServerResponse.status(500)
-                            .bodyValue(Map.of("error", "Internal error: " + e.getMessage()));
+                    return ServerResponse.status(500).bodyValue(Map.of("error", "Internal error: " + e.getMessage()));
                 });
     }
 
@@ -165,8 +162,7 @@ public class SkillHandler {
     private Map<String, Object> importAndDescribe(Path tempFile, String originalFilename) throws Exception {
         try {
             String name = skillManager.importArchive(tempFile, originalFilename);
-            var skills = skillLoader.loadFromDirectory(
-                    AppPaths.USER_SKILLS_DIR.resolve(name), "user");
+            var skills = skillLoader.loadFromDirectory(AppPaths.USER_SKILLS_DIR.resolve(name), "user");
             var skillList = new ArrayList<Map<String, String>>();
             for (var skill : skills) {
                 skillList.add(Map.of(

@@ -30,8 +30,9 @@ public class ReloadCommand implements SlashCommand {
             session.reload();
             int skillCount = session.getSkillRegistry().getAll().size();
             int templateCount = session.getPromptTemplates().size();
-            context.output().println("Reloaded: " + skillCount + " skill(s), "
-                    + templateCount + " template(s). System prompt rebuilt.");
+            context.output()
+                    .println("Reloaded: " + skillCount + " skill(s), " + templateCount
+                            + " template(s). System prompt rebuilt.");
         } catch (Exception e) {
             context.output().println("Reload failed: " + e.getMessage());
         }

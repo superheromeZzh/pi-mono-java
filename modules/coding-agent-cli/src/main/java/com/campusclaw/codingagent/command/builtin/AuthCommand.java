@@ -27,10 +27,14 @@ public class AuthCommand implements SlashCommand {
     }
 
     @Override
-    public String name() { return "auth"; }
+    public String name() {
+        return "auth";
+    }
 
     @Override
-    public String description() { return "Manage stored API keys (login / list / logout)"; }
+    public String description() {
+        return "Manage stored API keys (login / list / logout)";
+    }
 
     @Override
     public void execute(SlashCommandContext context, String arguments) {
@@ -62,14 +66,13 @@ public class AuthCommand implements SlashCommand {
         }
         var providerOpt = Provider.tryFromValue(p[0]);
         if (providerOpt.isEmpty()) {
-            context.output().println("Unknown provider: " + p[0]
-                    + ". Run /providers to list known ids.");
+            context.output().println("Unknown provider: " + p[0] + ". Run /providers to list known ids.");
             return;
         }
         Provider provider = providerOpt.get();
         authStore.setApiKey(provider, p[1].trim());
-        context.output().println("Saved API key for " + provider.value()
-                + " to ~/.campusclaw/agent/auth.json (mode 0600).");
+        context.output()
+                .println("Saved API key for " + provider.value() + " to ~/.campusclaw/agent/auth.json (mode 0600).");
     }
 
     private void doList(SlashCommandContext context) {
@@ -91,15 +94,16 @@ public class AuthCommand implements SlashCommand {
         }
         var providerOpt = Provider.tryFromValue(rest);
         if (providerOpt.isEmpty()) {
-            context.output().println("Unknown provider: " + rest
-                    + ". Run /providers to list known ids.");
+            context.output().println("Unknown provider: " + rest + ". Run /providers to list known ids.");
             return;
         }
         Provider provider = providerOpt.get();
         boolean removed = authStore.remove(provider);
-        context.output().println(removed
-                ? "Removed credentials for " + provider.value() + "."
-                : "No credentials stored for " + provider.value() + ".");
+        context.output()
+                .println(
+                        removed
+                                ? "Removed credentials for " + provider.value() + "."
+                                : "No credentials stored for " + provider.value() + ".");
     }
 
     private void printUsage(SlashCommandContext context) {

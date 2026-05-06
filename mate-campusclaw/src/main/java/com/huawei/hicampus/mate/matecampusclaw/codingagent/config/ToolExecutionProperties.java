@@ -33,8 +33,10 @@ public class ToolExecutionProperties {
                 this.defaultMode = mode;
                 log.info("Tool execution mode overridden by system property: {}", mode);
             } catch (IllegalArgumentException e) {
-                log.warn("Invalid execution mode in system property '{}', using default: {}",
-                        modeOverride, this.defaultMode);
+                log.warn(
+                        "Invalid execution mode in system property '{}', using default: {}",
+                        modeOverride,
+                        this.defaultMode);
             }
         }
     }
@@ -84,38 +86,45 @@ public class ToolExecutionProperties {
      * 强制使用沙箱的命令模式（正则）
      */
     private List<String> sandboxRequiredPatterns = List.of(
-        "rm\\s+-rf\\s+/",
-        "mkfs\\.",
-        "dd\\s+if=/dev/zero",
-        ":\\(\\)\\{\\s*:|:&\\s*\\};:",
-        "curl\\s+.*\\|.*sh",
-        "wget\\s+.*\\|.*sh",
-        "eval\\s+.*\\$"
-    );
+            "rm\\s+-rf\\s+/",
+            "mkfs\\.",
+            "dd\\s+if=/dev/zero",
+            ":\\(\\)\\{\\s*:|:&\\s*\\};:",
+            "curl\\s+.*\\|.*sh",
+            "wget\\s+.*\\|.*sh",
+            "eval\\s+.*\\$");
 
     /**
      * 强制使用沙箱的文件路径模式
      */
-    private List<String> protectedPathPatterns = List.of(
-        "/etc/.*",
-        "/usr/.*",
-        "/bin/.*",
-        "/sbin/.*",
-        "\\.\\./.*",
-        "/root/.*",
-        "/sys/.*",
-        "/proc/.*"
-    );
+    private List<String> protectedPathPatterns =
+            List.of("/etc/.*", "/usr/.*", "/bin/.*", "/sbin/.*", "\\.\\./.*", "/root/.*", "/sys/.*", "/proc/.*");
 
     /**
      * 本地执行的命令白名单（当 mode=AUTO 时）
      */
     private Set<String> localSafeCommands = Set.of(
-        "cat", "head", "tail", "grep", "awk", "sed",
-        "ls", "pwd", "echo", "wc", "sort", "uniq",
-        "find", "which", "whoami", "id",
-        "git", "git-status", "git-log", "git-diff", "git-show"
-    );
+            "cat",
+            "head",
+            "tail",
+            "grep",
+            "awk",
+            "sed",
+            "ls",
+            "pwd",
+            "echo",
+            "wc",
+            "sort",
+            "uniq",
+            "find",
+            "which",
+            "whoami",
+            "id",
+            "git",
+            "git-status",
+            "git-log",
+            "git-diff",
+            "git-show");
 
     /**
      * 文件操作大小阈值（超过则使用本地执行更高效）

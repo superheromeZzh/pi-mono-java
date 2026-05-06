@@ -17,10 +17,14 @@ import com.campusclaw.codingagent.command.SlashCommandContext;
 public class ImportCommand implements SlashCommand {
 
     @Override
-    public String name() { return "import"; }
+    public String name() {
+        return "import";
+    }
 
     @Override
-    public String description() { return "Import and resume a session from a JSONL file"; }
+    public String description() {
+        return "Import and resume a session from a JSONL file";
+    }
 
     @Override
     public void execute(SlashCommandContext context, String arguments) {
@@ -53,7 +57,6 @@ public class ImportCommand implements SlashCommand {
             context.session().getAgent().getState().appendMessage(msg);
         }
 
-        context.output().println("Imported session " + sm.getSessionId()
-                + " with " + messages.size() + " messages.");
+        context.output().println("Imported session " + sm.getSessionId() + " with " + messages.size() + " messages.");
     }
 }

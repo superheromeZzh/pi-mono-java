@@ -88,11 +88,13 @@ public class FooterComponent implements Component {
     }
 
     @Override
-    public void invalidate() { }
+    public void invalidate() {}
 
     @Override
     public List<String> render(int width) {
-        if (width <= 0) { return List.of(); }
+        if (width <= 0) {
+            return List.of();
+        }
 
         var lines = new ArrayList<String>();
 
@@ -141,19 +143,27 @@ public class FooterComponent implements Component {
             sb.append("↑").append(formatTokens(inputTokens));
         }
         if (outputTokens > 0) {
-            if (sb.length() > 0) { sb.append(" "); }
+            if (sb.length() > 0) {
+                sb.append(" ");
+            }
             sb.append("↓").append(formatTokens(outputTokens));
         }
         if (cacheRead > 0) {
-            if (sb.length() > 0) { sb.append(" "); }
+            if (sb.length() > 0) {
+                sb.append(" ");
+            }
             sb.append("R").append(formatTokens(cacheRead));
         }
         if (cacheWrite > 0) {
-            if (sb.length() > 0) { sb.append(" "); }
+            if (sb.length() > 0) {
+                sb.append(" ");
+            }
             sb.append("W").append(formatTokens(cacheWrite));
         }
         if (totalCost > 0) {
-            if (sb.length() > 0) { sb.append(" "); }
+            if (sb.length() > 0) {
+                sb.append(" ");
+            }
             sb.append("$").append(String.format("%.3f", totalCost));
         }
         if (contextWindow > 0) {
@@ -161,11 +171,21 @@ public class FooterComponent implements Component {
             double pct = totalIn * 100.0 / contextWindow;
             // Color-code context percentage
             String pctStr = String.format("%.1f%%", pct);
-            if (sb.length() > 0) { sb.append(" "); }
+            if (sb.length() > 0) {
+                sb.append(" ");
+            }
             if (pct > 90) {
-                sb.append(ANSI_RESET).append(ANSI_RED).append(pctStr).append(ANSI_RESET).append(ANSI_DIM);
+                sb.append(ANSI_RESET)
+                        .append(ANSI_RED)
+                        .append(pctStr)
+                        .append(ANSI_RESET)
+                        .append(ANSI_DIM);
             } else if (pct > 70) {
-                sb.append(ANSI_RESET).append(ANSI_YELLOW).append(pctStr).append(ANSI_RESET).append(ANSI_DIM);
+                sb.append(ANSI_RESET)
+                        .append(ANSI_YELLOW)
+                        .append(pctStr)
+                        .append(ANSI_RESET)
+                        .append(ANSI_DIM);
             } else {
                 sb.append(pctStr);
             }
@@ -178,7 +198,9 @@ public class FooterComponent implements Component {
     }
 
     private String buildRight() {
-        if (modelName.isEmpty()) { return ""; }
+        if (modelName.isEmpty()) {
+            return "";
+        }
         var sb = new StringBuilder();
         if (!providerName.isEmpty()) {
             sb.append("(").append(providerName).append(") ");
@@ -209,10 +231,18 @@ public class FooterComponent implements Component {
     }
 
     public static String formatTokens(int tokens) {
-        if (tokens >= 10_000_000) { return String.format("%.0fM", tokens / 1_000_000.0); }
-        if (tokens >= 1_000_000) { return String.format("%.1fM", tokens / 1_000_000.0); }
-        if (tokens >= 10_000) { return String.format("%.0fk", tokens / 1000.0); }
-        if (tokens >= 1000) { return String.format("%.1fk", tokens / 1000.0); }
+        if (tokens >= 10_000_000) {
+            return String.format("%.0fM", tokens / 1_000_000.0);
+        }
+        if (tokens >= 1_000_000) {
+            return String.format("%.1fM", tokens / 1_000_000.0);
+        }
+        if (tokens >= 10_000) {
+            return String.format("%.0fk", tokens / 1000.0);
+        }
+        if (tokens >= 1000) {
+            return String.format("%.1fk", tokens / 1000.0);
+        }
         return String.valueOf(tokens);
     }
 
@@ -222,7 +252,9 @@ public class FooterComponent implements Component {
 
     private static String truncate(String s, int maxLen) {
         String stripped = stripAnsi(s);
-        if (stripped.length() <= maxLen) { return s; }
+        if (stripped.length() <= maxLen) {
+            return s;
+        }
         return s.substring(0, Math.max(0, maxLen - 3)) + "...";
     }
 }

@@ -182,7 +182,8 @@ class ContentBlockTest {
 
         @Test
         void thinkingContentFromJson() throws JsonProcessingException {
-            var json = """
+            var json =
+                    """
                 {"type":"thinking","thinking":"hmm","thinkingSignature":"sig","redacted":false}""";
             var block = mapper.readValue(json, ContentBlock.class);
             assertInstanceOf(ThinkingContent.class, block);
@@ -203,7 +204,8 @@ class ContentBlockTest {
 
         @Test
         void toolCallFromJson() throws JsonProcessingException {
-            var json = """
+            var json =
+                    """
                 {"type":"toolCall","id":"c1","name":"search","arguments":{"q":"test"},"thoughtSignature":"ts"}""";
             var block = mapper.readValue(json, ContentBlock.class);
             assertInstanceOf(ToolCall.class, block);
@@ -229,10 +231,9 @@ class ContentBlockTest {
     @Test
     void polymorphicListRoundTrip() throws JsonProcessingException {
         List<ContentBlock> blocks = List.of(
-            new TextContent("hello"),
-            new ThinkingContent("thinking..."),
-            new ToolCall("c1", "search", Map.of("q", "test"))
-        );
+                new TextContent("hello"),
+                new ThinkingContent("thinking..."),
+                new ToolCall("c1", "search", Map.of("q", "test")));
 
         var json = mapper.writerFor(new TypeReference<List<ContentBlock>>() {}).writeValueAsString(blocks);
         List<ContentBlock> deserialized = mapper.readValue(json, new TypeReference<>() {});
@@ -255,12 +256,13 @@ class ContentBlockTest {
 
         // Pattern matching switch (Java 21) - verifies sealed permits
         for (var block : List.of(text, image, thinking, tool)) {
-            var label = switch (block) {
-                case TextContent t -> "text";
-                case ImageContent i -> "image";
-                case ThinkingContent th -> "thinking";
-                case ToolCall tc -> "toolCall";
-            };
+            var label =
+                    switch (block) {
+                        case TextContent t -> "text";
+                        case ImageContent i -> "image";
+                        case ThinkingContent th -> "thinking";
+                        case ToolCall tc -> "toolCall";
+                    };
             assertNotNull(label);
         }
     }

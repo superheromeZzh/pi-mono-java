@@ -27,7 +27,9 @@ public class SettingsManager {
 
     private Path workingDir = Path.of(System.getProperty("user.dir"));
 
-    public void setWorkingDir(Path workingDir) { this.workingDir = workingDir; }
+    public void setWorkingDir(Path workingDir) {
+        this.workingDir = workingDir;
+    }
 
     /** Load merged settings (project overrides global). */
     public Settings load() {
@@ -84,7 +86,9 @@ public class SettingsManager {
     }
 
     private JsonNode loadJsonFile(Path path) {
-        if (!Files.exists(path)) { return MAPPER.createObjectNode(); }
+        if (!Files.exists(path)) {
+            return MAPPER.createObjectNode();
+        }
         try {
             return MAPPER.readTree(Files.readString(path));
         } catch (Exception e) {
@@ -95,7 +99,9 @@ public class SettingsManager {
 
     /** Deep merge: project values override global values. */
     static JsonNode deepMerge(JsonNode base, JsonNode override) {
-        if (!base.isObject() || !override.isObject()) { return override; }
+        if (!base.isObject() || !override.isObject()) {
+            return override;
+        }
         ObjectNode result = base.deepCopy();
         Iterator<String> fieldNames = ((ObjectNode) override).fieldNames();
         while (fieldNames.hasNext()) {

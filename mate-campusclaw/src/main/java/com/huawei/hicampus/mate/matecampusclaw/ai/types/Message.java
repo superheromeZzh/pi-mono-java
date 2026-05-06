@@ -17,5 +17,4 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
     @JsonSubTypes.Type(value = AssistantMessage.class, name = "assistant"),
     @JsonSubTypes.Type(value = ToolResultMessage.class, name = "toolResult")
 })
-public sealed interface Message permits UserMessage, AssistantMessage, ToolResultMessage {
-}
+public sealed interface Message permits UserMessage, AssistantMessage, ToolResultMessage {}

@@ -93,10 +93,7 @@ public class CancellableLoader implements Component {
         var lines = loader.render(width);
         if (cancelHint != null && !cancelHint.isEmpty()) {
             String hint = "\033[90m" + cancelHint + "\033[0m"; // dim gray
-            return List.of(
-                lines.isEmpty() ? "" : lines.get(0),
-                hint
-            );
+            return List.of(lines.isEmpty() ? "" : lines.get(0), hint);
         }
         return lines;
     }

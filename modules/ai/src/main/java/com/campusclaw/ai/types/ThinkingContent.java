@@ -16,10 +16,10 @@ import jakarta.annotation.Nullable;
  * @param redacted          whether the thinking content has been redacted
  */
 public record ThinkingContent(
-    @JsonProperty("thinking") String thinking,
-    @JsonProperty("thinkingSignature") @Nullable String thinkingSignature,
-    @JsonProperty("redacted") boolean redacted
-) implements ContentBlock {
+        @JsonProperty("thinking") String thinking,
+        @JsonProperty("thinkingSignature") @Nullable String thinkingSignature,
+        @JsonProperty("redacted") boolean redacted)
+        implements ContentBlock {
 
     public ThinkingContent(String thinking) {
         this(thinking, null, false);

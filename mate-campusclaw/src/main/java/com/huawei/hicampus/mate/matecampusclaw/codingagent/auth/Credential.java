@@ -19,9 +19,10 @@ import jakarta.annotation.Nullable;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public sealed interface Credential {
     record ApiKey(@JsonProperty("key") String key) implements Credential {}
+
     record OAuth(
-        @JsonProperty("accessToken") String accessToken,
-        @JsonProperty("refreshToken") @Nullable String refreshToken,
-        @JsonProperty("expiresAt") @Nullable Long expiresAt
-    ) implements Credential {}
+            @JsonProperty("accessToken") String accessToken,
+            @JsonProperty("refreshToken") @Nullable String refreshToken,
+            @JsonProperty("expiresAt") @Nullable Long expiresAt)
+            implements Credential {}
 }
