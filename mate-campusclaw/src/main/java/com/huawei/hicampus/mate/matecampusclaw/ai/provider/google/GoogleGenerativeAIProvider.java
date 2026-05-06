@@ -123,9 +123,13 @@ public class GoogleGenerativeAIProvider implements ApiProvider {
             try (var reader = new BufferedReader(new InputStreamReader(response.body()))) {
                 String line;
                 while ((line = reader.readLine()) != null) {
-                    if (line.isBlank() || !line.startsWith("data: ")) { continue; }
+                    if (line.isBlank() || !line.startsWith("data: ")) {
+                        continue;
+                    }
                     String data = line.substring(6).trim();
-                    if (data.equals("[DONE]")) { break; }
+                    if (data.equals("[DONE]")) {
+                        break;
+                    }
 
                     JsonNode chunk = MAPPER.readTree(data);
                     var parsed = GoogleShared.parseChunk(chunk);
@@ -143,7 +147,9 @@ public class GoogleGenerativeAIProvider implements ApiProvider {
                                     blocks.size() - 1, buildMessage(model, blocks, usage[0], stop[0])));
                             }
                             thinkingAcc.append(tc.thinking());
-                            if (tc.thinkingSignature() != null) { thinkingSig[0] = tc.thinkingSignature(); }
+                            if (tc.thinkingSignature() != null) {
+                                thinkingSig[0] = tc.thinkingSignature();
+                            }
                             blocks.set(blocks.size() - 1, new ThinkingContent(thinkingAcc.toString(), thinkingSig[0], false));
                             eventStream.push(new com.huawei.hicampus.mate.matecampusclaw.ai.stream.AssistantMessageEvent.ThinkingDeltaEvent(
                                 blocks.size() - 1, tc.thinking(), buildMessage(model, blocks, usage[0], stop[0])));
@@ -174,8 +180,12 @@ public class GoogleGenerativeAIProvider implements ApiProvider {
                                 idx, tc, buildMessage(model, blocks, usage[0], stop[0])));
                         }
                     }
-                    if (parsed.usage() != null) { usage[0] = parsed.usage(); }
-                    if (parsed.finishReason() != null) { stop[0] = GoogleShared.mapFinishReason(parsed.finishReason()); }
+                    if (parsed.usage() != null) {
+                        usage[0] = parsed.usage();
+                    }
+                    if (parsed.finishReason() != null) {
+                        stop[0] = GoogleShared.mapFinishReason(parsed.finishReason());
+                    }
                 }
             }
             // Finish any open block
@@ -223,7 +233,9 @@ public class GoogleGenerativeAIProvider implements ApiProvider {
         body.set("contents", GoogleShared.convertMessages(context.messages()));
 
         var tools = GoogleShared.convertTools(context.tools());
-        if (tools != null) { body.set("tools", tools); }
+        if (tools != null) {
+            body.set("tools", tools);
+        }
 
         var genConfig = MAPPER.createObjectNode();
         if (options != null && options.maxTokens() != null) {
@@ -254,7 +266,9 @@ public class GoogleGenerativeAIProvider implements ApiProvider {
 
     private String resolveApiKey(com.huawei.hicampus.mate.matecampusclaw.ai.env.ResolvedProviderConfig providerConfig,
                                  @Nullable SimpleStreamOptions options) {
-        if (options != null && options.apiKey() != null) { return options.apiKey(); }
+        if (options != null && options.apiKey() != null) {
+            return options.apiKey();
+        }
         return providerConfig.apiKey();
     }
 
@@ -262,7 +276,9 @@ public class GoogleGenerativeAIProvider implements ApiProvider {
             String type, List<ContentBlock> blocks,
             StringBuilder textAcc, StringBuilder thinkingAcc, String[] thinkingSig,
             AssistantMessageEventStream eventStream, Model model, Usage usage, StopReason stop) {
-        if (type == null || blocks.isEmpty()) { return; }
+        if (type == null || blocks.isEmpty()) {
+            return;
+        }
         int idx = blocks.size() - 1;
         if ("thinking".equals(type)) {
             String content = thinkingAcc.toString();
@@ -278,7 +294,9 @@ public class GoogleGenerativeAIProvider implements ApiProvider {
     }
 
     private Cost computeCost(Model model, Usage usage) {
-        if (model.cost() == null) { return Cost.empty(); }
+        if (model.cost() == null) {
+            return Cost.empty();
+        }
         var mc = model.cost();
         double input = usage.input() * mc.input() / 1_000_000.0;
         double output = usage.output() * mc.output() / 1_000_000.0;
@@ -299,7 +317,9 @@ public class GoogleGenerativeAIProvider implements ApiProvider {
                 case HIGH, XHIGH -> budgets.high();
                 default -> null;
             };
-            if (custom != null) { return custom; }
+            if (custom != null) {
+                return custom;
+            }
         }
 
         ThinkingLevel clamped = level == ThinkingLevel.XHIGH ? ThinkingLevel.HIGH : level;

@@ -33,9 +33,15 @@ public class Timings {
         @Nullable String parentName,
         @Nullable Map<String, String> metadata
     ) {
-        public long durationNanos() { return endNanos - startNanos; }
-        public double durationMs() { return durationNanos() / 1_000_000.0; }
-        public double durationSecs() { return durationNanos() / 1_000_000_000.0; }
+        public long durationNanos() {
+            return endNanos - startNanos;
+        }
+        public double durationMs() {
+            return durationNanos() / 1_000_000.0;
+        }
+        public double durationSecs() {
+            return durationNanos() / 1_000_000_000.0;
+        }
     }
 
     public record TimingStats(
@@ -65,13 +71,17 @@ public class Timings {
 
     /** Start a named timing span. */
     public void start(String name) {
-        if (!enabled) { return; }
+        if (!enabled) {
+            return;
+        }
         activeSpans.put(name, System.nanoTime());
     }
 
     /** Start a nested timing span with a parent. */
     public void start(String name, String parentName) {
-        if (!enabled) { return; }
+        if (!enabled) {
+            return;
+        }
         activeSpans.put(name, System.nanoTime());
         activeParents.put(name, parentName);
     }
@@ -83,7 +93,9 @@ public class Timings {
 
     /** End a timing span with optional metadata. */
     public @Nullable TimingSpan end(String name, @Nullable Map<String, String> metadata) {
-        if (!enabled) { return null; }
+        if (!enabled) {
+            return null;
+        }
         Long startNanos = activeSpans.remove(name);
         if (startNanos == null) {
             log.debug("No active timing span: {}", name);
@@ -123,7 +135,9 @@ public class Timings {
             .sorted()
             .toList();
 
-        if (durations.isEmpty()) { return Optional.empty(); }
+        if (durations.isEmpty()) {
+            return Optional.empty();
+        }
 
         int n = durations.size();
         double sum = durations.stream().mapToDouble(d -> d).sum();
@@ -184,10 +198,14 @@ public class Timings {
         this.enabled = enabled;
     }
 
-    public boolean isEnabled() { return enabled; }
+    public boolean isEnabled() {
+        return enabled;
+    }
 
     private static double percentile(List<Double> sorted, double p) {
-        if (sorted.isEmpty()) { return 0; }
+        if (sorted.isEmpty()) {
+            return 0;
+        }
         int index = (int) Math.ceil(p * sorted.size()) - 1;
         return sorted.get(Math.max(0, Math.min(index, sorted.size() - 1)));
     }

@@ -60,7 +60,9 @@ public class RpcMode {
             String line;
             while ((line = reader.readLine()) != null) {
                 line = line.trim();
-                if (line.isEmpty()) { continue; }
+                if (line.isEmpty()) {
+                    continue;
+                }
                 try {
                     var cmd = MAPPER.readValue(line, RpcCommand.class);
                     handleCommand(cmd);

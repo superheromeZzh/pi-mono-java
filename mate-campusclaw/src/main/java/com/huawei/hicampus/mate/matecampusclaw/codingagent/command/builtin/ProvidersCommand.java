@@ -39,10 +39,14 @@ public class ProvidersCommand implements SlashCommand {
     }
 
     @Override
-    public String name() { return "providers"; }
+    public String name() {
+        return "providers";
+    }
 
     @Override
-    public String description() { return "List known providers and their auth/baseURL state"; }
+    public String description() {
+        return "List known providers and their auth/baseURL state";
+    }
 
     @Override
     public void execute(SlashCommandContext context, String arguments) {
@@ -85,22 +89,34 @@ public class ProvidersCommand implements SlashCommand {
         // Highlight settings.provider entries that don't map to any known Provider.
         List<String> unknown = new ArrayList<>();
         for (String key : providerCfg.keySet()) {
-            if (Provider.tryFromValue(key).isEmpty()) { unknown.add(key); }
+            if (Provider.tryFromValue(key).isEmpty()) {
+                unknown.add(key);
+            }
         }
         if (!unknown.isEmpty()) {
             context.output().println("");
             context.output().println("settings.provider entries not matching any built-in provider:");
-            for (String k : unknown) { context.output().println("  " + k); }
+            for (String k : unknown) {
+                context.output().println("  " + k);
+            }
             context.output().println("(They are ignored today; see Phase 5 follow-up to register custom providers.)");
         }
     }
 
     private static String describeOverride(Settings.ProviderConfig cfg) {
-        if (cfg == null) { return "—"; }
+        if (cfg == null) {
+            return "—";
+        }
         var bits = new ArrayList<String>();
-        if (cfg.apiKey() != null && !cfg.apiKey().isBlank()) { bits.add("apiKey"); }
-        if (cfg.effectiveBaseUrl() != null) { bits.add("baseURL"); }
-        if (cfg.headers() != null && !cfg.headers().isEmpty()) { bits.add("headers"); }
+        if (cfg.apiKey() != null && !cfg.apiKey().isBlank()) {
+            bits.add("apiKey");
+        }
+        if (cfg.effectiveBaseUrl() != null) {
+            bits.add("baseURL");
+        }
+        if (cfg.headers() != null && !cfg.headers().isEmpty()) {
+            bits.add("headers");
+        }
         return bits.isEmpty() ? "—" : String.join("+", bits);
     }
 }

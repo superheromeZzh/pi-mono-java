@@ -112,18 +112,25 @@ public class SessionManager {
         String safePath = "--" + cwd.replaceFirst("^[/\\\\]", "").replaceAll("[/\\\\:]", "-") + "--";
         Path sessionDir = AppPaths.SESSIONS_DIR.resolve(safePath);
 
-        if (!Files.isDirectory(sessionDir)) { return List.of(); }
+        if (!Files.isDirectory(sessionDir)) {
+            return List.of();
+        }
 
         try (var stream = Files.list(sessionDir)) {
             Optional<Path> latest = stream
                     .filter(p -> p.toString().endsWith(".jsonl"))
                     .sorted(Comparator.comparingLong((Path p) -> {
-                        try { return Files.getLastModifiedTime(p).toMillis(); }
-                        catch (IOException e) { return 0; }
+                        try {
+                            return Files.getLastModifiedTime(p).toMillis();
+                        } catch (IOException e) {
+                            return 0;
+                        }
                     }).reversed())
                     .findFirst();
 
-            if (latest.isEmpty()) { return List.of(); }
+            if (latest.isEmpty()) {
+                return List.of();
+            }
 
             return loadSession(latest.get());
         } catch (IOException e) {
@@ -137,13 +144,17 @@ public class SessionManager {
      * Also restores sessionId, sessionFile, and lastEntryId.
      */
     public List<Message> loadSession(Path file) {
-        if (!Files.exists(file)) { return List.of(); }
+        if (!Files.exists(file)) {
+            return List.of();
+        }
 
         List<Map<String, Object>> entries = new ArrayList<>();
         try (var reader = Files.newBufferedReader(file, StandardCharsets.UTF_8)) {
             String line;
             while ((line = reader.readLine()) != null) {
-                if (line.isBlank()) { continue; }
+                if (line.isBlank()) {
+                    continue;
+                }
                 try {
                     @SuppressWarnings("unchecked")
                     var entry = mapper.readValue(line, LinkedHashMap.class);
@@ -157,11 +168,15 @@ public class SessionManager {
             return List.of();
         }
 
-        if (entries.isEmpty()) { return List.of(); }
+        if (entries.isEmpty()) {
+            return List.of();
+        }
 
         // Parse header
         var header = entries.get(0);
-        if (!"session".equals(header.get("type"))) { return List.of(); }
+        if (!"session".equals(header.get("type"))) {
+            return List.of();
+        }
 
         this.sessionFile = file;
         this.sessionId = (String) header.get("id");
@@ -172,7 +187,9 @@ public class SessionManager {
         for (int i = 1; i < entries.size(); i++) {
             var entry = entries.get(i);
             String entryId = (String) entry.get("id");
-            if (entryId != null) { lastEntryId = entryId; }
+            if (entryId != null) {
+                lastEntryId = entryId;
+            }
 
             if ("message".equals(entry.get("type")) && entry.containsKey("message")) {
                 Object raw = entry.get("message");
@@ -235,7 +252,9 @@ public class SessionManager {
      * Appends a message entry to the session file.
      */
     public void appendMessage(Message message) {
-        if (sessionFile == null) { return; }
+        if (sessionFile == null) {
+            return;
+        }
 
         String entryId = generateId();
         var entry = new LinkedHashMap<String, Object>();
@@ -257,7 +276,9 @@ public class SessionManager {
      * Appends a model change entry to the session file.
      */
     public void appendModelChange(String provider, String modelId) {
-        if (sessionFile == null) { return; }
+        if (sessionFile == null) {
+            return;
+        }
 
         String entryId = generateId();
         var entry = new LinkedHashMap<String, Object>();
@@ -275,7 +296,9 @@ public class SessionManager {
      * Appends a thinking level change entry to the session file.
      */
     public void appendThinkingLevelChange(String thinkingLevel) {
-        if (sessionFile == null) { return; }
+        if (sessionFile == null) {
+            return;
+        }
 
         String entryId = generateId();
         var entry = new LinkedHashMap<String, Object>();
@@ -292,7 +315,9 @@ public class SessionManager {
      * Appends a session name entry.
      */
     public void appendSessionName(String name) {
-        if (sessionFile == null) { return; }
+        if (sessionFile == null) {
+            return;
+        }
 
         String entryId = generateId();
         var entry = new LinkedHashMap<String, Object>();
@@ -305,8 +330,12 @@ public class SessionManager {
         lastEntryId = entryId;
     }
 
-    public String getSessionId() { return sessionId; }
-    public Path getSessionFile() { return sessionFile; }
+    public String getSessionId() {
+        return sessionId;
+    }
+    public Path getSessionFile() {
+        return sessionFile;
+    }
 
     /**
      * Close the writer. Called on shutdown.
@@ -324,7 +353,9 @@ public class SessionManager {
     }
 
     private void appendRaw(Map<String, Object> entry) {
-        if (sessionFile == null) { return; }
+        if (sessionFile == null) {
+            return;
+        }
         try {
             if (writer == null) {
                 writer = new BufferedWriter(new FileWriter(sessionFile.toFile(), StandardCharsets.UTF_8, true));

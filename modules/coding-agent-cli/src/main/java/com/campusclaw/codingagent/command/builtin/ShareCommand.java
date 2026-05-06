@@ -19,10 +19,14 @@ import com.campusclaw.codingagent.export.HtmlExporter;
 public class ShareCommand implements SlashCommand {
 
     @Override
-    public String name() { return "share"; }
+    public String name() {
+        return "share";
+    }
 
     @Override
-    public String description() { return "Share session as a secret GitHub gist"; }
+    public String description() {
+        return "Share session as a secret GitHub gist";
+    }
 
     @Override
     public void execute(SlashCommandContext context, String arguments) {

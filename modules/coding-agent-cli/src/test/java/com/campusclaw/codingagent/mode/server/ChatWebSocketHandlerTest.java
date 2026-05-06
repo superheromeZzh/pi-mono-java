@@ -268,7 +268,9 @@ class ChatWebSocketHandlerTest {
         ChatWebSocketHandler handler = new ChatWebSocketHandler(pool, catalog);
 
         // Replace the no-catalog server from setUp() with one wired up.
-        if (server != null) { server.disposeNow(); }
+        if (server != null) {
+            server.disposeNow();
+        }
         server = HttpServer.create()
                 .host("127.0.0.1")
                 .port(0)

@@ -34,7 +34,9 @@ public record ResolvedProviderConfig(
 
     /** Returns the effective base URL: explicit override or the model's default. */
     public String resolveBaseUrl(Model model) {
-        if (baseUrl != null && !baseUrl.isBlank()) { return baseUrl; }
+        if (baseUrl != null && !baseUrl.isBlank()) {
+            return baseUrl;
+        }
         return model.baseUrl();
     }
 }

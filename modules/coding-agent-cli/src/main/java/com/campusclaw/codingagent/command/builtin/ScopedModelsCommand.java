@@ -14,10 +14,14 @@ import com.campusclaw.codingagent.command.SlashCommandContext;
 public class ScopedModelsCommand implements SlashCommand {
 
     @Override
-    public String name() { return "scoped-models"; }
+    public String name() {
+        return "scoped-models";
+    }
 
     @Override
-    public String description() { return "Enable/disable models for Ctrl+P cycling"; }
+    public String description() {
+        return "Enable/disable models for Ctrl+P cycling";
+    }
 
     @Override
     public void execute(SlashCommandContext context, String arguments) {

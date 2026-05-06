@@ -27,10 +27,14 @@ public class LoginCommand implements SlashCommand {
     }
 
     @Override
-    public String name() { return "login"; }
+    public String name() {
+        return "login";
+    }
 
     @Override
-    public String description() { return "Persist an API key for a provider"; }
+    public String description() {
+        return "Persist an API key for a provider";
+    }
 
     @Override
     public void execute(SlashCommandContext context, String arguments) {

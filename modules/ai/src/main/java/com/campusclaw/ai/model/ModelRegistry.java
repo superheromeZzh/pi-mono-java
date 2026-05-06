@@ -130,7 +130,9 @@ public class ModelRegistry {
      * Returns a new Cost with computed values.
      */
     public static Cost calculateCost(Model model, Usage usage) {
-        if (model.cost() == null) { return Cost.empty(); }
+        if (model.cost() == null) {
+            return Cost.empty();
+        }
         var mc = model.cost();
         double input = usage.input() * mc.input() / 1_000_000.0;
         double output = usage.output() * mc.output() / 1_000_000.0;
@@ -154,7 +156,9 @@ public class ModelRegistry {
      * Check if two models are equal by comparing both id and provider.
      */
     public static boolean modelsAreEqual(Model a, Model b) {
-        if (a == null || b == null) { return false; }
+        if (a == null || b == null) {
+            return false;
+        }
         return a.id().equals(b.id()) && a.provider() == b.provider();
     }
 
@@ -209,7 +213,9 @@ public class ModelRegistry {
      * @return number of models loaded, or 0 on missing file / parse error
      */
     public int loadFromJsonFile(Path file) {
-        if (file == null || !Files.exists(file)) { return 0; }
+        if (file == null || !Files.exists(file)) {
+            return 0;
+        }
         try (var in = Files.newInputStream(file)) {
             return loadFromJsonStream(in, file.toString());
         } catch (Exception e) {
@@ -220,7 +226,9 @@ public class ModelRegistry {
 
     private int loadFromClasspathResource(String resource) {
         try (InputStream in = ModelRegistry.class.getResourceAsStream(resource)) {
-            if (in == null) { return 0; }
+            if (in == null) {
+                return 0;
+            }
             return loadFromJsonStream(in, "classpath:" + resource);
         } catch (Exception e) {
             log.warn("Failed to load models from {}: {}", resource, e.getMessage());
@@ -230,7 +238,9 @@ public class ModelRegistry {
 
     private int loadFromUserFile() {
         String home = System.getProperty("user.home");
-        if (home == null || home.isBlank()) { return 0; }
+        if (home == null || home.isBlank()) {
+            return 0;
+        }
         Path file = Path.of(home, ".campusclaw", "agent", "models.json");
         return loadFromJsonFile(file);
     }
@@ -238,7 +248,9 @@ public class ModelRegistry {
     private int loadFromJsonStream(InputStream in, String source) throws java.io.IOException {
         var mapper = new ObjectMapper();
         var models = mapper.readValue(in, new TypeReference<List<Model>>() {});
-        if (models == null || models.isEmpty()) { return 0; }
+        if (models == null || models.isEmpty()) {
+            return 0;
+        }
         registerAll(models);
         log.debug("Loaded {} model(s) from {}", models.size(), source);
         return models.size();

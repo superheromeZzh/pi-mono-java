@@ -59,7 +59,9 @@ public class ImageComponent implements Component {
 
     @Override
     public List<String> render(int width) {
-        if (cachedRender != null) { return cachedRender; }
+        if (cachedRender != null) {
+            return cachedRender;
+        }
 
         int displayWidth = Math.min(width, maxWidthCells);
 
@@ -87,8 +89,12 @@ public class ImageComponent implements Component {
     }
 
     private static String truncate(String s, int max) {
-        if (max <= 0) { return ""; }
-        if (s.length() <= max) { return s; }
+        if (max <= 0) {
+            return "";
+        }
+        if (s.length() <= max) {
+            return s;
+        }
         return s.substring(0, max - 1) + "…";
     }
 }

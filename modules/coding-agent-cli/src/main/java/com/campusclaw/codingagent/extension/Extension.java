@@ -28,19 +28,29 @@ public interface Extension {
     String name();
 
     /** Additional tools provided by this extension. */
-    default List<AgentTool> tools() { return List.of(); }
+    default List<AgentTool> tools() {
+        return List.of();
+    }
 
     /** Additional slash commands provided by this extension. */
-    default List<SlashCommand> commands() { return List.of(); }
+    default List<SlashCommand> commands() {
+        return List.of();
+    }
 
     /** Before-tool-call hooks. */
-    default List<BeforeToolCallHandler> beforeToolCallHandlers() { return List.of(); }
+    default List<BeforeToolCallHandler> beforeToolCallHandlers() {
+        return List.of();
+    }
 
     /** After-tool-call hooks. */
-    default List<AfterToolCallHandler> afterToolCallHandlers() { return List.of(); }
+    default List<AfterToolCallHandler> afterToolCallHandlers() {
+        return List.of();
+    }
 
     /** Event listeners. */
-    default List<AgentEventListener> eventListeners() { return List.of(); }
+    default List<AgentEventListener> eventListeners() {
+        return List.of();
+    }
 
     /** Called when the extension is loaded. */
     default void onLoad() {}

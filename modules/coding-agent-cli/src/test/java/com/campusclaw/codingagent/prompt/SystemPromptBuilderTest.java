@@ -361,9 +361,15 @@ class SystemPromptBuilderTest {
             this.description = description;
         }
 
-        @Override public String name() { return name; }
-        @Override public String label() { return name; }
-        @Override public String description() { return description; }
+        @Override public String name() {
+            return name;
+        }
+        @Override public String label() {
+            return name;
+        }
+        @Override public String description() {
+            return description;
+        }
 
         @Override
         public JsonNode parameters() {

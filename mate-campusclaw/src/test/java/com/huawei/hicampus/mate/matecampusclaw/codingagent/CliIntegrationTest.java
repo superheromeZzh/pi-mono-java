@@ -112,11 +112,21 @@ class CliIntegrationTest {
         private final LocalReadOperations read = new LocalReadOperations();
         private final LocalWriteOperations write = new LocalWriteOperations();
 
-        @Override public byte[] readFile(Path path) throws java.io.IOException { return read.readFile(path); }
-        @Override public boolean exists(Path path) { return read.exists(path); }
-        @Override public String detectMimeType(Path path) throws java.io.IOException { return read.detectMimeType(path); }
-        @Override public void writeFile(Path path, String content) throws java.io.IOException { write.writeFile(path, content); }
-        @Override public void mkdir(Path path) throws java.io.IOException { write.mkdir(path); }
+        @Override public byte[] readFile(Path path) throws java.io.IOException {
+            return read.readFile(path);
+        }
+        @Override public boolean exists(Path path) {
+            return read.exists(path);
+        }
+        @Override public String detectMimeType(Path path) throws java.io.IOException {
+            return read.detectMimeType(path);
+        }
+        @Override public void writeFile(Path path, String content) throws java.io.IOException {
+            write.writeFile(path, content);
+        }
+        @Override public void mkdir(Path path) throws java.io.IOException {
+            write.mkdir(path);
+        }
     }
 
     private AgentSession createSession() {
@@ -486,10 +496,15 @@ class CliIntegrationTest {
 
     private String contentText(Message message) {
         List<ContentBlock> content;
-        if (message instanceof UserMessage um) { content = um.content(); }
-        else if (message instanceof AssistantMessage am) { content = am.content(); }
-        else if (message instanceof ToolResultMessage tr) { content = tr.content(); }
-        else { return ""; }
+        if (message instanceof UserMessage um) {
+            content = um.content();
+        } else if (message instanceof AssistantMessage am) {
+            content = am.content();
+        } else if (message instanceof ToolResultMessage tr) {
+            content = tr.content();
+        } else {
+            return "";
+        }
 
         return content.stream()
                 .filter(TextContent.class::isInstance)
@@ -503,7 +518,9 @@ class CliIntegrationTest {
     // ===================================================================
 
     private record Reply(String text, String toolName, Map<String, Object> toolArgs) {
-        boolean isToolCall() { return toolName != null; }
+        boolean isToolCall() {
+            return toolName != null;
+        }
     }
 
     private static class ScriptedMockProvider implements ApiProvider {

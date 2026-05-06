@@ -618,7 +618,9 @@ public class SkillManager {
     }
 
     static void deleteRecursively(Path dir) {
-        if (dir == null || !Files.exists(dir)) { return; }
+        if (dir == null || !Files.exists(dir)) {
+            return;
+        }
         try {
             Files.walkFileTree(dir, new SimpleFileVisitor<>() {
                 @Override

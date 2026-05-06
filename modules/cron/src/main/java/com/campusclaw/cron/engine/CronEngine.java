@@ -57,7 +57,9 @@ public class CronEngine {
     }
 
     public void start() {
-        if (running) { return; }
+        if (running) {
+            return;
+        }
         running = true;
         scheduler = Executors.newSingleThreadScheduledExecutor(r -> {
             Thread t = new Thread(r, "cron-engine");
@@ -80,7 +82,9 @@ public class CronEngine {
     }
 
     public void stop() {
-        if (!running) { return; }
+        if (!running) {
+            return;
+        }
         running = false;
         scheduledJobs.values().forEach(f -> f.cancel(false));
         scheduledJobs.clear();
@@ -105,7 +109,9 @@ public class CronEngine {
 
     /** Schedule or reschedule a job. Called when a job is created/updated. */
     public void scheduleJob(CronJob job) {
-        if (!running || scheduler == null) { return; }
+        if (!running || scheduler == null) {
+            return;
+        }
 
         // Cancel existing schedule
         var existing = scheduledJobs.remove(job.id());
@@ -113,7 +119,9 @@ public class CronEngine {
             existing.cancel(false);
         }
 
-        if (!job.enabled()) { return; }
+        if (!job.enabled()) {
+            return;
+        }
 
         long delayMs = computeNextDelay(job);
         if (delayMs < 0) {
@@ -159,7 +167,9 @@ public class CronEngine {
         }
         try {
             var jobOpt = store.getJob(jobId);
-            if (jobOpt.isEmpty() || !jobOpt.get().enabled()) { return; }
+            if (jobOpt.isEmpty() || !jobOpt.get().enabled()) {
+                return;
+            }
 
             var job = jobOpt.get();
 
@@ -267,10 +277,16 @@ public class CronEngine {
         var results = new ArrayList<CronRunRecord>();
         var jobs = store.load();
         for (var job : jobs) {
-            if (!job.enabled()) { continue; }
-            if (job.state().runningAtMs() != 0) { continue; } // skip if running
+            if (!job.enabled()) {
+                continue;
+            }
+            if (job.state().runningAtMs() != 0) {
+                continue;
+            } // skip if running
             long delay = computeNextDelay(job);
-            if (delay < 0) { continue; } // past one-shot or invalid
+            if (delay < 0) {
+                continue;
+            } // past one-shot or invalid
             if (delay <= 60_000) { // due within 1 minute (tick tolerance)
                 results.add(executeJob(job));
             }

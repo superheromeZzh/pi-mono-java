@@ -15,10 +15,14 @@ import com.campusclaw.codingagent.command.SlashCommandContext;
 public class TreeCommand implements SlashCommand {
 
     @Override
-    public String name() { return "tree"; }
+    public String name() {
+        return "tree";
+    }
 
     @Override
-    public String description() { return "Navigate session tree (switch branches)"; }
+    public String description() {
+        return "Navigate session tree (switch branches)";
+    }
 
     @Override
     public void execute(SlashCommandContext context, String arguments) {

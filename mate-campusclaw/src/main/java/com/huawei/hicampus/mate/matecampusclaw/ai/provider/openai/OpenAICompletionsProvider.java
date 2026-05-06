@@ -547,7 +547,9 @@ public class OpenAICompletionsProvider implements ApiProvider {
     // -- Finish reason mapping --
 
     static StopReason mapFinishReason(String reason) {
-        if (reason == null) { return StopReason.STOP; }
+        if (reason == null) {
+            return StopReason.STOP;
+        }
         return switch (reason) {
             case "stop", "end" -> StopReason.STOP;
             case "length" -> StopReason.LENGTH;
@@ -609,7 +611,9 @@ public class OpenAICompletionsProvider implements ApiProvider {
 
     @SuppressWarnings("unchecked")
     private static Map<String, Object> parseToolArguments(String json) {
-        if (json == null || json.isBlank()) { return Map.of(); }
+        if (json == null || json.isBlank()) {
+            return Map.of();
+        }
         try {
             return MAPPER.readValue(json, new TypeReference<Map<String, Object>>() {});
         } catch (Exception e) {
@@ -618,7 +622,9 @@ public class OpenAICompletionsProvider implements ApiProvider {
     }
 
     private static String serializeArguments(Map<String, Object> args) {
-        if (args == null || args.isEmpty()) { return "{}"; }
+        if (args == null || args.isEmpty()) {
+            return "{}";
+        }
         try {
             return MAPPER.writeValueAsString(args);
         } catch (Exception e) {
@@ -676,7 +682,9 @@ public class OpenAICompletionsProvider implements ApiProvider {
                             .replace("\\\"", "\"")
                             .replace("\\\\", "\\");
                     }
-                    if (!str.isEmpty() && !"null".equals(str)) { return str; }
+                    if (!str.isEmpty() && !"null".equals(str)) {
+                        return str;
+                    }
                 } catch (Exception ignored) {}
             }
         }
@@ -685,14 +693,18 @@ public class OpenAICompletionsProvider implements ApiProvider {
 
     private static <T> int findBlockIndex(List<ContentBlock> blocks, Class<T> type) {
         for (int i = blocks.size() - 1; i >= 0; i--) {
-            if (type.isInstance(blocks.get(i))) { return i; }
+            if (type.isInstance(blocks.get(i))) {
+                return i;
+            }
         }
         return -1;
     }
 
     private static int findTextBlockIndex(List<ContentBlock> blocks) {
         for (int i = blocks.size() - 1; i >= 0; i--) {
-            if (blocks.get(i) instanceof TextContent) { return i; }
+            if (blocks.get(i) instanceof TextContent) {
+                return i;
+            }
         }
         return -1;
     }

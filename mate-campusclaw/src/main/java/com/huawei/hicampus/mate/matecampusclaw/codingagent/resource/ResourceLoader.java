@@ -99,7 +99,9 @@ public class ResourceLoader {
     }
 
     private void loadFromDir(Path dir, String source, Map<String, Resource> byName) {
-        if (!Files.isDirectory(dir)) { return; }
+        if (!Files.isDirectory(dir)) {
+            return;
+        }
         try (Stream<Path> paths = Files.list(dir)) {
             paths.filter(Files::isRegularFile)
                 .forEach(p -> {

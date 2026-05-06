@@ -561,7 +561,9 @@ public class InteractiveMode {
                     break;
                 }
 
-                if (eofFlag.get()) { break; }
+                if (eofFlag.get()) {
+                    break;
+                }
                 if (input == null || input.trim().isEmpty()) {
                     tui.render();
                     continue;
@@ -721,7 +723,9 @@ public class InteractiveMode {
                 output.append(result.stdout());
             }
             if (result.stderr() != null && !result.stderr().isEmpty()) {
-                if (!output.isEmpty()) { output.append("\n"); }
+                if (!output.isEmpty()) {
+                    output.append("\n");
+                }
                 output.append(result.stderr());
             }
 
@@ -837,7 +841,9 @@ public class InteractiveMode {
         }
         currentAssistantMessage = null;
 
-        if (unsub != null) { unsub.run(); }
+        if (unsub != null) {
+            unsub.run();
+        }
         tui.render();
     }
 
@@ -860,7 +866,10 @@ public class InteractiveMode {
         var current = session.getAgent().getState().getThinkingLevel();
         int idx = 0;
         for (int j = 0; j < levels.length; j++) {
-            if (levels[j] == current) { idx = j; break; }
+            if (levels[j] == current) {
+                idx = j;
+                break;
+            }
         }
         var next = levels[(idx + 1) % levels.length];
         session.getAgent().setThinkingLevel(next);
@@ -868,7 +877,9 @@ public class InteractiveMode {
         editorContainer.setBorderForThinkingLevel(next.value());
         // Persist thinking level change
         var sm = session.getSessionManager();
-        if (sm != null) { sm.appendThinkingLevelChange(next.value()); }
+        if (sm != null) {
+            sm.appendThinkingLevelChange(next.value());
+        }
         showStatus("Thinking: " + next.value());
     }
 
@@ -877,7 +888,9 @@ public class InteractiveMode {
      * @param forward true for next, false for previous
      */
     private void cycleModel(AgentSession session, boolean forward) {
-        if (modelRegistry == null) { return; }
+        if (modelRegistry == null) {
+            return;
+        }
 
         // Use scoped models if available, otherwise all models
         List<Model> candidates;
@@ -907,7 +920,9 @@ public class InteractiveMode {
                 }
             }
         }
-        if (currentIdx == -1) { currentIdx = 0; }
+        if (currentIdx == -1) {
+            currentIdx = 0;
+        }
 
         int nextIdx = forward
                 ? (currentIdx + 1) % allModels.size()
@@ -932,7 +947,9 @@ public class InteractiveMode {
 
         // Persist model change
         var sm = session.getSessionManager();
-        if (sm != null) { sm.appendModelChange(newModel.provider().value(), newModel.id()); }
+        if (sm != null) {
+            sm.appendModelChange(newModel.provider().value(), newModel.id());
+        }
 
         String thinkingStr = newModel.reasoning()
                 ? " • " + session.getAgent().getState().getThinkingLevel().value()
@@ -957,7 +974,9 @@ public class InteractiveMode {
      * Shows the model selector overlay. Replaces the chat area until dismissed.
      */
     private void showModelSelector(AgentSession session) {
-        if (modelRegistry == null) { return; }
+        if (modelRegistry == null) {
+            return;
+        }
         var currentModel = session.getAgent().getState().getModel();
         var overlay = new ModelSelectorOverlay(modelRegistry, currentModel);
 
@@ -978,7 +997,9 @@ public class InteractiveMode {
                             ? session.getAgent().getState().getThinkingLevel().value() : "off");
             // Persist model change
             var sm = session.getSessionManager();
-            if (sm != null) { sm.appendModelChange(model.provider().value(), model.id()); }
+            if (sm != null) {
+                sm.appendModelChange(model.provider().value(), model.id());
+            }
 
             dismissOverlay();
             showStatus("切换到 " + model.name());
@@ -1117,7 +1138,9 @@ public class InteractiveMode {
         }
 
         String currentText = editorContainer.getEditor().getText();
-        if (currentText == null) { currentText = ""; }
+        if (currentText == null) {
+            currentText = "";
+        }
 
         try {
             Path tmpFile = Files.createTempFile("campusclaw-editor-", ".pi.md");
@@ -1222,7 +1245,9 @@ public class InteractiveMode {
                 }
             }
             case MessageUpdateEvent e -> {
-                if (currentAssistantMessage == null) { return; }
+                if (currentAssistantMessage == null) {
+                    return;
+                }
                 if (e.assistantMessageEvent() instanceof AssistantMessageEvent.TextDeltaEvent delta) {
                     currentAssistantMessage.appendText(delta.delta());
                 } else if (e.assistantMessageEvent() instanceof AssistantMessageEvent.ThinkingDeltaEvent thinking) {
@@ -1239,7 +1264,9 @@ public class InteractiveMode {
                     // Persist assistant message to session file
                     if (currentSession != null) {
                         var sm = currentSession.getSessionManager();
-                        if (sm != null) { sm.appendMessage(msg); }
+                        if (sm != null) {
+                            sm.appendMessage(msg);
+                        }
                         // Persist assistant message to ChatMemory (GaussDB)
                         if (chatMemoryStore != null) {
                             try {
@@ -1275,10 +1302,14 @@ public class InteractiveMode {
     }
 
     private void checkAutoCompaction(AgentSession session) {
-        if (compactor == null) { return; }
+        if (compactor == null) {
+            return;
+        }
 
         var model = session.getAgent().getState().getModel();
-        if (model == null || model.contextWindow() <= 0) { return; }
+        if (model == null || model.contextWindow() <= 0) {
+            return;
+        }
 
         var messages = session.getHistory();
         if (compactor.needsCompaction(messages, model.contextWindow())) {
@@ -1316,7 +1347,9 @@ public class InteractiveMode {
     }
 
     private static String truncateDisplay(String s, int max) {
-        if (s.length() <= max) { return s; }
+        if (s.length() <= max) {
+            return s;
+        }
         return s.substring(0, max - 3) + "...";
     }
 
@@ -1325,13 +1358,17 @@ public class InteractiveMode {
      * with the file's content. Matches campusclaw TS @file behavior.
      */
     static String expandFileReferences(String input) {
-        if (input == null || !input.contains("@")) { return input; }
+        if (input == null || !input.contains("@")) {
+            return input;
+        }
 
         var sb = new StringBuilder();
         var tokens = input.split("\\s+");
         boolean first = true;
         for (String token : tokens) {
-            if (!first) { sb.append(' '); }
+            if (!first) {
+                sb.append(' ');
+            }
             first = false;
 
             if (token.startsWith("@") && token.length() > 1) {
@@ -1359,13 +1396,17 @@ public class InteractiveMode {
      * of being processed as slash commands.
      */
     private boolean isSkillOrTemplate(String input, AgentSession session) {
-        if (input.startsWith("/skill:")) { return true; }
+        if (input.startsWith("/skill:")) {
+            return true;
+        }
 
         // Check if it matches a prompt template name
         int spaceIdx = input.indexOf(' ');
         String name = spaceIdx >= 0 ? input.substring(1, spaceIdx) : input.substring(1);
         for (PromptTemplateEntry template : session.getPromptTemplates()) {
-            if (template.name().equals(name)) { return true; }
+            if (template.name().equals(name)) {
+                return true;
+            }
         }
         return false;
     }
@@ -1402,12 +1443,16 @@ public class InteractiveMode {
     }
 
     static int findEscapeSequenceEnd(String data, int start) {
-        if (start + 1 >= data.length()) { return start + 1; }
+        if (start + 1 >= data.length()) {
+            return start + 1;
+        }
         char second = data.charAt(start + 1);
         if (second == '[') {
             int j = start + 2;
             while (j < data.length()) {
-                if (data.charAt(j) >= 0x40 && data.charAt(j) <= 0x7E) { return j + 1; }
+                if (data.charAt(j) >= 0x40 && data.charAt(j) <= 0x7E) {
+                    return j + 1;
+                }
                 j++;
             }
             return data.length();

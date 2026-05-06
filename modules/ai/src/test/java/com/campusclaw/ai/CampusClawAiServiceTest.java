@@ -129,7 +129,9 @@ class CampusClawAiServiceTest {
             var capturedOptions = new Object() { StreamOptions value; };
             var provider = new ApiProvider() {
                 @Override
-                public Api getApi() { return Api.ANTHROPIC_MESSAGES; }
+                public Api getApi() {
+                    return Api.ANTHROPIC_MESSAGES;
+                }
 
                 @Override
                 public AssistantMessageEventStream stream(Model model, Context context, StreamOptions options) {
@@ -189,7 +191,9 @@ class CampusClawAiServiceTest {
             var capturedOptions = new Object() { SimpleStreamOptions value; };
             var provider = new ApiProvider() {
                 @Override
-                public Api getApi() { return Api.ANTHROPIC_MESSAGES; }
+                public Api getApi() {
+                    return Api.ANTHROPIC_MESSAGES;
+                }
 
                 @Override
                 public AssistantMessageEventStream stream(Model model, Context context, StreamOptions options) {

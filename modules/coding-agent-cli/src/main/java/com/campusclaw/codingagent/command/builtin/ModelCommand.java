@@ -11,9 +11,13 @@ public class ModelCommand implements SlashCommand {
 
     private final String name;
 
-    public ModelCommand() { this("model"); }
+    public ModelCommand() {
+        this("model");
+    }
 
-    public ModelCommand(String name) { this.name = name; }
+    public ModelCommand(String name) {
+        this.name = name;
+    }
 
     @Override
     public String name() {

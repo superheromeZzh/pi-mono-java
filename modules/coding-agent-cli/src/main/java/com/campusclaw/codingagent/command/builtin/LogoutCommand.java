@@ -21,10 +21,14 @@ public class LogoutCommand implements SlashCommand {
     }
 
     @Override
-    public String name() { return "logout"; }
+    public String name() {
+        return "logout";
+    }
 
     @Override
-    public String description() { return "Remove a persisted API key for a provider"; }
+    public String description() {
+        return "Remove a persisted API key for a provider";
+    }
 
     @Override
     public void execute(SlashCommandContext context, String arguments) {

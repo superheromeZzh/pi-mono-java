@@ -20,10 +20,14 @@ import com.huawei.hicampus.mate.matecampusclaw.codingagent.config.AppPaths;
 public class ResumeCommand implements SlashCommand {
 
     @Override
-    public String name() { return "resume"; }
+    public String name() {
+        return "resume";
+    }
 
     @Override
-    public String description() { return "Resume a different session"; }
+    public String description() {
+        return "Resume a different session";
+    }
 
     @Override
     public void execute(SlashCommandContext context, String arguments) {
@@ -54,8 +58,11 @@ public class ResumeCommand implements SlashCommand {
             var files = stream
                     .filter(p -> p.toString().endsWith(".jsonl"))
                     .sorted(Comparator.comparingLong((Path p) -> {
-                        try { return Files.getLastModifiedTime(p).toMillis(); }
-                        catch (IOException e) { return 0; }
+                        try {
+                            return Files.getLastModifiedTime(p).toMillis();
+                        } catch (IOException e) {
+                            return 0;
+                        }
                     }).reversed())
                     .limit(10)
                     .toList();

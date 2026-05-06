@@ -98,7 +98,9 @@ public class EditDiffTool implements AgentTool {
         }
 
         String result = String.join("\n", lines);
-        if (original.endsWith("\n")) { result += "\n"; }
+        if (original.endsWith("\n")) {
+            result += "\n";
+        }
 
         editOps.writeFile(path, result);
 
@@ -123,7 +125,9 @@ public class EditDiffTool implements AgentTool {
 
                 while (i < lines.size()) {
                     String l = lines.get(i);
-                    if (l.startsWith("@@") || l.startsWith("---") || l.startsWith("+++")) { break; }
+                    if (l.startsWith("@@") || l.startsWith("---") || l.startsWith("+++")) {
+                        break;
+                    }
                     if (l.startsWith("-")) {
                         removals.add(l.substring(1));
                     } else if (l.startsWith("+")) {

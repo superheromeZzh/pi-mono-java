@@ -54,7 +54,9 @@ public class MigrationManager {
     /** Get the current schema version for a data directory. */
     public int getCurrentVersion(Path dataDir) {
         Path versionFile = dataDir.resolve(VERSION_FILE);
-        if (!Files.exists(versionFile)) { return 1; } // Default to version 1
+        if (!Files.exists(versionFile)) {
+            return 1;
+        } // Default to version 1
         try {
             String content = Files.readString(versionFile).trim();
             return Integer.parseInt(content);
@@ -130,7 +132,9 @@ public class MigrationManager {
         // v1 -> v2: Add parentId to session entries for tree support
         register(new MigrationStep(1, 2, "Add session tree support (parentId field)", dataDir -> {
             Path sessionsDir = dataDir.resolve("sessions");
-            if (!Files.isDirectory(sessionsDir)) { return; }
+            if (!Files.isDirectory(sessionsDir)) {
+                return;
+            }
 
             try (var stream = Files.list(sessionsDir)) {
                 stream.filter(p -> p.toString().endsWith(".jsonl"))
@@ -140,7 +144,9 @@ public class MigrationManager {
                             List<String> updated = new ArrayList<>();
                             String lastId = null;
                             for (String line : lines) {
-                                if (line.isBlank()) { continue; }
+                                if (line.isBlank()) {
+                                    continue;
+                                }
                                 // Add parentId if not present
                                 if (!line.contains("\"parentId\"")) {
                                     // Insert parentId before the closing brace
@@ -154,7 +160,9 @@ public class MigrationManager {
                                 if (idIdx >= 0) {
                                     int start = idIdx + 6;
                                     int end = line.indexOf('"', start);
-                                    if (end > start) { lastId = line.substring(start, end); }
+                                    if (end > start) {
+                                        lastId = line.substring(start, end);
+                                    }
                                 }
                                 updated.add(line);
                             }

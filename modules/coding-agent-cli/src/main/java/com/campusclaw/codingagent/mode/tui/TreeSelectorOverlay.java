@@ -48,10 +48,14 @@ public class TreeSelectorOverlay implements Component, Focusable {
             selectList.setSelectedIndex(items.size() - 1);
         }
         selectList.setOnSelect(item -> {
-            if (onSelect != null) { onSelect.accept(item); }
+            if (onSelect != null) {
+                onSelect.accept(item);
+            }
         });
         selectList.setOnCancel(() -> {
-            if (onCancel != null) { onCancel.run(); }
+            if (onCancel != null) {
+                onCancel.run();
+            }
         });
     }
 
@@ -118,7 +122,9 @@ public class TreeSelectorOverlay implements Component, Focusable {
     @Override
     public void handleInput(String data) {
         if ("\033".equals(data) || "\003".equals(data)) {
-            if (onCancel != null) { onCancel.run(); }
+            if (onCancel != null) {
+                onCancel.run();
+            }
             return;
         }
         selectList.handleInput(data);
@@ -150,7 +156,9 @@ public class TreeSelectorOverlay implements Component, Focusable {
     }
 
     @Override
-    public boolean isFocused() { return focused; }
+    public boolean isFocused() {
+        return focused;
+    }
 
     @Override
     public void setFocused(boolean focused) {

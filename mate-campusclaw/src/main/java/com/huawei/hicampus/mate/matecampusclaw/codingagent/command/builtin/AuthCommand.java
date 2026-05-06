@@ -27,10 +27,14 @@ public class AuthCommand implements SlashCommand {
     }
 
     @Override
-    public String name() { return "auth"; }
+    public String name() {
+        return "auth";
+    }
 
     @Override
-    public String description() { return "Manage stored API keys (login / list / logout)"; }
+    public String description() {
+        return "Manage stored API keys (login / list / logout)";
+    }
 
     @Override
     public void execute(SlashCommandContext context, String arguments) {

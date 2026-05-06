@@ -657,7 +657,9 @@ class AgentLoopIntegrationTest {
 
     private <T> int indexOfFirst(Class<T> type) {
         for (int i = 0; i < events.size(); i++) {
-            if (type.isInstance(events.get(i))) { return i; }
+            if (type.isInstance(events.get(i))) {
+                return i;
+            }
         }
         return -1;
     }
@@ -753,13 +755,19 @@ class AgentLoopIntegrationTest {
     private AgentTool simpleTool(String name, String description) {
         return new AgentTool() {
             @Override
-            public String name() { return name; }
+            public String name() {
+                return name;
+            }
 
             @Override
-            public String label() { return name; }
+            public String label() {
+                return name;
+            }
 
             @Override
-            public String description() { return description; }
+            public String description() {
+                return description;
+            }
 
             @Override
             public JsonNode parameters() {
@@ -794,13 +802,19 @@ class AgentLoopIntegrationTest {
         }
 
         @Override
-        public String name() { return "steering_tool"; }
+        public String name() {
+            return "steering_tool";
+        }
 
         @Override
-        public String label() { return "Steering Tool"; }
+        public String label() {
+            return "Steering Tool";
+        }
 
         @Override
-        public String description() { return "Tool that injects a steering message"; }
+        public String description() {
+            return "Tool that injects a steering message";
+        }
 
         @Override
         public JsonNode parameters() {
@@ -832,13 +846,19 @@ class AgentLoopIntegrationTest {
         }
 
         @Override
-        public String name() { return "abort_tool"; }
+        public String name() {
+            return "abort_tool";
+        }
 
         @Override
-        public String label() { return "Abort Tool"; }
+        public String label() {
+            return "Abort Tool";
+        }
 
         @Override
-        public String description() { return "Cancels execution"; }
+        public String description() {
+            return "Cancels execution";
+        }
 
         @Override
         public JsonNode parameters() {
@@ -866,13 +886,19 @@ class AgentLoopIntegrationTest {
         private final CompletableFuture<Void> started = new CompletableFuture<>();
 
         @Override
-        public String name() { return "slow_tool"; }
+        public String name() {
+            return "slow_tool";
+        }
 
         @Override
-        public String label() { return "Slow Tool"; }
+        public String label() {
+            return "Slow Tool";
+        }
 
         @Override
-        public String description() { return "Slow tool for abort testing"; }
+        public String description() {
+            return "Slow tool for abort testing";
+        }
 
         @Override
         public JsonNode parameters() {
@@ -894,7 +920,11 @@ class AgentLoopIntegrationTest {
             started.complete(null);
             // Wait for cancellation
             while (!signal.isCancelled()) {
-                try { Thread.sleep(10); } catch (InterruptedException e) { break; }
+                try {
+                    Thread.sleep(10);
+                } catch (InterruptedException e) {
+                    break;
+                }
             }
             return new AgentToolResult(List.of(new TextContent("cancelled")), null);
         }

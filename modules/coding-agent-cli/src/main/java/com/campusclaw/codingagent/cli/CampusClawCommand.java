@@ -339,10 +339,22 @@ public class CampusClawCommand implements Callable<Integer> {
         // Validate conflicting session flags (matching campusclaw)
         int sessionFlagCount = 0;
         var conflicting = new ArrayList<String>();
-        if (sessionPath != null) { sessionFlagCount++; conflicting.add("--session"); }
-        if (continueSession) { sessionFlagCount++; conflicting.add("--continue"); }
-        if (resumeSession) { sessionFlagCount++; conflicting.add("--resume"); }
-        if (noSession) { sessionFlagCount++; conflicting.add("--no-session"); }
+        if (sessionPath != null) {
+            sessionFlagCount++;
+            conflicting.add("--session");
+        }
+        if (continueSession) {
+            sessionFlagCount++;
+            conflicting.add("--continue");
+        }
+        if (resumeSession) {
+            sessionFlagCount++;
+            conflicting.add("--resume");
+        }
+        if (noSession) {
+            sessionFlagCount++;
+            conflicting.add("--no-session");
+        }
         if (sessionFlagCount > 1) {
             System.err.println("Error: conflicting flags: " + String.join(", ", conflicting));
             return 1;
@@ -362,8 +374,12 @@ public class CampusClawCommand implements Callable<Integer> {
             System.out.println("Mode: " + mode);
             System.out.println("CWD: " + effectiveCwd);
             System.out.println("Prompt: " + effectivePrompt);
-            if (effectiveThinking != null) { System.out.println("Thinking: " + effectiveThinking); }
-            if (toolsFilter != null) { System.out.println("Tools: " + toolsFilter); }
+            if (effectiveThinking != null) {
+                System.out.println("Thinking: " + effectiveThinking);
+            }
+            if (toolsFilter != null) {
+                System.out.println("Tools: " + toolsFilter);
+            }
             return 0;
         }
 
@@ -527,7 +543,9 @@ public class CampusClawCommand implements Callable<Integer> {
                 var allRegistered = modelRegistry.getAllModels();
                 for (String pattern : modelsFilter.split(",")) {
                     String p = pattern.trim().toLowerCase();
-                    if (p.isEmpty()) { continue; }
+                    if (p.isEmpty()) {
+                        continue;
+                    }
                     for (var m : allRegistered) {
                         if (com.campusclaw.codingagent.model.ModelCatalogService.matchesPattern(p, m)
                                 && scoped.stream().noneMatch(s -> ModelRegistry.modelsAreEqual(s, m))) {
@@ -557,7 +575,9 @@ public class CampusClawCommand implements Callable<Integer> {
             // System terminal should not be explicitly closed by the application;
             // it will be automatically cleaned up by the OS when the process exits.
             // Explicitly closing it can cause the parent terminal window to exit.
-            if (sessionManager != null) { sessionManager.close(); }
+            if (sessionManager != null) {
+                sessionManager.close();
+            }
         }
         return 0;
     }
@@ -609,7 +629,9 @@ public class CampusClawCommand implements Callable<Integer> {
         com.campusclaw.codingagent.config.AppPaths.ensureUserDirs();
 
         // Normalize "uninstall" → "remove"
-        if ("uninstall".equals(command)) { command = "remove"; }
+        if ("uninstall".equals(command)) {
+            command = "remove";
+        }
 
         boolean local = args.contains("-l") || args.contains("--local");
         var filteredArgs = args.stream()
@@ -939,7 +961,9 @@ public class CampusClawCommand implements Callable<Integer> {
         // Provider/id format: "zai/glm-5"
         if (p.contains("/")) {
             String[] parts = p.split("/", 2);
-            if (!provider.contains(parts[0])) { return false; }
+            if (!provider.contains(parts[0])) {
+                return false;
+            }
             p = parts[1];
         }
 
@@ -983,15 +1007,37 @@ public class CampusClawCommand implements Callable<Integer> {
 
     // --- Accessors for testing ---
 
-    String getModel() { return model; }
-    String getPrompt() { return prompt; }
-    String getMode() { return mode; }
-    Path getCwd() { return cwd; }
-    String getSystemPrompt() { return systemPrompt; }
-    List<String> getPromptArgs() { return promptArgs; }
-    String getThinking() { return thinking; }
-    String getToolsFilter() { return toolsFilter; }
-    boolean isVerbose() { return verbose; }
-    boolean isPrintMode() { return printMode; }
-    String getAppendSystemPrompt() { return appendSystemPrompt; }
+    String getModel() {
+        return model;
+    }
+    String getPrompt() {
+        return prompt;
+    }
+    String getMode() {
+        return mode;
+    }
+    Path getCwd() {
+        return cwd;
+    }
+    String getSystemPrompt() {
+        return systemPrompt;
+    }
+    List<String> getPromptArgs() {
+        return promptArgs;
+    }
+    String getThinking() {
+        return thinking;
+    }
+    String getToolsFilter() {
+        return toolsFilter;
+    }
+    boolean isVerbose() {
+        return verbose;
+    }
+    boolean isPrintMode() {
+        return printMode;
+    }
+    String getAppendSystemPrompt() {
+        return appendSystemPrompt;
+    }
 }

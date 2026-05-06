@@ -240,7 +240,9 @@ class InputTest {
             var input = new Input();
             input.setValue("hello world");
             input.handleInput(KEY_HOME);
-            for (int i = 0; i < 5; i++) { input.handleInput(KEY_RIGHT); }
+            for (int i = 0; i < 5; i++) {
+                input.handleInput(KEY_RIGHT);
+            }
             input.handleInput(KEY_CTRL_K);
             assertEquals("hello", input.getValue());
         }
@@ -250,7 +252,9 @@ class InputTest {
             var input = new Input();
             input.setValue("hello world");
             input.handleInput(KEY_HOME);
-            for (int i = 0; i < 5; i++) { input.handleInput(KEY_RIGHT); }
+            for (int i = 0; i < 5; i++) {
+                input.handleInput(KEY_RIGHT);
+            }
             input.handleInput(KEY_CTRL_U);
             assertEquals(" world", input.getValue());
             assertEquals(0, input.getCursor());
@@ -279,7 +283,9 @@ class InputTest {
             var input = new Input();
             input.setValue("hello world");
             input.handleInput(KEY_HOME);
-            for (int i = 0; i < 5; i++) { input.handleInput(KEY_RIGHT); }
+            for (int i = 0; i < 5; i++) {
+                input.handleInput(KEY_RIGHT);
+            }
             input.handleInput(KEY_CTRL_K); // kills " world"
             input.handleInput(KEY_HOME);
             input.handleInput(KEY_CTRL_Y); // yanks " world" at start
@@ -308,7 +314,9 @@ class InputTest {
             var input = new Input();
             input.setValue("hello world");
             input.handleInput(KEY_HOME);
-            for (int i = 0; i < 5; i++) { input.handleInput(KEY_RIGHT); }
+            for (int i = 0; i < 5; i++) {
+                input.handleInput(KEY_RIGHT);
+            }
             input.handleInput(KEY_CTRL_K); // kills " world"
             input.handleInput(KEY_CTRL_U); // kills "hello", accumulates with prepend
 
@@ -349,7 +357,9 @@ class InputTest {
             var input = new Input();
             input.setValue("hello world");
             input.handleInput(KEY_HOME);
-            for (int i = 0; i < 5; i++) { input.handleInput(KEY_RIGHT); }
+            for (int i = 0; i < 5; i++) {
+                input.handleInput(KEY_RIGHT);
+            }
             input.handleInput(KEY_CTRL_K);
             input.handleInput(KEY_CTRL_Z);
             assertEquals("hello world", input.getValue());

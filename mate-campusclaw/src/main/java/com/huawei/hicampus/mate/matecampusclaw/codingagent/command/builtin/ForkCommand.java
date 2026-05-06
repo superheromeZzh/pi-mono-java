@@ -14,10 +14,14 @@ import com.huawei.hicampus.mate.matecampusclaw.codingagent.command.SlashCommandC
 public class ForkCommand implements SlashCommand {
 
     @Override
-    public String name() { return "fork"; }
+    public String name() {
+        return "fork";
+    }
 
     @Override
-    public String description() { return "Create a new fork from current session"; }
+    public String description() {
+        return "Create a new fork from current session";
+    }
 
     @Override
     public void execute(SlashCommandContext context, String arguments) {

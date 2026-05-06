@@ -43,20 +43,48 @@ public class MarkdownTheme {
         this.quoteBorder = b.quoteBorder;
     }
 
-    public String heading1(String text) { return heading1.apply(text); }
-    public String heading2(String text) { return heading2.apply(text); }
-    public String heading3(String text) { return heading3.apply(text); }
-    public String bold(String text) { return bold.apply(text); }
-    public String italic(String text) { return italic.apply(text); }
-    public String code(String text) { return code.apply(text); }
-    public String codeBlock(String text) { return codeBlock.apply(text); }
-    public String codeBlockBorder(String text) { return codeBlockBorder.apply(text); }
-    public String link(String text) { return link.apply(text); }
-    public String linkUrl(String text) { return linkUrl.apply(text); }
-    public String listBullet(String text) { return listBullet.apply(text); }
-    public String hr(String text) { return hr.apply(text); }
-    public String strikethrough(String text) { return strikethrough.apply(text); }
-    public String quoteBorder(String text) { return quoteBorder.apply(text); }
+    public String heading1(String text) {
+        return heading1.apply(text);
+    }
+    public String heading2(String text) {
+        return heading2.apply(text);
+    }
+    public String heading3(String text) {
+        return heading3.apply(text);
+    }
+    public String bold(String text) {
+        return bold.apply(text);
+    }
+    public String italic(String text) {
+        return italic.apply(text);
+    }
+    public String code(String text) {
+        return code.apply(text);
+    }
+    public String codeBlock(String text) {
+        return codeBlock.apply(text);
+    }
+    public String codeBlockBorder(String text) {
+        return codeBlockBorder.apply(text);
+    }
+    public String link(String text) {
+        return link.apply(text);
+    }
+    public String linkUrl(String text) {
+        return linkUrl.apply(text);
+    }
+    public String listBullet(String text) {
+        return listBullet.apply(text);
+    }
+    public String hr(String text) {
+        return hr.apply(text);
+    }
+    public String strikethrough(String text) {
+        return strikethrough.apply(text);
+    }
+    public String quoteBorder(String text) {
+        return quoteBorder.apply(text);
+    }
 
     /**
      * Returns the default theme with standard terminal colors.
@@ -102,20 +130,62 @@ public class MarkdownTheme {
         private UnaryOperator<String> strikethrough = s -> STRIKETHROUGH_STYLE + s + RESET;
         private UnaryOperator<String> quoteBorder = s -> GRAY + s + RESET;
 
-        public Builder heading1(UnaryOperator<String> fn) { this.heading1 = fn; return this; }
-        public Builder heading2(UnaryOperator<String> fn) { this.heading2 = fn; return this; }
-        public Builder heading3(UnaryOperator<String> fn) { this.heading3 = fn; return this; }
-        public Builder bold(UnaryOperator<String> fn) { this.bold = fn; return this; }
-        public Builder italic(UnaryOperator<String> fn) { this.italic = fn; return this; }
-        public Builder code(UnaryOperator<String> fn) { this.code = fn; return this; }
-        public Builder codeBlock(UnaryOperator<String> fn) { this.codeBlock = fn; return this; }
-        public Builder codeBlockBorder(UnaryOperator<String> fn) { this.codeBlockBorder = fn; return this; }
-        public Builder link(UnaryOperator<String> fn) { this.link = fn; return this; }
-        public Builder linkUrl(UnaryOperator<String> fn) { this.linkUrl = fn; return this; }
-        public Builder listBullet(UnaryOperator<String> fn) { this.listBullet = fn; return this; }
-        public Builder hr(UnaryOperator<String> fn) { this.hr = fn; return this; }
-        public Builder strikethrough(UnaryOperator<String> fn) { this.strikethrough = fn; return this; }
-        public Builder quoteBorder(UnaryOperator<String> fn) { this.quoteBorder = fn; return this; }
+        public Builder heading1(UnaryOperator<String> fn) {
+            this.heading1 = fn;
+            return this;
+        }
+        public Builder heading2(UnaryOperator<String> fn) {
+            this.heading2 = fn;
+            return this;
+        }
+        public Builder heading3(UnaryOperator<String> fn) {
+            this.heading3 = fn;
+            return this;
+        }
+        public Builder bold(UnaryOperator<String> fn) {
+            this.bold = fn;
+            return this;
+        }
+        public Builder italic(UnaryOperator<String> fn) {
+            this.italic = fn;
+            return this;
+        }
+        public Builder code(UnaryOperator<String> fn) {
+            this.code = fn;
+            return this;
+        }
+        public Builder codeBlock(UnaryOperator<String> fn) {
+            this.codeBlock = fn;
+            return this;
+        }
+        public Builder codeBlockBorder(UnaryOperator<String> fn) {
+            this.codeBlockBorder = fn;
+            return this;
+        }
+        public Builder link(UnaryOperator<String> fn) {
+            this.link = fn;
+            return this;
+        }
+        public Builder linkUrl(UnaryOperator<String> fn) {
+            this.linkUrl = fn;
+            return this;
+        }
+        public Builder listBullet(UnaryOperator<String> fn) {
+            this.listBullet = fn;
+            return this;
+        }
+        public Builder hr(UnaryOperator<String> fn) {
+            this.hr = fn;
+            return this;
+        }
+        public Builder strikethrough(UnaryOperator<String> fn) {
+            this.strikethrough = fn;
+            return this;
+        }
+        public Builder quoteBorder(UnaryOperator<String> fn) {
+            this.quoteBorder = fn;
+            return this;
+        }
 
         public MarkdownTheme build() {
             return new MarkdownTheme(this);

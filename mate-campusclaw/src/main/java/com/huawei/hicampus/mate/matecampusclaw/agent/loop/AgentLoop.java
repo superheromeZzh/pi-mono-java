@@ -202,7 +202,9 @@ public class AgentLoop {
         for (var event : stream.asFlux()
                 .takeUntilOther(cancelSink.asMono())
                 .toIterable()) {
-            if (signal.isCancelled()) { break; }
+            if (signal.isCancelled()) {
+                break;
+            }
             var currentMessage = extractAssistantMessage(event);
             if (!assistantStarted) {
                 listener.onEvent(new MessageStartEvent(currentMessage));
@@ -314,7 +316,9 @@ public class AgentLoop {
     private List<Message> drainSteeringMessages() {
         if (getSteeringMessages != null) {
             var msgs = getSteeringMessages.get();
-            if (msgs != null && !msgs.isEmpty()) { return msgs; }
+            if (msgs != null && !msgs.isEmpty()) {
+                return msgs;
+            }
         }
         return steeringQueue.drain();
     }
@@ -322,7 +326,9 @@ public class AgentLoop {
     private List<Message> drainFollowUpMessages() {
         if (getFollowUpMessages != null) {
             var msgs = getFollowUpMessages.get();
-            if (msgs != null && !msgs.isEmpty()) { return msgs; }
+            if (msgs != null && !msgs.isEmpty()) {
+                return msgs;
+            }
         }
         return followUpQueue.drain();
     }

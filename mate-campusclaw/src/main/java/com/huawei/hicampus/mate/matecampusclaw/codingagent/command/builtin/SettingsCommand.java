@@ -73,8 +73,12 @@ public class SettingsCommand implements SlashCommand {
         if (settings.compaction() != null) {
             var c = settings.compaction();
             out.println("  Compaction: " + (c.enabled() != null ? c.enabled() : true));
-            if (c.reserveTokens() != null) { out.println("    Reserve tokens: " + c.reserveTokens()); }
-            if (c.keepRecentTokens() != null) { out.println("    Keep recent: " + c.keepRecentTokens()); }
+            if (c.reserveTokens() != null) {
+                out.println("    Reserve tokens: " + c.reserveTokens());
+            }
+            if (c.keepRecentTokens() != null) {
+                out.println("    Keep recent: " + c.keepRecentTokens());
+            }
         } else {
             out.println("  Compaction: true (default)");
         }
@@ -83,7 +87,9 @@ public class SettingsCommand implements SlashCommand {
         if (settings.retry() != null) {
             var r = settings.retry();
             out.println("  Retry: " + (r.enabled() != null ? r.enabled() : false));
-            if (r.maxRetries() != null) { out.println("    Max retries: " + r.maxRetries()); }
+            if (r.maxRetries() != null) {
+                out.println("    Max retries: " + r.maxRetries());
+            }
         }
 
         // Context window

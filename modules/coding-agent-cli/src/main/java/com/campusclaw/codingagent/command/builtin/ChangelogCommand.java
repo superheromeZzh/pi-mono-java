@@ -15,10 +15,14 @@ import com.campusclaw.codingagent.util.Changelog;
 public class ChangelogCommand implements SlashCommand {
 
     @Override
-    public String name() { return "changelog"; }
+    public String name() {
+        return "changelog";
+    }
 
     @Override
-    public String description() { return "Show changelog entries"; }
+    public String description() {
+        return "Show changelog entries";
+    }
 
     @Override
     public void execute(SlashCommandContext context, String arguments) {

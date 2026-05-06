@@ -55,7 +55,9 @@ public record Settings(
     /** Returns the resolved default model id. opencode-style "model" wins over "defaultModel". */
     @Nullable
     public String resolvedDefaultModel() {
-        if (model != null && !model.isBlank()) { return model; }
+        if (model != null && !model.isBlank()) {
+            return model;
+        }
         return defaultModel;
     }
 
@@ -119,7 +121,9 @@ public record Settings(
         /** Returns the effective base URL — {@code baseURL} preferred, falls back to {@code baseUrl}. */
         @Nullable
         public String effectiveBaseUrl() {
-            if (baseURL != null && !baseURL.isBlank()) { return baseURL; }
+            if (baseURL != null && !baseURL.isBlank()) {
+                return baseURL;
+            }
             return baseUrlAlt;
         }
     }

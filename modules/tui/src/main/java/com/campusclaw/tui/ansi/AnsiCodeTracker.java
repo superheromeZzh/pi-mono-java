@@ -84,7 +84,10 @@ class AnsiCodeTracker {
                 case 8 -> hidden = true;
                 case 9 -> strikethrough = true;
                 case 21 -> bold = false;
-                case 22 -> { bold = false; dim = false; }
+                case 22 -> {
+                    bold = false;
+                    dim = false;
+                }
                 case 23 -> italic = false;
                 case 24 -> underline = false;
                 case 25 -> blink = false;
@@ -124,18 +127,40 @@ class AnsiCodeTracker {
 
     String getActiveCodes() {
         List<String> codes = new ArrayList<>();
-        if (bold) { codes.add("1"); }
-        if (dim) { codes.add("2"); }
-        if (italic) { codes.add("3"); }
-        if (underline) { codes.add("4"); }
-        if (blink) { codes.add("5"); }
-        if (inverse) { codes.add("7"); }
-        if (hidden) { codes.add("8"); }
-        if (strikethrough) { codes.add("9"); }
-        if (fgColor != null) { codes.add(fgColor); }
-        if (bgColor != null) { codes.add(bgColor); }
+        if (bold) {
+            codes.add("1");
+        }
+        if (dim) {
+            codes.add("2");
+        }
+        if (italic) {
+            codes.add("3");
+        }
+        if (underline) {
+            codes.add("4");
+        }
+        if (blink) {
+            codes.add("5");
+        }
+        if (inverse) {
+            codes.add("7");
+        }
+        if (hidden) {
+            codes.add("8");
+        }
+        if (strikethrough) {
+            codes.add("9");
+        }
+        if (fgColor != null) {
+            codes.add(fgColor);
+        }
+        if (bgColor != null) {
+            codes.add(bgColor);
+        }
 
-        if (codes.isEmpty()) { return ""; }
+        if (codes.isEmpty()) {
+            return "";
+        }
         return "\033[" + String.join(";", codes) + "m";
     }
 

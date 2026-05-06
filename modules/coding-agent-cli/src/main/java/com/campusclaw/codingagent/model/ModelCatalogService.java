@@ -62,10 +62,18 @@ public class ModelCatalogService {
      * {@code true} so the catalogue isn't unexpectedly empty.
      */
     public boolean hasCredentials(Model model) {
-        if (model == null) { return false; }
-        if (model.provider() == Provider.CUSTOM) { return true; }
-        if (model.apiKey() != null && !model.apiKey().isBlank()) { return true; }
-        if (providerConfigResolver == null) { return true; }
+        if (model == null) {
+            return false;
+        }
+        if (model.provider() == Provider.CUSTOM) {
+            return true;
+        }
+        if (model.apiKey() != null && !model.apiKey().isBlank()) {
+            return true;
+        }
+        if (providerConfigResolver == null) {
+            return true;
+        }
         try {
             var cfg = providerConfigResolver.resolve(model.provider(), model);
             return cfg.apiKey() != null && !cfg.apiKey().isBlank();
@@ -100,9 +108,13 @@ public class ModelCatalogService {
         var all = modelRegistry.getAllModels();
         var picked = new ArrayList<Model>();
         for (String pattern : patterns) {
-            if (pattern == null) { continue; }
+            if (pattern == null) {
+                continue;
+            }
             String p = pattern.trim().toLowerCase();
-            if (p.isEmpty()) { continue; }
+            if (p.isEmpty()) {
+                continue;
+            }
             for (Model m : all) {
                 if (matchesPattern(p, m) && !alreadyIn(picked, m)) {
                     picked.add(m);
@@ -145,7 +157,9 @@ public class ModelCatalogService {
         // provider/id form
         if (p.contains("/")) {
             String[] parts = p.split("/", 2);
-            if (!provider.contains(parts[0])) { return false; }
+            if (!provider.contains(parts[0])) {
+                return false;
+            }
             p = parts[1];
         }
 
@@ -166,7 +180,9 @@ public class ModelCatalogService {
 
     private static boolean alreadyIn(List<Model> list, Model m) {
         for (Model x : list) {
-            if (ModelRegistry.modelsAreEqual(x, m)) { return true; }
+            if (ModelRegistry.modelsAreEqual(x, m)) {
+                return true;
+            }
         }
         return false;
     }

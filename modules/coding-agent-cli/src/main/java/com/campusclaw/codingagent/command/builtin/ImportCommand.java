@@ -17,10 +17,14 @@ import com.campusclaw.codingagent.command.SlashCommandContext;
 public class ImportCommand implements SlashCommand {
 
     @Override
-    public String name() { return "import"; }
+    public String name() {
+        return "import";
+    }
 
     @Override
-    public String description() { return "Import and resume a session from a JSONL file"; }
+    public String description() {
+        return "Import and resume a session from a JSONL file";
+    }
 
     @Override
     public void execute(SlashCommandContext context, String arguments) {
