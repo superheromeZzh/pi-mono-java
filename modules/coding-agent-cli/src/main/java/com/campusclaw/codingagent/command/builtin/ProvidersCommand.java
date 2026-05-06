@@ -35,6 +35,7 @@ public class ProvidersCommand implements SlashCommand {
     private final SettingsManager settingsManager;
     private final AuthStore authStore;
 
+    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public ProvidersCommand(ModelRegistry modelRegistry, SettingsManager settingsManager, AuthStore authStore) {
         this.modelRegistry = modelRegistry;
         this.settingsManager = settingsManager;

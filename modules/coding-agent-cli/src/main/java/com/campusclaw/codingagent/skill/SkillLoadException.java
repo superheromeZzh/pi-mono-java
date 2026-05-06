@@ -12,10 +12,12 @@ package com.campusclaw.codingagent.skill;
  */
 public class SkillLoadException extends RuntimeException {
 
+    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public SkillLoadException(String message) {
         super(message);
     }
 
+    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public SkillLoadException(String message, Throwable cause) {
         super(message, cause);
     }

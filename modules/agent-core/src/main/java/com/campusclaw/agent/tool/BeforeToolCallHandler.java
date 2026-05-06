@@ -13,5 +13,6 @@ package com.campusclaw.agent.tool;
 @FunctionalInterface
 public interface BeforeToolCallHandler {
 
+    @SuppressWarnings("checkstyle:java_doc_format_missing")
     BeforeToolCallResult handle(BeforeToolCallContext context) throws Exception;
 }

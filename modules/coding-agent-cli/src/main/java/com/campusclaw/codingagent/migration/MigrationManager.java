@@ -33,6 +33,7 @@ public class MigrationManager {
     @SuppressWarnings("checkstyle:top_class_comment")
     @FunctionalInterface
     public interface Migration {
+        @SuppressWarnings("checkstyle:java_doc_format_missing")
         void apply(Path dataDir) throws IOException;
     }
 
@@ -41,6 +42,7 @@ public class MigrationManager {
 
     private final List<MigrationStep> migrations = new ArrayList<>();
 
+    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public MigrationManager() {
         registerBuiltins();
     }

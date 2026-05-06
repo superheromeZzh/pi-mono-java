@@ -44,11 +44,13 @@ public class EditTool implements AgentTool {
     private final FileMutationQueue mutationQueue;
     private final Path cwd;
 
+    @SuppressWarnings("checkstyle:java_doc_format_missing")
     @Autowired
     public EditTool(EditOperations editOperations, FileMutationQueue mutationQueue) {
         this(editOperations, mutationQueue, Path.of(System.getProperty("user.dir")));
     }
 
+    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public EditTool(EditOperations editOperations, FileMutationQueue mutationQueue, Path cwd) {
         this.editOperations = editOperations;
         this.mutationQueue = mutationQueue;

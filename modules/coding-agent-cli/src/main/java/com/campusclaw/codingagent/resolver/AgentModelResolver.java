@@ -36,6 +36,7 @@ public class AgentModelResolver {
     private final SettingsManager settingsManager;
     private final ModelRegistry modelRegistry;
 
+    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public AgentModelResolver(SettingsManager settingsManager, ModelRegistry modelRegistry) {
         this.settingsManager = settingsManager;
         this.modelRegistry = modelRegistry;

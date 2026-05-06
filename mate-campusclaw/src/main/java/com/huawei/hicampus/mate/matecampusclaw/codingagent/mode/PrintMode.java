@@ -33,11 +33,13 @@ public class PrintMode {
     private final AgentSession session;
     private final OutputFormat format;
 
+    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public PrintMode(AgentSession session, OutputFormat format) {
         this.session = session;
         this.format = format;
     }
 
+    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public int run(String prompt) {
         var result = new StringBuilder();
         var exitCode = new int[] {0};

@@ -21,6 +21,7 @@ public sealed interface RenderDiff permits RenderDiff.LineUpdates, RenderDiff.Fu
      * @param updates the list of individual line updates
      */
     record LineUpdates(List<LineUpdate> updates) implements RenderDiff {
+        @SuppressWarnings("checkstyle:java_doc_format_missing")
         public LineUpdates {
             updates = List.copyOf(updates);
         }

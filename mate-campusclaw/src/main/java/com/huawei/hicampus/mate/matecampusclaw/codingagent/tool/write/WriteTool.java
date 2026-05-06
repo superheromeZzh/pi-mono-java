@@ -43,11 +43,13 @@ public class WriteTool implements AgentTool {
     private final FileMutationQueue mutationQueue;
     private final Path cwd;
 
+    @SuppressWarnings("checkstyle:java_doc_format_missing")
     @Autowired
     public WriteTool(WriteOperations writeOperations, FileMutationQueue mutationQueue) {
         this(writeOperations, mutationQueue, Path.of(System.getProperty("user.dir")));
     }
 
+    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public WriteTool(WriteOperations writeOperations, FileMutationQueue mutationQueue, Path cwd) {
         this.writeOperations = writeOperations;
         this.mutationQueue = mutationQueue;

@@ -16,14 +16,17 @@ public record RpcEvent(
         @JsonProperty("id") @Nullable String requestId,
         @JsonProperty("data") @Nullable Object data,
         @JsonProperty("error") @Nullable String error) {
+    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public static RpcEvent of(String type, @Nullable Object data) {
         return new RpcEvent(type, null, data, null);
     }
 
+    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public static RpcEvent response(String requestId, String type, @Nullable Object data) {
         return new RpcEvent(type, requestId, data, null);
     }
 
+    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public static RpcEvent error(String requestId, String message) {
         return new RpcEvent("error", requestId, null, message);
     }

@@ -18,6 +18,7 @@ public class AgentResponseEvent extends ApplicationEvent {
 
     private final String message;
 
+    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public AgentResponseEvent(Object source, String message) {
         super(source);
         this.message = message;

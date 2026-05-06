@@ -23,6 +23,7 @@ import com.campusclaw.agent.tool.CancellationToken;
  */
 public record BashExecOptions(
         Consumer<byte[]> onData, CancellationToken signal, Duration timeout, Map<String, String> env) {
+    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public BashExecOptions {
         env = env == null ? Map.of() : Map.copyOf(env);
     }

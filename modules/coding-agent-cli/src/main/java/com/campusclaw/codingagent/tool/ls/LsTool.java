@@ -49,11 +49,13 @@ public class LsTool implements AgentTool {
     private final LsOperations lsOperations;
     private final Path cwd;
 
+    @SuppressWarnings("checkstyle:java_doc_format_missing")
     @Autowired
     public LsTool(LsOperations lsOperations) {
         this(lsOperations, Path.of(System.getProperty("user.dir")));
     }
 
+    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public LsTool(LsOperations lsOperations, Path cwd) {
         this.lsOperations = lsOperations;
         this.cwd = cwd;

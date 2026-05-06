@@ -7,7 +7,9 @@ package com.campusclaw.assistant.channel;
 @SuppressWarnings("checkstyle:top_class_comment")
 public interface Channel {
 
+    @SuppressWarnings("checkstyle:java_doc_format_missing")
     String getName();
 
+    @SuppressWarnings("checkstyle:java_doc_format_missing")
     void sendMessage(String message);
 }

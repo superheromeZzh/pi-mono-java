@@ -115,10 +115,12 @@ public class Editor implements Component, Focusable {
     private Consumer<String> onChange;
     private Consumer<String> onSubmit;
 
+    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public Editor() {
         this("");
     }
 
+    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public Editor(String initialText) {
         this.lines = new ArrayList<>();
         this.undoStack = new UndoStack<>(this::cloneSnapshot);

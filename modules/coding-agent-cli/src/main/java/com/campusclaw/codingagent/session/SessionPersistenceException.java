@@ -12,10 +12,12 @@ package com.campusclaw.codingagent.session;
  */
 public class SessionPersistenceException extends RuntimeException {
 
+    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public SessionPersistenceException(String message) {
         super(message);
     }
 
+    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public SessionPersistenceException(String message, Throwable cause) {
         super(message, cause);
     }

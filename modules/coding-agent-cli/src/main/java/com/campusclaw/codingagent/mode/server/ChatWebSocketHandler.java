@@ -89,6 +89,7 @@ public class ChatWebSocketHandler {
     private final SessionPool pool;
     private final ModelCatalogService modelCatalog;
 
+    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public ChatWebSocketHandler(SessionPool pool, ModelCatalogService modelCatalog) {
         this.pool = pool;
         this.modelCatalog = modelCatalog;

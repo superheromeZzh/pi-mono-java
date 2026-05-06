@@ -70,14 +70,17 @@ public class KeyBindingRegistry {
         }
     }
 
+    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public void register(KeyBinding binding) {
         bindings.put(binding.action(), binding);
     }
 
+    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public Optional<KeyBinding> get(String action) {
         return Optional.ofNullable(bindings.get(action));
     }
 
+    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public Optional<String> getKey(String action) {
         return get(action).map(KeyBinding::key);
     }

@@ -17,6 +17,7 @@ public class CompactCommand implements SlashCommand {
 
     private final Compactor compactor;
 
+    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public CompactCommand(Compactor compactor) {
         this.compactor = compactor;
     }

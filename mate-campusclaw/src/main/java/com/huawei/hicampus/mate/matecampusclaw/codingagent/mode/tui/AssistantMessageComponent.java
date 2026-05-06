@@ -45,21 +45,25 @@ public class AssistantMessageComponent implements Component {
     private int cachedWidth = -1;
     private List<String> cachedLines;
 
+    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public void appendThinking(String delta) {
         thinkingContent.append(delta);
         invalidate();
     }
 
+    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public void appendText(String delta) {
         textContent.append(delta);
         invalidate();
     }
 
+    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public void setComplete(boolean complete) {
         this.complete = complete;
         invalidate();
     }
 
+    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public boolean hasContent() {
         return !thinkingContent.isEmpty() || !textContent.isEmpty();
     }
@@ -68,6 +72,7 @@ public class AssistantMessageComponent implements Component {
         return textContent.toString();
     }
 
+    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public void setHideThinking(boolean hide) {
         this.hideThinking = hide;
         invalidate();

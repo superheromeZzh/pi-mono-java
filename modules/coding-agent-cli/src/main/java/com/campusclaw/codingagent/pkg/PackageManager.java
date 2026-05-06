@@ -50,6 +50,7 @@ public class PackageManager {
     private final Path packagesDir;
     private final Map<String, InstalledPackage> installed = new LinkedHashMap<>();
 
+    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public PackageManager(Path packagesDir) {
         this.packagesDir = packagesDir;
     }

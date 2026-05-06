@@ -46,58 +46,72 @@ public class MarkdownTheme {
         this.quoteBorder = b.quoteBorder;
     }
 
+    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public String heading1(String text) {
         return heading1.apply(text);
     }
 
+    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public String heading2(String text) {
         return heading2.apply(text);
     }
 
+    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public String heading3(String text) {
         return heading3.apply(text);
     }
 
+    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public String bold(String text) {
         return bold.apply(text);
     }
 
+    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public String italic(String text) {
         return italic.apply(text);
     }
 
+    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public String code(String text) {
         return code.apply(text);
     }
 
+    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public String codeBlock(String text) {
         return codeBlock.apply(text);
     }
 
+    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public String codeBlockBorder(String text) {
         return codeBlockBorder.apply(text);
     }
 
+    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public String link(String text) {
         return link.apply(text);
     }
 
+    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public String linkUrl(String text) {
         return linkUrl.apply(text);
     }
 
+    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public String listBullet(String text) {
         return listBullet.apply(text);
     }
 
+    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public String hr(String text) {
         return hr.apply(text);
     }
 
+    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public String strikethrough(String text) {
         return strikethrough.apply(text);
     }
 
+    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public String quoteBorder(String text) {
         return quoteBorder.apply(text);
     }
@@ -109,6 +123,7 @@ public class MarkdownTheme {
         return new Builder().build();
     }
 
+    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public static Builder builder() {
         return new Builder();
     }
@@ -147,76 +162,91 @@ public class MarkdownTheme {
         private UnaryOperator<String> strikethrough = s -> STRIKETHROUGH_STYLE + s + RESET;
         private UnaryOperator<String> quoteBorder = s -> GRAY + s + RESET;
 
+        @SuppressWarnings("checkstyle:java_doc_format_missing")
         public Builder heading1(UnaryOperator<String> fn) {
             this.heading1 = fn;
             return this;
         }
 
+        @SuppressWarnings("checkstyle:java_doc_format_missing")
         public Builder heading2(UnaryOperator<String> fn) {
             this.heading2 = fn;
             return this;
         }
 
+        @SuppressWarnings("checkstyle:java_doc_format_missing")
         public Builder heading3(UnaryOperator<String> fn) {
             this.heading3 = fn;
             return this;
         }
 
+        @SuppressWarnings("checkstyle:java_doc_format_missing")
         public Builder bold(UnaryOperator<String> fn) {
             this.bold = fn;
             return this;
         }
 
+        @SuppressWarnings("checkstyle:java_doc_format_missing")
         public Builder italic(UnaryOperator<String> fn) {
             this.italic = fn;
             return this;
         }
 
+        @SuppressWarnings("checkstyle:java_doc_format_missing")
         public Builder code(UnaryOperator<String> fn) {
             this.code = fn;
             return this;
         }
 
+        @SuppressWarnings("checkstyle:java_doc_format_missing")
         public Builder codeBlock(UnaryOperator<String> fn) {
             this.codeBlock = fn;
             return this;
         }
 
+        @SuppressWarnings("checkstyle:java_doc_format_missing")
         public Builder codeBlockBorder(UnaryOperator<String> fn) {
             this.codeBlockBorder = fn;
             return this;
         }
 
+        @SuppressWarnings("checkstyle:java_doc_format_missing")
         public Builder link(UnaryOperator<String> fn) {
             this.link = fn;
             return this;
         }
 
+        @SuppressWarnings("checkstyle:java_doc_format_missing")
         public Builder linkUrl(UnaryOperator<String> fn) {
             this.linkUrl = fn;
             return this;
         }
 
+        @SuppressWarnings("checkstyle:java_doc_format_missing")
         public Builder listBullet(UnaryOperator<String> fn) {
             this.listBullet = fn;
             return this;
         }
 
+        @SuppressWarnings("checkstyle:java_doc_format_missing")
         public Builder hr(UnaryOperator<String> fn) {
             this.hr = fn;
             return this;
         }
 
+        @SuppressWarnings("checkstyle:java_doc_format_missing")
         public Builder strikethrough(UnaryOperator<String> fn) {
             this.strikethrough = fn;
             return this;
         }
 
+        @SuppressWarnings("checkstyle:java_doc_format_missing")
         public Builder quoteBorder(UnaryOperator<String> fn) {
             this.quoteBorder = fn;
             return this;
         }
 
+        @SuppressWarnings("checkstyle:java_doc_format_missing")
         public MarkdownTheme build() {
             return new MarkdownTheme(this);
         }

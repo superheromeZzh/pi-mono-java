@@ -61,6 +61,7 @@ public class MistralProvider implements ApiProvider {
 
     private final com.campusclaw.ai.env.ProviderConfigResolver providerConfigResolver;
 
+    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public MistralProvider(com.campusclaw.ai.env.ProviderConfigResolver providerConfigResolver) {
         this.providerConfigResolver = providerConfigResolver;
     }

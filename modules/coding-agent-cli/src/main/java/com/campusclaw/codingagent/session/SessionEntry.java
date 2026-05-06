@@ -25,14 +25,17 @@ public record SessionEntry(
         @JsonProperty("summary") @Nullable String summary,
         @JsonProperty("branchName") @Nullable String branchName,
         @JsonProperty("timestamp") long timestamp) {
+    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public static SessionEntry message(String id, @Nullable String parentId, Message message) {
         return new SessionEntry(id, parentId, "message", message, null, null, System.currentTimeMillis());
     }
 
+    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public static SessionEntry compaction(String id, @Nullable String parentId, String summary) {
         return new SessionEntry(id, parentId, "compaction", null, summary, null, System.currentTimeMillis());
     }
 
+    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public static SessionEntry branchSummary(String id, @Nullable String parentId, String branchName, String summary) {
         return new SessionEntry(id, parentId, "branch_summary", null, summary, branchName, System.currentTimeMillis());
     }

@@ -8,6 +8,7 @@ import com.huawei.hicampus.mate.matecampusclaw.codingagent.config.ToolExecutionP
 
 @SuppressWarnings("checkstyle:top_class_comment")
 public class SandboxTest {
+    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public static void main(String[] args) {
         // 创建配置
         ToolExecutionProperties props = new ToolExecutionProperties();

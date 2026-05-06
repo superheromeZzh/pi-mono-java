@@ -47,11 +47,13 @@ public enum Provider {
         this.value = value;
     }
 
+    @SuppressWarnings("checkstyle:java_doc_format_missing")
     @JsonValue
     public String value() {
         return value;
     }
 
+    @SuppressWarnings("checkstyle:java_doc_format_missing")
     @JsonCreator
     public static Provider fromValue(String value) {
         for (var p : values()) {

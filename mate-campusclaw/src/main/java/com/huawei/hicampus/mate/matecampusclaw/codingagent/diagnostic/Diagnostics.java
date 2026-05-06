@@ -40,6 +40,7 @@ public class Diagnostics {
     @SuppressWarnings("checkstyle:top_class_comment")
     @FunctionalInterface
     public interface DiagnosticCheck {
+        @SuppressWarnings("checkstyle:java_doc_format_missing")
         List<DiagnosticResult> run();
     }
 

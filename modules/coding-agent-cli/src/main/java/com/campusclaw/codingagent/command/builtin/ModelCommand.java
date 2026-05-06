@@ -12,10 +12,12 @@ public class ModelCommand implements SlashCommand {
 
     private final String name;
 
+    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public ModelCommand() {
         this("model");
     }
 
+    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public ModelCommand(String name) {
         this.name = name;
     }

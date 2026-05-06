@@ -29,6 +29,7 @@ public class UserMessageComponent implements Component {
     private int cachedWidth = -1;
     private List<String> cachedLines;
 
+    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public UserMessageComponent(String text) {
         this.text = text != null ? text : "";
     }

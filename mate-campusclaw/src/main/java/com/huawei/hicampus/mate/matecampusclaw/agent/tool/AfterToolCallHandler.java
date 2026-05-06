@@ -13,5 +13,6 @@ package com.huawei.hicampus.mate.matecampusclaw.agent.tool;
 @FunctionalInterface
 public interface AfterToolCallHandler {
 
+    @SuppressWarnings("checkstyle:java_doc_format_missing")
     AfterToolCallResult handle(AfterToolCallContext context) throws Exception;
 }

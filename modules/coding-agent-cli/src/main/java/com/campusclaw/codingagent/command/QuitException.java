@@ -17,10 +17,12 @@ package com.campusclaw.codingagent.command;
  */
 public class QuitException extends RuntimeException {
 
+    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public QuitException() {
         super();
     }
 
+    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public QuitException(String message) {
         super(message);
     }

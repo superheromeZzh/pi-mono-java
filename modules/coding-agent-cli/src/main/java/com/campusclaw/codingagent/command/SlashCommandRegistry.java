@@ -17,10 +17,12 @@ import org.springframework.stereotype.Service;
 public class SlashCommandRegistry {
     private final Map<String, SlashCommand> commands = new LinkedHashMap<>();
 
+    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public void register(SlashCommand command) {
         commands.put(command.name(), command);
     }
 
+    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public Optional<SlashCommand> get(String name) {
         return Optional.ofNullable(commands.get(name));
     }

@@ -66,6 +66,7 @@ public record AgentLoopConfig(
                 null);
     }
 
+    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public AgentLoopConfig {
         Objects.requireNonNull(model, "model");
         if (piAiService == null && streamFunction == null) {

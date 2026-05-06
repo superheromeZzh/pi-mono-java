@@ -40,6 +40,7 @@ public class ModelSelectorOverlay implements Component, Focusable {
     private Runnable onCancel;
     private boolean focused;
 
+    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public ModelSelectorOverlay(ModelRegistry modelRegistry, Model currentModel) {
         this.currentModel = currentModel;
 

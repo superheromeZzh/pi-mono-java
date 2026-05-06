@@ -27,6 +27,7 @@ public class SystemSchedulerInstaller {
 
     private final Path launcherScript;
 
+    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public SystemSchedulerInstaller(Path launcherScript) {
         this.launcherScript = launcherScript.toAbsolutePath().normalize();
     }

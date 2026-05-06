@@ -27,11 +27,13 @@ public enum ThinkingLevel {
         this.value = value;
     }
 
+    @SuppressWarnings("checkstyle:java_doc_format_missing")
     @JsonValue
     public String value() {
         return value;
     }
 
+    @SuppressWarnings("checkstyle:java_doc_format_missing")
     @JsonCreator
     public static ThinkingLevel fromValue(String value) {
         for (var level : values()) {

@@ -84,6 +84,7 @@ public class CampusClawCommand implements Callable<Integer> {
     @org.springframework.beans.factory.annotation.Value("${server.session.persistence.enabled:true}")
     private boolean serverSessionPersistenceEnabled;
 
+    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public CampusClawCommand(
             CampusClawAiService piAiService,
             ModelRegistry modelRegistry,

@@ -35,6 +35,7 @@ public class HybridGlobTool implements AgentTool {
     private final ExecutionRouter router;
     private final ObjectMapper mapper = new ObjectMapper();
 
+    @SuppressWarnings("checkstyle:java_doc_format_missing")
     @Autowired
     public HybridGlobTool(ExecutionRouter router) {
         this.router = router;

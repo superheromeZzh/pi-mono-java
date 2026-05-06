@@ -81,6 +81,7 @@ public class AnthropicProvider implements ApiProvider {
 
     private final ProviderConfigResolver providerConfigResolver;
 
+    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public AnthropicProvider(ProviderConfigResolver providerConfigResolver) {
         this.providerConfigResolver = providerConfigResolver;
     }

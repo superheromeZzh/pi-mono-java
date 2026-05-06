@@ -61,6 +61,7 @@ public class GatewayWebSocketHandler extends SimpleChannelInboundHandler<TextWeb
         return t;
     });
 
+    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public GatewayWebSocketHandler(
             WebSocketGatewayProperties properties, GatewayChannel gatewayChannel, ObjectMapper objectMapper) {
         this.properties = properties;

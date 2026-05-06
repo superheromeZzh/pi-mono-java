@@ -20,6 +20,7 @@ import com.campusclaw.agent.tool.CancellationToken;
  * @since [br_eCampusCore 25.1.0_Next]
  */
 public record BashExecutorOptions(Duration timeout, CancellationToken signal, Map<String, String> env) {
+    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public BashExecutorOptions {
         env = env == null ? Map.of() : Map.copyOf(env);
     }

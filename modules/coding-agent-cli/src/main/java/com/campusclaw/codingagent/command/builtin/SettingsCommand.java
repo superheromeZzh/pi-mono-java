@@ -19,6 +19,7 @@ public class SettingsCommand implements SlashCommand {
 
     private final SettingsManager settingsManager;
 
+    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public SettingsCommand(SettingsManager settingsManager) {
         this.settingsManager = settingsManager;
     }

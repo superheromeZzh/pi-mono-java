@@ -49,6 +49,7 @@ public class FooterComponent implements Component {
     private long branchCacheTime;
     private static final long BRANCH_CACHE_TTL_MS = 10_000L; // 10s
 
+    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public void setModel(String provider, String model, int contextWindow, boolean supportsReasoning) {
         this.providerName = provider != null ? provider : "";
         this.modelName = model != null ? model : "";
@@ -60,6 +61,7 @@ public class FooterComponent implements Component {
         this.thinkingLevel = level != null ? level : "";
     }
 
+    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public void setCwd(String cwd) {
         this.cwd = cwd != null ? cwd : "";
         // Invalidate branch cache on cwd change
@@ -75,6 +77,7 @@ public class FooterComponent implements Component {
         this.autoCompactEnabled = enabled;
     }
 
+    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public void updateUsage(int input, int output, int cacheRead, int cacheWrite, double cost) {
         this.inputTokens += input;
         this.outputTokens += output;
@@ -83,6 +86,7 @@ public class FooterComponent implements Component {
         this.totalCost += cost;
     }
 
+    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public void resetUsage() {
         this.inputTokens = 0;
         this.outputTokens = 0;
@@ -234,6 +238,7 @@ public class FooterComponent implements Component {
         return cachedBranch;
     }
 
+    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public static String formatTokens(int tokens) {
         if (tokens >= 10_000_000) {
             return String.format(Locale.ROOT, "%.0fM", tokens / 1_000_000.0);

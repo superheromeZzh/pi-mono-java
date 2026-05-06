@@ -40,11 +40,13 @@ public class CustomModelLoader {
     private final SettingsManager settingsManager;
     private final ModelRegistry modelRegistry;
 
+    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public CustomModelLoader(SettingsManager settingsManager, ModelRegistry modelRegistry) {
         this.settingsManager = settingsManager;
         this.modelRegistry = modelRegistry;
     }
 
+    @SuppressWarnings("checkstyle:java_doc_format_missing")
     @EventListener(ApplicationReadyEvent.class)
     public void registerCustomModels() {
         Settings settings;

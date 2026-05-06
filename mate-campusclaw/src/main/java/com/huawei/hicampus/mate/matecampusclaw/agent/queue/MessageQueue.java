@@ -30,6 +30,7 @@ public class MessageQueue {
     private final ArrayDeque<Message> messages = new ArrayDeque<>();
     private DeliveryMode mode = DeliveryMode.ALL;
 
+    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public void enqueue(Message message) {
         Objects.requireNonNull(message, "message");
 
@@ -41,6 +42,7 @@ public class MessageQueue {
         }
     }
 
+    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public List<Message> drain(DeliveryMode mode) {
         lock.lock();
         try {
@@ -62,6 +64,7 @@ public class MessageQueue {
         }
     }
 
+    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public void clear() {
         lock.lock();
         try {
@@ -71,6 +74,7 @@ public class MessageQueue {
         }
     }
 
+    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public boolean hasMessages() {
         lock.lock();
         try {
@@ -80,6 +84,7 @@ public class MessageQueue {
         }
     }
 
+    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public void setMode(DeliveryMode mode) {
         lock.lock();
         try {

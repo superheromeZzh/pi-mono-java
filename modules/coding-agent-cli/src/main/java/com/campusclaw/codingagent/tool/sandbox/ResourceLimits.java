@@ -24,6 +24,7 @@ public class ResourceLimits {
     private boolean privileged; // 是否特权模式
     private boolean autoRemove; // 执行后自动删除容器
 
+    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public static ResourceLimits defaults() {
         return ResourceLimits.builder()
                 .memoryMb(512)
@@ -35,6 +36,7 @@ public class ResourceLimits {
                 .build();
     }
 
+    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public static ResourceLimits highPerformance() {
         return ResourceLimits.builder()
                 .memoryMb(2048)
@@ -46,6 +48,7 @@ public class ResourceLimits {
                 .build();
     }
 
+    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public static ResourceLimits readonly() {
         return ResourceLimits.builder()
                 .memoryMb(256)

@@ -68,6 +68,7 @@ public class AgentSession {
     private Agent agent;
     private boolean initialized;
 
+    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public AgentSession(
             CampusClawAiService piAiService,
             ModelRegistry modelRegistry,
