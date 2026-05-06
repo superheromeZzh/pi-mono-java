@@ -206,6 +206,7 @@ public class Input implements Component, Focusable {
         return List.of(sb.toString());
     }
 
+    @SuppressWarnings("checkstyle:huge_cyclomatic_complexity")
     @Override
     public void handleInput(String data) {
         // Escape / Ctrl+C

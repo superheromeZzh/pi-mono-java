@@ -213,6 +213,7 @@ public class SkillManager {
      * @param originalName   original filename for deriving skill name (nullable; falls back to archivePath filename)
      * @return the installed skill's directory name
      */
+    @SuppressWarnings("checkstyle:huge_cyclomatic_complexity")
     public String importArchive(Path archivePath, String originalName) throws SkillInstallException {
         Path resolved = archivePath.toAbsolutePath().normalize();
 

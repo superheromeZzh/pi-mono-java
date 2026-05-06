@@ -27,6 +27,7 @@ public class SessionCommand implements SlashCommand {
         return "Show session info and stats";
     }
 
+    @SuppressWarnings("checkstyle:huge_cyclomatic_complexity")
     @Override
     public void execute(SlashCommandContext context, String arguments) {
         var session = context.session();

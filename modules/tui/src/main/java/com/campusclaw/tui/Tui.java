@@ -127,6 +127,7 @@ public class Tui {
      * a single burst of {@code \r\n} at the bottom lets the terminal scroll
      * old content into scrollback (preserving history for the user).
      */
+    @SuppressWarnings("checkstyle:huge_cyclomatic_complexity")
     public synchronized void render() {
         if (!running || root == null) {
             return;

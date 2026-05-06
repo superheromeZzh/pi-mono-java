@@ -308,6 +308,7 @@ public class Agent {
         }
     }
 
+    @SuppressWarnings("checkstyle:huge_cyclomatic_complexity")
     public static String formatError(Throwable throwable) {
         var current = throwable;
         // Unwrap standard wrapper exceptions

@@ -259,6 +259,7 @@ public class Editor implements Component, Focusable {
         return result;
     }
 
+    @SuppressWarnings("checkstyle:huge_cyclomatic_complexity")
     @Override
     public void handleInput(String data) {
         // --- Undo ---

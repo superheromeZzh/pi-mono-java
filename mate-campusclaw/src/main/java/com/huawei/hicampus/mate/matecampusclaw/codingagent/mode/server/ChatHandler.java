@@ -59,6 +59,7 @@ public class ChatHandler {
                         .bodyValue(Map.of("error", Agent.formatError(e))));
     }
 
+    @SuppressWarnings("checkstyle:huge_cyclomatic_complexity")
     private Mono<ServerResponse> handleChat(ChatRequest req) {
         if (req.message() == null || req.message().isBlank()) {
             return ServerResponse.badRequest().bodyValue(Map.of("error", "message is required"));

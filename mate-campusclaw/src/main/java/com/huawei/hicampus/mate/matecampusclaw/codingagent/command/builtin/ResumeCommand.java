@@ -29,6 +29,7 @@ public class ResumeCommand implements SlashCommand {
         return "Resume a different session";
     }
 
+    @SuppressWarnings("checkstyle:huge_cyclomatic_complexity")
     @Override
     public void execute(SlashCommandContext context, String arguments) {
         var sm = context.session().getSessionManager();

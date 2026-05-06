@@ -27,6 +27,7 @@ public final class AnsiUtils {
      *
      * @return the escape code and its length, or null if no escape sequence starts at pos
      */
+    @SuppressWarnings("checkstyle:huge_cyclomatic_complexity")
     static AnsiCode extractAnsiCode(String str, int pos) {
         if (pos >= str.length() || str.charAt(pos) != '\033') {
             return null;
@@ -123,6 +124,7 @@ public final class AnsiUtils {
     /**
      * Checks if a code point is East Asian Fullwidth or Wide.
      */
+    @SuppressWarnings("checkstyle:huge_cyclomatic_complexity")
     private static boolean isEastAsianWide(int cp) {
         // CJK Unified Ideographs
         if (cp >= 0x4E00 && cp <= 0x9FFF) {
@@ -326,6 +328,7 @@ public final class AnsiUtils {
      * @param endCol   the ending visible column (exclusive)
      * @return the sliced text with ANSI codes preserved
      */
+    @SuppressWarnings("checkstyle:huge_cyclomatic_complexity")
     public static String sliceByColumn(String text, int startCol, int endCol) {
         if (text == null || text.isEmpty() || endCol <= startCol) {
             return "";

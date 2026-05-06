@@ -7,6 +7,10 @@
     <property name="severity" value="error"/>
     <property name="fileExtensions" value="java"/>
 
+    <!-- 让 @SuppressWarnings("checkstyle:xxx") 注解能抑制对应规则的违规。
+         需要 TreeWalker 内的 SuppressWarningsHolder 配合。 -->
+    <module name="SuppressWarningsFilter"/>
+
     <!-- FileHeaderComment: every .java file must start with the Huawei copyright header.
          Year range \d{4}-\d{4} accepts e.g. 2026-2026 or 2024-2026. -->
     <module name="RegexpHeader">
@@ -16,6 +20,8 @@
     </module>
 
     <module name="TreeWalker">
+        <module name="SuppressWarningsHolder"/>
+
         <module name="NeedBraces">
             <property name="tokens" value="LITERAL_IF, LITERAL_ELSE, LITERAL_FOR, LITERAL_WHILE, LITERAL_DO"/>
         </module>
@@ -52,6 +58,15 @@
             <property name="format" value="\bString\.format\s*\(\s*&quot;"/>
             <property name="message" value="String.format 必须显式以 Locale.ROOT 或 Locale.ENGLISH 作为第一参数。"/>
             <property name="ignoreComments" value="true"/>
+        </module>
+
+        <!-- huge_cyclomatic_complexity: 圈复杂度超阈值即拒。
+             switchBlockAsSingleDecisionPoint=true: 整段 switch 算 1 个决策点
+             而非每 case 一个，避免合理的查表式 switch 被误判为「复杂」。 -->
+        <module name="CyclomaticComplexity">
+            <property name="id" value="huge_cyclomatic_complexity"/>
+            <property name="max" value="15"/>
+            <property name="switchBlockAsSingleDecisionPoint" value="true"/>
         </module>
     </module>
 </module>

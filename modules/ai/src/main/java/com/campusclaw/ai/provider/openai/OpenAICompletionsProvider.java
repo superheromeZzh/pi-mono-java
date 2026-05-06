@@ -238,6 +238,7 @@ public class OpenAICompletionsProvider implements ApiProvider {
         return builder.build();
     }
 
+    @SuppressWarnings("checkstyle:huge_cyclomatic_complexity")
     private void processStream(
             OpenAIClient client,
             ChatCompletionCreateParams params,

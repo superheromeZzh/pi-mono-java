@@ -53,6 +53,7 @@ public class MessageTransformer {
      * @param targetModelId  the target model id
      * @return transformed messages
      */
+    @SuppressWarnings("checkstyle:huge_cyclomatic_complexity")
     public static List<Message> transform(
             List<Message> messages, Api targetApi, String targetProvider, String targetModelId) {
 
