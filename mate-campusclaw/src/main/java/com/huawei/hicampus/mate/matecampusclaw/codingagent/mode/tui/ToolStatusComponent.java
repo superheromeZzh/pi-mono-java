@@ -62,6 +62,7 @@ public class ToolStatusComponent implements Component {
     private long startTimeMs;
     private long endTimeMs;
 
+    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public ToolStatusComponent(String toolName) {
         this.toolName = toolName;
         this.startTimeMs = System.currentTimeMillis();
@@ -71,10 +72,12 @@ public class ToolStatusComponent implements Component {
         this.args = args;
     }
 
+    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public void updatePartialResult(Object partialResult) {
         this.partialResultSummary = summarizeResult(partialResult);
     }
 
+    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public void setComplete(boolean error, Object result) {
         this.complete = true;
         this.error = error;
@@ -84,6 +87,7 @@ public class ToolStatusComponent implements Component {
         invalidate();
     }
 
+    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public void setComplete(boolean error) {
         setComplete(error, null);
     }

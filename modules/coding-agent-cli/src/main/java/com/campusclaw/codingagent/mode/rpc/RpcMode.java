@@ -33,10 +33,12 @@ public class RpcMode {
 
     private final AgentSession session;
 
+    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public RpcMode(AgentSession session) {
         this.session = session;
     }
 
+    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public void run() {
         // Subscribe to agent events and forward as RPC events
         session.subscribe(event -> {

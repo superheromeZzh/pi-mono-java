@@ -12,6 +12,7 @@ import com.campusclaw.codingagent.tool.sandbox.SandboxSecurityPolicy;
 
 @SuppressWarnings("checkstyle:top_class_comment")
 public class SandboxQuickTest {
+    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public static void main(String[] args) throws Exception {
         System.out.println("=== Docker 沙箱测试 ===\n");
 

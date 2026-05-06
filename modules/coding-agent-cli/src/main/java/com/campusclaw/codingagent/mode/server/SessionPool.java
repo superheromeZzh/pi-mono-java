@@ -62,6 +62,7 @@ public class SessionPool {
 
     record Entry(AgentSession session, long lastAccess) {}
 
+    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public SessionPool(
             CampusClawAiService aiService,
             ModelRegistry modelRegistry,
@@ -71,6 +72,7 @@ public class SessionPool {
         this(aiService, modelRegistry, promptBuilder, tools, baseConfig, null, false, true);
     }
 
+    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public SessionPool(
             CampusClawAiService aiService,
             ModelRegistry modelRegistry,
@@ -82,6 +84,7 @@ public class SessionPool {
         this(aiService, modelRegistry, promptBuilder, tools, baseConfig, sandboxParser, useSandbox, true);
     }
 
+    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public SessionPool(
             CampusClawAiService aiService,
             ModelRegistry modelRegistry,

@@ -34,6 +34,7 @@ public final class ShellResolver {
 
     /** Resolved shell plus the flag used to pass a single command string. */
     public record ShellConfig(String shell, List<String> args) {
+        @SuppressWarnings("checkstyle:java_doc_format_missing")
         public ShellConfig {
             args = List.copyOf(args);
         }

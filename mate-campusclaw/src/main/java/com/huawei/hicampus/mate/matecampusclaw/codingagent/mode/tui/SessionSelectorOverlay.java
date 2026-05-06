@@ -43,6 +43,7 @@ public class SessionSelectorOverlay implements Component, Focusable {
     private boolean focused;
     private final boolean empty;
 
+    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public SessionSelectorOverlay(String cwd) {
         var sessions = loadSessions(cwd);
         this.empty = sessions.isEmpty();

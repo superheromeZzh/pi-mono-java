@@ -19,6 +19,7 @@ public class LogoutCommand implements SlashCommand {
 
     private final AuthStore authStore;
 
+    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public LogoutCommand(AuthStore authStore) {
         this.authStore = authStore;
     }

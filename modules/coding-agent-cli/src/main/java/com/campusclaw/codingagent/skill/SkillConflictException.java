@@ -19,11 +19,13 @@ public class SkillConflictException extends SkillInstallException {
 
     private final List<Conflict> conflicts;
 
+    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public SkillConflictException(List<Conflict> conflicts) {
         super(buildMessage(conflicts));
         this.conflicts = List.copyOf(conflicts);
     }
 
+    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public List<Conflict> conflicts() {
         return conflicts;
     }

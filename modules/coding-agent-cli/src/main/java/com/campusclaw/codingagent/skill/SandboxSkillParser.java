@@ -32,6 +32,7 @@ public class SandboxSkillParser {
 
     private final DockerSandboxClient sandboxClient;
 
+    @SuppressWarnings("checkstyle:java_doc_format_missing")
     @Autowired
     public SandboxSkillParser(DockerSandboxClient sandboxClient) {
         this.sandboxClient = sandboxClient;

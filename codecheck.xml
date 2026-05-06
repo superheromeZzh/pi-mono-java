@@ -108,5 +108,23 @@
             <property name="message" value="long 类型变量赋值的整数字面量必须以 L 结尾（如 60_000L），避免静默的 int→long 转换。"/>
             <property name="ignoreComments" value="true"/>
         </module>
+
+        <!-- JavaDocFormat: public 方法必须有 Javadoc 描述功能。@param / @return / @throws
+             按需补全（allowMissingParamTags=true / allowMissingReturnTag=true 让 tag 可选；
+             一旦写了，JavadocMethod 会校验与实际签名是否一致）。 -->
+        <module name="MissingJavadocMethod">
+            <property name="id" value="java_doc_format_missing"/>
+            <property name="scope" value="public"/>
+            <!-- getter/setter / equals/hashCode/toString / 构造器有时无需详注。 -->
+            <property name="allowMissingPropertyJavadoc" value="true"/>
+            <property name="allowedAnnotations" value="Override,Generated,GeneratedBy,Bean"/>
+        </module>
+        <module name="JavadocMethod">
+            <property name="id" value="java_doc_format_consistency"/>
+            <property name="accessModifiers" value="public"/>
+            <property name="allowMissingParamTags" value="true"/>
+            <property name="allowMissingReturnTag" value="true"/>
+            <property name="allowedAnnotations" value="Override,Generated,GeneratedBy,Bean"/>
+        </module>
     </module>
 </module>

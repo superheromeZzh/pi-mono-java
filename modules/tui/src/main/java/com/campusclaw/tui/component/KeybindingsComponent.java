@@ -68,26 +68,31 @@ public class KeybindingsComponent implements Component {
         return Collections.unmodifiableList(keybindings);
     }
 
+    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public void setKeybindings(List<Keybinding> keybindings) {
         this.keybindings = keybindings != null ? new ArrayList<>(keybindings) : new ArrayList<>();
         invalidate();
     }
 
+    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public void setSeparator(String separator) {
         this.separator = separator != null ? separator : "  |  ";
         invalidate();
     }
 
+    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public void setKeyStyleFn(UnaryOperator<String> keyStyleFn) {
         this.keyStyleFn = keyStyleFn;
         invalidate();
     }
 
+    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public void setDescStyleFn(UnaryOperator<String> descStyleFn) {
         this.descStyleFn = descStyleFn;
         invalidate();
     }
 
+    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public void setSeparatorStyleFn(UnaryOperator<String> separatorStyleFn) {
         this.separatorStyleFn = separatorStyleFn;
         invalidate();

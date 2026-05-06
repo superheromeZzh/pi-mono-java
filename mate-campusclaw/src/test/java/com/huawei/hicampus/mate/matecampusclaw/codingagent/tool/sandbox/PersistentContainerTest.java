@@ -14,6 +14,7 @@ import com.huawei.hicampus.mate.matecampusclaw.codingagent.config.ToolExecutionP
  */
 public class PersistentContainerTest {
 
+    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public static void main(String[] args) throws Exception {
         System.out.println("=== 常驻容器模式测试 ===\n");
 

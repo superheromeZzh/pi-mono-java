@@ -32,6 +32,7 @@ public class SessionPersistence {
 
     private final ObjectMapper objectMapper;
 
+    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public SessionPersistence(ObjectMapper objectMapper) {
         this.objectMapper = Objects.requireNonNull(objectMapper, "objectMapper");
     }

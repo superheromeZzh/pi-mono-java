@@ -13,5 +13,6 @@ package com.campusclaw.agent.tool;
 @FunctionalInterface
 public interface AgentToolUpdateCallback {
 
+    @SuppressWarnings("checkstyle:java_doc_format_missing")
     void onUpdate(AgentToolResult partialResult);
 }

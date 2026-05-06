@@ -31,11 +31,13 @@ public class CampusClawApplication implements CommandLineRunner, ExitCodeGenerat
     private final IFactory factory;
     private int exitCode;
 
+    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public CampusClawApplication(CampusClawCommand piCommand, IFactory factory) {
         this.piCommand = piCommand;
         this.factory = factory;
     }
 
+    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public static void main(String[] args) {
         // Suppress JVM startup warnings that pollute terminal scrollback:
         // - Netty: avoid sun.misc.Unsafe (eliminates JVM module access warnings)

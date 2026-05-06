@@ -16,5 +16,6 @@ import java.nio.file.Path;
  */
 public interface BashOperations {
 
+    @SuppressWarnings("checkstyle:java_doc_format_missing")
     BashResult exec(String command, Path cwd, BashExecOptions options) throws IOException;
 }

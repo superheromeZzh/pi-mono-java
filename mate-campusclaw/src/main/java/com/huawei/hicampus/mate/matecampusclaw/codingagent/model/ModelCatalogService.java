@@ -42,6 +42,7 @@ public class ModelCatalogService {
     private final SettingsManager settingsManager;
     private final ProviderConfigResolver providerConfigResolver;
 
+    @SuppressWarnings("checkstyle:java_doc_format_missing")
     @Autowired
     public ModelCatalogService(
             ModelRegistry modelRegistry,

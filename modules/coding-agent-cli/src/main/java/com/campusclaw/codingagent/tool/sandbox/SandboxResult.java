@@ -27,6 +27,7 @@ public class SandboxResult {
         return exitCode != null && exitCode == 0 && errorMessage == null && !timeout;
     }
 
+    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public static SandboxResult error(String message, String stderr) {
         return SandboxResult.builder()
                 .errorMessage(message)
@@ -35,6 +36,7 @@ public class SandboxResult {
                 .build();
     }
 
+    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public static SandboxResult timeout(int timeoutSeconds) {
         return SandboxResult.builder()
                 .timeout(true)
@@ -43,6 +45,7 @@ public class SandboxResult {
                 .build();
     }
 
+    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public static SandboxResult success(String stdout) {
         return SandboxResult.builder().stdout(stdout).exitCode(0).build();
     }

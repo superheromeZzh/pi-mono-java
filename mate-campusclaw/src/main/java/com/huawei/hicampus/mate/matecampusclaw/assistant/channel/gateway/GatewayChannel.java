@@ -56,6 +56,7 @@ public class GatewayChannel implements Channel {
 
     record PendingRequest(String reqId, String channelId, String sessionKey) {}
 
+    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public GatewayChannel(
             WebSocketGatewayProperties properties,
             ChannelRegistry channelRegistry,
@@ -65,6 +66,7 @@ public class GatewayChannel implements Channel {
         this.messageSubmitter = messageSubmitter;
     }
 
+    @SuppressWarnings("checkstyle:java_doc_format_missing")
     @PostConstruct
     public void register() {
         channelRegistry.register(this);

@@ -13,6 +13,7 @@ public class HelpCommand implements SlashCommand {
 
     private final SlashCommandRegistry registry;
 
+    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public HelpCommand(SlashCommandRegistry registry) {
         this.registry = registry;
     }

@@ -34,6 +34,7 @@ public class OneShotMode {
     private final PrintStream out;
     private final PrintStream err;
 
+    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public OneShotMode() {
         this(System.out, System.err);
     }

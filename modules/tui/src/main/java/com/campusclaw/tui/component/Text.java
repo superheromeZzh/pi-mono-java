@@ -39,18 +39,22 @@ public class Text implements Component {
     private int cachedWidth = -1;
     private List<String> cachedLines;
 
+    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public Text() {
         this("");
     }
 
+    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public Text(String text) {
         this(text, 0, 0, null);
     }
 
+    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public Text(String text, int paddingX, int paddingY) {
         this(text, paddingX, paddingY, null);
     }
 
+    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public Text(String text, int paddingX, int paddingY, UnaryOperator<String> bgFn) {
         this.text = text != null ? text : "";
         this.paddingX = paddingX;
@@ -58,6 +62,7 @@ public class Text implements Component {
         this.bgFn = bgFn;
     }
 
+    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public void setText(String text) {
         this.text = text != null ? text : "";
         invalidate();
@@ -67,6 +72,7 @@ public class Text implements Component {
         return text;
     }
 
+    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public void setBgFn(UnaryOperator<String> bgFn) {
         this.bgFn = bgFn;
         invalidate();

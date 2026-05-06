@@ -22,6 +22,7 @@ public class MyBatisChatMemoryRepository implements ChatMemoryRepository {
     private final ObjectMapper objectMapper;
     private final ChatMemoryMapper mapper;
 
+    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public MyBatisChatMemoryRepository(ObjectMapper objectMapper, ChatMemoryMapper mapper) {
         this.objectMapper = Objects.requireNonNull(objectMapper, "objectMapper");
         this.mapper = Objects.requireNonNull(mapper, "mapper");

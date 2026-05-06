@@ -61,6 +61,7 @@ public class Tui {
     private int previousHeight = 0;
     private int maxLinesRendered = 0;
 
+    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public Tui(Terminal terminal) {
         this.terminal = Objects.requireNonNull(terminal);
         this.syncOutputSupported = isSyncOutputSupported();

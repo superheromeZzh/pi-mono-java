@@ -16,11 +16,13 @@ public class ChannelRegistry {
     private final ConcurrentHashMap<String, Channel> channels = new ConcurrentHashMap<>();
     private volatile Channel latestChannel;
 
+    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public void register(Channel channel) {
         channels.put(channel.getName(), channel);
         latestChannel = channel;
     }
 
+    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public Channel get(String name) {
         return channels.get(name);
     }

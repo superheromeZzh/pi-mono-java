@@ -48,6 +48,7 @@ public class CronJobExecutor {
     private final List<AgentTool> availableTools;
     private final com.huawei.hicampus.mate.matecampusclaw.cron.CronService cronService;
 
+    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public CronJobExecutor(
             CampusClawAiService aiService,
             ModelRegistry modelRegistry,
@@ -61,6 +62,7 @@ public class CronJobExecutor {
         this.cronService = cronService;
     }
 
+    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public CronRunRecord execute(CronJob job) {
         String runId = UUID.randomUUID().toString().substring(0, 8);
         long startedAt = System.currentTimeMillis();

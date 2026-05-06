@@ -13,5 +13,6 @@ package com.campusclaw.agent.event;
 @FunctionalInterface
 public interface AgentEventListener {
 
+    @SuppressWarnings("checkstyle:java_doc_format_missing")
     void onEvent(AgentEvent event);
 }

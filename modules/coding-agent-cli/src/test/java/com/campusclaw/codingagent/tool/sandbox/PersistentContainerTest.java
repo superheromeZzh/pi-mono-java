@@ -14,6 +14,7 @@ import com.campusclaw.codingagent.config.ToolExecutionProperties;
  */
 public class PersistentContainerTest {
 
+    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public static void main(String[] args) throws Exception {
         System.out.println("=== 常驻容器模式测试 ===\n");
 

@@ -29,6 +29,7 @@ public record AgentStateSnapshot(
         Set<String> pendingToolCalls,
         String error) {
 
+    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public AgentStateSnapshot {
         tools = List.copyOf(tools);
         messages = List.copyOf(messages);

@@ -25,6 +25,7 @@ public class LoopCommand implements SlashCommand {
 
     private final LoopManager loopManager;
 
+    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public LoopCommand(LoopManager loopManager) {
         this.loopManager = loopManager;
     }

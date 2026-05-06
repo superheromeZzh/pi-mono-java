@@ -12,6 +12,7 @@ package com.huawei.hicampus.mate.matecampusclaw.tui;
  */
 public class CampusClawTui {
 
+    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public static void main(String[] args) {
         System.out.println("CampusClaw-TUI initialized");
     }

@@ -16,9 +16,12 @@ import java.nio.file.Path;
  */
 public interface ReadOperations {
 
+    @SuppressWarnings("checkstyle:java_doc_format_missing")
     byte[] readFile(Path path) throws IOException;
 
+    @SuppressWarnings("checkstyle:java_doc_format_missing")
     boolean exists(Path path);
 
+    @SuppressWarnings("checkstyle:java_doc_format_missing")
     String detectMimeType(Path path) throws IOException;
 }

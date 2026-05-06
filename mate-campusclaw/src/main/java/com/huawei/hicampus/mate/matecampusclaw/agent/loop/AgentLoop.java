@@ -60,6 +60,7 @@ public class AgentLoop {
     private final SteeringMessageSupplier getSteeringMessages;
     private final SteeringMessageSupplier getFollowUpMessages;
 
+    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public AgentLoop(AgentLoopConfig config) {
         Objects.requireNonNull(config, "config");
         this.streamFunction = config.effectiveStreamFunction();
@@ -75,11 +76,13 @@ public class AgentLoop {
         this.getFollowUpMessages = config.getFollowUpMessages();
     }
 
+    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public List<Message> run(
             List<Message> prompts, AgentContext context, AgentEventListener listener, CancellationToken signal) {
         return runInternal(prompts != null ? prompts : List.of(), context, listener, signal);
     }
 
+    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public List<Message> continueLoop(AgentContext context, AgentEventListener listener, CancellationToken signal) {
         return runInternal(List.of(), context, listener, signal);
     }

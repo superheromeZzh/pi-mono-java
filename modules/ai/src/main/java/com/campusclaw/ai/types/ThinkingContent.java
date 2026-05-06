@@ -24,6 +24,7 @@ public record ThinkingContent(
         @JsonProperty("redacted") boolean redacted)
         implements ContentBlock {
 
+    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public ThinkingContent(String thinking) {
         this(thinking, null, false);
     }

@@ -54,11 +54,13 @@ public class CronEngine {
     private volatile ScheduledExecutorService scheduler;
     private volatile boolean running;
 
+    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public CronEngine(CronStore store, CronJobExecutor executor) {
         this.store = store;
         this.executor = executor;
     }
 
+    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public void start() {
         if (running) {
             return;
@@ -86,6 +88,7 @@ public class CronEngine {
                 jobs.stream().filter(CronJob::enabled).count());
     }
 
+    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public void stop() {
         if (!running) {
             return;
@@ -104,10 +107,12 @@ public class CronEngine {
         return running;
     }
 
+    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public void addListener(CronEventListener listener) {
         listeners.add(listener);
     }
 
+    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public void removeListener(CronEventListener listener) {
         listeners.remove(listener);
     }

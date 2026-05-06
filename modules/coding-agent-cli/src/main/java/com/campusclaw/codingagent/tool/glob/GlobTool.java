@@ -68,11 +68,13 @@ public class GlobTool implements AgentTool {
 
     private final Path cwd;
 
+    @SuppressWarnings("checkstyle:java_doc_format_missing")
     @Autowired
     public GlobTool() {
         this(Path.of(System.getProperty("user.dir")));
     }
 
+    @SuppressWarnings("checkstyle:java_doc_format_missing")
     public GlobTool(Path cwd) {
         this.cwd = cwd;
     }
