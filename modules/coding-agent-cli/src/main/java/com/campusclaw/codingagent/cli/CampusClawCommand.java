@@ -955,83 +955,83 @@ public class CampusClawCommand implements Callable<Integer> {
         if (action == null) {
             System.out.println(
                     """
-                    Usage: campusclaw skill <command> [args]
+        Usage: campusclaw skill <command> [args]
 
-                    Commands:
-                      install <git-url>    Install a skill from a git repository
-                      import <archive>     Import a skill from a .zip or .tar.gz archive
-                      list                 List installed skills
-                      remove <name>        Remove an installed skill
-                      link <path>          Symlink a local skill directory (for development)
-                      update <name>        Update a git-installed skill (git pull)
+        Commands:
+          install <git-url>    Install a skill from a git repository
+          import <archive>     Import a skill from a .zip or .tar.gz archive
+          list                 List installed skills
+          remove <name>        Remove an installed skill
+          link <path>          Symlink a local skill directory (for development)
+          update <name>        Update a git-installed skill (git pull)
 
-                    Examples:
-                      campusclaw skill install https://github.com/user/my-skill
-                      campusclaw skill import ./my-skill.zip
-                      campusclaw skill import ~/Downloads/skill-pack.tar.gz
-                      campusclaw skill link ./my-local-skill
-                      campusclaw skill list
-                      campusclaw skill remove my-skill
-                      campusclaw skill update my-skill""");
+        Examples:
+          campusclaw skill install https://github.com/user/my-skill
+          campusclaw skill import ./my-skill.zip
+          campusclaw skill import ~/Downloads/skill-pack.tar.gz
+          campusclaw skill link ./my-local-skill
+          campusclaw skill list
+          campusclaw skill remove my-skill
+          campusclaw skill update my-skill""");
             return;
         }
         switch (action) {
             case "install" ->
                 System.out.println(
                         """
-                    Usage: campusclaw skill install <git-url>
+        Usage: campusclaw skill install <git-url>
 
-                    Clone a git repository into ~/.campusclaw/agent/skills/.
-                    The repository must contain at least one SKILL.md file.
+        Clone a git repository into ~/.campusclaw/agent/skills/.
+        The repository must contain at least one SKILL.md file.
 
-                    Examples:
-                      campusclaw skill install https://github.com/user/my-skill
-                      campusclaw skill install git@github.com:user/skill-collection.git""");
+        Examples:
+          campusclaw skill install https://github.com/user/my-skill
+          campusclaw skill install git@github.com:user/skill-collection.git""");
             case "import" ->
                 System.out.println(
                         """
-                    Usage: campusclaw skill import <archive-path>
+        Usage: campusclaw skill import <archive-path>
 
-                    Extract a .zip or .tar.gz archive into ~/.campusclaw/agent/skills/.
-                    The archive must contain at least one SKILL.md file.
-                    If the archive contains a single top-level directory, it will be unwrapped.
+        Extract a .zip or .tar.gz archive into ~/.campusclaw/agent/skills/.
+        The archive must contain at least one SKILL.md file.
+        If the archive contains a single top-level directory, it will be unwrapped.
 
-                    Supported formats: .zip, .tar.gz, .tgz
+        Supported formats: .zip, .tar.gz, .tgz
 
-                    Examples:
-                      campusclaw skill import ./my-skill.zip
-                      campusclaw skill import ~/Downloads/skill-collection.tar.gz""");
+        Examples:
+          campusclaw skill import ./my-skill.zip
+          campusclaw skill import ~/Downloads/skill-collection.tar.gz""");
             case "list", "ls" ->
                 System.out.println(
                         """
-                    Usage: campusclaw skill list
+        Usage: campusclaw skill list
 
-                    List all skills in ~/.campusclaw/agent/skills/ with their source and description.""");
+        List all skills in ~/.campusclaw/agent/skills/ with their source and description.""");
             case "remove", "rm", "uninstall" ->
                 System.out.println(
                         """
-                    Usage: campusclaw skill remove <name>
+        Usage: campusclaw skill remove <name>
 
-                    Remove an installed skill by its directory name.
-                    For git-installed skills, deletes the cloned directory.
-                    For linked skills, removes the symlink (does not delete the original).""");
+        Remove an installed skill by its directory name.
+        For git-installed skills, deletes the cloned directory.
+        For linked skills, removes the symlink (does not delete the original).""");
             case "link" ->
                 System.out.println(
                         """
-                    Usage: campusclaw skill link <path>
+        Usage: campusclaw skill link <path>
 
-                    Create a symbolic link in ~/.campusclaw/agent/skills/ pointing to a local directory.
-                    Useful for developing and testing skills without copying files.
+        Create a symbolic link in ~/.campusclaw/agent/skills/ pointing to a local directory.
+        Useful for developing and testing skills without copying files.
 
-                    Example:
-                      campusclaw skill link ./my-skill-in-progress""");
+        Example:
+          campusclaw skill link ./my-skill-in-progress""");
             case "update" ->
                 System.out.println(
                         """
-                    Usage: campusclaw skill update <name>
+        Usage: campusclaw skill update <name>
 
-                    Run 'git pull --ff-only' in the skill directory.
-                    Only works for git-installed skills.""");
+        Run 'git pull --ff-only' in the skill directory.
+        Only works for git-installed skills.""");
             default -> printSkillHelp(null);
         }
     }
@@ -1041,37 +1041,37 @@ public class CampusClawCommand implements Callable<Integer> {
             case "install" ->
                 System.out.println(
                         """
-                    Usage: pi install <source> [-l]
+        Usage: pi install <source> [-l]
 
-                    Install a package and add it to settings.
+        Install a package and add it to settings.
 
-                    Options:
-                      -l, --local    Install project-locally (.campusclaw/settings.json)
+        Options:
+          -l, --local    Install project-locally (.campusclaw/settings.json)
 
-                    Examples:
-                      pi install npm:@foo/bar
-                      pi install git:github.com/user/repo
-                      pi install ./local/path""");
+        Examples:
+          pi install npm:@foo/bar
+          pi install git:github.com/user/repo
+          pi install ./local/path""");
             case "remove" ->
                 System.out.println(
                         """
-                    Usage: pi remove <source> [-l]
+        Usage: pi remove <source> [-l]
 
-                    Remove a package source from settings.
-                    Alias: pi uninstall <source> [-l]""");
+        Remove a package source from settings.
+        Alias: pi uninstall <source> [-l]""");
             case "update" ->
                 System.out.println(
                         """
-                    Usage: pi update [source]
+        Usage: pi update [source]
 
-                    Update installed packages.
-                    If <source> is provided, only that package is updated.""");
+        Update installed packages.
+        If <source> is provided, only that package is updated.""");
             case "list" ->
                 System.out.println(
                         """
-                    Usage: pi list
+        Usage: pi list
 
-                    List installed packages from user and project settings.""");
+        List installed packages from user and project settings.""");
             default -> System.out.println("No help available for: " + command);
         }
     }
