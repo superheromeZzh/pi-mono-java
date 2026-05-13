@@ -15,6 +15,7 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import com.campusclaw.agent.util.LoggingUncaughtExceptionHandler;
 import com.campusclaw.assistant.channel.gateway.protocol.ChatEventPayload;
 import com.campusclaw.assistant.channel.gateway.protocol.ConnectParams;
 import com.campusclaw.assistant.channel.gateway.protocol.ErrorBody;
@@ -58,6 +59,7 @@ public class GatewayWebSocketHandler extends SimpleChannelInboundHandler<TextWeb
     private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor(r -> {
         Thread t = new Thread(r, "gateway-tick");
         t.setDaemon(true);
+        t.setUncaughtExceptionHandler(LoggingUncaughtExceptionHandler.INSTANCE);
         return t;
     });
 

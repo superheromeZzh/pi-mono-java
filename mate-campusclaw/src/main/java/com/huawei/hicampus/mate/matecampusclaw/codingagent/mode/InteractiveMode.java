@@ -31,6 +31,7 @@ import com.huawei.hicampus.mate.matecampusclaw.agent.event.ToolExecutionStartEve
 import com.huawei.hicampus.mate.matecampusclaw.agent.event.ToolExecutionUpdateEvent;
 import com.huawei.hicampus.mate.matecampusclaw.agent.event.TurnStartEvent;
 import com.huawei.hicampus.mate.matecampusclaw.agent.tool.CancellationToken;
+import com.huawei.hicampus.mate.matecampusclaw.agent.util.LoggingUncaughtExceptionHandler;
 import com.huawei.hicampus.mate.matecampusclaw.ai.model.ModelRegistry;
 import com.huawei.hicampus.mate.matecampusclaw.ai.stream.AssistantMessageEvent;
 import com.huawei.hicampus.mate.matecampusclaw.ai.types.AssistantMessage;
@@ -925,6 +926,7 @@ public class InteractiveMode {
         var spinnerTimer = Executors.newSingleThreadScheduledExecutor(r -> {
             var t = new Thread(r, "spinner-timer");
             t.setDaemon(true);
+            t.setUncaughtExceptionHandler(LoggingUncaughtExceptionHandler.INSTANCE);
             return t;
         });
         spinnerTimer.scheduleAtFixedRate(

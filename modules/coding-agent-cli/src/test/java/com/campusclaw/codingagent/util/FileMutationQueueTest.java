@@ -22,6 +22,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import com.campusclaw.agent.util.LoggingUncaughtExceptionHandler;
+
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
@@ -84,6 +86,7 @@ class FileMutationQueueTest {
                     throw new RuntimeException(e);
                 }
             });
+            t1.setUncaughtExceptionHandler(LoggingUncaughtExceptionHandler.INSTANCE);
             t1.start();
 
             // Wait until t1 has acquired the lock
@@ -104,6 +107,7 @@ class FileMutationQueueTest {
                     throw new RuntimeException(e);
                 }
             });
+            t2.setUncaughtExceptionHandler(LoggingUncaughtExceptionHandler.INSTANCE);
             t2.start();
 
             // Give t2 time to start and block on the lock

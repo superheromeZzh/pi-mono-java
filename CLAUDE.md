@@ -130,6 +130,48 @@ int toolCount = 0;
 ### 圈复杂度（CC ≤ 15）
 方法的 cyclomatic complexity 不得超过 15（`switchBlockAsSingleDecisionPoint=true`，整段 switch 算 1 个决策点）。超阈值的方法必须拆分提取，**不要新增 `@SuppressWarnings("checkstyle:huge_cyclomatic_complexity")`**——存量带此注解的是历史欠债，等待重构，不是范例。
 
+### 后台线程必须装 UncaughtExceptionHandler（软约束，全员遵守）
+
+**不**由 Checkstyle 拦截——AST 级判断「`new Thread(...)` 后是否在 `start()` 之前调用了 `setUncaughtExceptionHandler`」复杂度与收益不成正比，靠规范+评审保证。但凡发现存量违规，与硬规则同等优先级修复。
+
+**规则**：任何直接 `new Thread(...)` 实例化（包括 `ThreadFactory` lambda 内部那行 `new Thread(r, "name")`）都**必须**在线程 `.start()` 之前调用 `setUncaughtExceptionHandler`。默认走仓库提供的单例：
+
+```java
+import com.campusclaw.agent.util.LoggingUncaughtExceptionHandler;
+```
+
+只有线程真有定制错误处理需求（例如失败要重启、要回写状态）才另写 handler。
+
+**理由**：不装 handler，后台线程抛未捕获异常 JVM 默认只打到 `System.err` 并悄悄终止线程——心跳、流读取、调度任务在生产可能静默瘫痪，日志/告警拿不到任何信号。
+
+✅ 正例（独立线程）：
+```java
+Thread drainer = new Thread(this::drain, "bash-output-drainer");
+drainer.setDaemon(true);
+drainer.setUncaughtExceptionHandler(LoggingUncaughtExceptionHandler.INSTANCE);
+drainer.start();
+```
+
+✅ 正例（ThreadFactory lambda）：
+```java
+Executors.newSingleThreadScheduledExecutor(r -> {
+    Thread t = new Thread(r, "cron-engine");
+    t.setDaemon(true);
+    t.setUncaughtExceptionHandler(LoggingUncaughtExceptionHandler.INSTANCE);
+    return t;
+});
+```
+
+❌ 反例（裸链式，handler 没法挂）：
+```java
+new Thread(task).start();                              // 没装 handler
+new Thread(task, "worker").start();                    // 同上
+```
+
+链式 `new Thread(...).start()` 必须先拆成局部变量再装 handler——这是「方便挂 handler」的硬要求，不是风格偏好。
+
+**范围**：本规则只覆盖 `new Thread(...)` 直接实例化。`Executors.newFixedThreadPool(...)` 默认 thread factory、`CompletableFuture.runAsync(...)` / `ForkJoinPool.commonPool()` 等共享池走 Future 异常路径，不在此规则覆盖范围。
+
 ### 任何方法的 Javadoc 写了就要写全
 **不强制**方法必须有 Javadoc——但只要写了，就必须 tag 齐全且与签名一致。规则覆盖所有访问级别（public / protected / package-private / private），原则是「写就写好，不写不查」。
 

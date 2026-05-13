@@ -16,6 +16,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import com.campusclaw.agent.util.LoggingUncaughtExceptionHandler;
 import com.campusclaw.assistant.channel.MessageSubmitter;
 
 import org.slf4j.Logger;
@@ -57,6 +58,7 @@ public class LoopManager implements MessageSubmitter {
         this.scheduler = Executors.newSingleThreadScheduledExecutor(r -> {
             Thread t = new Thread(r, "loop-manager");
             t.setDaemon(true);
+            t.setUncaughtExceptionHandler(LoggingUncaughtExceptionHandler.INSTANCE);
             return t;
         });
         log.debug("LoopManager initialized");
