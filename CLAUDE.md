@@ -74,6 +74,13 @@ Key runtime concepts:
 
 年份范围正则是 `\d{4}-\d{4}`，单年用同年填两遍即可（如 `2026-2026`）。
 
+### 禁止 TODO/FIXME 注释（交付代码）
+正式交付给客户的代码不应包含未完成标记。Checkstyle 规则 `no_todo_fixme_in_delivery_code` 会拒绝任何形如 `// TODO`、`/* FIXME */`、`* TODO`（Javadoc 续行）的注释，覆盖 `src/main/java` 与 `src/test/java`。
+
+未完成或暂缓实现的工作改记录到 [`docs/DEFERRED.md`](docs/DEFERRED.md)；如果是已上线产品的缺陷，请直接在 issue tracker 立单。代码里残留 TODO/FIXME 会让客户误解为已知缺陷。
+
+极端情况下需要保留可用 `@SuppressWarnings("checkstyle:no_todo_fixme_in_delivery_code")` 局部豁免，但 PR review 应当拒绝任何这样的新增——存量为零，不要破例。
+
 ### 大括号位置（K&R，palantir 自动整形）
 - `{` 永远在行尾，不要单独成行
 - `} else {` / `} catch (...) {` / `} finally {` / `} while (...);` 衔接同行

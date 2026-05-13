@@ -109,6 +109,18 @@
             <property name="ignoreComments" value="true"/>
         </module>
 
+        <!-- no_todo_fixme_in_delivery_code: 正式交付代码不允许 TODO/FIXME 注释。
+             未完成工作改记录到仓内 docs/DEFERRED.md（或 issue tracker），
+             代码里残留 TODO/FIXME 会让客户误解为已知缺陷。
+             正则前置 // 或 /* 或 ` * `（Javadoc 续行），等价于「只检查注释」，
+             避免字符串字面量 "TODO" 或标识符 todoList 误报。 -->
+        <module name="RegexpSinglelineJava">
+            <property name="id" value="no_todo_fixme_in_delivery_code"/>
+            <property name="format" value="(?://|/\*+|\*\s)[^\n]*\b(?:TODO|FIXME)\b"/>
+            <property name="message" value="正式交付代码不应包含 TODO/FIXME 注释。请把未完成工作改记录到 docs/DEFERRED.md。"/>
+            <property name="ignoreComments" value="false"/>
+        </module>
+
         <!-- JavaDocFormat: 一旦方法写了 Javadoc，就必须严格合规——@param 覆盖所有参数、
              非 void 方法必须有 @return、@throws 必须覆盖签名声明的受检异常。
              仍然**不**强制每个方法都有 Javadoc（无 Javadoc 的方法不报错）。
