@@ -190,22 +190,33 @@ public class ServerMode {
                         }))
                 .bindNow();
 
-        log.info(
-                "CampusClaw API server started on http://{}:{}\nEndpoints:\n"
-                        + "  GET    /api/health\n"
-                        + "  POST   /api/chat\n"
-                        + "  DELETE /api/conversations/{id}\n"
-                        + "  POST   /api/skills\n"
-                        + "  GET    /api/skills\n"
-                        + "  DELETE /api/skills/{name}\n"
-                        + "  POST   /api/skills/{name}/enable\n"
-                        + "  POST   /api/skills/{name}/disable\n"
-                        + "  WS     /api/ws/chat",
-                host,
-                port);
+        log.info("CampusClaw API server started on {}:{}", host, port);
+        printStartupBanner(host, port);
 
         server.onDispose().block();
         sessionPool.shutdown();
+    }
+
+    /*
+     * Startup banner is stdout-as-UI — the human launching `pi --mode server`
+     * needs to see the bound URL and endpoint list immediately on their terminal,
+     * regardless of logback level/appender routing. The same info is also written
+     * to the logger above for ops/file capture; the println block here is the
+     * user-visible echo, not duplicate logging.
+     */
+    @SuppressWarnings("checkstyle:no_system_out_err")
+    private static void printStartupBanner(String host, int port) {
+        System.out.println("CampusClaw API server started on http://" + host + ":" + port);
+        System.out.println("Endpoints:");
+        System.out.println("  GET    /api/health");
+        System.out.println("  POST   /api/chat");
+        System.out.println("  DELETE /api/conversations/{id}");
+        System.out.println("  POST   /api/skills");
+        System.out.println("  GET    /api/skills");
+        System.out.println("  DELETE /api/skills/{name}");
+        System.out.println("  POST   /api/skills/{name}/enable");
+        System.out.println("  POST   /api/skills/{name}/disable");
+        System.out.println("  WS     /api/ws/chat");
     }
 
     /**
