@@ -750,6 +750,10 @@ class AgentLoopIntegrationTest {
 
     /**
      * Simple tool that returns a fixed result.
+     *
+     * @param name the tool name
+     * @param description the tool description
+     * @return a stub {@link AgentTool} that always succeeds with a fixed payload
      */
     private AgentTool simpleTool(String name, String description) {
         return new AgentTool() {

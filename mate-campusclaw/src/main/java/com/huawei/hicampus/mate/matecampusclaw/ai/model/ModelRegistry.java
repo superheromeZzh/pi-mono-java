@@ -133,7 +133,10 @@ public class ModelRegistry {
 
     /**
      * Calculates cost breakdown for a model and usage.
-     * Returns a new Cost with computed values.
+     *
+     * @param model the model whose pricing table is used
+     * @param usage observed token usage
+     * @return the computed {@link Cost} breakdown
      */
     public static Cost calculateCost(Model model, Usage usage) {
         if (model.cost() == null) {
@@ -150,6 +153,9 @@ public class ModelRegistry {
     /**
      * Check if a model supports xhigh thinking level.
      * Supported: GPT-5.x families, Opus 4.6 models.
+     *
+     * @param model the model to test
+     * @return {@code true} when xhigh thinking is supported
      */
     public static boolean supportsXhigh(Model model) {
         String id = model.id();
@@ -162,6 +168,10 @@ public class ModelRegistry {
 
     /**
      * Check if two models are equal by comparing both id and provider.
+     *
+     * @param a left model, may be {@code null}
+     * @param b right model, may be {@code null}
+     * @return {@code true} when both are non-null and share the same id and provider
      */
     public static boolean modelsAreEqual(Model a, Model b) {
         if (a == null || b == null) {
@@ -172,6 +182,8 @@ public class ModelRegistry {
 
     /**
      * Returns all registered models across all providers.
+     *
+     * @return a snapshot of every currently registered model
      */
     public List<Model> getAllModels() {
         synchronized (lock) {
@@ -221,6 +233,7 @@ public class ModelRegistry {
      * top-level array of Model objects (matching the {@link Model} record
      * shape). Existing entries with the same provider+id are overwritten.
      *
+     * @param file the JSON file to read
      * @return number of models loaded, or 0 on missing file / parse error
      */
     public int loadFromJsonFile(Path file) {
@@ -269,6 +282,8 @@ public class ModelRegistry {
 
     /**
      * Returns the list of built-in models to pre-register.
+     *
+     * @return the compiled-in default model catalog
      */
     static List<Model> builtInModels() {
         return List.of(

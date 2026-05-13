@@ -29,6 +29,9 @@ public final class GitUtils {
 
     /**
      * Returns the current git branch name, or empty if not in a git repo.
+     *
+     * @param workDir the workDir
+     * @return the result
      */
     public static Optional<String> getCurrentBranch(Path workDir) {
         return runGit(workDir, "rev-parse", "--abbrev-ref", "HEAD")
@@ -38,6 +41,9 @@ public final class GitUtils {
 
     /**
      * Returns true if the working tree has uncommitted changes.
+     *
+     * @param workDir the workDir
+     * @return the result
      */
     public static boolean hasUncommittedChanges(Path workDir) {
         return runGit(workDir, "status", "--porcelain")
@@ -47,6 +53,9 @@ public final class GitUtils {
 
     /**
      * Returns true if the given path is inside a git repository.
+     *
+     * @param workDir the workDir
+     * @return the result
      */
     public static boolean isGitRepo(Path workDir) {
         return runGit(workDir, "rev-parse", "--is-inside-work-tree")
@@ -56,6 +65,9 @@ public final class GitUtils {
 
     /**
      * Returns the root directory of the git repository.
+     *
+     * @param workDir the workDir
+     * @return the result
      */
     public static Optional<Path> getRepoRoot(Path workDir) {
         return runGit(workDir, "rev-parse", "--show-toplevel")
@@ -66,6 +78,9 @@ public final class GitUtils {
 
     /**
      * Returns the short commit hash of HEAD.
+     *
+     * @param workDir the workDir
+     * @return the result
      */
     public static Optional<String> getHeadCommit(Path workDir) {
         return runGit(workDir, "rev-parse", "--short", "HEAD").map(String::trim).filter(s -> !s.isEmpty());
@@ -73,6 +88,9 @@ public final class GitUtils {
 
     /**
      * Returns a list of changed file paths (staged and unstaged).
+     *
+     * @param workDir the workDir
+     * @return the result
      */
     public static List<String> getChangedFiles(Path workDir) {
         return runGit(workDir, "diff", "--name-only", "HEAD")
@@ -82,6 +100,9 @@ public final class GitUtils {
 
     /**
      * Returns the configured user name from git config.
+     *
+     * @param workDir the workDir
+     * @return the result
      */
     public static Optional<String> getUserName(Path workDir) {
         return runGit(workDir, "config", "user.name").map(String::trim).filter(s -> !s.isEmpty());
@@ -89,6 +110,9 @@ public final class GitUtils {
 
     /**
      * Returns the remote URL for 'origin'.
+     *
+     * @param workDir the workDir
+     * @return the result
      */
     public static Optional<String> getRemoteUrl(Path workDir) {
         return runGit(workDir, "remote", "get-url", "origin").map(String::trim).filter(s -> !s.isEmpty());
@@ -96,6 +120,10 @@ public final class GitUtils {
 
     /**
      * Runs a git command and returns its stdout, or empty on failure.
+     *
+     * @param workDir the workDir
+     * @param args the args
+     * @return the result
      */
     private static Optional<String> runGit(Path workDir, String... args) {
         try {

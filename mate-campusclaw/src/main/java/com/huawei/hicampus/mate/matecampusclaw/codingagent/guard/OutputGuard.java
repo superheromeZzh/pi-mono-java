@@ -71,6 +71,8 @@ public class OutputGuard implements AutoCloseable {
 
     /**
      * Returns whether the guard is currently active.
+     *
+     * @return the result
      */
     public boolean isActive() {
         return active;
@@ -79,6 +81,8 @@ public class OutputGuard implements AutoCloseable {
     /**
      * Returns the original stdout for protocol output.
      * Use this stream for JSONL protocol messages even when the guard is active.
+     *
+     * @return the result
      */
     public PrintStream getProtocolStream() {
         return originalStdout;

@@ -94,7 +94,11 @@ public class ChatWebSocketHandler {
         this.modelCatalog = modelCatalog;
     }
 
-    /** Convenience for tests / call sites that don't need the catalogue. */
+    /**
+     * Convenience for tests / call sites that don't need the catalogue.
+     *
+     * @param pool the pool
+     */
     public ChatWebSocketHandler(SessionPool pool) {
         this(pool, null);
     }
@@ -105,6 +109,8 @@ public class ChatWebSocketHandler {
      * @param in                   inbound frame stream
      * @param out                  outbound frame sink
      * @param conversationIdHint   conversation to resume, or {@code null} to create a new one
+     *
+     * @return the result
      */
     public Publisher<Void> handle(WebsocketInbound in, WebsocketOutbound out, String conversationIdHint) {
         SessionPool.SessionRef ref = pool.getOrCreate(conversationIdHint);
@@ -538,6 +544,9 @@ public class ChatWebSocketHandler {
      * {@code null} if there is none. In a multi-turn tool loop the agent's
      * message history alternates assistant → toolResult → assistant → …, and
      * the frontend's "final answer" is always the last assistant entry.
+     *
+     * @param messages the messages
+     * @return the result
      */
     private static AssistantMessage findLastAssistantMessage(List<Message> messages) {
         if (messages == null) {
@@ -555,6 +564,9 @@ public class ChatWebSocketHandler {
     /**
      * Concatenates all {@link TextContent} blocks of an assistant message into
      * a single string (thinking / tool-call blocks are skipped).
+     *
+     * @param msg the msg
+     * @return the result
      */
     private static String extractText(AssistantMessage msg) {
         if (msg.content() == null) {
@@ -573,6 +585,9 @@ public class ChatWebSocketHandler {
      * Serializes a {@link Message} to a {@link JsonNode} using the typed writer
      * so that the {@code "role":"user|assistant|toolResult"} discriminator is
      * preserved. Returns {@code null} on failure (caller should skip emission).
+     *
+     * @param msg the msg
+     * @return the result
      */
     private static JsonNode messageToNode(Message msg) {
         if (msg == null) {
@@ -586,7 +601,12 @@ public class ChatWebSocketHandler {
         }
     }
 
-    /** Maps a list of messages through {@link #messageToNode} into a JSON array. */
+    /**
+     * Maps a list of messages through {@link #messageToNode} into a JSON array.
+     *
+     * @param msgs the msgs
+     * @return the result
+     */
     private static JsonNode messagesToNode(List<Message> msgs) {
         var arr = MAPPER.createArrayNode();
         if (msgs == null) {

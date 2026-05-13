@@ -295,6 +295,10 @@ public class GatewayWebSocketHandler extends SimpleChannelInboundHandler<TextWeb
     /**
      * Send a response frame with the given id and payload.
      * Called by GatewayChannel to complete pending sessions.send requests.
+     *
+     * @param ctx Netty context to write the frame on
+     * @param reqId original request id to echo back
+     * @param payload response payload body
      */
     public void sendResponseFrame(ChannelHandlerContext ctx, String reqId, Object payload) {
         writeFrame(ctx, Map.of("type", "res", "id", reqId, "ok", true, "payload", payload));
@@ -315,6 +319,13 @@ public class GatewayWebSocketHandler extends SimpleChannelInboundHandler<TextWeb
 
     /**
      * Send a chat event with proper OpenClaw framing including seq.
+     *
+     * @param ctx Netty context to write the frame on
+     * @param event event name (e.g. {@code chat})
+     * @param runId opaque run id correlating deltas with their final
+     * @param sessionKey assistant session key
+     * @param state event state such as {@code delta} or {@code final}
+     * @param content message body for this event
      */
     public void sendEvent(
             ChannelHandlerContext ctx, String event, String runId, String sessionKey, String state, String content) {
@@ -382,6 +393,9 @@ public class GatewayWebSocketHandler extends SimpleChannelInboundHandler<TextWeb
 
     /**
      * Get session by channel ID.
+     *
+     * @param channelId channel id to look up
+     * @return the registered context, or {@code null} when none is found
      */
     public ChannelHandlerContext getSession(String channelId) {
         return sessions.get(channelId);

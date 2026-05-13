@@ -76,6 +76,8 @@ public class DiffRenderer {
 
     /**
      * Returns the last rendered frame.
+     *
+     * @return the cached lines from the most recent render call
      */
     public List<String> getLastRendered() {
         return lastRendered;

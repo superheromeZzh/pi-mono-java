@@ -35,6 +35,8 @@ public class SystemSchedulerInstaller {
      * Install the cron tick scheduler for the current OS.
      * @param intervalSeconds tick interval (default 60)
      * @return human-readable status message
+     *
+     * @throws IOException if the operation fails
      */
     public String install(int intervalSeconds) throws IOException {
         if (isWindows()) {
@@ -48,6 +50,10 @@ public class SystemSchedulerInstaller {
 
     /**
      * Uninstall the cron tick scheduler.
+     *
+     * @return the result
+     *
+     * @throws IOException if the operation fails
      */
     public String uninstall() throws IOException {
         if (isWindows()) {
@@ -61,6 +67,8 @@ public class SystemSchedulerInstaller {
 
     /**
      * Check if the scheduler is currently installed.
+     *
+     * @return the result
      */
     public String status() {
         if (isWindows()) {
@@ -368,6 +376,8 @@ public class SystemSchedulerInstaller {
     /**
      * Auto-detect the launcher script path from the running JAR location.
      * Looks for campusclaw.sh (macOS/Linux) or campusclaw.bat (Windows).
+     *
+     * @return the result
      */
     public static Path detectLauncherScript() {
         String scriptName = isWindows() ? "campusclaw.bat" : "campusclaw.sh";

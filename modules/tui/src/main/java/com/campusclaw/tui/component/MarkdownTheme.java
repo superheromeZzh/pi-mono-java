@@ -104,6 +104,8 @@ public class MarkdownTheme {
 
     /**
      * Returns the default theme with standard terminal colors.
+     *
+     * @return the built-in default theme
      */
     public static MarkdownTheme defaultTheme() {
         return new Builder().build();

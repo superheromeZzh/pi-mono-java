@@ -32,7 +32,12 @@ public class ImageComponent implements Component {
         this.altText = altText;
     }
 
-    /** Load image from file path. */
+    /**
+     * Load image from file path.
+     *
+     * @param path image file path
+     * @return {@code true} when loading succeeded, {@code false} when the file could not be read
+     */
     public boolean loadFromFile(Path path) {
         try {
             this.imageData = Files.readAllBytes(path);
@@ -46,14 +51,24 @@ public class ImageComponent implements Component {
         }
     }
 
-    /** Set image from raw bytes. */
+    /**
+     * Set image from raw bytes.
+     *
+     * @param data raw image bytes
+     * @param alt alternate text shown when inline images are unsupported
+     */
     public void setImageData(byte[] data, String alt) {
         this.imageData = data;
         this.altText = alt;
         invalidate();
     }
 
-    /** Set maximum display dimensions in terminal cells. */
+    /**
+     * Set maximum display dimensions in terminal cells.
+     *
+     * @param widthCells max width in cells
+     * @param heightCells max height in cells
+     */
     public void setMaxDimensions(int widthCells, int heightCells) {
         this.maxWidthCells = widthCells;
         this.maxHeightCells = heightCells;

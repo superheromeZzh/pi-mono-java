@@ -109,14 +109,16 @@
             <property name="ignoreComments" value="true"/>
         </module>
 
-        <!-- JavaDocFormat: 只校验「写了 Javadoc 的方法」是否合规——@param/@return/@throws
-             一旦写了就要和签名一致。**不**强制 public 方法都有 Javadoc。
-             allowMissingParamTags / allowMissingReturnTag = true 让 tag 缺省可接受。 -->
+        <!-- JavaDocFormat: 一旦方法写了 Javadoc，就必须严格合规——@param 覆盖所有参数、
+             非 void 方法必须有 @return、@throws 必须覆盖签名声明的受检异常。
+             仍然**不**强制每个方法都有 Javadoc（无 Javadoc 的方法不报错）。
+             作用域覆盖所有访问级别：public / protected / package / private 都要遵守。 -->
         <module name="JavadocMethod">
             <property name="id" value="java_doc_format_consistency"/>
-            <property name="accessModifiers" value="public"/>
-            <property name="allowMissingParamTags" value="true"/>
-            <property name="allowMissingReturnTag" value="true"/>
+            <property name="accessModifiers" value="public,protected,package,private"/>
+            <property name="allowMissingParamTags" value="false"/>
+            <property name="allowMissingReturnTag" value="false"/>
+            <property name="validateThrows" value="true"/>
             <property name="allowedAnnotations" value="Override,Generated,GeneratedBy,Bean"/>
         </module>
     </module>

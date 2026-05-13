@@ -121,6 +121,9 @@ public final class HtmlExporter {
 
     /**
      * Converts ANSI escape codes to HTML span elements with CSS classes.
+     *
+     * @param text the text
+     * @return the result
      */
     public static String ansiToHtml(String text) {
         if (text == null) {

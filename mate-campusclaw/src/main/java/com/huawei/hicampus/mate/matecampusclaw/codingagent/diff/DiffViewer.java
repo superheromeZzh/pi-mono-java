@@ -41,6 +41,10 @@ public class DiffViewer {
     /**
      * Compute a simple line-based diff between two texts.
      * Tabs are replaced with spaces for consistent rendering (matching campusclaw).
+     *
+     * @param oldText the oldText
+     * @param newText the newText
+     * @return the result
      */
     public static List<DiffLine> diff(String oldText, String newText) {
         String[] oldLines = replaceTabs(oldText).split("\n", -1);
@@ -48,13 +52,22 @@ public class DiffViewer {
         return computeLcs(oldLines, newLines);
     }
 
-    /** Replace tabs with spaces for consistent rendering (matching campusclaw). */
+    /**
+     * Replace tabs with spaces for consistent rendering (matching campusclaw).
+     *
+     * @param text the text
+     * @return the result
+     */
     private static String replaceTabs(String text) {
         return text != null ? text.replace("\t", "   ") : "";
     }
 
     /**
      * Format diff as colored unified diff string.
+     *
+     * @param lines the lines
+     * @param fileName the fileName
+     * @return the result
      */
     public static String formatUnified(List<DiffLine> lines, String fileName) {
         var sb = new StringBuilder();
@@ -101,6 +114,10 @@ public class DiffViewer {
 
     /**
      * Format diff as side-by-side view.
+     *
+     * @param lines the lines
+     * @param colWidth the colWidth
+     * @return the result
      */
     public static String formatSideBySide(List<DiffLine> lines, int colWidth) {
         var sb = new StringBuilder();
@@ -159,6 +176,9 @@ public class DiffViewer {
 
     /**
      * Generate a summary of changes.
+     *
+     * @param lines the lines
+     * @return the result
      */
     public static DiffSummary summarize(List<DiffLine> lines) {
         int added = 0, removed = 0, modified = 0, unchanged = 0;
@@ -193,6 +213,11 @@ public class DiffViewer {
      * Highlights changed words within a line using inverse colors.
      * Words present in 'line' but not in 'other' get INVERSE highlighting.
      * Matching campusclaw's diffWords() intra-line highlighting behavior.
+     *
+     * @param line the line
+     * @param other the other
+     * @param baseColor the baseColor
+     * @return the result
      */
     static String highlightWordDiff(String line, String other, String baseColor) {
         if (line == null || line.isEmpty()) {
@@ -237,7 +262,12 @@ public class DiffViewer {
         return sb.toString();
     }
 
-    /** Tokenize a string into words and whitespace tokens. */
+    /**
+     * Tokenize a string into words and whitespace tokens.
+     *
+     * @param text the text
+     * @return the result
+     */
     private static List<String> tokenize(String text) {
         var tokens = new ArrayList<String>();
         var current = new StringBuilder();
@@ -264,7 +294,13 @@ public class DiffViewer {
         return tokens;
     }
 
-    /** LCS on word tokens. */
+    /**
+     * LCS on word tokens.
+     *
+     * @param a the a
+     * @param b the b
+     * @return the result
+     */
     private static List<String> wordLcs(List<String> a, List<String> b) {
         int m = a.size(), n = b.size();
         int[][] dp = new int[m + 1][n + 1];
@@ -293,7 +329,13 @@ public class DiffViewer {
         return result;
     }
 
-    /** Simple LCS-based diff algorithm. */
+    /**
+     * Simple LCS-based diff algorithm.
+     *
+     * @param oldLines the oldLines
+     * @param newLines the newLines
+     * @return the result
+     */
     private static List<DiffLine> computeLcs(String[] oldLines, String[] newLines) {
         int m = oldLines.length, n = newLines.length;
         int[][] dp = new int[m + 1][n + 1];

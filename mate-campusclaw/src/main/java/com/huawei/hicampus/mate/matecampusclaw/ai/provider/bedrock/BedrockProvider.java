@@ -206,6 +206,12 @@ public class BedrockProvider implements ApiProvider {
     /**
      * Builds the additionalModelRequestFields Document for Bedrock thinking/reasoning.
      * Supports both adaptive thinking (Claude 4.6+) and budget-based thinking (older Claude).
+     *
+     * @param model the target Bedrock model
+     * @param reasoning requested reasoning level
+     * @param thinkingBudgets optional per-level token budgets
+     * @param maxTokens max output tokens (used as a cap for budget-based thinking)
+     * @return the additionalModelRequestFields document, or {@code null} for non-Claude models
      */
     private static Document buildThinkingConfig(
             Model model,

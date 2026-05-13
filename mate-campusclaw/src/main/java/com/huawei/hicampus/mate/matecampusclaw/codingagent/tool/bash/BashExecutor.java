@@ -112,6 +112,8 @@ public class BashExecutor {
      * Destroy a process together with every live descendant. On Windows a plain
      * {@code destroyForcibly()} leaves grandchildren running; walking descendants
      * mirrors the {@code taskkill /F /T} approach used by the pi-mono reference.
+     *
+     * @param process the process
      */
     private static void killProcessTree(Process process) {
         process.descendants().forEach(ProcessHandle::destroyForcibly);

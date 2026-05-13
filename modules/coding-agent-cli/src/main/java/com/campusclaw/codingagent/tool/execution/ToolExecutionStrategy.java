@@ -19,7 +19,14 @@ import com.campusclaw.agent.tool.CancellationToken;
 public interface ToolExecutionStrategy {
 
     /**
-     * 执行工具调用
+     * 执行工具调用.
+     *
+     * @param toolName 工具名
+     * @param params 工具参数
+     * @param signal 取消信号
+     * @param onUpdate 进度回调
+     * @return 工具执行结果
+     * @throws Exception 工具执行抛出的任意异常
      */
     AgentToolResult execute(
             String toolName, Map<String, Object> params, CancellationToken signal, AgentToolUpdateCallback onUpdate)
@@ -27,11 +34,16 @@ public interface ToolExecutionStrategy {
 
     /**
      * 获取策略名称
+     *
+     * @return the result
      */
     String getName();
 
     /**
      * 检查是否支持该工具
+     *
+     * @param toolName the toolName
+     * @return the result
      */
     boolean supports(String toolName);
 }

@@ -122,6 +122,8 @@ public class CampusClawAiService {
 
     /**
      * Returns the provider registry used by this service.
+     *
+     * @return the active {@link ApiProviderRegistry}
      */
     public ApiProviderRegistry getProviderRegistry() {
         return providerRegistry;
@@ -129,6 +131,8 @@ public class CampusClawAiService {
 
     /**
      * Returns the model registry used by this service.
+     *
+     * @return the active {@link ModelRegistry}
      */
     public ModelRegistry getModelRegistry() {
         return modelRegistry;

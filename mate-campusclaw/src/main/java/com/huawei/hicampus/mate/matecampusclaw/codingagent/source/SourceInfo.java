@@ -56,12 +56,21 @@ public class SourceInfo {
 
     private final Map<String, List<ResourceSource>> registry = new LinkedHashMap<>();
 
-    /** Register a resource source. */
+    /**
+     * Register a resource source.
+     *
+     * @param source the source
+     */
     public void register(ResourceSource source) {
         registry.computeIfAbsent(source.resourceId(), k -> new ArrayList<>()).add(source);
     }
 
-    /** Get the effective source (highest priority) for a resource. */
+    /**
+     * Get the effective source (highest priority) for a resource.
+     *
+     * @param resourceId the resourceId
+     * @return the result
+     */
     public Optional<ResourceSource> getEffective(String resourceId) {
         List<ResourceSource> sources = registry.get(resourceId);
         if (sources == null || sources.isEmpty()) {
@@ -70,18 +79,32 @@ public class SourceInfo {
         return sources.stream().min(Comparator.naturalOrder()); // highest priority first
     }
 
-    /** Get all sources for a resource (shows overrides). */
+    /**
+     * Get all sources for a resource (shows overrides).
+     *
+     * @param resourceId the resourceId
+     * @return the result
+     */
     public List<ResourceSource> getSources(String resourceId) {
         List<ResourceSource> sources = registry.getOrDefault(resourceId, List.of());
         return sources.stream().sorted().toList();
     }
 
-    /** Get all registered resource IDs. */
+    /**
+     * Get all registered resource IDs.
+     *
+     * @return the result
+     */
     public Set<String> getResourceIds() {
         return Collections.unmodifiableSet(registry.keySet());
     }
 
-    /** Get all resources of a given type. */
+    /**
+     * Get all resources of a given type.
+     *
+     * @param resourceType the resourceType
+     * @return the result
+     */
     public List<ResourceSource> getByType(String resourceType) {
         return registry.values().stream()
                 .flatMap(Collection::stream)
@@ -90,7 +113,11 @@ public class SourceInfo {
                 .toList();
     }
 
-    /** Detect conflicts (multiple sources for same resource). */
+    /**
+     * Detect conflicts (multiple sources for same resource).
+     *
+     * @return the result
+     */
     public Map<String, List<ResourceSource>> getConflicts() {
         Map<String, List<ResourceSource>> conflicts = new LinkedHashMap<>();
         for (var entry : registry.entrySet()) {
@@ -101,7 +128,12 @@ public class SourceInfo {
         return conflicts;
     }
 
-    /** Format a resource source for display. */
+    /**
+     * Format a resource source for display.
+     *
+     * @param source the source
+     * @return the result
+     */
     public static String format(ResourceSource source) {
         StringBuilder sb = new StringBuilder();
         sb.append(source.resourceId())

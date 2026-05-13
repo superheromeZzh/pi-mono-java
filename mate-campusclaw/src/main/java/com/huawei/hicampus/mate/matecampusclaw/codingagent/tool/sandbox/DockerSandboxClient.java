@@ -177,6 +177,8 @@ public class DockerSandboxClient {
 
     /**
      * 检查 worker 容器是否健康运行
+     *
+     * @return the result
      */
     private boolean isWorkerHealthy() {
         if (workerContainerId == null) {
@@ -200,6 +202,10 @@ public class DockerSandboxClient {
 
     /**
      * 在沙箱中执行命令
+     *
+     * @param command the command
+     * @param limits the limits
+     * @return the result
      */
     public SandboxResult execute(List<String> command, ResourceLimits limits) {
         if (!dockerAvailable) {
@@ -223,6 +229,10 @@ public class DockerSandboxClient {
 
     /**
      * 使用常驻 Worker 容器执行
+     *
+     * @param command the command
+     * @param limits the limits
+     * @return the result
      */
     private SandboxResult executeWithWorker(List<String> command, ResourceLimits limits) {
         long startTime = System.currentTimeMillis();
@@ -274,6 +284,10 @@ public class DockerSandboxClient {
 
     /**
      * 使用临时容器执行
+     *
+     * @param command the command
+     * @param limits the limits
+     * @return the result
      */
     private SandboxResult executeWithEphemeralContainer(List<String> command, ResourceLimits limits) {
         long startTime = System.currentTimeMillis();
@@ -349,6 +363,9 @@ public class DockerSandboxClient {
 
     /**
      * 执行 Docker 命令
+     *
+     * @param args the args
+     * @return the result
      */
     private ProcessResult executeDockerCommand(List<String> args) {
         return executeDockerCommand(args, 60);
@@ -435,6 +452,8 @@ public class DockerSandboxClient {
 
     /**
      * 检查沙箱是否可用
+     *
+     * @return the result
      */
     public boolean isAvailable() {
         if (!dockerAvailable) {
@@ -450,6 +469,8 @@ public class DockerSandboxClient {
 
     /**
      * 获取工作容器 ID
+     *
+     * @return the result
      */
     public String getWorkerContainerId() {
         return workerContainerId;

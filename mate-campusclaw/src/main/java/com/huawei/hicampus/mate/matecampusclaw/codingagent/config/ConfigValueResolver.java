@@ -58,6 +58,9 @@ public final class ConfigValueResolver {
 
     /**
      * Resolves a single environment variable expression.
+     *
+     * @param expr the expr
+     * @return the result
      */
     private static String resolveEnvExpr(String expr) {
         Matcher defaultMatcher = ENV_DEFAULT_PATTERN.matcher(expr);
@@ -74,6 +77,9 @@ public final class ConfigValueResolver {
 
     /**
      * Checks if a value contains any unresolved placeholders.
+     *
+     * @param value the value
+     * @return the result
      */
     public static boolean hasPlaceholders(String value) {
         return value != null && (ENV_PATTERN.matcher(value).find() || value.startsWith("~"));

@@ -26,6 +26,10 @@ public interface ProviderConfigResolver {
      * Resolves config for the given model. The {@code model} argument is
      * provided so implementations can fall back to the model's embedded
      * {@code apiKey} field when no other source is available.
+     *
+     * @param provider the provider whose configuration is being resolved
+     * @param model the target model (used as a fallback source for {@code apiKey})
+     * @return the resolved provider configuration
      */
     ResolvedProviderConfig resolve(Provider provider, Model model);
 }

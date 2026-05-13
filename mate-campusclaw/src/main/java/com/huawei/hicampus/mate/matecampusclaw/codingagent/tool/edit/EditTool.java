@@ -209,6 +209,13 @@ public class EditTool implements AgentTool {
      * Performs multiple disjoint edits against the original file content.
      * All edits are matched against the original (not incrementally).
      * Matching campusclaw's multi-edit behavior.
+     *
+     * @param path the path
+     * @param pathInput the pathInput
+     * @param editsList the editsList
+     * @return the result
+     *
+     * @throws Exception if the operation fails
      */
     private AgentToolResult performMultiEdit(Path path, String pathInput, List<Map<String, Object>> editsList)
             throws Exception {

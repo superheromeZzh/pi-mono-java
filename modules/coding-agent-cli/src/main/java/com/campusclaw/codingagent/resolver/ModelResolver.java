@@ -97,6 +97,9 @@ public class ModelResolver {
     /**
      * Adds a scoped model override. When {@code alias} is requested,
      * {@code targetModelId} will be resolved instead.
+     *
+     * @param alias the alias
+     * @param targetModelId the targetModelId
      */
     public void addScopedOverride(String alias, String targetModelId) {
         scopedOverrides.put(alias, targetModelId);
@@ -104,6 +107,8 @@ public class ModelResolver {
 
     /**
      * Removes a scoped model override.
+     *
+     * @param alias the alias
      */
     public void removeScopedOverride(String alias) {
         scopedOverrides.remove(alias);
@@ -111,6 +116,8 @@ public class ModelResolver {
 
     /**
      * Returns all scoped overrides.
+     *
+     * @return the result
      */
     public Map<String, String> getScopedOverrides() {
         return Map.copyOf(scopedOverrides);
@@ -118,6 +125,9 @@ public class ModelResolver {
 
     /**
      * Finds a model by exact id across all providers.
+     *
+     * @param modelId the modelId
+     * @return the result
      */
     public Optional<Model> findModel(String modelId) {
         for (Provider provider : modelRegistry.getProviders()) {
@@ -131,6 +141,8 @@ public class ModelResolver {
 
     /**
      * Returns all available model ids across all providers.
+     *
+     * @return the result
      */
     public List<String> getAllModelIds() {
         var ids = new ArrayList<String>();

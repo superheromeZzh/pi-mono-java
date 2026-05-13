@@ -81,3 +81,37 @@ tool:
     # 使用临时容器模式（不需要常驻 worker 容器）
     # 适用于无法拉取镜像的场景，每次执行创建新容器
     use-ephemeral-containers: false
+
+# 子 agent 后端配置 (spawn_agent 工具)
+# 主 agent 通过 spawn_agent 工具调用其它 coding agent；下方每个 entry 是一种后端。
+# type=acp: 走 ACP 协议 + stdio (Claude Code, Codex/Gemini 等)
+# type=http: 走自有 HTTP/ndJSON 协议 (URL + 鉴权)
+# disabled=true 可临时关闭某条而不删整段
+subagent:
+  enabled: true
+  backends:
+    claude-code:
+      type: acp
+      disabled: false
+      command: claude
+      args:
+        - "--acp"
+      prompt-timeout: PT15M
+      client-name: campusclaw-acp
+      client-version: 1.0.0
+    codex:
+      type: acp
+      disabled: true
+      command: codex-acp
+      args: []
+      prompt-timeout: PT15M
+    # 远端 HTTP agent 示例（默认禁用；启用时设置 url + auth-token）
+    remote-http:
+      type: http
+      disabled: true
+      url: https://agent.example.com/api
+      auth-type: bearer    # bearer | header | none
+      auth-token: ${CAMPUSCLAW_REMOTE_AGENT_TOKEN:}
+      connect-timeout: PT10S
+      request-timeout: PT30S
+      prompt-timeout: PT10M

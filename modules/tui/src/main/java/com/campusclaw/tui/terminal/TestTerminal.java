@@ -105,6 +105,8 @@ public class TestTerminal implements Terminal {
     /**
      * Simulates input arriving at the terminal (e.g. a keypress).
      * All registered input listeners are invoked with the given data.
+     *
+     * @param data raw input text to deliver to listeners
      */
     public void simulateInput(String data) {
         for (Consumer<String> listener : inputListeners) {
@@ -115,6 +117,9 @@ public class TestTerminal implements Terminal {
     /**
      * Simulates a terminal resize event.
      * Updates the stored size and notifies all resize listeners.
+     *
+     * @param width new width in columns
+     * @param height new height in rows
      */
     public void simulateResize(int width, int height) {
         this.size = new TerminalSize(width, height);
@@ -125,6 +130,8 @@ public class TestTerminal implements Terminal {
 
     /**
      * Returns all data that has been written to this terminal, in order.
+     *
+     * @return an unmodifiable view of the recorded writes
      */
     public List<String> getWrittenOutput() {
         return Collections.unmodifiableList(writtenOutput);
@@ -132,6 +139,8 @@ public class TestTerminal implements Terminal {
 
     /**
      * Returns all written data concatenated into a single string.
+     *
+     * @return all recorded writes joined in order
      */
     public String getFullOutput() {
         return String.join("", writtenOutput);

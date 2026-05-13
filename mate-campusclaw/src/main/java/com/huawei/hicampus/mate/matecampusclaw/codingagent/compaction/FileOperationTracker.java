@@ -22,7 +22,12 @@ import com.huawei.hicampus.mate.matecampusclaw.ai.types.ToolCall;
  */
 public class FileOperationTracker {
 
-    /** Extract file operations from message history. */
+    /**
+     * Extract file operations from message history.
+     *
+     * @param messages the messages
+     * @return the result
+     */
     public static FileOperations extract(List<Message> messages) {
         Set<String> filesRead = new LinkedHashSet<>();
         Set<String> filesModified = new LinkedHashSet<>();

@@ -137,6 +137,9 @@ public class LoopCommand implements SlashCommand {
     /**
      * Parse an interval string like "5s", "2m", "1h", "1min", "30sec", "2hr".
      * Returns -1 if not a valid interval.
+     *
+     * @param s the s
+     * @return the result
      */
     static long parseInterval(String s) {
         if (s == null || s.length() < 2) {

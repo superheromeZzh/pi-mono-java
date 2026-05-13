@@ -642,6 +642,9 @@ public class OpenAICompletionsProvider implements ApiProvider {
 
     /**
      * Maps ThinkingLevel to OpenAI reasoning_effort string.
+     *
+     * @param level requested thinking level
+     * @return the OpenAI {@code reasoning_effort} value
      */
     private static String mapReasoningEffort(ThinkingLevel level) {
         return switch (level) {
@@ -656,6 +659,9 @@ public class OpenAICompletionsProvider implements ApiProvider {
 
     /**
      * Returns true for providers that use custom thinking formats (not standard reasoning_effort).
+     *
+     * @param provider the provider variant
+     * @return {@code true} when the provider needs its own thinking schema
      */
     private static boolean isProviderWithCustomThinking(Provider provider) {
         return provider == Provider.ZAI;
@@ -664,6 +670,9 @@ public class OpenAICompletionsProvider implements ApiProvider {
     /**
      * Extracts reasoning/thinking delta from OpenAI-compatible provider delta.
      * Different providers use different fields: reasoning_content, reasoning, reasoning_text.
+     *
+     * @param delta the chat completion chunk delta
+     * @return the extracted reasoning text, or empty string when none is present
      */
     private static String extractReasoningDelta(
             com.openai.models.chat.completions.ChatCompletionChunk.Choice.Delta delta) {

@@ -39,6 +39,8 @@ public class SandboxSkillParser {
 
     /**
      * 检查沙箱解析是否可用
+     *
+     * @return the result
      */
     public boolean isAvailable() {
         return sandboxClient != null && sandboxClient.isAvailable();
@@ -90,6 +92,9 @@ public class SandboxSkillParser {
     /**
      * 构建沙箱内的解析脚本 (POSIX sh 兼容，支持 busybox ash/dash)
      * 使用临时文件传递变量，避免子 shell 问题
+     *
+     * @param base64Content the base64Content
+     * @return the result
      */
     private String buildParseScript(String base64Content) {
         return """
@@ -153,7 +158,13 @@ public class SandboxSkillParser {
     }
 
     /**
-     * 解析沙箱返回的 JSON 结果
+     * 解析沙箱返回的 JSON 结果.
+     *
+     * @param json 沙箱返回的 JSON 文本
+     * @param filePath 当前正在解析的 skill 文件路径（用于错误信息）
+     * @param source skill 来源描述
+     * @return 解析得到的 {@link Skill}
+     * @throws SkillLoadException JSON 解析失败、字段缺失或非法
      */
     private Skill parseSandboxResult(String json, Path filePath, String source) {
         // 简单 JSON 解析（避免引入 JSON 库依赖）
@@ -187,6 +198,10 @@ public class SandboxSkillParser {
 
     /**
      * 简单的 JSON 字段提取（不引入额外依赖）
+     *
+     * @param json the json
+     * @param fieldName the fieldName
+     * @return the result
      */
     private String extractJsonField(String json, String fieldName) {
         String pattern = "\"" + fieldName + "\":\\s*\"([^\"]*)\"";

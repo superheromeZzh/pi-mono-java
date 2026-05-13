@@ -42,6 +42,8 @@ public class CronService {
     /**
      * Set the default model ID for cron jobs that don't specify one.
      * Should be called on startup with the user's chosen model.
+     *
+     * @param modelId the model identifier to use as the default
      */
     public void setDefaultModelId(String modelId) {
         this.defaultModelId = modelId;
@@ -117,6 +119,8 @@ public class CronService {
     /**
      * Perform a single synchronous tick: execute all due jobs and return results.
      * Used by {@code --cron-tick} CLI mode for system scheduler integration.
+     *
+     * @return the run record for each job that was executed during this tick
      */
     public List<CronRunRecord> tickOnce() {
         return engine.tickOnce();

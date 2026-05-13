@@ -269,6 +269,11 @@ public class AgentLoop {
     /**
      * Resolves tool calls, separating known tools from unknown ones.
      * Unknown tools get an error result instead of throwing, matching TS behavior.
+     *
+     * @param toolCalls the tool calls emitted by the assistant
+     * @param tools the catalog of tools currently available to the agent
+     * @param resolved out-parameter populated with calls whose tool was found
+     * @param unknownResults out-parameter populated with error results for unknown tools
      */
     private void resolveToolCallsSafe(
             List<ToolCall> toolCalls,

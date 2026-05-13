@@ -150,7 +150,8 @@ public class CronStore {
     /**
      * Acquire an inter-process exclusive file lock for safe concurrent access
      * from multiple JVM instances (e.g. --cron-tick via system scheduler).
-     * Returns null if locking fails.
+     *
+     * @return the acquired lock, or {@code null} if locking fails
      */
     public FileLock acquireProcessLock() {
         try {
@@ -171,6 +172,8 @@ public class CronStore {
 
     /**
      * Release a previously acquired process lock.
+     *
+     * @param fileLock the lock returned by {@link #acquireProcessLock()}; {@code null} is allowed and ignored
      */
     public void releaseProcessLock(FileLock fileLock) {
         if (fileLock == null) {

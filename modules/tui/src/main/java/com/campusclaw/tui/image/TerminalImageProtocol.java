@@ -24,7 +24,11 @@ public final class TerminalImageProtocol {
         NONE
     }
 
-    /** Detect the best available image protocol for the current terminal. */
+    /**
+     * Detect the best available image protocol for the current terminal.
+     *
+     * @return the inferred {@link Protocol} based on env vars and terminal hints
+     */
     public static Protocol detect() {
         String term = System.getenv("TERM");
         String termProgram = System.getenv("TERM_PROGRAM");
@@ -47,11 +51,12 @@ public final class TerminalImageProtocol {
 
     /**
      * Generate Kitty Graphics Protocol escape sequence.
-     * Format: ESC_G <key=value,...> ; <base64-data> ESC \
+     * Format: ESC_G {@code <key=value,...>} ; {@code <base64-data>} ESC \
      *
      * @param imageBytes PNG image data
      * @param width      display width in cells (0 = auto)
      * @param height     display height in cells (0 = auto)
+     * @return the Kitty graphics escape sequence
      */
     public static String kittyImage(byte[] imageBytes, int width, int height) {
         String b64 = Base64.getEncoder().encodeToString(imageBytes);
@@ -95,6 +100,7 @@ public final class TerminalImageProtocol {
      * @param width       display width (e.g. "auto", "50px", "10")
      * @param height      display height (e.g. "auto", "50px", "5")
      * @param preserveAR  preserve aspect ratio
+     * @return the iTerm2 inline-image escape sequence
      */
     public static String iterm2Image(byte[] imageBytes, String width, String height, boolean preserveAR) {
         String b64 = Base64.getEncoder().encodeToString(imageBytes);
@@ -135,7 +141,11 @@ public final class TerminalImageProtocol {
         };
     }
 
-    /** Check if the current terminal supports inline images. */
+    /**
+     * Check if the current terminal supports inline images.
+     *
+     * @return {@code true} when at least one supported protocol is available
+     */
     public static boolean isSupported() {
         return detect() != Protocol.NONE;
     }

@@ -52,7 +52,12 @@ public class ModelCatalogService {
         this.providerConfigResolver = providerConfigResolver;
     }
 
-    /** Convenience for tests that don't care about credential resolution. */
+    /**
+     * Convenience for tests that don't care about credential resolution.
+     *
+     * @param modelRegistry the modelRegistry
+     * @param settingsManager the settingsManager
+     */
     public ModelCatalogService(ModelRegistry modelRegistry, SettingsManager settingsManager) {
         this(modelRegistry, settingsManager, null);
     }
@@ -66,6 +71,9 @@ public class ModelCatalogService {
      *
      * <p>When the resolver isn't wired in (test path), conservatively returns
      * {@code true} so the catalogue isn't unexpectedly empty.
+     *
+     * @param model the model
+     * @return the result
      */
     public boolean hasCredentials(Model model) {
         if (model == null) {
@@ -88,7 +96,11 @@ public class ModelCatalogService {
         }
     }
 
-    /** Every model registered, regardless of {@code enabledModels}. Sorted by provider+id. */
+    /**
+     * Every model registered, regardless of {@code enabledModels}. Sorted by provider+id.
+     *
+     * @return the result
+     */
     public List<Model> getAllModels() {
         var all = new ArrayList<>(modelRegistry.getAllModels());
         all.sort(Comparator.comparing((Model m) -> m.provider().value()).thenComparing(Model::id));
@@ -103,6 +115,8 @@ public class ModelCatalogService {
      *       glob/substring expansion plus all custom-provider models.</li>
      *   <li>Otherwise return everything.</li>
      * </ul>
+     *
+     * @return the result
      */
     public List<Model> getAvailableModels() {
         Settings settings = safeLoad();
@@ -140,6 +154,8 @@ public class ModelCatalogService {
     /**
      * Returns {@code true} when the user has narrowed the visible model set —
      * useful when surfacing "showing X of Y" in a UI.
+     *
+     * @return the result
      */
     public boolean isFiltered() {
         Settings settings = safeLoad();
@@ -150,6 +166,10 @@ public class ModelCatalogService {
      * Glob/substring match against a model. Mirrors the legacy
      * {@code CampusClawCommand.matchesModelPattern} so {@code -m} cycling and
      * the WS catalogue agree.
+     *
+     * @param pattern the pattern
+     * @param model the model
+     * @return the result
      */
     public static boolean matchesPattern(String pattern, Model model) {
         String id = model.id().toLowerCase(Locale.ROOT);

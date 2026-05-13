@@ -56,7 +56,11 @@ public class Changelog {
         loadReadState();
     }
 
-    /** Load changelog entries from a JSON file. */
+    /**
+     * Load changelog entries from a JSON file.
+     *
+     * @param path the path
+     */
     public void loadFromFile(Path path) {
         try {
             List<ChangelogEntry> loaded = MAPPER.readValue(path.toFile(), new TypeReference<List<ChangelogEntry>>() {});
@@ -68,7 +72,11 @@ public class Changelog {
         }
     }
 
-    /** Load changelog from classpath resource. */
+    /**
+     * Load changelog from classpath resource.
+     *
+     * @param resourcePath the resourcePath
+     */
     public void loadFromResource(String resourcePath) {
         try (InputStream is = getClass().getResourceAsStream(resourcePath)) {
             if (is == null) {
@@ -84,12 +92,20 @@ public class Changelog {
         }
     }
 
-    /** Get all entries. */
+    /**
+     * Get all entries.
+     *
+     * @return the result
+     */
     public List<ChangelogEntry> getAll() {
         return Collections.unmodifiableList(entries);
     }
 
-    /** Get entries newer than the last read version. */
+    /**
+     * Get entries newer than the last read version.
+     *
+     * @return the result
+     */
     public List<ChangelogEntry> getUnread() {
         if (lastReadVersion == null) {
             return List.copyOf(entries);
@@ -104,7 +120,11 @@ public class Changelog {
         return unread;
     }
 
-    /** Check if there are unread changes. */
+    /**
+     * Check if there are unread changes.
+     *
+     * @return the result
+     */
     public boolean hasUnread() {
         return !getUnread().isEmpty();
     }
@@ -117,7 +137,12 @@ public class Changelog {
         }
     }
 
-    /** Format a changelog entry for terminal display. */
+    /**
+     * Format a changelog entry for terminal display.
+     *
+     * @param entry the entry
+     * @return the result
+     */
     public static String format(ChangelogEntry entry) {
         var sb = new StringBuilder();
         sb.append("\033[1m").append(entry.version());
@@ -144,7 +169,11 @@ public class Changelog {
         return sb.toString();
     }
 
-    /** Format all entries. */
+    /**
+     * Format all entries.
+     *
+     * @return the result
+     */
     public String formatAll() {
         var sb = new StringBuilder();
         for (ChangelogEntry entry : entries) {

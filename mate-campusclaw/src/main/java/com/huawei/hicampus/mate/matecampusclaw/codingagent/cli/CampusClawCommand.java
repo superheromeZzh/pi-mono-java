@@ -80,6 +80,7 @@ public class CampusClawCommand implements Callable<Integer> {
     private final SandboxSkillParser sandboxSkillParser;
     private final com.huawei.hicampus.mate.matecampusclaw.codingagent.resolver.AgentModelResolver agentModelResolver;
     private final com.huawei.hicampus.mate.matecampusclaw.codingagent.model.ModelCatalogService modelCatalogService;
+    private final com.huawei.hicampus.mate.matecampusclaw.agent.subagent.SubAgentRegistry subAgentRegistry;
 
     @org.springframework.beans.factory.annotation.Value("${server.session.persistence.enabled:true}")
     private boolean serverSessionPersistenceEnabled;
@@ -97,7 +98,8 @@ public class CampusClawCommand implements Callable<Integer> {
             org.springframework.context.ApplicationContext applicationContext,
             @org.springframework.lang.Nullable SandboxSkillParser sandboxSkillParser,
             com.huawei.hicampus.mate.matecampusclaw.codingagent.resolver.AgentModelResolver agentModelResolver,
-            com.huawei.hicampus.mate.matecampusclaw.codingagent.model.ModelCatalogService modelCatalogService) {
+            com.huawei.hicampus.mate.matecampusclaw.codingagent.model.ModelCatalogService modelCatalogService,
+            com.huawei.hicampus.mate.matecampusclaw.agent.subagent.SubAgentRegistry subAgentRegistry) {
         this.piAiService = piAiService;
         this.modelRegistry = modelRegistry;
         this.promptBuilder = promptBuilder;
@@ -111,6 +113,7 @@ public class CampusClawCommand implements Callable<Integer> {
         this.sandboxSkillParser = sandboxSkillParser;
         this.agentModelResolver = agentModelResolver;
         this.modelCatalogService = modelCatalogService;
+        this.subAgentRegistry = subAgentRegistry;
     }
 
     @Option(
@@ -491,6 +494,7 @@ public class CampusClawCommand implements Callable<Integer> {
                 new SkillLoader(sandboxSkillParser, useSandbox),
                 new SkillExpander(sandboxSkillParser, useSandbox),
                 effectiveTools);
+        session.setSubAgentRegistry(subAgentRegistry);
 
         // Session persistence (skip if --no-session)
         SessionManager sessionManager = noSession ? null : new SessionManager();
@@ -677,6 +681,8 @@ public class CampusClawCommand implements Callable<Integer> {
     /**
      * Execute due cron jobs synchronously and exit.
      * Called by OS scheduler (launchd/crontab) via --cron-tick flag.
+     *
+     * @return the result
      */
     private Integer executeCronTick() {
         if (cronService == null) {
@@ -709,6 +715,11 @@ public class CampusClawCommand implements Callable<Integer> {
     /**
      * Handles package management subcommands (install, remove, update, list, config).
      * Aligned with campusclaw's package management system.
+     *
+     * @param command the command
+     * @param args the args
+     *
+     * @return the result
      */
     @SuppressWarnings("checkstyle:huge_cyclomatic_complexity")
     private Integer handlePackageCommand(String command, List<String> args) {
@@ -789,6 +800,10 @@ public class CampusClawCommand implements Callable<Integer> {
 
     /**
      * Handles skill management subcommands: install, list, remove, link, update.
+     *
+     * @param args the args
+     *
+     * @return the result
      */
     @SuppressWarnings("checkstyle:huge_cyclomatic_complexity")
     private Integer handleSkillCommand(List<String> args) {
@@ -1093,6 +1108,8 @@ public class CampusClawCommand implements Callable<Integer> {
     /**
      * Resolves the effective prompt from the -p flag or positional arguments.
      * Supports @file syntax to include file contents.
+     *
+     * @return the result
      */
     String resolvePrompt() {
         if (prompt != null && !prompt.isBlank()) {

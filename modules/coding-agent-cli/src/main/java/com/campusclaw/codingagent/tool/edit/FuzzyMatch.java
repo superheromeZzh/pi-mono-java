@@ -26,6 +26,9 @@ final class FuzzyMatch {
      * 2. Whitespace-normalized match (collapse runs of whitespace to single space)
      *
      * @return the match position, or null if no match found
+     *
+     * @param haystack the haystack
+     * @param needle the needle
      */
     static Match fuzzyFindText(String haystack, String needle) {
         if (haystack == null || needle == null || needle.isEmpty()) {
@@ -44,6 +47,10 @@ final class FuzzyMatch {
 
     /**
      * Counts occurrences of needle in haystack (exact match).
+     *
+     * @param haystack the haystack
+     * @param needle the needle
+     * @return the result
      */
     static int countOccurrences(String haystack, String needle) {
         if (needle.isEmpty()) {

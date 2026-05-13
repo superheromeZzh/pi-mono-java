@@ -27,6 +27,8 @@ public class CancellableLoader implements Component {
 
     /**
      * Creates a cancellable loader with the given message.
+     *
+     * @param message text shown next to the spinner
      */
     public CancellableLoader(String message) {
         this(message, "Press Escape to cancel");
@@ -34,6 +36,9 @@ public class CancellableLoader implements Component {
 
     /**
      * Creates a cancellable loader with the given message and cancel hint.
+     *
+     * @param message text shown next to the spinner
+     * @param cancelHint hint shown to indicate how to cancel
      */
     public CancellableLoader(String message, String cancelHint) {
         this.loader = new Loader(message);
@@ -43,6 +48,8 @@ public class CancellableLoader implements Component {
 
     /**
      * Sets the message displayed during loading.
+     *
+     * @param message new spinner message
      */
     public void setMessage(String message) {
         loader.setMessage(message);
@@ -50,6 +57,8 @@ public class CancellableLoader implements Component {
 
     /**
      * Sets the cancel hint text.
+     *
+     * @param hint new cancel-hint text
      */
     public void setCancelHint(String hint) {
         this.cancelHint = hint;
@@ -57,6 +66,8 @@ public class CancellableLoader implements Component {
 
     /**
      * Sets a callback to run when cancellation is triggered.
+     *
+     * @param onCancel callback invoked on cancellation
      */
     public void setOnCancel(Runnable onCancel) {
         this.onCancel = onCancel;
@@ -64,6 +75,8 @@ public class CancellableLoader implements Component {
 
     /**
      * Returns whether cancellation has been requested.
+     *
+     * @return {@code true} when cancellation has been triggered
      */
     public boolean isCancelled() {
         return cancelled;

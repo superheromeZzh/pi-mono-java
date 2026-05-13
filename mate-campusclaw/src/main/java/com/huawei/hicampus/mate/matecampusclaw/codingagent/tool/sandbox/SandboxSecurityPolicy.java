@@ -53,6 +53,9 @@ public class SandboxSecurityPolicy {
 
     /**
      * 检查命令是否危险
+     *
+     * @param command the command
+     * @return the result
      */
     public boolean isDangerousCommand(String command) {
         if (command == null || command.isEmpty()) {
@@ -70,6 +73,9 @@ public class SandboxSecurityPolicy {
 
     /**
      * 检查路径是否受保护
+     *
+     * @param path the path
+     * @return the result
      */
     public boolean isProtectedPath(String path) {
         if (path == null || path.isEmpty()) {
@@ -87,6 +93,10 @@ public class SandboxSecurityPolicy {
 
     /**
      * 验证命令是否允许执行
+     *
+     * @param command the command
+     *
+     * @throws SecurityException if the operation fails
      */
     public void validateCommand(String command) throws SecurityException {
         if (isDangerousCommand(command)) {
@@ -96,6 +106,10 @@ public class SandboxSecurityPolicy {
 
     /**
      * 验证路径访问是否允许
+     *
+     * @param path the path
+     *
+     * @throws SecurityException if the operation fails
      */
     public void validatePath(String path) throws SecurityException {
         if (isProtectedPath(path)) {
@@ -105,6 +119,9 @@ public class SandboxSecurityPolicy {
 
     /**
      * 标准化路径
+     *
+     * @param path the path
+     * @return the result
      */
     private String normalizePath(String path) {
         return path.replaceAll("/+", "/").replaceAll("/\\./", "/").replaceAll("/+$", "");
@@ -112,6 +129,9 @@ public class SandboxSecurityPolicy {
 
     /**
      * 安全命令列表
+     *
+     * @param command the command
+     * @return the result
      */
     public boolean isSafeCommand(String command) {
         if (command == null || command.isEmpty()) {

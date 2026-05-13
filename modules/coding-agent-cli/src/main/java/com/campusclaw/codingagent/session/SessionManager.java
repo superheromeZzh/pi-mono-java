@@ -70,6 +70,8 @@ public class SessionManager {
     /**
      * Creates a new session file in the sessions directory for the given cwd,
      * with a generated 8-char session ID.
+     *
+     * @param cwd the cwd
      */
     public void createSession(String cwd) {
         createSession(cwd, UUID.randomUUID().toString().substring(0, 8));
@@ -80,6 +82,9 @@ public class SessionManager {
      * using a caller-supplied session ID. The JSONL filename will be
      * {@code <sessionId>.jsonl}, allowing external IDs (e.g. WS conversation_id)
      * to map 1:1 to a session file.
+     *
+     * @param cwd the cwd
+     * @param sessionId the sessionId
      */
     public void createSession(String cwd, String sessionId) {
         this.sessionId = sessionId;
@@ -111,6 +116,8 @@ public class SessionManager {
      * Resumes the most recent session for the given cwd.
      *
      * @return list of messages from the session, or empty if no session found
+     *
+     * @param cwd the cwd
      */
     public List<Message> resumeLatestSession(String cwd) {
         String safePath = "--" + cwd.replaceFirst("^[/\\\\]", "").replaceAll("[/\\\\:]", "-") + "--";
@@ -146,6 +153,9 @@ public class SessionManager {
     /**
      * Loads a session from a JSONL file, returning the messages from the current branch.
      * Also restores sessionId, sessionFile, and lastEntryId.
+     *
+     * @param file the file
+     * @return the result
      */
     public List<Message> loadSession(Path file) {
         if (!Files.exists(file)) {
@@ -227,6 +237,8 @@ public class SessionManager {
      * conversations can still be reopened. The heuristic is conservative:
      * {@code toolCallId+toolName} → toolResult, any assistant-only metadata
      * → assistant, otherwise → user.
+     *
+     * @param message the message
      */
     static void backfillRoleIfMissing(Map<String, Object> message) {
         if (message.containsKey("role")) {
@@ -235,7 +247,12 @@ public class SessionManager {
         message.put("role", inferRole(message));
     }
 
-    /** Inference rule shared with {@link ConversationLister}. */
+    /**
+     * Inference rule shared with {@link ConversationLister}.
+     *
+     * @param message the message
+     * @return the result
+     */
     static String inferRole(Map<String, Object> message) {
         if (message.containsKey("toolCallId") && message.containsKey("toolName")) {
             return "toolResult";
@@ -254,6 +271,8 @@ public class SessionManager {
 
     /**
      * Appends a message entry to the session file.
+     *
+     * @param message the message
      */
     public void appendMessage(Message message) {
         if (sessionFile == null) {
@@ -278,6 +297,9 @@ public class SessionManager {
 
     /**
      * Appends a model change entry to the session file.
+     *
+     * @param provider the provider
+     * @param modelId the modelId
      */
     public void appendModelChange(String provider, String modelId) {
         if (sessionFile == null) {
@@ -298,6 +320,8 @@ public class SessionManager {
 
     /**
      * Appends a thinking level change entry to the session file.
+     *
+     * @param thinkingLevel the thinkingLevel
      */
     public void appendThinkingLevelChange(String thinkingLevel) {
         if (sessionFile == null) {
@@ -317,6 +341,8 @@ public class SessionManager {
 
     /**
      * Appends a session name entry.
+     *
+     * @param name the name
      */
     public void appendSessionName(String name) {
         if (sessionFile == null) {

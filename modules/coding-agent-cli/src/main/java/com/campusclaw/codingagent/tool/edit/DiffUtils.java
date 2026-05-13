@@ -57,6 +57,10 @@ final class DiffUtils {
 
     /**
      * Finds the 1-indexed line number of the first change.
+     *
+     * @param oldText the oldText
+     * @param newText the newText
+     * @return the result
      */
     static Integer findFirstChangedLine(String oldText, String newText) {
         String[] oldLines = oldText.split("\n", -1);
@@ -76,6 +80,10 @@ final class DiffUtils {
     /**
      * Computes a list of change regions as [oldIdx, newIdx] pairs for each differing line.
      * Uses a simple LCS-based approach for small diffs.
+     *
+     * @param oldLines the oldLines
+     * @param newLines the newLines
+     * @return the result
      */
     private static List<int[]> computeChanges(String[] oldLines, String[] newLines) {
         // Find common prefix

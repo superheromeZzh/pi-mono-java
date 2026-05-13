@@ -67,6 +67,8 @@ public class SkillLoader {
 
     /**
      * Checks if sandbox parsing is enabled and available.
+     *
+     * @return the result
      */
     public boolean isSandboxEnabled() {
         return sandboxEnabled;
@@ -145,6 +147,10 @@ public class SkillLoader {
 
     /**
      * Loads a single skill file, using sandbox if enabled.
+     *
+     * @param skillFile the skillFile
+     * @param source the source
+     * @return the result
      */
     private Skill loadSkillFile(Path skillFile, String source) {
         if (sandboxEnabled && sandboxParser != null) {
@@ -221,6 +227,10 @@ public class SkillLoader {
     /**
      * Parses YAML frontmatter from content delimited by {@code ---} lines.
      * Returns an empty map if no frontmatter is present.
+     *
+     * @param content the content
+     *
+     * @return the result
      */
     @SuppressWarnings("unchecked")
     static Map<String, Object> parseFrontmatter(String content) {
@@ -257,6 +267,9 @@ public class SkillLoader {
 
     /**
      * Strips the YAML frontmatter from content, returning only the body.
+     *
+     * @param content the content
+     * @return the result
      */
     static String stripFrontmatter(String content) {
         if (content == null || !content.startsWith(FRONTMATTER_DELIMITER)) {

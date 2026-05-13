@@ -83,22 +83,40 @@ public class PackageManager {
         }
     }
 
-    /** Get all installed packages. */
+    /**
+     * Get all installed packages.
+     *
+     * @return the result
+     */
     public List<InstalledPackage> getInstalled() {
         return List.copyOf(installed.values());
     }
 
-    /** Get an installed package by name. */
+    /**
+     * Get an installed package by name.
+     *
+     * @param name the name
+     * @return the result
+     */
     public Optional<InstalledPackage> get(String name) {
         return Optional.ofNullable(installed.get(name));
     }
 
-    /** Check if a package is installed. */
+    /**
+     * Check if a package is installed.
+     *
+     * @param name the name
+     * @return the result
+     */
     public boolean isInstalled(String name) {
         return installed.containsKey(name);
     }
 
-    /** Get all skill paths from all packages. */
+    /**
+     * Get all skill paths from all packages.
+     *
+     * @return the result
+     */
     public List<Path> getAllSkillPaths() {
         List<Path> paths = new ArrayList<>();
         for (InstalledPackage pkg : installed.values()) {

@@ -91,7 +91,15 @@ public class ExecutionRouter {
     }
 
     /**
-     * 路由执行请求
+     * 路由执行请求.
+     *
+     * @param toolName 工具名
+     * @param params 工具参数
+     * @param explicitMode 显式模式覆盖，null 表示自动判定
+     * @param signal 取消信号
+     * @param onUpdate 进度回调
+     * @return 工具执行结果
+     * @throws Exception 工具执行抛出的任意异常
      */
     public AgentToolResult route(
             String toolName,
@@ -115,7 +123,16 @@ public class ExecutionRouter {
     }
 
     /**
-     * 本地执行
+     * 本地执行.
+     *
+     * @param toolName 工具名
+     * @param params 工具参数
+     * @param signal 取消信号
+     * @param onUpdate 进度回调
+     * @return 工具执行结果
+     * @throws IllegalStateException 本地执行被关闭，或工具在本地不可用且沙箱也不可用
+     * @throws UnsupportedOperationException 当 {@code toolName} 不在已知本地工具集合内
+     * @throws Exception 底层工具执行抛出的任意异常
      */
     private AgentToolResult executeLocal(
             String toolName, Map<String, Object> params, CancellationToken signal, AgentToolUpdateCallback onUpdate)
@@ -158,7 +175,15 @@ public class ExecutionRouter {
     }
 
     /**
-     * 沙箱执行
+     * 沙箱执行.
+     *
+     * @param toolName 工具名
+     * @param params 工具参数
+     * @param signal 取消信号
+     * @param onUpdate 进度回调
+     * @return 工具执行结果
+     * @throws IllegalStateException 沙箱执行被关闭
+     * @throws Exception 底层工具执行抛出的任意异常
      */
     private AgentToolResult executeSandbox(
             String toolName, Map<String, Object> params, CancellationToken signal, AgentToolUpdateCallback onUpdate)
@@ -183,7 +208,14 @@ public class ExecutionRouter {
     }
 
     /**
-     * 自动模式执行
+     * 自动模式执行.
+     *
+     * @param toolName 工具名
+     * @param params 工具参数
+     * @param signal 取消信号
+     * @param onUpdate 进度回调
+     * @return 工具执行结果
+     * @throws Exception 底层工具执行抛出的任意异常
      */
     private AgentToolResult executeAuto(
             String toolName, Map<String, Object> params, CancellationToken signal, AgentToolUpdateCallback onUpdate)
@@ -222,6 +254,12 @@ public class ExecutionRouter {
 
     /**
      * 构建沙箱命令
+     *
+     * @param toolName the toolName
+     * @param params the params
+     * @return the result
+     *
+     * @throws UnsupportedOperationException if the operation fails
      */
     private List<String> buildSandboxCommand(String toolName, Map<String, Object> params) {
         return switch (toolName) {
@@ -303,6 +341,10 @@ public class ExecutionRouter {
 
     /**
      * 确定资源限制
+     *
+     * @param toolName the toolName
+     * @param params the params
+     * @return the result
      */
     private ResourceLimits determineResourceLimits(String toolName, Map<String, Object> params) {
         return switch (toolName) {
@@ -314,6 +356,10 @@ public class ExecutionRouter {
 
     /**
      * 风险评估
+     *
+     * @param toolName the toolName
+     * @param params the params
+     * @return the result
      */
     private RiskLevel assessRisk(String toolName, Map<String, Object> params) {
         // 检查命令内容
@@ -349,6 +395,9 @@ public class ExecutionRouter {
 
     /**
      * 安全检查（本地执行时）
+     *
+     * @param toolName the toolName
+     * @param params the params
      */
     private void performSafetyCheck(String toolName, Map<String, Object> params) {
         if (params.containsKey("command")) {
@@ -363,6 +412,11 @@ public class ExecutionRouter {
 
     /**
      * 确定最终执行模式
+     *
+     * @param toolName the toolName
+     * @param params the params
+     * @param explicitMode the explicitMode
+     * @return the result
      */
     private ExecutionMode determineMode(String toolName, Map<String, Object> params, ExecutionMode explicitMode) {
         // 1. 优先使用显式指定的模式
@@ -386,6 +440,10 @@ public class ExecutionRouter {
 
     /**
      * 转换沙箱结果为工具结果
+     *
+     * @param result the result
+     * @param toolName the toolName
+     * @return the result
      */
     private AgentToolResult convertToToolResult(SandboxResult result, String toolName) {
         String output = result.getStdout();

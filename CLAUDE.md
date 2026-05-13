@@ -103,20 +103,45 @@ Key runtime concepts:
 ### 圈复杂度（CC ≤ 15）
 方法的 cyclomatic complexity 不得超过 15（`switchBlockAsSingleDecisionPoint=true`，整段 switch 算 1 个决策点）。超阈值的方法必须拆分提取，**不要新增 `@SuppressWarnings("checkstyle:huge_cyclomatic_complexity")`**——存量带此注解的是历史欠债，等待重构，不是范例。
 
-### public 方法的 Javadoc 写了就要写对
-**不强制** public 方法必须有 Javadoc——只在「写了 Javadoc」时校验：`@param` / `@return` / `@throws` 一旦写出，就要与方法签名一致；不需要的 tag 可以省。
+### 任何方法的 Javadoc 写了就要写全
+**不强制**方法必须有 Javadoc——但只要写了，就必须 tag 齐全且与签名一致。规则覆盖所有访问级别（public / protected / package-private / private），原则是「写就写好，不写不查」。
+
+具体语义：
+- 所有参数都必须有 `@param`（缺一个就报错）
+- 非 void 方法必须有 `@return`
+- 签名声明的受检异常必须有 `@throws X`（`validateThrows=true`）
+- tag 与签名不一致仍然报错（如 `@param x` 但参数叫 `message`）
+- **未写 Javadoc 的方法不报错**
+
+❌ 反例（Javadoc 描述给了，tag 缺）：
+
+```java
+/** Inference rule shared with ConversationLister. */
+static String inferRole(Map<String, Object> message) {  // 报错：缺 @param message + @return
+    ...
+}
+```
+
+✅ 正例 A（tag 齐全）：
 
 ```java
 /**
  * Returns the number of buffered characters.
+ *
+ * @return current buffer length in chars
  */
 public int size() {
     return buffer.length();
 }
 ```
 
-`@param x ...` 写了但参数列表里没有 `x` → 报错。  
-有 return 类型但 Javadoc 漏写 `@return` → 不报错（按需）。
+✅ 正例 B（干脆不写 Javadoc，自然不报错）：
+
+```java
+static String inferRole(Map<String, Object> message) {
+    ...
+}
+```
 
 ### 顶层 public 类必须有 Javadoc + @version
 新增 public class / interface / enum / record / @interface 时，类声明前必须有 Javadoc，且包含 `@version` 标签：

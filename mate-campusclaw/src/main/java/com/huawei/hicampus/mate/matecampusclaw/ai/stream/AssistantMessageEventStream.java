@@ -110,6 +110,8 @@ public class AssistantMessageEventStream {
 
     /**
      * Returns the event stream as a {@link Flux}.
+     *
+     * @return the underlying event flux
      */
     public Flux<AssistantMessageEvent> asFlux() {
         return delegate.asFlux();
@@ -117,6 +119,8 @@ public class AssistantMessageEventStream {
 
     /**
      * Returns a {@link Mono} that resolves to the final {@link AssistantMessage}.
+     *
+     * @return the final-result mono
      */
     public Mono<AssistantMessage> result() {
         return delegate.result();

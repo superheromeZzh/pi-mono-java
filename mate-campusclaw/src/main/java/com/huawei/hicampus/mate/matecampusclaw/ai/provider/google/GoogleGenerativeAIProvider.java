@@ -370,7 +370,11 @@ public class GoogleGenerativeAIProvider implements ApiProvider {
 
     /**
      * Resolves thinking budget tokens for Google models based on thinking level.
-     * Returns -1 for dynamic budget (let model decide).
+     *
+     * @param model the model whose budget table applies
+     * @param level requested thinking level
+     * @param budgets optional per-level budget overrides
+     * @return resolved token budget; {@code -1} signals "let the model decide"
      */
     static int resolveGoogleThinkingBudget(Model model, ThinkingLevel level, @Nullable ThinkingBudgets budgets) {
         if (budgets != null) {

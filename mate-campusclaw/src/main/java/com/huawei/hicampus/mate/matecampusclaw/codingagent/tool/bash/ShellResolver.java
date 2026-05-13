@@ -43,7 +43,11 @@ public final class ShellResolver {
 
     private ShellResolver() {}
 
-    /** Resolve a shell, caching the result. Throws if no shell can be located (Windows only). */
+    /**
+     * Resolve a shell, caching the result. Throws if no shell can be located (Windows only).
+     *
+     * @return the result
+     */
     public static ShellConfig resolve() {
         ShellConfig local = cached;
         if (local != null) {
@@ -115,6 +119,11 @@ public final class ShellResolver {
      * Run {@code which}/{@code where} to locate an executable on PATH.
      * On Windows {@code where} sometimes returns paths that no longer exist, so the result is
      * verified with {@link Files#isRegularFile(Path, java.nio.file.LinkOption...)}.
+     *
+     * @param locator the locator
+     * @param target the target
+     * @param verifyExists the verifyExists
+     * @return the result
      */
     private static String findOnPath(String locator, String target, boolean verifyExists) {
         try {

@@ -82,7 +82,12 @@ public class KeyBindingRegistry {
         return get(action).map(KeyBinding::key);
     }
 
-    /** Find the action bound to a given key combo. */
+    /**
+     * Find the action bound to a given key combo.
+     *
+     * @param key the key
+     * @return the result
+     */
     public Optional<String> findAction(String key) {
         return bindings.values().stream()
                 .filter(b -> b.key().equalsIgnoreCase(key))

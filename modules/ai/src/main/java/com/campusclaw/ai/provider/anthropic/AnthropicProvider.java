@@ -528,6 +528,9 @@ public class AnthropicProvider implements ApiProvider {
 
     /**
      * Adds cache_control ephemeral to the last content block of a user message.
+     *
+     * @param msg the input message
+     * @return a new message whose last block carries an ephemeral {@code cache_control}; original returned if there is nothing to tag
      */
     private static MessageParam addCacheControlToLastBlock(MessageParam msg) {
         var blockParams = msg.content().blockParams();
@@ -745,6 +748,9 @@ public class AnthropicProvider implements ApiProvider {
     /**
      * Returns true if prompt caching should be enabled.
      * Only enables caching for the official Anthropic API endpoint.
+     *
+     * @param baseUrl configured base URL, may be {@code null}
+     * @return {@code true} only for the official {@code api.anthropic.com} endpoint
      */
     private static boolean shouldEnableCaching(@Nullable String baseUrl) {
         return baseUrl != null && baseUrl.contains("api.anthropic.com");
@@ -752,6 +758,9 @@ public class AnthropicProvider implements ApiProvider {
 
     /**
      * Check if a model supports adaptive thinking (Opus 4.6 and Sonnet 4.6).
+     *
+     * @param modelId the model identifier to test
+     * @return {@code true} for Opus 4.6 / Sonnet 4.6 family
      */
     private static boolean supportsAdaptiveThinking(String modelId) {
         return modelId.contains("opus-4-6")
@@ -763,6 +772,10 @@ public class AnthropicProvider implements ApiProvider {
     /**
      * Map ThinkingLevel to Anthropic effort levels for adaptive thinking.
      * "max" is only valid on Opus 4.6.
+     *
+     * @param level requested thinking level
+     * @param modelId target model id (used to decide whether {@code max} is permitted)
+     * @return the Anthropic effort string (e.g. {@code low} / {@code medium} / {@code high} / {@code max})
      */
     private static String mapToAnthropicEffort(ThinkingLevel level, String modelId) {
         boolean isOpus = modelId.contains("opus");

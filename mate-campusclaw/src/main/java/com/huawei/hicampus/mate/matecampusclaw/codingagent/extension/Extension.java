@@ -24,33 +24,61 @@ import com.huawei.hicampus.mate.matecampusclaw.codingagent.command.SlashCommand;
  */
 public interface Extension {
 
-    /** Unique identifier for this extension. */
+    /**
+     * Unique identifier for this extension.
+     *
+     * @return the result
+     */
     String id();
 
-    /** Human-readable name. */
+    /**
+     * Human-readable name.
+     *
+     * @return the result
+     */
     String name();
 
-    /** Additional tools provided by this extension. */
+    /**
+     * Additional tools provided by this extension.
+     *
+     * @return the result
+     */
     default List<AgentTool> tools() {
         return List.of();
     }
 
-    /** Additional slash commands provided by this extension. */
+    /**
+     * Additional slash commands provided by this extension.
+     *
+     * @return the result
+     */
     default List<SlashCommand> commands() {
         return List.of();
     }
 
-    /** Before-tool-call hooks. */
+    /**
+     * Before-tool-call hooks.
+     *
+     * @return the result
+     */
     default List<BeforeToolCallHandler> beforeToolCallHandlers() {
         return List.of();
     }
 
-    /** After-tool-call hooks. */
+    /**
+     * After-tool-call hooks.
+     *
+     * @return the result
+     */
     default List<AfterToolCallHandler> afterToolCallHandlers() {
         return List.of();
     }
 
-    /** Event listeners. */
+    /**
+     * Event listeners.
+     *
+     * @return the result
+     */
     default List<AgentEventListener> eventListeners() {
         return List.of();
     }

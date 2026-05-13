@@ -59,6 +59,9 @@ public class EnvApiKeyResolver {
 
     /**
      * Returns the first non-null, non-blank value from the given env var names.
+     *
+     * @param names environment variable names to probe in order
+     * @return the first defined non-blank value, or empty when none match
      */
     private Optional<String> firstEnv(String... names) {
         for (String name : names) {
@@ -72,7 +75,8 @@ public class EnvApiKeyResolver {
 
     /**
      * Detects Google Application Default Credentials.
-     * Returns AUTHENTICATED sentinel if gcloud credentials exist.
+     *
+     * @return the {@code AUTHENTICATED} sentinel when gcloud credentials are present, or empty otherwise
      */
     private Optional<String> detectGoogleADC() {
         // Check GOOGLE_APPLICATION_CREDENTIALS
@@ -93,6 +97,8 @@ public class EnvApiKeyResolver {
 
     /**
      * Detects AWS Bedrock credentials from various sources.
+     *
+     * @return the {@code AUTHENTICATED} sentinel when any supported credential source is set, or empty
      */
     private Optional<String> detectBedrockCredentials() {
         // AWS_PROFILE

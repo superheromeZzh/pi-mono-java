@@ -151,6 +151,8 @@ public class EventStream<T, R> {
      * <p>This is a unicast Flux — only one subscriber is supported.
      * Events pushed before subscription are buffered and delivered
      * when a subscriber connects.
+     *
+     * @return the underlying event flux
      */
     public Flux<T> asFlux() {
         return eventSink.asFlux();
@@ -164,6 +166,8 @@ public class EventStream<T, R> {
      * If the stream ends without a result ({@link #end()}), the Mono completes empty.
      * If the stream ends with an error ({@link #error(Throwable)}), the Mono signals
      * that error.
+     *
+     * @return the final-result mono
      */
     public Mono<R> result() {
         return resultSink.asMono();

@@ -70,6 +70,8 @@ public class Tui {
      * Detect whether the terminal supports synchronized output (DEC private mode 2026).
      * macOS Terminal.app does not support this and can crash when receiving large
      * buffered writes with unrecognized escape sequences during its rendering pipeline.
+     *
+     * @return {@code true} when DEC 2026 synchronized output is safe to use
      */
     private static boolean isSyncOutputSupported() {
         String termProgram = System.getenv("TERM_PROGRAM");
@@ -272,6 +274,11 @@ public class Tui {
      * clear (used for width/height changes and shrink-below-high-water-mark).
      * On the first frame {@code clear} is false — {@link #start()} has already
      * cleared the screen.
+     *
+     * @param newLines fully laid-out lines for the current frame
+     * @param width viewport width in columns
+     * @param height viewport height in rows
+     * @param clear whether to emit a full screen clear before drawing
      */
     private void fullRender(List<String> newLines, int width, int height, boolean clear) {
         StringBuilder sb = new StringBuilder();

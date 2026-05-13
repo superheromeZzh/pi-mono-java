@@ -155,6 +155,12 @@ public class Box implements Component {
 
     /**
      * Builds a horizontal border line: corner + repeated horizontal + corner.
+     *
+     * @param left the left-corner character
+     * @param horizontal the repeated horizontal-line character
+     * @param right the right-corner character
+     * @param totalWidth total width including corners
+     * @return the styled border line
      */
     private String buildBorderLine(char left, char horizontal, char right, int totalWidth) {
         int innerCount = Math.max(0, totalWidth - 2);
@@ -164,6 +170,10 @@ public class Box implements Component {
 
     /**
      * Builds a padding line (empty space between border and content).
+     *
+     * @param innerWidth inner width in columns (excludes vertical borders)
+     * @param hasBorder whether vertical borders should bookend the line
+     * @return a styled padding line
      */
     private String buildPaddingLine(int innerWidth, boolean hasBorder) {
         String inner = " ".repeat(innerWidth);

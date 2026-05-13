@@ -58,6 +58,8 @@ public class SkillManager {
 
     /**
      * Creates a SkillManager with direct skill parsing (no sandbox).
+     *
+     * @param skillsDir the skillsDir
      */
     public SkillManager(Path skillsDir) {
         this(skillsDir, null, false);
@@ -79,7 +81,11 @@ public class SkillManager {
         }
     }
 
-    /** Returns the shared enabled/disabled state store. */
+    /**
+     * Returns the shared enabled/disabled state store.
+     *
+     * @return the result
+     */
     public SkillStateStore stateStore() {
         return stateStore;
     }
@@ -91,6 +97,8 @@ public class SkillManager {
      *
      * @param gitUrl the git clone URL
      * @return the installed skill's directory name
+     *
+     * @throws SkillInstallException if the operation fails
      */
     public String install(String gitUrl) throws SkillInstallException {
         String repoName = extractRepoName(gitUrl);
@@ -145,6 +153,8 @@ public class SkillManager {
      *
      * @param localPath path to a directory containing SKILL.md (or subdirectories with SKILL.md)
      * @return the link name created
+     *
+     * @throws SkillInstallException if the operation fails
      */
     public String link(Path localPath) throws SkillInstallException {
         Path resolved = localPath.toAbsolutePath().normalize();
@@ -204,6 +214,8 @@ public class SkillManager {
      *
      * @param archivePath path to the archive file
      * @return the installed skill's directory name
+     *
+     * @throws SkillInstallException if the operation fails
      */
     public String importArchive(Path archivePath) throws SkillInstallException {
         return importArchive(archivePath, null);
@@ -215,6 +227,8 @@ public class SkillManager {
      * @param archivePath    path to the archive file
      * @param originalName   original filename for deriving skill name (nullable; falls back to archivePath filename)
      * @return the installed skill's directory name
+     *
+     * @throws SkillInstallException if the operation fails
      */
     @SuppressWarnings("checkstyle:huge_cyclomatic_complexity")
     public String importArchive(Path archivePath, String originalName) throws SkillInstallException {
@@ -358,6 +372,9 @@ public class SkillManager {
     /**
      * Finds skill name conflicts between the incoming skills and the ones already
      * installed on disk. Returns an empty list when there are no conflicts.
+     *
+     * @param incoming the incoming
+     * @return the result
      */
     private List<SkillConflictException.Conflict> findConflicts(List<Skill> incoming) {
         if (incoming.isEmpty()) {
@@ -387,6 +404,11 @@ public class SkillManager {
      * If the extracted directory contains exactly one subdirectory and no files,
      * return that subdirectory (common pattern: archive has a single root folder).
      * Otherwise return the directory itself.
+     *
+     * @param dir the dir
+     * @return the result
+     *
+     * @throws IOException if the operation fails
      */
     private Path unwrapSingleRoot(Path dir) throws IOException {
         try (var entries = Files.list(dir)) {
@@ -407,6 +429,8 @@ public class SkillManager {
 
     /**
      * Lists all skills in the skills directory, cross-referencing the manifest.
+     *
+     * @return the result
      */
     public List<SkillInfo> list() {
         List<InstalledSkillRecord> manifest = loadManifest();
@@ -466,6 +490,8 @@ public class SkillManager {
      * Removes an installed skill by name.
      *
      * @param name the skill directory name (as shown by list)
+     *
+     * @throws SkillInstallException if the operation fails
      */
     public void remove(String name) throws SkillInstallException {
         Path targetDir = skillsDir.resolve(name);
@@ -496,6 +522,8 @@ public class SkillManager {
      * Updates a git-installed skill by pulling latest changes.
      *
      * @param name the skill directory name
+     *
+     * @throws SkillInstallException if the operation fails
      */
     public void update(String name) throws SkillInstallException {
         Path targetDir = skillsDir.resolve(name);

@@ -192,7 +192,15 @@ export type UiMessage =
   | { kind: 'user'; text: string; timestamp: number }
   | { kind: 'assistant'; message: AssistantMessage }
   | { kind: 'meta'; label: string; text: string }
+  | { kind: 'system'; label: string; text: string }
   | { kind: 'error'; text: string };
+
+/** Data shape for `response` to `list_skills` / `get_prompt_templates`. */
+export interface NamedEntry {
+  name: string;
+  description: string;
+  source: string;
+}
 
 export interface ToolState {
   toolCallId: string;

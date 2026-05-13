@@ -128,6 +128,9 @@ public class SystemPromptBuilder {
     /**
      * Generates conditional guidelines based on which tools are available.
      * Matches campusclaw TS conditional guideline generation.
+     *
+     * @param config the config
+     * @return the result
      */
     String buildConditionalGuidelines(SystemPromptConfig config) {
         Set<String> toolNames = new LinkedHashSet<>();

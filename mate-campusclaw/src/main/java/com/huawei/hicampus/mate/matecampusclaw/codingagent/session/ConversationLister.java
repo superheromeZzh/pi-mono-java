@@ -52,6 +52,9 @@ public class ConversationLister {
      * Lists every {@code .jsonl} session file under the directory derived from
      * {@code cwd}, sorted by {@code updatedAt} descending (newest first).
      * Returns an empty list when the directory is missing.
+     *
+     * @param cwd the cwd
+     * @return the result
      */
     public List<Entry> list(String cwd) {
         Path dir = sessionsDirFor(cwd);
@@ -76,7 +79,12 @@ public class ConversationLister {
         return entries;
     }
 
-    /** Resolves the on-disk JSONL directory for the given working directory. */
+    /**
+     * Resolves the on-disk JSONL directory for the given working directory.
+     *
+     * @param cwd the cwd
+     * @return the result
+     */
     public Path sessionsDirFor(String cwd) {
         String safePath = "--" + cwd.replaceFirst("^[/\\\\]", "").replaceAll("[/\\\\:]", "-") + "--";
         return AppPaths.SESSIONS_DIR.resolve(safePath);
@@ -148,6 +156,9 @@ public class ConversationLister {
      * the {@code role} field is absent. We fall back to the same shape-based
      * inference used by {@link SessionManager#inferRole(Map)} so legacy
      * conversations still get a meaningful title in the picker.
+     *
+     * @param messageNode the messageNode
+     * @return the result
      */
     private static String extractUserTitle(JsonNode messageNode) {
         if (messageNode == null || messageNode.isMissingNode()) {
@@ -175,7 +186,12 @@ public class ConversationLister {
         return null;
     }
 
-    /** Mirrors {@link SessionManager#inferRole(Map)} but reads from a JsonNode. */
+    /**
+     * Mirrors {@link SessionManager#inferRole(Map)} but reads from a JsonNode.
+     *
+     * @param message the message
+     * @return the result
+     */
     private static String inferRoleFromJsonNode(JsonNode message) {
         if (message.has("toolCallId") && message.has("toolName")) {
             return "toolResult";
@@ -207,12 +223,19 @@ public class ConversationLister {
     /**
      * Convenience: lists conversations for the JVM's working directory. The
      * server uses this since it has no per-request cwd notion.
+     *
+     * @return the result
      */
     public List<Entry> listForServer() {
         return list(System.getProperty("user.dir"));
     }
 
-    /** Convenience static for callers that don't want to keep an instance around. */
+    /**
+     * Convenience static for callers that don't want to keep an instance around.
+     *
+     * @param entries the entries
+     * @return the result
+     */
     public static List<Map<String, Object>> toWireFormat(List<Entry> entries) {
         List<Map<String, Object>> wire = new ArrayList<>(entries.size());
         for (Entry e : entries) {

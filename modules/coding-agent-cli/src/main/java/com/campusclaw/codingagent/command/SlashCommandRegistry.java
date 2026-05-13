@@ -29,8 +29,14 @@ public class SlashCommandRegistry {
         return Collections.unmodifiableCollection(commands.values());
     }
 
-    /** Parse and execute a slash command string like "/model gpt-4o".
-     *  Returns false if no matching registered command is found. */
+    /**
+     * Parse and execute a slash command string like {@code /model gpt-4o}.
+     *
+     * @param input the raw slash-command string entered by the user
+     * @param context execution context passed to the command handler
+     * @return {@code true} if a matching command was found and executed;
+     *         {@code false} when no matching registered command exists
+     */
     public boolean execute(String input, SlashCommandContext context) {
         if (!input.startsWith("/")) {
             return false;

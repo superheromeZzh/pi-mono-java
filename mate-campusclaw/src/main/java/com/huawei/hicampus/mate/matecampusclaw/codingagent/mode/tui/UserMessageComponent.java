@@ -65,7 +65,13 @@ public class UserMessageComponent implements Component {
         return lines;
     }
 
-    /** Wraps a content line with background color, padding to full width. */
+    /**
+     * Wraps a content line with background color, padding to full width.
+     *
+     * @param content the content
+     * @param width the width
+     * @return the result
+     */
     private static String bgLine(String content, int width) {
         int visLen = AnsiUtils.visibleWidth(content);
         int pad = Math.max(0, width - visLen);

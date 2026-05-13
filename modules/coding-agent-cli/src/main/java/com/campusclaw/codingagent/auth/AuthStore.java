@@ -61,7 +61,12 @@ public class AuthStore {
         this.authFile = authFile;
     }
 
-    /** Reads the API key persisted for {@code provider}, or empty if none. */
+    /**
+     * Reads the API key persisted for {@code provider}, or empty if none.
+     *
+     * @param provider the provider
+     * @return the result
+     */
     public Optional<String> getApiKey(Provider provider) {
         var entry = read().get(provider.value());
         if (entry == null) {
@@ -74,7 +79,12 @@ public class AuthStore {
         return Optional.empty();
     }
 
-    /** Persists an API key for {@code provider}, writing {@code 0600}. */
+    /**
+     * Persists an API key for {@code provider}, writing {@code 0600}.
+     *
+     * @param provider the provider
+     * @param apiKey the apiKey
+     */
     public void setApiKey(Provider provider, String apiKey) {
         var all = read();
         Map<String, Object> entry = new LinkedHashMap<>();
@@ -84,7 +94,12 @@ public class AuthStore {
         write(all);
     }
 
-    /** Removes any persisted credential for {@code provider}. */
+    /**
+     * Removes any persisted credential for {@code provider}.
+     *
+     * @param provider the provider
+     * @return the result
+     */
     public boolean remove(Provider provider) {
         var all = read();
         if (all.remove(provider.value()) == null) {
@@ -94,7 +109,11 @@ public class AuthStore {
         return true;
     }
 
-    /** Lists provider ids that currently have a credential persisted. */
+    /**
+     * Lists provider ids that currently have a credential persisted.
+     *
+     * @return the result
+     */
     public Map<String, String> listSummary() {
         var summary = new TreeMap<String, String>();
         for (var e : read().entrySet()) {

@@ -8,6 +8,7 @@ import type {
   LogEntry,
   Message,
   ModelInfo,
+  NamedEntry,
   ServerFrame,
   ThinkingLevel,
   ToolCallBlock,
@@ -334,6 +335,38 @@ async function getState() {
  * live turn, not from past tool result messages, so replaying them as
  * standalone bubbles would be misleading.
  */
+async function listSkills(): Promise<NamedEntry[]> {
+  try {
+    const data = await send<{ skills: NamedEntry[] }>({ type: 'list_skills' }, true);
+    return Array.isArray(data?.skills) ? data!.skills : [];
+  } catch (e) {
+    logEntry('err', `[list_skills failed] ${(e as Error).message}`);
+    throw e;
+  }
+}
+
+async function getPromptTemplates(): Promise<NamedEntry[]> {
+  try {
+    const data = await send<{ templates: NamedEntry[] }>({ type: 'get_prompt_templates' }, true);
+    return Array.isArray(data?.templates) ? data!.templates : [];
+  } catch (e) {
+    logEntry('err', `[get_prompt_templates failed] ${(e as Error).message}`);
+    throw e;
+  }
+}
+
+/** Inserts a system bubble (slash-command output, local notice, etc) into the chat. Does not hit the WS. */
+function pushSystem(label: string, text: string) {
+  messages.value.push({ kind: 'system', label, text });
+}
+
+/** Locally clears the chat view without touching server state. Used by /clear. */
+function clearMessages() {
+  messages.value = [];
+  for (const k of Object.keys(tools)) delete tools[k];
+  currentAssistantIdx = -1;
+}
+
 async function getHistory() {
   try {
     const data = await send<{ messages: Message[] }>({ type: 'get_history' }, true);
@@ -554,5 +587,9 @@ export function useChatWs() {
     getHistory,
     listModels,
     listConversations,
+    listSkills,
+    getPromptTemplates,
+    pushSystem,
+    clearMessages,
   };
 }
