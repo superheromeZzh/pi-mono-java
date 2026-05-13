@@ -181,7 +181,10 @@ public class DiffViewer {
      * @return the result
      */
     public static DiffSummary summarize(List<DiffLine> lines) {
-        int added = 0, removed = 0, modified = 0, unchanged = 0;
+        int added = 0;
+        int removed = 0;
+        int modified = 0;
+        int unchanged = 0;
         for (DiffLine line : lines) {
             switch (line.type) {
                 case ADDED -> added++;
@@ -302,7 +305,8 @@ public class DiffViewer {
      * @return the result
      */
     private static List<String> wordLcs(List<String> a, List<String> b) {
-        int m = a.size(), n = b.size();
+        int m = a.size();
+        int n = b.size();
         int[][] dp = new int[m + 1][n + 1];
         for (int i = m - 1; i >= 0; i--) {
             for (int j = n - 1; j >= 0; j--) {
@@ -314,7 +318,8 @@ public class DiffViewer {
             }
         }
         var result = new ArrayList<String>();
-        int i = 0, j = 0;
+        int i = 0;
+        int j = 0;
         while (i < m && j < n) {
             if (a.get(i).equals(b.get(j))) {
                 result.add(a.get(i));
@@ -337,7 +342,8 @@ public class DiffViewer {
      * @return the result
      */
     private static List<DiffLine> computeLcs(String[] oldLines, String[] newLines) {
-        int m = oldLines.length, n = newLines.length;
+        int m = oldLines.length;
+        int n = newLines.length;
         int[][] dp = new int[m + 1][n + 1];
         for (int i = m - 1; i >= 0; i--) {
             for (int j = n - 1; j >= 0; j--) {
@@ -350,7 +356,8 @@ public class DiffViewer {
         }
 
         List<DiffLine> result = new ArrayList<>();
-        int i = 0, j = 0;
+        int i = 0;
+        int j = 0;
         while (i < m || j < n) {
             if (i < m && j < n && oldLines[i].equals(newLines[j])) {
                 result.add(new DiffLine(LineType.SAME, i + 1, j + 1, oldLines[i], newLines[j]));
