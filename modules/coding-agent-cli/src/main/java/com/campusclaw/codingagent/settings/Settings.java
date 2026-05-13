@@ -61,7 +61,12 @@ public record Settings(
                 null, null, null, null, null, null, null, null, null, null, null);
     }
 
-    /** Returns the resolved default model id. opencode-style "model" wins over "defaultModel". */
+    /**
+     * Returns the resolved default model id. opencode-style {@code "model"} wins over
+     * {@code "defaultModel"} when both are set.
+     *
+     * @return the chosen default model id, or {@code null} when neither field is set
+     */
     @Nullable
     public String resolvedDefaultModel() {
         if (model != null && !model.isBlank()) {
@@ -126,7 +131,11 @@ public record Settings(
             @JsonProperty("baseURL") @Nullable String baseURL,
             @JsonProperty("baseUrl") @Nullable String baseUrlAlt,
             @JsonProperty("headers") @Nullable Map<String, String> headers) {
-        /** Returns the effective base URL — {@code baseURL} preferred, falls back to {@code baseUrl}. */
+        /**
+         * Returns the effective base URL — {@code baseURL} preferred, falls back to {@code baseUrl}.
+         *
+         * @return the non-blank {@code baseURL} when present, else {@code baseUrl}, else {@code null}
+         */
         @Nullable
         public String effectiveBaseUrl() {
             if (baseURL != null && !baseURL.isBlank()) {

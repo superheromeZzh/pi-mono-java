@@ -43,7 +43,17 @@ public record SystemPromptConfig(
         contextFiles = contextFiles != null ? List.copyOf(contextFiles) : List.of();
     }
 
-    /** Backwards-compatible constructor without context files, system override, or append. */
+    /**
+     * Backwards-compatible constructor used before the context-files / system-prompt-override /
+     * append-prompt fields were added. Delegates to the canonical constructor with those
+     * optional fields defaulted to an empty list and {@code null}.
+     *
+     * @param tools registered agent tools
+     * @param skills available skills
+     * @param cwd current working directory
+     * @param customPrompt user-supplied additional prompt text (may be null)
+     * @param env environment variables snapshot (may be null)
+     */
     public SystemPromptConfig(
             List<AgentTool> tools, List<Skill> skills, Path cwd, String customPrompt, Map<String, String> env) {
         this(tools, skills, cwd, customPrompt, env, List.of(), null, null);

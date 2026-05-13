@@ -33,7 +33,12 @@ public record ResolvedProviderConfig(
         return new ResolvedProviderConfig(apiKey, null, null);
     }
 
-    /** Returns the effective base URL: explicit override or the model's default. */
+    /**
+     * Returns the effective base URL: explicit override or the model's default.
+     *
+     * @param model fallback source when no explicit override is configured
+     * @return the configured {@code baseUrl} when non-blank, otherwise {@link Model#baseUrl()}
+     */
     public String resolveBaseUrl(Model model) {
         if (baseUrl != null && !baseUrl.isBlank()) {
             return baseUrl;

@@ -21,7 +21,12 @@ public record UserMessage(
         @JsonProperty("content") List<ContentBlock> content, @JsonProperty("timestamp") long timestamp)
         implements Message {
 
-    /** Convenience constructor that wraps a plain text string into a single TextContent block. */
+    /**
+     * Convenience constructor that wraps a plain text string into a single {@link TextContent} block.
+     *
+     * @param text raw user text to wrap
+     * @param timestamp Unix timestamp in milliseconds when the message was authored
+     */
     public UserMessage(String text, long timestamp) {
         this(List.of(new TextContent(text, null)), timestamp);
     }

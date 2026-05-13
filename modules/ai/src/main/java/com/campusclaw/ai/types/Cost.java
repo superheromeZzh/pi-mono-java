@@ -25,7 +25,11 @@ public record Cost(
         @JsonProperty("cacheWrite") double cacheWrite,
         @JsonProperty("total") double total) {
 
-    /** Returns a zero-valued Cost instance. */
+    /**
+     * Returns a zero-valued {@link Cost} instance.
+     *
+     * @return a {@link Cost} with all fields set to {@code 0.0}
+     */
     public static Cost empty() {
         return new Cost(0.0, 0.0, 0.0, 0.0, 0.0);
     }
