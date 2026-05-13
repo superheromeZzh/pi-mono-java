@@ -97,39 +97,70 @@ public class FooterDataProvider {
             new FooterHint("Ctrl+P", "model"),
             new FooterHint("Esc", "interrupt"));
 
-    /** Update model info. */
+    /**
+     * Update model info.
+     *
+     * @param model the model
+     */
     public void setModel(Model model) {
         this.modelName = model.name();
         this.providerName = model.provider().value();
     }
 
-    /** Update thinking level. */
+    /**
+     * Update thinking level.
+     *
+     * @param level the level
+     */
     public void setThinkingLevel(ThinkingLevel level) {
         this.thinkingLevel = level;
     }
 
-    /** Update token stats from usage. */
+    /**
+     * Update token stats from usage.
+     *
+     * @param usage the usage
+     */
     public void updateUsage(Usage usage) {
         this.tokenStats = TokenStats.from(usage);
     }
 
-    /** Update session stats. */
+    /**
+     * Update session stats.
+     *
+     * @param turns the turns
+     * @param messages the messages
+     * @param durationMs the durationMs
+     */
     public void updateSession(int turns, int messages, long durationMs) {
         this.sessionStats = new SessionStats(turns, messages, durationMs);
     }
 
-    /** Set streaming status. */
+    /**
+     * Set streaming status.
+     *
+     * @param streaming the streaming
+     */
     public void setStreaming(boolean streaming) {
         this.streaming = streaming;
     }
 
-    /** Get current footer data snapshot. */
+    /**
+     * Get current footer data snapshot.
+     *
+     * @return the result
+     */
     public FooterData getFooterData() {
         return new FooterData(
                 modelName, providerName, thinkingLevel, tokenStats, sessionStats, defaultHints, streaming);
     }
 
-    /** Format the footer as a single-line status bar. */
+    /**
+     * Format the footer as a single-line status bar.
+     *
+     * @param width the width
+     * @return the result
+     */
     public String formatStatusBar(int width) {
         var sb = new StringBuilder();
         // Model name

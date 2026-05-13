@@ -183,6 +183,10 @@ public class BashTool implements AgentTool {
 
     /**
      * Truncates text to the first N lines.
+     *
+     * @param text the text
+     * @param maxLines the maxLines
+     * @return the result
      */
     private static String truncateText(String text, int maxLines) {
         String[] lines = text.split("\n", -1);

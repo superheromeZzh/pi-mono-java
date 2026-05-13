@@ -159,7 +159,13 @@ public class ModelSelectorOverlay implements Component, Focusable {
         selectList.setItems(scored.stream().map(ScoredModel::model).toList());
     }
 
-    /** Best fuzzy score across id / name / provider. */
+    /**
+     * Best fuzzy score across id / name / provider.
+     *
+     * @param query the query
+     * @param m the m
+     * @return the result
+     */
     private static int scoreModel(String query, Model m) {
         int s1 = FuzzyMatcher.score(query, m.id());
         int s2 = FuzzyMatcher.score(query, m.name());

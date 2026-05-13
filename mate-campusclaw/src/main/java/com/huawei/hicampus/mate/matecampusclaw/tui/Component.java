@@ -35,6 +35,8 @@ public interface Component {
     /**
      * Whether this component wants to receive key release events (Kitty keyboard protocol).
      * Default is false — release events are filtered out.
+     *
+     * @return {@code true} if release events should be forwarded to {@link #handleInput(String)}
      */
     default boolean wantsKeyRelease() {
         return false;

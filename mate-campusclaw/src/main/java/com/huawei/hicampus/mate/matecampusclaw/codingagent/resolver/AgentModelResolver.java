@@ -44,6 +44,10 @@ public class AgentModelResolver {
     /**
      * Resolves the model for a named agent role. Falls back to {@code defaultModel}
      * if no override is configured or the override fails to resolve.
+     *
+     * @param agentName the agentName
+     * @param defaultModel the defaultModel
+     * @return the result
      */
     public Model resolve(String agentName, Model defaultModel) {
         return findOverride(agentName).flatMap(this::lookupAcrossProviders).orElse(defaultModel);

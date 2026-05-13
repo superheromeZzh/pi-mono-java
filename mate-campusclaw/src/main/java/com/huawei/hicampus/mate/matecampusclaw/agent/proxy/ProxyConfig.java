@@ -46,7 +46,11 @@ public class ProxyConfig {
             String username, // nullable
             String password // nullable
             ) {
-        /** Convert to java.net.Proxy. */
+        /**
+         * Convert to java.net.Proxy.
+         *
+         * @return the equivalent {@link Proxy} instance, or {@link Proxy#NO_PROXY} for DIRECT
+         */
         public Proxy toJavaProxy() {
             return switch (type) {
                 case HTTP -> new Proxy(Proxy.Type.HTTP, new InetSocketAddress(host, port));
@@ -55,7 +59,11 @@ public class ProxyConfig {
             };
         }
 
-        /** Format as URL string. */
+        /**
+         * Format as URL string.
+         *
+         * @return a URL representation such as {@code http://user@host:port}
+         */
         public String toUrl() {
             String scheme = type == ProxyType.SOCKS5 ? "socks5" : "http";
             if (username != null) {
@@ -69,7 +77,12 @@ public class ProxyConfig {
     private ProxyEntry httpsProxy;
     private final List<String> noProxy = new ArrayList<>();
 
-    /** Create config from a proxy URL string (e.g. from --proxy flag). */
+    /**
+     * Create config from a proxy URL string (e.g. from --proxy flag).
+     *
+     * @param proxyUrl proxy URL such as {@code http://user:pass@host:port}
+     * @return a new config that uses this URL for both HTTP and HTTPS
+     */
     public static ProxyConfig fromUrl(String proxyUrl) {
         ProxyConfig config = new ProxyConfig();
         ProxyEntry entry = parseProxyUrl(proxyUrl);
@@ -81,7 +94,11 @@ public class ProxyConfig {
         return config;
     }
 
-    /** Create config from environment variables, falling back to Windows registry. */
+    /**
+     * Create config from environment variables, falling back to Windows registry.
+     *
+     * @return a config populated from {@code HTTP_PROXY} / {@code HTTPS_PROXY} / {@code NO_PROXY}
+     */
     public static ProxyConfig fromEnvironment() {
         ProxyConfig config = new ProxyConfig();
         // HTTP_PROXY / http_proxy
@@ -114,7 +131,12 @@ public class ProxyConfig {
         return config;
     }
 
-    /** Get proxy for a given URL. Returns null if direct connection should be used. */
+    /**
+     * Get proxy for a given URL.
+     *
+     * @param url request URL to resolve a proxy for
+     * @return the proxy entry to use, or {@code null} when a direct connection should be made
+     */
     public ProxyEntry getProxyFor(String url) {
         try {
             URI uri = URI.create(url);
@@ -139,7 +161,12 @@ public class ProxyConfig {
         return null;
     }
 
-    /** Check if a host should bypass the proxy. */
+    /**
+     * Check if a host should bypass the proxy.
+     *
+     * @param host hostname to test against the configured {@code NO_PROXY} patterns
+     * @return {@code true} if the host matches any bypass rule
+     */
     public boolean shouldBypass(String host) {
         String lowerHost = host.toLowerCase(Locale.ROOT);
         for (String pattern : noProxy) {
@@ -159,7 +186,11 @@ public class ProxyConfig {
         return false;
     }
 
-    /** Check if any proxy is configured. */
+    /**
+     * Check if any proxy is configured.
+     *
+     * @return {@code true} when at least one of HTTP/HTTPS proxy is set
+     */
     public boolean isConfigured() {
         return httpProxy != null || httpsProxy != null;
     }
@@ -221,7 +252,12 @@ public class ProxyConfig {
         log.info("Installed proxy selector for system-wide use");
     }
 
-    /** Parse a proxy URL string like http://user:pass@host:port */
+    /**
+     * Parse a proxy URL string like {@code http://user:pass@host:port}.
+     *
+     * @param url URL to parse; {@code null} or blank yields {@code null}
+     * @return the parsed entry, or {@code null} when parsing fails
+     */
     static ProxyEntry parseProxyUrl(String url) {
         if (url == null || url.isBlank()) {
             return null;
@@ -266,6 +302,8 @@ public class ProxyConfig {
      * Read Windows Internet Settings from registry to detect system proxy.
      * Reads HKCU\Software\Microsoft\Windows\CurrentVersion\Internet Settings
      * for ProxyEnable and ProxyServer values.
+     *
+     * @return the detected proxy entry, or {@code null} if disabled / unreadable / unparseable
      */
     static ProxyEntry detectWindowsRegistryProxy() {
         try {

@@ -24,7 +24,12 @@ public final class ClipboardUtils {
 
     private ClipboardUtils() {}
 
-    /** Copy text to clipboard using best available method. */
+    /**
+     * Copy text to clipboard using best available method.
+     *
+     * @param text the text
+     * @return the result
+     */
     public static boolean copy(String text) {
         // Try native first
         if (tryNativeCopy(text)) {
@@ -34,12 +39,21 @@ public final class ClipboardUtils {
         return tryOsc52Copy(text);
     }
 
-    /** Read text from clipboard using native tools. */
+    /**
+     * Read text from clipboard using native tools.
+     *
+     * @return the result
+     */
     public static Optional<String> paste() {
         return tryNativePaste();
     }
 
-    /** Write OSC 52 escape sequence to stdout for terminal clipboard. */
+    /**
+     * Write OSC 52 escape sequence to stdout for terminal clipboard.
+     *
+     * @param text the text
+     * @return the result
+     */
     public static boolean tryOsc52Copy(String text) {
         try {
             String b64 = java.util.Base64.getEncoder().encodeToString(text.getBytes(StandardCharsets.UTF_8));

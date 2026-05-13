@@ -43,6 +43,9 @@ public final class GoogleShared {
 
     /**
      * Converts unified messages to Google API content format.
+     *
+     * @param messages messages in the unified representation
+     * @return Google {@code contents} array
      */
     public static ArrayNode convertMessages(List<Message> messages) {
         var contents = MAPPER.createArrayNode();
@@ -134,6 +137,9 @@ public final class GoogleShared {
 
     /**
      * Converts unified Tool definitions to Google function declarations.
+     *
+     * @param tools tool catalog, may be {@code null} or empty
+     * @return Google {@code tools} array, or {@code null} when input is empty
      */
     public static ArrayNode convertTools(@Nullable List<Tool> tools) {
         if (tools == null || tools.isEmpty()) {
@@ -158,6 +164,9 @@ public final class GoogleShared {
 
     /**
      * Parses a streaming response chunk from Google's API.
+     *
+     * @param chunk raw streaming JSON chunk
+     * @return the parsed blocks plus optional finish reason and usage
      */
     public static ParsedChunk parseChunk(JsonNode chunk) {
         var candidates = chunk.path("candidates");
@@ -217,6 +226,9 @@ public final class GoogleShared {
 
     /**
      * Maps Google finish reason to unified StopReason.
+     *
+     * @param reason the Google-supplied finish reason
+     * @return the unified {@link StopReason}; defaults to {@link StopReason#STOP} when {@code null}
      */
     public static StopReason mapFinishReason(@Nullable String reason) {
         if (reason == null) {

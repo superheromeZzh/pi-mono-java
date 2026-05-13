@@ -214,6 +214,8 @@ public class ServerMode {
      * <p>Origin is wide-open ({@code *}) because the server is meant to be run
      * on the developer's own machine; tightening this should be done by an
      * operator deploying the server publicly.
+     *
+     * @param res the res
      */
     static void applyCorsHeaders(HttpServerResponse res) {
         res.header("Access-Control-Allow-Origin", "*")
@@ -225,6 +227,10 @@ public class ServerMode {
     /**
      * Extracts a query parameter value from a request URI.
      * Returns null if the parameter is absent or empty.
+     *
+     * @param uri the uri
+     * @param name the name
+     * @return the result
      */
     static String extractQueryParam(String uri, String name) {
         if (uri == null) {

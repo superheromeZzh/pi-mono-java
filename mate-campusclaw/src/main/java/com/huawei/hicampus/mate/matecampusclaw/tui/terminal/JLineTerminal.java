@@ -39,6 +39,8 @@ public class JLineTerminal implements Terminal {
 
     /**
      * Creates a JLineTerminal wrapping the system terminal.
+     *
+     * @throws UncheckedIOException when the JLine terminal cannot be built
      */
     public JLineTerminal() {
         try {
@@ -68,6 +70,8 @@ public class JLineTerminal implements Terminal {
     /**
      * Creates a JLineTerminal wrapping a pre-built JLine terminal instance.
      * Useful for testing or custom terminal configurations.
+     *
+     * @param jlineTerminal a pre-constructed JLine terminal to adopt
      */
     JLineTerminal(org.jline.terminal.Terminal jlineTerminal) {
         this.jline = jlineTerminal;

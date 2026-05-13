@@ -15,7 +15,9 @@ public interface MessageSubmitter {
 
     /**
      * Submit a message to be processed by the current session's agent.
-     * Returns true if the message was successfully submitted.
+     *
+     * @param message text content to forward to the agent
+     * @return {@code true} when the message was successfully submitted
      */
     boolean submitMessage(String message);
 }

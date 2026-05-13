@@ -157,6 +157,8 @@ class SessionManagerTest {
      * Returns a per-test cwd string that encodes into a unique subfolder under
      * {@link AppPaths#SESSIONS_DIR}, so concurrent test runs don't collide and
      * {@link #cleanup()} can scrub the whole subdirectory after each test.
+     *
+     * @return the result
      */
     private static String uniqueCwd() {
         return "/tmp/campusclaw-sm-test-" + UUID.randomUUID().toString().substring(0, 8);

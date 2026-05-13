@@ -46,7 +46,12 @@ class AssistantMessageEventTest {
         mapper = new ObjectMapper();
     }
 
-    /** Creates a minimal AssistantMessage for use in event tests. */
+    /**
+     * Creates a minimal AssistantMessage for use in event tests.
+     *
+     * @param reason stop reason embedded in the resulting message
+     * @return a minimal assistant message
+     */
     private AssistantMessage sampleMessage(StopReason reason) {
         return new AssistantMessage(
                 List.of(new TextContent("hello")),

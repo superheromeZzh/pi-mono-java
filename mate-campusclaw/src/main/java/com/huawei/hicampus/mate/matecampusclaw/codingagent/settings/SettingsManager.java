@@ -32,7 +32,11 @@ public class SettingsManager {
         this.workingDir = workingDir;
     }
 
-    /** Load merged settings (project overrides global). */
+    /**
+     * Load merged settings (project overrides global).
+     *
+     * @return the result
+     */
     public Settings load() {
         JsonNode global = loadJsonFile(GLOBAL_SETTINGS);
         JsonNode project = loadJsonFile(workingDir.resolve(PROJECT_SETTINGS));
@@ -45,17 +49,31 @@ public class SettingsManager {
         }
     }
 
-    /** Load only global settings. */
+    /**
+     * Load only global settings.
+     *
+     * @return the result
+     */
     public Settings loadGlobal() {
         return loadFromFile(GLOBAL_SETTINGS);
     }
 
-    /** Save a value to global settings. */
+    /**
+     * Save a value to global settings.
+     *
+     * @param key the key
+     * @param value the value
+     */
     public void setGlobal(String key, Object value) {
         saveToFile(GLOBAL_SETTINGS, key, value);
     }
 
-    /** Save a value to project settings. */
+    /**
+     * Save a value to project settings.
+     *
+     * @param key the key
+     * @param value the value
+     */
     public void setProject(String key, Object value) {
         saveToFile(workingDir.resolve(PROJECT_SETTINGS), key, value);
     }
@@ -98,7 +116,13 @@ public class SettingsManager {
         }
     }
 
-    /** Deep merge: project values override global values. */
+    /**
+     * Deep merge: project values override global values.
+     *
+     * @param base the base
+     * @param override the override
+     * @return the result
+     */
     static JsonNode deepMerge(JsonNode base, JsonNode override) {
         if (!base.isObject() || !override.isObject()) {
             return override;

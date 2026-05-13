@@ -23,6 +23,9 @@ public final class SimpleStreamOptionsFactory {
 
     /**
      * Creates options from model defaults.
+     *
+     * @param model the source model
+     * @return options whose {@code maxTokens} mirrors the model
      */
     public static SimpleStreamOptions fromModel(Model model) {
         var builder = SimpleStreamOptions.builder().maxTokens(model.maxTokens());
@@ -34,6 +37,9 @@ public final class SimpleStreamOptionsFactory {
 
     /**
      * Creates options for a quick/fast response (lower tokens, no thinking).
+     *
+     * @param model the source model
+     * @return options capped at 4096 tokens with deterministic temperature
      */
     public static SimpleStreamOptions fast(Model model) {
         return SimpleStreamOptions.builder()
@@ -44,6 +50,9 @@ public final class SimpleStreamOptionsFactory {
 
     /**
      * Creates options for a thorough response (max tokens, thinking enabled if supported).
+     *
+     * @param model the source model
+     * @return options with the model's full token budget and high reasoning if supported
      */
     public static SimpleStreamOptions thorough(Model model) {
         var builder = SimpleStreamOptions.builder().maxTokens(model.maxTokens());
@@ -55,6 +64,9 @@ public final class SimpleStreamOptionsFactory {
 
     /**
      * Creates options with custom API key.
+     *
+     * @param apiKey the API key to attach to outgoing requests
+     * @return options carrying the given API key
      */
     public static SimpleStreamOptions withApiKey(String apiKey) {
         return SimpleStreamOptions.builder().apiKey(apiKey).build();
@@ -62,6 +74,9 @@ public final class SimpleStreamOptionsFactory {
 
     /**
      * Creates options with custom headers.
+     *
+     * @param headers HTTP headers to attach to outgoing requests
+     * @return options carrying the given headers
      */
     public static SimpleStreamOptions withHeaders(Map<String, String> headers) {
         return SimpleStreamOptions.builder().headers(headers).build();
@@ -69,6 +84,10 @@ public final class SimpleStreamOptionsFactory {
 
     /**
      * Creates options from a thinking level and model.
+     *
+     * @param model the source model
+     * @param level desired reasoning level, or {@code null} to disable
+     * @return options with reasoning enabled if both inputs allow it
      */
     public static SimpleStreamOptions withThinking(Model model, @Nullable ThinkingLevel level) {
         var builder = SimpleStreamOptions.builder().maxTokens(model.maxTokens());
@@ -80,6 +99,10 @@ public final class SimpleStreamOptionsFactory {
 
     /**
      * Merges base options with overrides. Override fields take precedence.
+     *
+     * @param base baseline options, may be {@code null}
+     * @param overrides override options, may be {@code null}
+     * @return the merged options; non-null inputs short-circuit when only one side is provided
      */
     public static SimpleStreamOptions merge(SimpleStreamOptions base, SimpleStreamOptions overrides) {
         if (base == null) {

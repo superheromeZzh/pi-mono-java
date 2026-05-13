@@ -71,6 +71,9 @@ public final class PromptTemplate {
 
     /**
      * Checks if a template string contains any parameter placeholders.
+     *
+     * @param template the template
+     * @return the result
      */
     public static boolean hasParameters(String template) {
         return template != null && PARAM_PATTERN.matcher(template).find();

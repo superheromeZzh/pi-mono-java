@@ -39,7 +39,13 @@ public final class ImageUtils {
 
     private ImageUtils() {}
 
-    /** Resize image to fit within maxDim x maxDim while preserving aspect ratio. */
+    /**
+     * Resize image to fit within maxDim x maxDim while preserving aspect ratio.
+     *
+     * @param source the source
+     * @param maxDim the maxDim
+     * @return the result
+     */
     public static BufferedImage resize(BufferedImage source, int maxDim) {
         int w = source.getWidth();
         int h = source.getHeight();
@@ -60,21 +66,40 @@ public final class ImageUtils {
         return resized;
     }
 
-    /** Convert image to PNG bytes. */
+    /**
+     * Convert image to PNG bytes.
+     *
+     * @param image the image
+     * @return the result
+     *
+     * @throws IOException if the operation fails
+     */
     public static byte[] toPng(BufferedImage image) throws IOException {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         ImageIO.write(image, "png", baos);
         return baos.toByteArray();
     }
 
-    /** Convert image to JPEG bytes with default quality. */
+    /**
+     * Convert image to JPEG bytes with default quality.
+     *
+     * @param image the image
+     * @return the result
+     *
+     * @throws IOException if the operation fails
+     */
     public static byte[] toJpeg(BufferedImage image) throws IOException {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         ImageIO.write(image, "jpg", baos);
         return baos.toByteArray();
     }
 
-    /** Read image from file path. */
+    /**
+     * Read image from file path.
+     *
+     * @param path the path
+     * @return the result
+     */
     public static Optional<BufferedImage> readImage(Path path) {
         try {
             BufferedImage img = ImageIO.read(path.toFile());
@@ -85,12 +110,23 @@ public final class ImageUtils {
         }
     }
 
-    /** Encode image bytes as base64 data URI. */
+    /**
+     * Encode image bytes as base64 data URI.
+     *
+     * @param imageBytes the imageBytes
+     * @param mimeType the mimeType
+     * @return the result
+     */
     public static String toBase64DataUri(byte[] imageBytes, String mimeType) {
         return "data:" + mimeType + ";base64," + Base64.getEncoder().encodeToString(imageBytes);
     }
 
-    /** Encode file as base64 string. */
+    /**
+     * Encode file as base64 string.
+     *
+     * @param path the path
+     * @return the result
+     */
     public static Optional<String> fileToBase64(Path path) {
         try {
             byte[] bytes = Files.readAllBytes(path);
@@ -101,7 +137,12 @@ public final class ImageUtils {
         }
     }
 
-    /** Get image dimensions without fully loading the image. */
+    /**
+     * Get image dimensions without fully loading the image.
+     *
+     * @param path the path
+     * @return the result
+     */
     public static Optional<int[]> getImageDimensions(Path path) {
         try (ImageInputStream input = ImageIO.createImageInputStream(path.toFile())) {
             if (input == null) {
@@ -124,7 +165,12 @@ public final class ImageUtils {
         }
     }
 
-    /** Prepare an image for LLM: resize if needed, convert to PNG, encode as base64. */
+    /**
+     * Prepare an image for LLM: resize if needed, convert to PNG, encode as base64.
+     *
+     * @param path the path
+     * @return the result
+     */
     public static Optional<String> prepareForLlm(Path path) {
         return readImage(path).map(img -> {
             try {
@@ -138,7 +184,12 @@ public final class ImageUtils {
         });
     }
 
-    /** Check if file is likely an image based on extension. */
+    /**
+     * Check if file is likely an image based on extension.
+     *
+     * @param path the path
+     * @return the result
+     */
     public static boolean isImageFile(Path path) {
         String name = path.getFileName().toString().toLowerCase(Locale.ROOT);
         return name.endsWith(".png")

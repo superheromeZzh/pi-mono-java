@@ -88,6 +88,9 @@ public final class ContextOverflowDetector {
     /**
      * Check if an assistant message represents a context overflow error.
      * Does not check for silent overflow.
+     *
+     * @param message the assistant message to inspect
+     * @return {@code true} when the message indicates an overt context-overflow error
      */
     public static boolean isContextOverflow(AssistantMessage message) {
         return isContextOverflow(message, 0);

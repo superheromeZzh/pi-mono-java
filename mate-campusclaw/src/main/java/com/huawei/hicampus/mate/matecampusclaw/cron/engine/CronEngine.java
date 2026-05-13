@@ -112,7 +112,11 @@ public class CronEngine {
         listeners.remove(listener);
     }
 
-    /** Schedule or reschedule a job. Called when a job is created/updated. */
+    /**
+     * Schedule or reschedule a job. Called when a job is created/updated.
+     *
+     * @param job the job whose schedule should be installed (or refreshed)
+     */
     public void scheduleJob(CronJob job) {
         if (!running || scheduler == null) {
             return;
@@ -150,7 +154,11 @@ public class CronEngine {
         log.debug("Scheduled job {} to run in {}ms", job.name(), delayMs);
     }
 
-    /** Unschedule a job. Called when a job is deleted/disabled. */
+    /**
+     * Unschedule a job. Called when a job is deleted/disabled.
+     *
+     * @param jobId identifier of the job to remove from the active schedule
+     */
     public void unscheduleJob(String jobId) {
         var future = scheduledJobs.remove(jobId);
         if (future != null) {
@@ -158,7 +166,13 @@ public class CronEngine {
         }
     }
 
-    /** Trigger immediate execution of a job. */
+    /**
+     * Trigger immediate execution of a job.
+     *
+     * @param jobId identifier of the job to run now
+     * @return the resulting run record
+     * @throws IllegalArgumentException if no job exists with the given id
+     */
     public CronRunRecord triggerJob(String jobId) {
         var jobOpt = store.getJob(jobId);
         if (jobOpt.isEmpty()) {
@@ -282,6 +296,8 @@ public class CronEngine {
     /**
      * Perform a single synchronous tick: check all enabled jobs, execute those that are due.
      * Designed for {@code --cron-tick} mode where an external scheduler (launchd/crontab) invokes the CLI.
+     *
+     * @return the run record for each job that was executed during this tick
      */
     public List<CronRunRecord> tickOnce() {
         cleanStaleRunning();

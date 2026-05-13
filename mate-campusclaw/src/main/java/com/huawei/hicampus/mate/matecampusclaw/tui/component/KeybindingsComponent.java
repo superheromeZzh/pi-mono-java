@@ -50,6 +50,8 @@ public class KeybindingsComponent implements Component {
 
     /**
      * Creates a KeybindingsComponent with the given keybindings and default styling.
+     *
+     * @param keybindings initial bindings to display; may be {@code null}
      */
     public KeybindingsComponent(List<Keybinding> keybindings) {
         this.keybindings = keybindings != null ? new ArrayList<>(keybindings) : new ArrayList<>();

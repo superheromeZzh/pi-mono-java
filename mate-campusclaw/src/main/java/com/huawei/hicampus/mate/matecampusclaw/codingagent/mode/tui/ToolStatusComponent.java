@@ -88,7 +88,11 @@ public class ToolStatusComponent implements Component {
         setComplete(error, null);
     }
 
-    /** Toggle expanded/collapsed state (for ctrl+o). */
+    /**
+     * Toggle expanded/collapsed state (for ctrl+o).
+     *
+     * @param expanded the expanded
+     */
     public void setExpanded(boolean expanded) {
         this.expanded = expanded;
     }
@@ -284,12 +288,20 @@ public class ToolStatusComponent implements Component {
         return sb.toString();
     }
 
-    /** Whether this tool uses tail truncation (show last lines). */
+    /**
+     * Whether this tool uses tail truncation (show last lines).
+     *
+     * @return the result
+     */
     private boolean isTailTruncatedTool() {
         return "bash".equals(toolName);
     }
 
-    /** Get preview line limit for this tool type (matching campusclaw per-tool limits). */
+    /**
+     * Get preview line limit for this tool type (matching campusclaw per-tool limits).
+     *
+     * @return the result
+     */
     private int getPreviewLimit() {
         return switch (toolName) {
             case "bash" -> PREVIEW_BASH;
