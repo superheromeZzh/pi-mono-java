@@ -21,7 +21,15 @@ import org.springframework.stereotype.Service;
 
 import jakarta.annotation.PostConstruct;
 
-@SuppressWarnings("checkstyle:top_class_comment")
+/**
+ * Service that owns the active CLI key map. On startup it registers the built-in defaults
+ * (interrupt, exit, model cycle, thinking toggle and so on) and then overlays user
+ * customizations loaded from {@code keybindings.json}. Supports lookup by action id and
+ * reverse lookup by key combo.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/13]
+ * @since [br_eCampusCore 25.1.0_Next]
+ */
 @Service
 public class KeyBindingRegistry {
     private static final Logger log = LoggerFactory.getLogger(KeyBindingRegistry.class);

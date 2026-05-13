@@ -8,7 +8,13 @@ import com.huawei.hicampus.mate.matecampusclaw.codingagent.command.QuitException
 import com.huawei.hicampus.mate.matecampusclaw.codingagent.command.SlashCommand;
 import com.huawei.hicampus.mate.matecampusclaw.codingagent.command.SlashCommandContext;
 
-@SuppressWarnings("checkstyle:top_class_comment")
+/**
+ * Slash command {@code /quit} that prints a farewell line and throws {@link QuitException}
+ * to signal the CLI main loop to exit.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/13]
+ * @since [br_eCampusCore 25.1.0_Next]
+ */
 public class QuitCommand implements SlashCommand {
 
     @Override

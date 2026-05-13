@@ -12,7 +12,14 @@ import com.campusclaw.codingagent.command.SlashCommand;
 import com.campusclaw.codingagent.command.SlashCommandContext;
 import com.campusclaw.codingagent.compaction.Compactor;
 
-@SuppressWarnings("checkstyle:top_class_comment")
+/**
+ * Slash command {@code /compact} that runs the configured {@link Compactor} over the current
+ * session's history, replacing older messages with a summary plus the retained tail to reduce
+ * context size for subsequent turns.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/13]
+ * @since [br_eCampusCore 25.1.0_Next]
+ */
 public class CompactCommand implements SlashCommand {
 
     private final Compactor compactor;

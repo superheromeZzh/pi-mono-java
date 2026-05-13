@@ -7,7 +7,13 @@ package com.huawei.hicampus.mate.matecampusclaw.assistant.channel.gateway.protoc
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-@SuppressWarnings("checkstyle:top_class_comment")
+/**
+ * Per-connection policy advertised by the gateway server. Caps inbound payload size,
+ * the buffered backlog the server retains, and the heartbeat tick interval in milliseconds.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/13]
+ * @since [br_eCampusCore 25.1.0_Next]
+ */
 @JsonIgnoreProperties(ignoreUnknown = true)
 public record PolicyInfo(
         @JsonProperty("maxPayload") int maxPayload,

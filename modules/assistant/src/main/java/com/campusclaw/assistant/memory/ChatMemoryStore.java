@@ -10,7 +10,14 @@ import com.campusclaw.ai.types.Message;
 
 import org.springframework.stereotype.Service;
 
-@SuppressWarnings("checkstyle:top_class_comment")
+/**
+ * Service facade over {@link ChatMemoryRepository} that exposes load/append/clear operations
+ * on conversation history. Serves as the integration point for higher-level assistant
+ * services that need durable chat memory.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/13]
+ * @since [br_eCampusCore 25.1.0_Next]
+ */
 @Service
 public class ChatMemoryStore {
 

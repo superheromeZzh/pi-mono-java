@@ -6,7 +6,15 @@ package com.huawei.hicampus.mate.matecampusclaw.codingagent.tool.sandbox;
 
 import com.huawei.hicampus.mate.matecampusclaw.codingagent.config.ToolExecutionProperties;
 
-@SuppressWarnings("checkstyle:top_class_comment")
+/**
+ * Stand-alone manual smoke test for {@link DockerSandboxClient} in long-lived worker mode.
+ * Boots a persistent Alpine worker, runs {@code ls -la}, prints stdout/stderr, and shuts the
+ * sandbox down. Runs via {@code main} rather than JUnit so it can be invoked outside the
+ * regular test suite when verifying Docker integration locally.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/13]
+ * @since [br_eCampusCore 25.1.0_Next]
+ */
 public class SandboxTest {
     public static void main(String[] args) {
         // 创建配置

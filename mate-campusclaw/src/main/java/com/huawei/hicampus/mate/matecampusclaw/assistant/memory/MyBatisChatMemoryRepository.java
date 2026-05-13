@@ -16,7 +16,15 @@ import com.huawei.hicampus.mate.matecampusclaw.ai.types.UserMessage;
 import com.huawei.hicampus.mate.matecampusclaw.assistant.mapper.ChatMemoryMapper;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-@SuppressWarnings("checkstyle:top_class_comment")
+/**
+ * Default {@link ChatMemoryRepository} implementation that persists messages through
+ * {@link ChatMemoryMapper}. Serializes each {@link Message} as JSON via the provided
+ * {@link ObjectMapper} and assigns a monotonically increasing per-conversation sequence
+ * on append.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/13]
+ * @since [br_eCampusCore 25.1.0_Next]
+ */
 public class MyBatisChatMemoryRepository implements ChatMemoryRepository {
 
     private final ObjectMapper objectMapper;

@@ -22,7 +22,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
-@SuppressWarnings("checkstyle:top_class_comment")
+/**
+ * Service that persists per-provider {@link Credential} entries in a JSON file under the
+ * user's auth directory with POSIX 600 permissions where supported. Exposes get/set/remove/list
+ * lookup plus a convenience accessor that flattens {@link Credential.ApiKey} and
+ * {@link Credential.OAuth} to a single token string.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/13]
+ * @since [br_eCampusCore 25.1.0_Next]
+ */
 @Service
 public class AuthStorage {
     private static final Logger log = LoggerFactory.getLogger(AuthStorage.class);

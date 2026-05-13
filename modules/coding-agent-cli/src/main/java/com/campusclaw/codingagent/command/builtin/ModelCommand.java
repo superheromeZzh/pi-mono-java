@@ -7,7 +7,13 @@ package com.campusclaw.codingagent.command.builtin;
 import com.campusclaw.codingagent.command.SlashCommand;
 import com.campusclaw.codingagent.command.SlashCommandContext;
 
-@SuppressWarnings("checkstyle:top_class_comment")
+/**
+ * Slash command {@code /model} (also registered under {@code /models}) that either prints the
+ * session's current model or switches to the model id supplied as the argument.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/13]
+ * @since [br_eCampusCore 25.1.0_Next]
+ */
 public class ModelCommand implements SlashCommand {
 
     private final String name;

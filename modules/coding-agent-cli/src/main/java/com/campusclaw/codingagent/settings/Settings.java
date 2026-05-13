@@ -12,7 +12,16 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import jakarta.annotation.Nullable;
 
-@SuppressWarnings("checkstyle:top_class_comment")
+/**
+ * User-facing settings loaded from {@code ~/.campusclaw/settings.json} (global) and merged
+ * with the per-project {@code .campusclaw/settings.json}. Captures provider/model defaults,
+ * transport and UI preferences, and nested configuration blocks for compaction, retry,
+ * terminal, images, per-provider credentials and per-agent overrides. Many field names mirror
+ * opencode's schema for cross-tool compatibility.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/13]
+ * @since [br_eCampusCore 25.1.0_Next]
+ */
 @JsonIgnoreProperties(ignoreUnknown = true)
 public record Settings(
         @JsonProperty("defaultProvider") @Nullable String defaultProvider,
