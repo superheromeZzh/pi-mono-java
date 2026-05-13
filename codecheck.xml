@@ -152,6 +152,16 @@
             <property name="id" value="non_constant_field_camel_case_static"/>
             <property name="format" value="^[a-z][a-zA-Z0-9]*$"/>
         </module>
+        <!-- 局部变量也按 lowerCamelCase（含 final 局部变量）；for 循环单字符变量豁免。 -->
+        <module name="LocalVariableName">
+            <property name="id" value="non_constant_field_camel_case_local"/>
+            <property name="format" value="^[a-z][a-zA-Z0-9]*$"/>
+            <property name="allowOneCharVarInForLoop" value="true"/>
+        </module>
+        <module name="LocalFinalVariableName">
+            <property name="id" value="non_constant_field_camel_case_local_final"/>
+            <property name="format" value="^[a-z][a-zA-Z0-9]*$"/>
+        </module>
 
         <!-- huge_cyclomatic_complexity: 圈复杂度超阈值即拒。
              switchBlockAsSingleDecisionPoint=true: 整段 switch 算 1 个决策点
