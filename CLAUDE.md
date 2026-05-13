@@ -139,6 +139,55 @@ new String(process.getInputStream().readAllBytes())           // 同上
 
 注意 `new String(char[])`、`String.toCharArray()`、`Character.toChars(cp)` 这些 `char[] ↔ String` 之间的互转**不在此规则**——`char[]` 本身已经是 UTF-16 code unit 序列，不涉及编码协商，无需也无法传 charset。
 
+### 记录日志必须走 SLF4J 门面，禁用 System.out/err 和 printStackTrace
+
+**规则**：所有「记录日志」诉求一律用 SLF4J（`org.slf4j.Logger`）。`System.out.print*` / `System.err.print*` / `Throwable.printStackTrace()` 一律禁止——除非该类承担的就是 CLI 用户输出（Picocli 命令）、协议 stdout/stderr 输出（Print/Rpc 模式）、TUI 终端渲染、启动 banner 等「stdout/stderr 本就是接口」的角色。这类类必须在类声明上加 `@SuppressWarnings("checkstyle:no_system_out_err")` 显式声明意图——这样 reviewer 一眼能看出「这是协议/UI 输出，不是日志」。
+
+**硬约束**（Checkstyle，build-failing）：
+
+| 规则 id | 命中 |
+|---|---|
+| `no_system_out_err` | `System.out.(print\|println\|printf\|format\|append\|write)(...)`、`System.err.*` 同形 |
+| `no_print_stack_trace` | `.printStackTrace(...)` |
+
+检测：`RegexpSinglelineJava` 在 TreeWalker 内逐行扫描，`ignoreComments=true` 让 javadoc / 注释里提及 `System.out.println(...)` 不被误判。`System.out` / `System.err` 作为流引用（如 `var saved = System.out;`、`PrintStream out = System.err`）不触发——只有调用 `print*/format/append/write` 方法才报错。
+
+**为什么不能用 `System.out` 当日志**：
+- 没有时间戳/线程/级别信息——出问题时定位困难
+- 不走 logback/log4j 配置，无法被 appender 收集到文件 / ELK
+- 容器化部署里 stdout 与协议输出（JSONL/RPC）混流，污染契约
+- 异常堆栈用 `printStackTrace()` 直接打到 stderr，没有上下文，且测试环境难以静默
+
+✅ 正例（记日志走门面）：
+```java
+private static final Logger log = LoggerFactory.getLogger(MyService.class);
+
+log.info("session opened: id={}", sessionId);
+log.error("failed to publish event", e);
+```
+
+✅ 合法 stdout/stderr 出口（必须类级豁免，让意图显式）：
+```java
+@SuppressWarnings("checkstyle:no_system_out_err")
+@CommandLine.Command(name = "list-models")
+public class ListModelsCommand implements Runnable {
+    @Override
+    public void run() {
+        System.out.println("Available models:");
+        models.forEach(m -> System.out.println("  " + m));
+    }
+}
+```
+
+❌ 反例（这些都应该走 SLF4J）：
+```java
+System.err.println("Failed to publish event: " + e.getMessage());  // 改 log.error("...", e)
+e.printStackTrace();                                                // 改 log.error("...", e)
+System.out.println("DEBUG: state = " + state);                      // 改 log.debug("state={}", state)
+```
+
+**理由**：项目已普遍引入 SLF4J（128 个文件），`LoggingUncaughtExceptionHandler` 已经把后台线程未捕获异常导到 `log.error`。日志型 print 残留在代码里就是可观测性漏洞——上规则一次性堵住，并把「stdout 是契约」的少数类用注解显式标注，杜绝增量。`new InteractiveMode` 路径里类似的事件发布失败、`InteractiveMode#close` 兜底分支，这些都应当走 `log.error("...", e)`，不要在用户终端噪音里再混入诊断信息。
+
 ### 注释符与注释内容之间必须有空格
 
 **规则**：行首的 `//` 与 `/*` 后必须紧跟空白（空格/制表符/换行）或重复同样的符号（`///`、`/**`）。`//foo` / `/*foo*/` 一律拒绝。

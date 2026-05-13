@@ -1003,7 +1003,7 @@ public class InteractiveMode {
                         applicationContext.publishEvent(
                                 new com.huawei.hicampus.mate.matecampusclaw.assistant.channel.gateway.AgentResponseEvent(this, replyText));
                     } catch (Exception e) {
-                        System.err.println("[InteractiveMode] Failed to publish AgentResponseEvent: " + e.getMessage());
+                        log.error("Failed to publish AgentResponseEvent", e);
                     }
                 }
             }

@@ -50,11 +50,14 @@ public final class ClipboardUtils {
     }
 
     /**
-     * Write OSC 52 escape sequence to stdout for terminal clipboard.
+     * Write OSC 52 escape sequence to stdout for terminal clipboard. The OSC 52 byte
+     * sequence is a terminal control protocol, not log output — it must reach the
+     * controlling terminal verbatim, so it goes through System.out, never a logger.
      *
      * @param text the text
      * @return the result
      */
+    @SuppressWarnings("checkstyle:no_system_out_err")
     public static boolean tryOsc52Copy(String text) {
         try {
             String b64 = java.util.Base64.getEncoder().encodeToString(text.getBytes(StandardCharsets.UTF_8));

@@ -190,18 +190,19 @@ public class ServerMode {
                         }))
                 .bindNow();
 
-        log.info("CampusClaw API server started on {}:{}", host, port);
-        System.out.println("CampusClaw API server started on http://" + host + ":" + port);
-        System.out.println("Endpoints:");
-        System.out.println("  GET    /api/health");
-        System.out.println("  POST   /api/chat");
-        System.out.println("  DELETE /api/conversations/{id}");
-        System.out.println("  POST   /api/skills");
-        System.out.println("  GET    /api/skills");
-        System.out.println("  DELETE /api/skills/{name}");
-        System.out.println("  POST   /api/skills/{name}/enable");
-        System.out.println("  POST   /api/skills/{name}/disable");
-        System.out.println("  WS     /api/ws/chat");
+        log.info(
+                "CampusClaw API server started on http://{}:{}\nEndpoints:\n"
+                        + "  GET    /api/health\n"
+                        + "  POST   /api/chat\n"
+                        + "  DELETE /api/conversations/{id}\n"
+                        + "  POST   /api/skills\n"
+                        + "  GET    /api/skills\n"
+                        + "  DELETE /api/skills/{name}\n"
+                        + "  POST   /api/skills/{name}/enable\n"
+                        + "  POST   /api/skills/{name}/disable\n"
+                        + "  WS     /api/ws/chat",
+                host,
+                port);
 
         server.onDispose().block();
         sessionPool.shutdown();

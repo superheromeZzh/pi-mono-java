@@ -5,6 +5,7 @@
 package com.huawei.hicampus.mate.matecampusclaw.codingagent.cli;
 
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -47,11 +48,15 @@ import com.huawei.hicampus.mate.matecampusclaw.codingagent.tool.bash.BashExecuto
 import com.huawei.hicampus.mate.matecampusclaw.tui.terminal.JLineTerminal;
 import com.huawei.hicampus.mate.matecampusclaw.tui.terminal.Terminal;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
+import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
+import picocli.CommandLine.Spec;
 
 /**
  * Main CLI command for CampusClaw.
@@ -67,6 +72,11 @@ import picocli.CommandLine.Parameters;
         version = "pi 0.1.0")
 @Component
 public class CampusClawCommand implements Callable<Integer> {
+
+    private static final Logger log = LoggerFactory.getLogger(CampusClawCommand.class);
+
+    @Spec
+    private CommandLine.Model.CommandSpec spec;
 
     private final CampusClawAiService piAiService;
     private final ModelRegistry modelRegistry;
@@ -115,6 +125,14 @@ public class CampusClawCommand implements Callable<Integer> {
         this.agentModelResolver = agentModelResolver;
         this.modelCatalogService = modelCatalogService;
         this.subAgentRegistry = subAgentRegistry;
+    }
+
+    private PrintWriter out() {
+        return spec.commandLine().getOut();
+    }
+
+    private PrintWriter err() {
+        return spec.commandLine().getErr();
     }
 
     @Option(
@@ -267,7 +285,7 @@ public class CampusClawCommand implements Callable<Integer> {
             if (proxyConfig.isConfigured()) {
                 proxyConfig.installAsDefault();
             } else {
-                System.err.println("Warning: invalid proxy URL: " + proxy);
+                err().println("Warning: invalid proxy URL: " + proxy);
             }
         }
 
@@ -330,8 +348,8 @@ public class CampusClawCommand implements Callable<Integer> {
         if (settings.customModels() != null) {
             for (Settings.CustomModelConfig cm : settings.customModels()) {
                 if (cm.id() == null || cm.api() == null || cm.baseUrl() == null || cm.apiKey() == null) {
-                    System.err.println(
-                            "Warning: Skipping custom model with missing required fields (id, api, baseUrl, apiKey)");
+                    err().println(
+                                    "Warning: Skipping custom model with missing required fields (id, api, baseUrl, apiKey)");
                     continue;
                 }
                 List<InputModality> modalities = List.of(InputModality.TEXT);
@@ -364,7 +382,7 @@ public class CampusClawCommand implements Callable<Integer> {
         if (exportArgs != null && !exportArgs.isEmpty()) {
             Path inputFile = Path.of(exportArgs.get(0));
             if (!Files.exists(inputFile)) {
-                System.err.println("Session file not found: " + inputFile);
+                err().println("Session file not found: " + inputFile);
                 return 1;
             }
 
@@ -380,7 +398,7 @@ public class CampusClawCommand implements Callable<Integer> {
             var sm = new SessionManager();
             var messages = sm.loadSession(inputFile);
             if (messages.isEmpty()) {
-                System.err.println("No messages found in session file.");
+                err().println("No messages found in session file.");
                 return 1;
             }
 
@@ -388,9 +406,10 @@ public class CampusClawCommand implements Callable<Integer> {
                     messages, "CampusClaw Session", sm.getSessionId());
             try {
                 Files.writeString(outputFile, html);
-                System.out.println("Exported " + messages.size() + " messages to " + outputFile);
+                out().println("Exported " + messages.size() + " messages to " + outputFile);
             } catch (IOException e) {
-                System.err.println("Failed to write HTML: " + e.getMessage());
+                log.error("Failed to write HTML export to {}", outputFile, e);
+                err().println("Failed to write HTML: " + e.getMessage());
                 return 1;
             }
             return 0;
@@ -408,7 +427,7 @@ public class CampusClawCommand implements Callable<Integer> {
                         && !m.name().toLowerCase(Locale.ROOT).contains(search.toLowerCase(Locale.ROOT))) {
                     continue;
                 }
-                System.out.printf("  %-15s %-40s %s%n", m.provider().value(), m.id(), m.name());
+                out().printf("  %-15s %-40s %s%n", m.provider().value(), m.id(), m.name());
             }
             return 0;
         }
@@ -433,35 +452,35 @@ public class CampusClawCommand implements Callable<Integer> {
             conflicting.add("--no-session");
         }
         if (sessionFlagCount > 1) {
-            System.err.println("Error: conflicting flags: " + String.join(", ", conflicting));
+            err().println("Error: conflicting flags: " + String.join(", ", conflicting));
             return 1;
         }
 
         // --print/-p flag makes this non-interactive (like campusclaw -p)
         if (printMode) {
             if (effectivePrompt == null) {
-                System.err.println("Error: --print requires a prompt (positional args or piped stdin)");
+                err().println("Error: --print requires a prompt (positional args or piped stdin)");
                 return 1;
             }
             mode = "one-shot";
         }
 
         if ("print".equals(mode)) {
-            System.out.println("Model: " + effectiveModel);
-            System.out.println("Mode: " + mode);
-            System.out.println("CWD: " + effectiveCwd);
-            System.out.println("Prompt: " + effectivePrompt);
+            out().println("Model: " + effectiveModel);
+            out().println("Mode: " + mode);
+            out().println("CWD: " + effectiveCwd);
+            out().println("Prompt: " + effectivePrompt);
             if (effectiveThinking != null) {
-                System.out.println("Thinking: " + effectiveThinking);
+                out().println("Thinking: " + effectiveThinking);
             }
             if (toolsFilter != null) {
-                System.out.println("Tools: " + toolsFilter);
+                out().println("Tools: " + toolsFilter);
             }
             return 0;
         }
 
         if ("one-shot".equals(mode) && effectivePrompt == null) {
-            System.err.println("Error: --mode one-shot requires a prompt (-p or positional args)");
+            err().println("Error: --mode one-shot requires a prompt (-p or positional args)");
             return 1;
         }
 
@@ -516,10 +535,10 @@ public class CampusClawCommand implements Callable<Integer> {
                     for (var msg : messages) {
                         session.getAgent().getState().appendMessage(msg);
                     }
-                    System.err.println(
-                            "Loaded session " + sessionManager.getSessionId() + " (" + messages.size() + " messages)");
+                    err().println("Loaded session " + sessionManager.getSessionId() + " (" + messages.size()
+                            + " messages)");
                 } else {
-                    System.err.println("Warning: session file empty or invalid: " + sessionPath);
+                    err().println("Warning: session file empty or invalid: " + sessionPath);
                     sessionManager.createSession(effectiveCwd.toString());
                 }
             } else if (forkPath != null) {
@@ -532,7 +551,7 @@ public class CampusClawCommand implements Callable<Integer> {
                         session.getAgent().getState().appendMessage(msg);
                         sessionManager.appendMessage(msg);
                     }
-                    System.err.println("Forked session " + originalId + " → " + sessionManager.getSessionId() + " ("
+                    err().println("Forked session " + originalId + " → " + sessionManager.getSessionId() + " ("
                             + messages.size() + " messages)");
                 }
             } else if (continueSession) {
@@ -561,14 +580,14 @@ public class CampusClawCommand implements Callable<Integer> {
                     for (var msg : messages) {
                         session.getAgent().getState().appendMessage(msg);
                     }
-                    System.err.println(
-                            "Resumed session " + sessionManager.getSessionId() + " (" + messages.size() + " messages)");
+                    err().println("Resumed session " + sessionManager.getSessionId() + " (" + messages.size()
+                            + " messages)");
                 } else {
                     sessionManager.createSession(effectiveCwd.toString());
                 }
             } else if (resumeSession) {
                 // --resume: show list and let user pick (in non-interactive context, just list)
-                System.err.println("Use /resume command in interactive mode to select a session.");
+                err().println("Use /resume command in interactive mode to select a session.");
                 sessionManager.createSession(effectiveCwd.toString());
             } else {
                 sessionManager.createSession(effectiveCwd.toString());
@@ -581,7 +600,7 @@ public class CampusClawCommand implements Callable<Integer> {
                 ThinkingLevel level = ThinkingLevel.fromValue(effectiveThinking);
                 session.getAgent().setThinkingLevel(level);
             } catch (IllegalArgumentException e) {
-                System.err.println("Warning: Unknown thinking level '" + effectiveThinking
+                err().println("Warning: Unknown thinking level '" + effectiveThinking
                         + "'. Valid: off, minimal, low, medium, high, xhigh");
             }
         }
@@ -689,26 +708,27 @@ public class CampusClawCommand implements Callable<Integer> {
      */
     private Integer executeCronTick() {
         if (cronService == null) {
-            System.err.println("Error: Cron service not available");
+            err().println("Error: Cron service not available");
             return 1;
         }
         var store = new com.huawei.hicampus.mate.matecampusclaw.cron.store.CronStore();
         var processLock = store.acquireProcessLock();
         if (processLock == null) {
-            System.err.println("Another cron-tick is already running, skipping");
+            err().println("Another cron-tick is already running, skipping");
             return 0;
         }
         try {
             var results = cronService.tickOnce();
             for (var r : results) {
-                System.out.printf("[cron-tick] %s → %s%n", r.jobId(), r.status());
+                out().printf("[cron-tick] %s → %s%n", r.jobId(), r.status());
             }
             if (results.isEmpty()) {
-                System.out.println("[cron-tick] No jobs due");
+                out().println("[cron-tick] No jobs due");
             }
             return 0;
         } catch (Exception e) {
-            System.err.println("[cron-tick] Error: " + e.getMessage());
+            log.error("cron-tick execution failed", e);
+            err().println("[cron-tick] Error: " + e.getMessage());
             return 1;
         } finally {
             store.releaseProcessLock(processLock);
@@ -746,55 +766,55 @@ public class CampusClawCommand implements Callable<Integer> {
         switch (command) {
             case "install" -> {
                 if (filteredArgs.isEmpty()) {
-                    System.err.println("Usage: pi install <source> [-l]");
+                    err().println("Usage: pi install <source> [-l]");
                     return 1;
                 }
                 String source = filteredArgs.get(0);
-                System.out.println("Installing package: " + source + (local ? " (local)" : " (global)"));
-                System.out.println("Package installation is not yet fully implemented.");
-                System.out.println("Add the source to your settings.json packages array manually:");
-                System.out.println("  \"packages\": [\"" + source + "\"]");
+                out().println("Installing package: " + source + (local ? " (local)" : " (global)"));
+                out().println("Package installation is not yet fully implemented.");
+                out().println("Add the source to your settings.json packages array manually:");
+                out().println("  \"packages\": [\"" + source + "\"]");
                 return 0;
             }
             case "remove" -> {
                 if (filteredArgs.isEmpty()) {
-                    System.err.println("Usage: pi remove <source> [-l]");
+                    err().println("Usage: pi remove <source> [-l]");
                     return 1;
                 }
                 String source = filteredArgs.get(0);
-                System.out.println("Removing package: " + source);
-                System.out.println("Remove the source from your settings.json packages array manually.");
+                out().println("Removing package: " + source);
+                out().println("Remove the source from your settings.json packages array manually.");
                 return 0;
             }
             case "update" -> {
                 String source = filteredArgs.isEmpty() ? null : filteredArgs.get(0);
                 if (source != null) {
-                    System.out.println("Updating package: " + source);
+                    out().println("Updating package: " + source);
                 } else {
-                    System.out.println("Updating all packages...");
+                    out().println("Updating all packages...");
                 }
-                System.out.println("Package update is not yet fully implemented.");
+                out().println("Package update is not yet fully implemented.");
                 return 0;
             }
             case "list" -> {
-                System.out.println("Installed packages:");
+                out().println("Installed packages:");
                 Settings settings = settingsManager != null ? settingsManager.load() : Settings.empty();
                 if (settings.packages() != null && !settings.packages().isEmpty()) {
                     for (String pkg : settings.packages()) {
-                        System.out.println("  " + pkg);
+                        out().println("  " + pkg);
                     }
                 } else {
-                    System.out.println("  (none)");
+                    out().println("  (none)");
                 }
                 return 0;
             }
             case "config" -> {
-                System.out.println("Package config TUI is not yet implemented.");
-                System.out.println("Edit settings.json manually to configure packages.");
+                out().println("Package config TUI is not yet implemented.");
+                out().println("Edit settings.json manually to configure packages.");
                 return 0;
             }
             default -> {
-                System.err.println("Unknown package command: " + command);
+                err().println("Unknown package command: " + command);
                 return 1;
             }
         }
@@ -832,33 +852,33 @@ public class CampusClawCommand implements Callable<Integer> {
         switch (action) {
             case "install" -> {
                 if (actionArgs.isEmpty()) {
-                    System.err.println("Usage: campusclaw skill install <git-url>");
+                    err().println("Usage: campusclaw skill install <git-url>");
                     return 1;
                 }
                 String gitUrl = actionArgs.get(0);
                 try {
-                    System.out.println("Installing skill from: " + gitUrl);
+                    out().println("Installing skill from: " + gitUrl);
                     String name = manager.install(gitUrl);
-                    System.out.println("Skill installed: " + name);
+                    out().println("Skill installed: " + name);
 
                     // Show what was installed (使用支持沙箱的 SkillLoader)
                     var skillLoader = new SkillLoader(sandboxSkillParser, useSandbox);
                     var skills = skillLoader.loadFromDirectory(
                             com.huawei.hicampus.mate.matecampusclaw.codingagent.config.AppPaths.USER_SKILLS_DIR.resolve(name), "user");
                     for (var skill : skills) {
-                        System.out.println("  - " + skill.name() + ": " + skill.description());
+                        out().println("  - " + skill.name() + ": " + skill.description());
                     }
                     return 0;
                 } catch (SkillInstallException e) {
-                    System.err.println("Error: " + e.getMessage());
+                    err().println("Error: " + e.getMessage());
                     return 1;
                 }
             }
             case "list", "ls" -> {
                 var infos = manager.list();
                 if (infos.isEmpty()) {
-                    System.out.println("No skills installed.");
-                    System.out.println("Install skills with: campusclaw skill install <git-url>");
+                    out().println("No skills installed.");
+                    out().println("Install skills with: campusclaw skill install <git-url>");
                     return 0;
                 }
 
@@ -872,84 +892,84 @@ public class CampusClawCommand implements Callable<Integer> {
                                 .max()
                                 .orElse(6));
                 String fmt = "  %-" + maxName + "s  %-" + maxType + "s  %s%n";
-                System.out.printf(fmt, "NAME", "SOURCE", "DESCRIPTION");
-                System.out.printf(fmt, "-".repeat(maxName), "-".repeat(maxType), "-".repeat(30));
+                out().printf(fmt, "NAME", "SOURCE", "DESCRIPTION");
+                out().printf(fmt, "-".repeat(maxName), "-".repeat(maxType), "-".repeat(30));
                 for (var info : infos) {
-                    System.out.printf(fmt, info.name(), info.sourceType(), info.description());
+                    out().printf(fmt, info.name(), info.sourceType(), info.description());
                 }
                 return 0;
             }
             case "remove", "rm", "uninstall" -> {
                 if (actionArgs.isEmpty()) {
-                    System.err.println("Usage: campusclaw skill remove <name>");
+                    err().println("Usage: campusclaw skill remove <name>");
                     return 1;
                 }
                 String name = actionArgs.get(0);
                 try {
                     manager.remove(name);
-                    System.out.println("Removed skill: " + name);
+                    out().println("Removed skill: " + name);
                     return 0;
                 } catch (SkillInstallException e) {
-                    System.err.println("Error: " + e.getMessage());
+                    err().println("Error: " + e.getMessage());
                     return 1;
                 }
             }
             case "link" -> {
                 if (actionArgs.isEmpty()) {
-                    System.err.println("Usage: campusclaw skill link <path>");
+                    err().println("Usage: campusclaw skill link <path>");
                     return 1;
                 }
                 Path localPath = Path.of(actionArgs.get(0));
                 try {
                     String name = manager.link(localPath);
-                    System.out.println("Linked skill: " + name + " → "
+                    out().println("Linked skill: " + name + " → "
                             + localPath.toAbsolutePath().normalize());
                     return 0;
                 } catch (SkillInstallException e) {
-                    System.err.println("Error: " + e.getMessage());
+                    err().println("Error: " + e.getMessage());
                     return 1;
                 }
             }
             case "import" -> {
                 if (actionArgs.isEmpty()) {
-                    System.err.println("Usage: campusclaw skill import <archive-path>");
+                    err().println("Usage: campusclaw skill import <archive-path>");
                     return 1;
                 }
                 Path archivePath = Path.of(actionArgs.get(0));
                 try {
-                    System.out.println("Importing skill from: " + archivePath);
+                    out().println("Importing skill from: " + archivePath);
                     String name = manager.importArchive(archivePath);
-                    System.out.println("Skill imported: " + name);
+                    out().println("Skill imported: " + name);
                     var skills = new SkillLoader()
                             .loadFromDirectory(
                                     com.huawei.hicampus.mate.matecampusclaw.codingagent.config.AppPaths.USER_SKILLS_DIR.resolve(name), "user");
                     for (var skill : skills) {
-                        System.out.println("  - " + skill.name() + ": " + skill.description());
+                        out().println("  - " + skill.name() + ": " + skill.description());
                     }
                     return 0;
                 } catch (SkillInstallException e) {
-                    System.err.println("Error: " + e.getMessage());
+                    err().println("Error: " + e.getMessage());
                     return 1;
                 }
             }
             case "update" -> {
                 if (actionArgs.isEmpty()) {
-                    System.err.println("Usage: campusclaw skill update <name>");
+                    err().println("Usage: campusclaw skill update <name>");
                     return 1;
                 }
                 String name = actionArgs.get(0);
                 try {
-                    System.out.println("Updating skill: " + name);
+                    out().println("Updating skill: " + name);
                     manager.update(name);
-                    System.out.println("Updated: " + name);
+                    out().println("Updated: " + name);
                     return 0;
                 } catch (SkillInstallException e) {
-                    System.err.println("Error: " + e.getMessage());
+                    err().println("Error: " + e.getMessage());
                     return 1;
                 }
             }
             default -> {
-                System.err.println("Unknown skill command: " + action);
+                err().println("Unknown skill command: " + action);
                 printSkillHelp(null);
                 return 1;
             }
@@ -958,8 +978,8 @@ public class CampusClawCommand implements Callable<Integer> {
 
     private void printSkillHelp(String action) {
         if (action == null) {
-            System.out.println(
-                    """
+            out().println(
+                            """
         Usage: campusclaw skill <command> [args]
 
         Commands:
@@ -982,8 +1002,8 @@ public class CampusClawCommand implements Callable<Integer> {
         }
         switch (action) {
             case "install" ->
-                System.out.println(
-                        """
+                out().println(
+                                """
         Usage: campusclaw skill install <git-url>
 
         Clone a git repository into ~/.campusclaw/agent/skills/.
@@ -993,8 +1013,8 @@ public class CampusClawCommand implements Callable<Integer> {
             campusclaw skill install https://github.com/user/my-skill
             campusclaw skill install git@github.com:user/skill-collection.git""");
             case "import" ->
-                System.out.println(
-                        """
+                out().println(
+                                """
         Usage: campusclaw skill import <archive-path>
 
         Extract a .zip or .tar.gz archive into ~/.campusclaw/agent/skills/.
@@ -1007,22 +1027,22 @@ public class CampusClawCommand implements Callable<Integer> {
             campusclaw skill import ./my-skill.zip
             campusclaw skill import ~/Downloads/skill-collection.tar.gz""");
             case "list", "ls" ->
-                System.out.println(
-                        """
+                out().println(
+                                """
         Usage: campusclaw skill list
 
         List all skills in ~/.campusclaw/agent/skills/ with their source and description.""");
             case "remove", "rm", "uninstall" ->
-                System.out.println(
-                        """
+                out().println(
+                                """
         Usage: campusclaw skill remove <name>
 
         Remove an installed skill by its directory name.
         For git-installed skills, deletes the cloned directory.
         For linked skills, removes the symlink (does not delete the original).""");
             case "link" ->
-                System.out.println(
-                        """
+                out().println(
+                                """
         Usage: campusclaw skill link <path>
 
         Create a symbolic link in ~/.campusclaw/agent/skills/ pointing to a local directory.
@@ -1031,8 +1051,8 @@ public class CampusClawCommand implements Callable<Integer> {
         Example:
             campusclaw skill link ./my-skill-in-progress""");
             case "update" ->
-                System.out.println(
-                        """
+                out().println(
+                                """
         Usage: campusclaw skill update <name>
 
         Run 'git pull --ff-only' in the skill directory.
@@ -1044,8 +1064,8 @@ public class CampusClawCommand implements Callable<Integer> {
     private void printPackageCommandHelp(String command) {
         switch (command) {
             case "install" ->
-                System.out.println(
-                        """
+                out().println(
+                                """
         Usage: pi install <source> [-l]
 
         Install a package and add it to settings.
@@ -1058,26 +1078,26 @@ public class CampusClawCommand implements Callable<Integer> {
             pi install git:github.com/user/repo
             pi install ./local/path""");
             case "remove" ->
-                System.out.println(
-                        """
+                out().println(
+                                """
         Usage: pi remove <source> [-l]
 
         Remove a package source from settings.
         Alias: pi uninstall <source> [-l]""");
             case "update" ->
-                System.out.println(
-                        """
+                out().println(
+                                """
         Usage: pi update [source]
 
         Update installed packages.
         If <source> is provided, only that package is updated.""");
             case "list" ->
-                System.out.println(
-                        """
+                out().println(
+                                """
         Usage: pi list
 
         List installed packages from user and project settings.""");
-            default -> System.out.println("No help available for: " + command);
+            default -> out().println("No help available for: " + command);
         }
     }
 

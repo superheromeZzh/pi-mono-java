@@ -123,6 +123,12 @@ public class RpcMode {
         }
     }
 
+    /*
+     * RPC mode's contract is "newline-delimited JSON events on stdout". External
+     * processes parse this stream line-by-line, so events must go through System.out,
+     * never a logger.
+     */
+    @SuppressWarnings("checkstyle:no_system_out_err")
     private void emit(RpcEvent event) {
         try {
             System.out.println(MAPPER.writeValueAsString(event));
