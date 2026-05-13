@@ -12,7 +12,5 @@ package com.huawei.hicampus.mate.matecampusclaw.agent;
  */
 public class CampusClawAgentCore {
 
-    public static void main(String[] args) {
-        System.out.println("CampusClaw-Agent-Core initialized");
-    }
+    private CampusClawAgentCore() {}
 }

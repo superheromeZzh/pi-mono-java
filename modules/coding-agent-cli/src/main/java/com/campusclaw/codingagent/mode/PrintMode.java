@@ -64,7 +64,7 @@ public class PrintMode {
             session.prompt(prompt).join();
 
             if (format == OutputFormat.TEXT) {
-                System.out.print(result);
+                writeStdout(result.toString());
             }
         } catch (Exception e) {
             log.error("Print mode error", e);
@@ -74,6 +74,17 @@ public class PrintMode {
         return exitCode[0];
     }
 
+    /*
+     * PrintMode's contract is "write program output to stdout" — text for TEXT mode,
+     * JSONL events for JSON mode. This is the protocol byte stream callers pipe and
+     * parse, not a log: it must go through System.out, never a logger.
+     */
+    @SuppressWarnings("checkstyle:no_system_out_err")
+    private void writeStdout(String text) {
+        System.out.print(text);
+    }
+
+    @SuppressWarnings("checkstyle:no_system_out_err")
     private void writeJsonEvent(Object event) {
         try {
             System.out.println(MAPPER.writeValueAsString(event));

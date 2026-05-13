@@ -10,57 +10,57 @@ import com.campusclaw.codingagent.tool.sandbox.ResourceLimits;
 import com.campusclaw.codingagent.tool.sandbox.SandboxResult;
 import com.campusclaw.codingagent.tool.sandbox.SandboxSecurityPolicy;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * Stand-alone manual smoke test for the long-lived Docker sandbox worker. Configures
  * {@link DockerSandboxClient} with a persistent (non-ephemeral) Alpine worker, runs an
- * {@code echo} command, prints the result, and waits on stdin so the operator can inspect
+ * {@code echo} command, logs the result, and waits on stdin so the operator can inspect
  * the container before tearing it down. Intended for ad-hoc developer runs, not the CI suite.
  *
  * @version [br_eCampusCore 25.1.0_Next, 2026/05/13]
  * @since [br_eCampusCore 25.1.0_Next]
  */
 public class SandboxQuickTest {
-    public static void main(String[] args) throws Exception {
-        System.out.println("=== Docker 沙箱测试 ===\n");
 
-        // 创建配置 - 使用常驻容器模式
+    private static final Logger log = LoggerFactory.getLogger(SandboxQuickTest.class);
+
+    public static void main(String[] args) throws Exception {
+        log.info("=== Docker 沙箱测试 ===");
+
         ToolExecutionProperties props = new ToolExecutionProperties();
         props.setSandboxExecutionEnabled(true);
-        props.setUseEphemeralContainers(false); // 关键：测试常驻容器模式
+        props.setUseEphemeralContainers(false);
         props.setDockerHost("unix:///var/run/docker.sock");
         props.setSandboxWorkerImage("alpine:3.19");
         props.setSandboxWorkerMemory("512m");
         props.setSandboxWorkerCpu(1.0);
 
-        // 创建安全策略
         SandboxSecurityPolicy policy = new SandboxSecurityPolicy();
 
-        System.out.println("初始化 Docker 客户端...");
-        System.out.println("配置: useEphemeralContainers = " + props.isUseEphemeralContainers());
+        log.info("初始化 Docker 客户端...");
+        log.info("配置: useEphemeralContainers = {}", props.isUseEphemeralContainers());
 
-        // 创建 Docker 客户端
         DockerSandboxClient client = new DockerSandboxClient(props, policy);
 
-        System.out.println("\nDocker 可用: " + client.isAvailable());
-        System.out.println("Worker 容器 ID: " + client.getWorkerContainerId());
+        log.info("Docker 可用: {}", client.isAvailable());
+        log.info("Worker 容器 ID: {}", client.getWorkerContainerId());
 
-        // 如果可用，执行一个测试命令
         if (client.isAvailable()) {
-            System.out.println("\n执行测试命令: echo 'Hello from Sandbox'");
+            log.info("执行测试命令: echo 'Hello from Sandbox'");
             SandboxResult result =
                     client.execute(java.util.List.of("echo", "Hello from Sandbox"), ResourceLimits.defaults());
-            System.out.println("退出码: " + result.getExitCode());
-            System.out.println("输出: " + result.getStdout().trim());
+            log.info("退出码: {}", result.getExitCode());
+            log.info("输出: {}", result.getStdout().trim());
         } else {
-            System.out.println("\n沙箱不可用！");
+            log.warn("沙箱不可用！");
         }
 
-        // 保持运行，方便检查容器状态
-        System.out.println("\n按 Enter 键关闭沙箱并退出...");
+        log.info("按 Enter 键关闭沙箱并退出...");
         System.in.read();
 
-        // 关闭
         client.shutdown();
-        System.out.println("沙箱已关闭");
+        log.info("沙箱已关闭");
     }
 }

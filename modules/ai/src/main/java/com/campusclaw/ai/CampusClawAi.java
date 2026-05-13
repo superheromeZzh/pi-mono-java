@@ -12,7 +12,5 @@ package com.campusclaw.ai;
  */
 public class CampusClawAi {
 
-    public static void main(String[] args) {
-        System.out.println("CampusClaw-AI Module initialized");
-    }
+    private CampusClawAi() {}
 }

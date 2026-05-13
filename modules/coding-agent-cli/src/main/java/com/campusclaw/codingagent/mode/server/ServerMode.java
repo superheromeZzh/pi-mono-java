@@ -50,6 +50,15 @@ public class ServerMode {
 
     private static final Logger log = LoggerFactory.getLogger(ServerMode.class);
 
+    /*
+     * Dedicated logger for the startup banner. The category name is decoupled from
+     * the class's package so its level can be configured independently of
+     * `logging.level.com.campusclaw` (which we keep at WARN to avoid runtime noise).
+     * Pinned to INFO via application.yml so `pi --mode server` always shows the
+     * endpoint list to the operator who launched it.
+     */
+    private static final Logger banner = LoggerFactory.getLogger("CampusClawStartupBanner");
+
     private final CampusClawAiService aiService;
     private final ModelRegistry modelRegistry;
     private final SystemPromptBuilder promptBuilder;
@@ -191,17 +200,17 @@ public class ServerMode {
                 .bindNow();
 
         log.info("CampusClaw API server started on {}:{}", host, port);
-        System.out.println("CampusClaw API server started on http://" + host + ":" + port);
-        System.out.println("Endpoints:");
-        System.out.println("  GET    /api/health");
-        System.out.println("  POST   /api/chat");
-        System.out.println("  DELETE /api/conversations/{id}");
-        System.out.println("  POST   /api/skills");
-        System.out.println("  GET    /api/skills");
-        System.out.println("  DELETE /api/skills/{name}");
-        System.out.println("  POST   /api/skills/{name}/enable");
-        System.out.println("  POST   /api/skills/{name}/disable");
-        System.out.println("  WS     /api/ws/chat");
+        banner.info("CampusClaw API server started on http://{}:{}", host, port);
+        banner.info("Endpoints:");
+        banner.info("  GET    /api/health");
+        banner.info("  POST   /api/chat");
+        banner.info("  DELETE /api/conversations/{id}");
+        banner.info("  POST   /api/skills");
+        banner.info("  GET    /api/skills");
+        banner.info("  DELETE /api/skills/{name}");
+        banner.info("  POST   /api/skills/{name}/enable");
+        banner.info("  POST   /api/skills/{name}/disable");
+        banner.info("  WS     /api/ws/chat");
 
         server.onDispose().block();
         sessionPool.shutdown();

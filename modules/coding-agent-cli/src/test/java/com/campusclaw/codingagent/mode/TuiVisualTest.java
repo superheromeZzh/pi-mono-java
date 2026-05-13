@@ -8,6 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
+import java.util.Locale;
 
 import com.campusclaw.codingagent.mode.tui.AssistantMessageComponent;
 import com.campusclaw.codingagent.mode.tui.EditorContainer;
@@ -19,12 +20,16 @@ import com.campusclaw.tui.component.Text;
 import com.campusclaw.tui.terminal.TestTerminal;
 
 import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Visual rendering test — validates the full TUI output matches expectations.
- * Run this test and inspect the output to verify visual correctness.
+ * Run this test and inspect the logger output to verify visual correctness.
  */
 class TuiVisualTest {
+
+    private static final Logger log = LoggerFactory.getLogger(TuiVisualTest.class);
 
     @Test
     void fullConversationRendersCorrectly() {
@@ -59,11 +64,11 @@ class TuiVisualTest {
 
         List<String> lines = root.render(80);
 
-        // Print for visual inspection
-        System.out.println("=== RENDERED (" + lines.size() + " lines) ===");
+        // Log rendered output for visual inspection
+        log.info("=== RENDERED ({} lines) ===", lines.size());
         for (int i = 0; i < lines.size(); i++) {
             String clean = stripAnsi(lines.get(i));
-            System.out.printf("%3d: |%s|\n", i, clean);
+            log.info("{}: |{}|", String.format(Locale.ROOT, "%3d", i), clean);
         }
 
         // Structural assertions

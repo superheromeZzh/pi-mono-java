@@ -119,6 +119,32 @@
             <property name="ignoreComments" value="true"/>
         </module>
 
+        <!-- no_system_out_err: 禁止把 System.out / System.err 当日志使用。
+             所有「记录日志」诉求一律走 SLF4J（private static final Logger log = LoggerFactory.getLogger(...)）。
+             少数 stdout/stderr 本就是接口的场景——Picocli CLI 用户输出、Print/Rpc 模式的协议输出、
+             TUI 终端渲染、Server 启动 banner——必须在类声明上加
+             @SuppressWarnings("checkstyle:no_system_out_err") 显式声明意图，让 reviewer
+             一眼看出「这是协议/UI 输出，不是日志」。
+             检测：行内出现 System.(out|err).(print|println|printf|format|append|write) 即报错；
+             ignoreComments=true 让 javadoc / 注释里提及 System.out.println(...) 不被误判。 -->
+        <module name="RegexpSinglelineJava">
+            <property name="id" value="no_system_out_err"/>
+            <property name="format" value="\bSystem\.(out|err)\.(print|println|printf|format|append|write)\b"/>
+            <property name="message" value="禁止用 System.out/System.err 打印日志：请改用 SLF4J（private static final Logger log = LoggerFactory.getLogger(...)）。如确属 CLI/协议/UI 输出，请在类上加 @SuppressWarnings(&quot;checkstyle:no_system_out_err&quot;)。"/>
+            <property name="ignoreComments" value="true"/>
+        </module>
+
+        <!-- no_print_stack_trace: 禁止 Throwable.printStackTrace()，必须走 log.error("...", e)，
+             让异常进入 SLF4J / logback / log4j 配置链——能被 appender 收集、能被测试静默、
+             带上下文（logger 名、线程、级别、时间戳）。
+             当前仓内存量已为 0，规则上锁防止回潮。 -->
+        <module name="RegexpSinglelineJava">
+            <property name="id" value="no_print_stack_trace"/>
+            <property name="format" value="\.printStackTrace\s*\("/>
+            <property name="message" value="禁止 Throwable.printStackTrace()：请改用 log.error(&quot;...&quot;, e) 让异常进入日志框架。"/>
+            <property name="ignoreComments" value="true"/>
+        </module>
+
         <!-- comment_marker_space: 行首注释符 // 与 /* 之后必须紧跟空白（空格/制表符/换行）
              或者重复同样的符号（`///` 三斜线、`/**` Javadoc 起始）。
              正例：`// foo`、`/** ... */`、`/* foo */`、`//` 空注释、`///`、`/**`。
