@@ -1,9 +1,15 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue';
+import { computed, nextTick, onMounted, ref, watch } from 'vue';
 import { useChatWs } from './composables/useChatWs';
 import MessageList from './components/MessageList.vue';
 import ConversationsPanel from './components/ConversationsPanel.vue';
 import type { ThinkingLevel } from './types/ws';
+import {
+  getSlashCommandCompletions,
+  parseSlashCommand,
+  type SlashCommandDef,
+} from './chat/slashCommands';
+import { executeSlashCommand } from './chat/slashCommandExecutor';
 
 const chat = useChatWs();
 
@@ -101,9 +107,72 @@ onMounted(() => {
 watch(wsUrl, (next) => {
   if (next) void chat.listConversations(next);
 });
+// ----- slash command autocomplete -----
+const slashSuggestions = ref<SlashCommandDef[]>([]);
+const slashHighlightIdx = ref(0);
+const promptTextarea = ref<HTMLTextAreaElement | null>(null);
+
+const showSlashMenu = computed(() => slashSuggestions.value.length > 0);
+
+watch(promptText, (next) => {
+  // Only suggest when the user has typed a single line starting with `/` and
+  // hasn't yet typed past the command name (the first whitespace closes the
+  // menu so arg-typing isn't interrupted).
+  const m = /^\/([^\s]*)$/u.exec(next);
+  if (!m) {
+    slashSuggestions.value = [];
+    slashHighlightIdx.value = 0;
+    return;
+  }
+  slashSuggestions.value = getSlashCommandCompletions(m[1]).slice(0, 8);
+  if (slashHighlightIdx.value >= slashSuggestions.value.length) {
+    slashHighlightIdx.value = 0;
+  }
+});
+
+function acceptSlashSuggestion(cmd: SlashCommandDef) {
+  promptText.value = `/${cmd.name}${cmd.args ? ' ' : ''}`;
+  slashSuggestions.value = [];
+  slashHighlightIdx.value = 0;
+  void nextTick(() => promptTextarea.value?.focus());
+}
+
+async function runSlashCommand(input: string): Promise<boolean> {
+  const parsed = parseSlashCommand(input);
+  if (!parsed) return false;
+  // Echo the typed command so the user has a record of what produced the output.
+  chat.pushSystem(`/${parsed.command.name}${parsed.args ? ' ' + parsed.args : ''}`, '…');
+  const idx = chat.messages.value.length - 1;
+  const result = await executeSlashCommand(parsed, chat);
+  // Replace the placeholder with the real result, preserving the same bubble.
+  chat.messages.value[idx] = {
+    kind: result.isError ? 'error' : 'system',
+    ...(result.isError
+      ? { text: result.content }
+      : {
+          label: `/${parsed.command.name}${parsed.args ? ' ' + parsed.args : ''}`,
+          text: result.content,
+        }),
+  } as (typeof chat.messages.value)[number];
+  return true;
+}
+
 function onPrompt() {
   const t = promptText.value.trim();
   if (!t) return;
+  // Slash commands run client-side and produce a system bubble rather than
+  // being sent to the model. `/help` etc. don't need a WS connection.
+  if (t.startsWith('/')) {
+    const parsed = parseSlashCommand(t);
+    if (parsed) {
+      promptText.value = '';
+      slashSuggestions.value = [];
+      void runSlashCommand(t);
+      return;
+    }
+    // Unknown `/foo` — fall through to send as a normal prompt so the user
+    // can still talk about literal slash text. Matches CLI behavior.
+  }
   promptText.value = '';
   void chat.prompt(t);
 }
@@ -114,6 +183,34 @@ function onSteer() {
   void chat.steer(t);
 }
 function onPromptKeydown(e: KeyboardEvent) {
+  if (showSlashMenu.value) {
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      slashHighlightIdx.value =
+        (slashHighlightIdx.value + 1) % slashSuggestions.value.length;
+      return;
+    }
+    if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      slashHighlightIdx.value =
+        (slashHighlightIdx.value - 1 + slashSuggestions.value.length) %
+        slashSuggestions.value.length;
+      return;
+    }
+    if (e.key === 'Tab' || (e.key === 'Enter' && !e.metaKey && !e.ctrlKey && !e.shiftKey)) {
+      const sel = slashSuggestions.value[slashHighlightIdx.value];
+      if (sel) {
+        e.preventDefault();
+        acceptSlashSuggestion(sel);
+        return;
+      }
+    }
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      slashSuggestions.value = [];
+      return;
+    }
+  }
   if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
     e.preventDefault();
     onPrompt();
@@ -265,11 +362,29 @@ function logPrefix(dir: 'in' | 'out' | 'err' | 'info') {
   </main>
 
   <footer class="controls">
-    <textarea
-      v-model="promptText"
-      placeholder="输入消息，Cmd/Ctrl+Enter 发送；运行中可点 Steer 调整方向"
-      @keydown="onPromptKeydown"
-    ></textarea>
+    <div class="prompt-wrap">
+      <div v-if="showSlashMenu" class="slash-menu" role="listbox">
+        <div
+          v-for="(s, i) in slashSuggestions"
+          :key="s.name"
+          class="slash-item"
+          :class="{ active: i === slashHighlightIdx }"
+          role="option"
+          @mousedown.prevent="acceptSlashSuggestion(s)"
+          @mouseenter="slashHighlightIdx = i"
+        >
+          <span class="slash-name">/{{ s.name }}<span v-if="s.args" class="slash-args">{{ ' ' + s.args }}</span></span>
+          <span class="slash-desc">{{ s.description }}</span>
+        </div>
+        <div class="slash-hint">↑↓ to navigate · Tab/Enter to accept · Esc to dismiss</div>
+      </div>
+      <textarea
+        ref="promptTextarea"
+        v-model="promptText"
+        placeholder="输入消息，Cmd/Ctrl+Enter 发送；运行中可点 Steer 调整方向；输入 / 触发命令"
+        @keydown="onPromptKeydown"
+      ></textarea>
+    </div>
     <div class="btn-col">
       <button class="primary" @click="onPrompt" :disabled="!chat.connected.value">Prompt</button>
       <button @click="onSteer" :disabled="!chat.connected.value">Steer</button>
@@ -407,14 +522,65 @@ aside label.hint code {
   gap: 8px;
   align-items: stretch;
 }
-.controls textarea {
+.controls .prompt-wrap {
   flex: 1;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+.controls textarea {
+  width: 100%;
   resize: none;
   min-height: 56px;
   max-height: 180px;
   line-height: 1.45;
   padding: 10px;
   font-size: 14px;
+  box-sizing: border-box;
+}
+.slash-menu {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: calc(100% + 6px);
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+  max-height: 240px;
+  overflow-y: auto;
+  font-size: 12px;
+  z-index: 10;
+}
+.slash-item {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  padding: 6px 10px;
+  cursor: pointer;
+}
+.slash-item.active {
+  background: color-mix(in srgb, var(--accent) 18%, transparent);
+}
+.slash-item .slash-name {
+  font-family: ui-monospace, monospace;
+  color: var(--accent);
+  white-space: nowrap;
+}
+.slash-item .slash-args {
+  color: var(--muted);
+}
+.slash-item .slash-desc {
+  color: var(--muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.slash-hint {
+  padding: 4px 10px;
+  font-size: 10.5px;
+  color: var(--muted);
+  border-top: 1px solid var(--border);
 }
 .btn-col {
   display: flex;

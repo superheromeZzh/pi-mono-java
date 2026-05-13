@@ -35,6 +35,12 @@ watch(
         <div class="content">{{ msg.text }}</div>
       </div>
 
+      <!-- System (slash-command output, local notices) -->
+      <div v-else-if="msg.kind === 'system'" class="bubble system">
+        <div class="role">{{ msg.label }}</div>
+        <div class="content">{{ msg.text }}</div>
+      </div>
+
       <!-- Error -->
       <div v-else-if="msg.kind === 'error'" class="bubble error">
         <div class="role">Error</div>
@@ -83,6 +89,20 @@ watch(
 }
 .bubble.error .role {
   color: var(--err);
+}
+.bubble.system {
+  border-left: 3px solid var(--accent);
+  background: color-mix(in srgb, var(--panel) 92%, var(--accent) 8%);
+}
+.bubble.system .role {
+  color: var(--accent);
+  font-family: ui-monospace, monospace;
+  text-transform: none;
+  letter-spacing: 0;
+}
+.bubble.system .content {
+  font-family: ui-monospace, monospace;
+  font-size: 12.5px;
 }
 .content {
   font-size: 14px;
