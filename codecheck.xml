@@ -136,6 +136,33 @@
             <property name="ignoreComments" value="false"/>
         </module>
 
+        <!-- non_constant_field_camel_case: 非常量字段必须 lowerCamelCase。
+             覆盖两类字段：
+             - 实例字段（MemberName）：`private String userName`、`int retryCount` 等
+             - 静态非 final 字段（StaticVariableName）：`private static Logger log` 等
+             不覆盖 `static final` 常量（ConstantName 的领域，通常 UPPER_SNAKE_CASE）。
+             正则 `^[a-z][a-zA-Z0-9]*$`：必须小写字母开头，纯字母数字，禁止下划线/美元号。
+             ❌ 反例：`user_name`、`UserName`、`_count`、`m_value`。
+             ✅ 正例：`userName`、`retryCount`、`isActive`、`log`。 -->
+        <module name="MemberName">
+            <property name="id" value="non_constant_field_camel_case_instance"/>
+            <property name="format" value="^[a-z][a-zA-Z0-9]*$"/>
+        </module>
+        <module name="StaticVariableName">
+            <property name="id" value="non_constant_field_camel_case_static"/>
+            <property name="format" value="^[a-z][a-zA-Z0-9]*$"/>
+        </module>
+        <!-- 局部变量也按 lowerCamelCase（含 final 局部变量）；for 循环单字符变量豁免。 -->
+        <module name="LocalVariableName">
+            <property name="id" value="non_constant_field_camel_case_local"/>
+            <property name="format" value="^[a-z][a-zA-Z0-9]*$"/>
+            <property name="allowOneCharVarInForLoop" value="true"/>
+        </module>
+        <module name="LocalFinalVariableName">
+            <property name="id" value="non_constant_field_camel_case_local_final"/>
+            <property name="format" value="^[a-z][a-zA-Z0-9]*$"/>
+        </module>
+
         <!-- huge_cyclomatic_complexity: 圈复杂度超阈值即拒。
              switchBlockAsSingleDecisionPoint=true: 整段 switch 算 1 个决策点
              而非每 case 一个，避免合理的查表式 switch 被误判为「复杂」。 -->

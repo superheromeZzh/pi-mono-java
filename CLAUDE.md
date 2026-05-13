@@ -192,6 +192,27 @@ private static final String BG_PENDING = "\033[48;2;40;40;50m";
 
 `int x = 1;//foo` 不允许，应写 `int x = 1; // foo`。不进 Checkstyle 是因为 hard 检查需要排除字符串里的 `://` URL、sed 脚本 `s/foo//;...` 等，正则误报率高。由代码评审把关。
 
+### 非常量字段与局部变量必须 lowerCamelCase
+
+**规则**：非 `static final` 的字段（实例字段 + 静态非 final 字段）以及方法体内的局部变量（含 `final` 局部）名必须匹配 `^[a-z][a-zA-Z0-9]*$`——小写字母开头，纯字母数字，禁止下划线、美元号、Hungarian 前缀（`m_xxx`）。`static final` 常量按惯例 UPPER_SNAKE_CASE，不在此规则覆盖范围；`for (int i = 0; ...)` 这类循环单字符变量豁免。
+
+**硬约束**（build-failing）：四条 Checkstyle 规则联合生效——
+- `non_constant_field_camel_case_instance`（MemberName）实例字段
+- `non_constant_field_camel_case_static`（StaticVariableName）静态非 final 字段
+- `non_constant_field_camel_case_local`（LocalVariableName）方法体内局部变量，`allowOneCharVarInForLoop=true`
+- `non_constant_field_camel_case_local_final`（LocalFinalVariableName）方法体内 `final` 局部变量
+
+| ✅ 正例 | ❌ 反例 |
+|---|---|
+| `private String userName` | `private String user_name` |
+| `private int retryCount` | `private int RetryCount` |
+| `private static Logger log` | `private static Logger LOG_handle` |
+| `private boolean isActive` | `private boolean _count` / `m_value` |
+| `String dim = "..."; String reset = "...";` | `String DIM = "..."; String RST = "...";` |
+| `for (int i = 0; i < n; i++)`（单字符豁免） | — |
+
+**理由**：Java 业界惯例（JLS、Google Java Style、Oracle Code Conventions）一致要求字段与局部变量 lowerCamelCase。混用 snake_case / UpperCamel / `m_` 前缀让 import/grep/IDE 重构难以一致命中。常量与变量视觉区分（UPPER_SNAKE vs lowerCamel）让读者第一眼判断「这是不可变共享值」还是「会变的状态」——方法内拿 `String DIM = ...` 当变量会被误认为常量。
+
 ### 数字字面量后缀
 - **long 类型变量赋值的整数字面量必须以 `L` 结尾**（大写）。`60_000` → `60_000L`。避免静默的 int→long 转换。
 - 已经是 long 字面量的，必须用大写 `L` 而非小写 `l`（`UpperEll` 强制；小写 `l` 易与数字 `1` 混淆）。
