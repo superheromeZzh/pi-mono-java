@@ -958,21 +958,21 @@ public class CampusClawCommand implements Callable<Integer> {
         Usage: campusclaw skill <command> [args]
 
         Commands:
-          install <git-url>    Install a skill from a git repository
-          import <archive>     Import a skill from a .zip or .tar.gz archive
-          list                 List installed skills
-          remove <name>        Remove an installed skill
-          link <path>          Symlink a local skill directory (for development)
-          update <name>        Update a git-installed skill (git pull)
+            install <git-url>    Install a skill from a git repository
+            import <archive>     Import a skill from a .zip or .tar.gz archive
+            list                 List installed skills
+            remove <name>        Remove an installed skill
+            link <path>          Symlink a local skill directory (for development)
+            update <name>        Update a git-installed skill (git pull)
 
         Examples:
-          campusclaw skill install https://github.com/user/my-skill
-          campusclaw skill import ./my-skill.zip
-          campusclaw skill import ~/Downloads/skill-pack.tar.gz
-          campusclaw skill link ./my-local-skill
-          campusclaw skill list
-          campusclaw skill remove my-skill
-          campusclaw skill update my-skill""");
+            campusclaw skill install https://github.com/user/my-skill
+            campusclaw skill import ./my-skill.zip
+            campusclaw skill import ~/Downloads/skill-pack.tar.gz
+            campusclaw skill link ./my-local-skill
+            campusclaw skill list
+            campusclaw skill remove my-skill
+            campusclaw skill update my-skill""");
             return;
         }
         switch (action) {
@@ -985,8 +985,8 @@ public class CampusClawCommand implements Callable<Integer> {
         The repository must contain at least one SKILL.md file.
 
         Examples:
-          campusclaw skill install https://github.com/user/my-skill
-          campusclaw skill install git@github.com:user/skill-collection.git""");
+            campusclaw skill install https://github.com/user/my-skill
+            campusclaw skill install git@github.com:user/skill-collection.git""");
             case "import" ->
                 System.out.println(
                         """
@@ -999,8 +999,8 @@ public class CampusClawCommand implements Callable<Integer> {
         Supported formats: .zip, .tar.gz, .tgz
 
         Examples:
-          campusclaw skill import ./my-skill.zip
-          campusclaw skill import ~/Downloads/skill-collection.tar.gz""");
+            campusclaw skill import ./my-skill.zip
+            campusclaw skill import ~/Downloads/skill-collection.tar.gz""");
             case "list", "ls" ->
                 System.out.println(
                         """
@@ -1024,7 +1024,7 @@ public class CampusClawCommand implements Callable<Integer> {
         Useful for developing and testing skills without copying files.
 
         Example:
-          campusclaw skill link ./my-skill-in-progress""");
+            campusclaw skill link ./my-skill-in-progress""");
             case "update" ->
                 System.out.println(
                         """
@@ -1046,12 +1046,12 @@ public class CampusClawCommand implements Callable<Integer> {
         Install a package and add it to settings.
 
         Options:
-          -l, --local    Install project-locally (.campusclaw/settings.json)
+            -l, --local    Install project-locally (.campusclaw/settings.json)
 
         Examples:
-          pi install npm:@foo/bar
-          pi install git:github.com/user/repo
-          pi install ./local/path""");
+            pi install npm:@foo/bar
+            pi install git:github.com/user/repo
+            pi install ./local/path""");
             case "remove" ->
                 System.out.println(
                         """
