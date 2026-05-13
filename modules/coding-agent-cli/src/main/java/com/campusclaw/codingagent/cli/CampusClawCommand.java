@@ -5,6 +5,7 @@
 package com.campusclaw.codingagent.cli;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -300,7 +301,7 @@ public class CampusClawCommand implements Callable<Integer> {
                 && !"rpc".equals(mode)
                 && !"print".equals(mode)) {
             try {
-                String piped = new String(System.in.readAllBytes()).trim();
+                String piped = new String(System.in.readAllBytes(), StandardCharsets.UTF_8).trim();
                 if (!piped.isEmpty()) {
                     effectivePrompt = piped;
                 }

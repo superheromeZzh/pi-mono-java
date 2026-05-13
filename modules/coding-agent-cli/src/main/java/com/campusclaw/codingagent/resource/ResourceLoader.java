@@ -5,6 +5,7 @@
 package com.campusclaw.codingagent.resource;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.LinkedHashMap;
@@ -95,7 +96,7 @@ public class ResourceLoader {
         // Classpath
         try (var is = getClass().getClassLoader().getResourceAsStream(subPath + "/" + resourceName)) {
             if (is != null) {
-                return Optional.of(new String(is.readAllBytes()));
+                return Optional.of(new String(is.readAllBytes(), StandardCharsets.UTF_8));
             }
         } catch (IOException e) {
             log.debug("Failed to read classpath resource: {}/{}", subPath, resourceName, e);

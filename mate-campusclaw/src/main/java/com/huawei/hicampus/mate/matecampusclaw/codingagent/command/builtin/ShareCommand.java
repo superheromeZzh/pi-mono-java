@@ -5,6 +5,7 @@
 package com.huawei.hicampus.mate.matecampusclaw.codingagent.command.builtin;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
@@ -60,7 +61,7 @@ public class ShareCommand implements SlashCommand {
                     .redirectErrorStream(true)
                     .start();
 
-            String output = new String(process.getInputStream().readAllBytes()).trim();
+            String output = new String(process.getInputStream().readAllBytes(), StandardCharsets.UTF_8).trim();
             int exitCode = process.waitFor();
 
             Files.deleteIfExists(tmpFile);

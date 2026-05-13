@@ -5,6 +5,7 @@
 package com.campusclaw.codingagent.mode;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
@@ -1364,7 +1365,7 @@ public class InteractiveMode {
             var check = new ProcessBuilder("osascript", "-e", "the clipboard info for (class PNGf)")
                     .redirectErrorStream(true)
                     .start();
-            String output = new String(check.getInputStream().readAllBytes()).trim();
+            String output = new String(check.getInputStream().readAllBytes(), StandardCharsets.UTF_8).trim();
             int exit = check.waitFor();
 
             if (exit != 0 || output.isEmpty()) {

@@ -5,6 +5,7 @@
 package com.huawei.hicampus.mate.matecampusclaw.codingagent.cron;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Locale;
@@ -176,7 +177,7 @@ public class SystemSchedulerInstaller {
             var proc = new ProcessBuilder("launchctl", "print", "gui/" + getUid() + "/" + LABEL)
                     .redirectErrorStream(true)
                     .start();
-            String output = new String(proc.getInputStream().readAllBytes());
+            String output = new String(proc.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
             int exit = proc.waitFor();
             if (exit == 0) {
                 return "Installed and active\nPlist: " + PLIST_PATH;
@@ -235,7 +236,7 @@ public class SystemSchedulerInstaller {
             var proc = new ProcessBuilder("crontab", "-l")
                     .redirectErrorStream(true)
                     .start();
-            String output = new String(proc.getInputStream().readAllBytes());
+            String output = new String(proc.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
             proc.waitFor();
             return output;
         } catch (InterruptedException e) {
@@ -296,7 +297,7 @@ public class SystemSchedulerInstaller {
                             )
                     .redirectErrorStream(true)
                     .start();
-            String output = new String(proc.getInputStream().readAllBytes());
+            String output = new String(proc.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
             int exit = proc.waitFor();
             if (exit != 0) {
                 return "Failed to create task: " + output;
@@ -316,7 +317,7 @@ public class SystemSchedulerInstaller {
             var proc = new ProcessBuilder("schtasks", "/Delete", "/TN", TASK_NAME, "/F")
                     .redirectErrorStream(true)
                     .start();
-            String output = new String(proc.getInputStream().readAllBytes());
+            String output = new String(proc.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
             int exit = proc.waitFor();
             if (exit != 0) {
                 return "Not installed or failed to remove: " + output.trim();
@@ -333,7 +334,7 @@ public class SystemSchedulerInstaller {
             var proc = new ProcessBuilder("schtasks", "/Query", "/TN", TASK_NAME, "/FO", "LIST")
                     .redirectErrorStream(true)
                     .start();
-            String output = new String(proc.getInputStream().readAllBytes());
+            String output = new String(proc.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
             int exit = proc.waitFor();
             if (exit == 0) {
                 // Extract key info from LIST format
@@ -365,7 +366,7 @@ public class SystemSchedulerInstaller {
     private static String getUid() {
         try {
             var proc = new ProcessBuilder("id", "-u").start();
-            String uid = new String(proc.getInputStream().readAllBytes()).trim();
+            String uid = new String(proc.getInputStream().readAllBytes(), StandardCharsets.UTF_8).trim();
             proc.waitFor();
             return uid;
         } catch (Exception e) {
