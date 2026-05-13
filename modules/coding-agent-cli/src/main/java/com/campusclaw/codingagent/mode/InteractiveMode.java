@@ -31,6 +31,7 @@ import com.campusclaw.agent.event.ToolExecutionStartEvent;
 import com.campusclaw.agent.event.ToolExecutionUpdateEvent;
 import com.campusclaw.agent.event.TurnStartEvent;
 import com.campusclaw.agent.tool.CancellationToken;
+import com.campusclaw.agent.util.LoggingUncaughtExceptionHandler;
 import com.campusclaw.ai.model.ModelRegistry;
 import com.campusclaw.ai.stream.AssistantMessageEvent;
 import com.campusclaw.ai.types.AssistantMessage;
@@ -925,6 +926,7 @@ public class InteractiveMode {
         var spinnerTimer = Executors.newSingleThreadScheduledExecutor(r -> {
             var t = new Thread(r, "spinner-timer");
             t.setDaemon(true);
+            t.setUncaughtExceptionHandler(LoggingUncaughtExceptionHandler.INSTANCE);
             return t;
         });
         spinnerTimer.scheduleAtFixedRate(

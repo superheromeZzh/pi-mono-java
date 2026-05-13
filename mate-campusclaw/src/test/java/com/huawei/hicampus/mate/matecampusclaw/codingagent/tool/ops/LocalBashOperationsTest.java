@@ -19,6 +19,7 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 
 import com.huawei.hicampus.mate.matecampusclaw.agent.tool.CancellationToken;
+import com.huawei.hicampus.mate.matecampusclaw.agent.util.LoggingUncaughtExceptionHandler;
 
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -101,15 +102,16 @@ class LocalBashOperationsTest {
             var token = new CancellationToken();
 
             // Cancel after a short delay in a separate thread
-            new Thread(() -> {
-                        try {
-                            Thread.sleep(300);
-                        } catch (InterruptedException e) {
-                            Thread.currentThread().interrupt();
-                        }
-                        token.cancel();
-                    })
-                    .start();
+            Thread canceller = new Thread(() -> {
+                try {
+                    Thread.sleep(300);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+                token.cancel();
+            });
+            canceller.setUncaughtExceptionHandler(LoggingUncaughtExceptionHandler.INSTANCE);
+            canceller.start();
 
             BashResult result =
                     ops.exec("sleep 60", tempDir, new BashExecOptions(null, token, Duration.ofSeconds(30), null));

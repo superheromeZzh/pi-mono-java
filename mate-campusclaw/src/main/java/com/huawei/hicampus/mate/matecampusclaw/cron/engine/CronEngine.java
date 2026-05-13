@@ -18,6 +18,7 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 
+import com.huawei.hicampus.mate.matecampusclaw.agent.util.LoggingUncaughtExceptionHandler;
 import com.huawei.hicampus.mate.matecampusclaw.cron.model.CronEvent;
 import com.huawei.hicampus.mate.matecampusclaw.cron.model.CronJob;
 import com.huawei.hicampus.mate.matecampusclaw.cron.model.CronJobState;
@@ -67,6 +68,7 @@ public class CronEngine {
         scheduler = Executors.newSingleThreadScheduledExecutor(r -> {
             Thread t = new Thread(r, "cron-engine");
             t.setDaemon(true);
+            t.setUncaughtExceptionHandler(LoggingUncaughtExceptionHandler.INSTANCE);
             return t;
         });
 

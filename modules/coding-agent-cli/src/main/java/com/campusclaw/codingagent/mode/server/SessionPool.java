@@ -15,6 +15,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import com.campusclaw.agent.tool.AgentTool;
+import com.campusclaw.agent.util.LoggingUncaughtExceptionHandler;
 import com.campusclaw.ai.CampusClawAiService;
 import com.campusclaw.ai.model.ModelRegistry;
 import com.campusclaw.ai.types.Message;
@@ -105,6 +106,7 @@ public class SessionPool {
         this.cleaner = Executors.newSingleThreadScheduledExecutor(r -> {
             var t = new Thread(r, "session-pool-cleaner");
             t.setDaemon(true);
+            t.setUncaughtExceptionHandler(LoggingUncaughtExceptionHandler.INSTANCE);
             return t;
         });
         cleaner.scheduleAtFixedRate(this::evictIdle, IDLE_TIMEOUT_MINUTES, 5, TimeUnit.MINUTES);

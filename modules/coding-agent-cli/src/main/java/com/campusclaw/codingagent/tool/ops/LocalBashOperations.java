@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import com.campusclaw.agent.util.LoggingUncaughtExceptionHandler;
 import com.campusclaw.codingagent.tool.bash.ShellResolver;
 
 /**
@@ -65,6 +66,7 @@ public class LocalBashOperations implements BashOperations {
                 },
                 "bash-output-drainer");
         drainer.setDaemon(true);
+        drainer.setUncaughtExceptionHandler(LoggingUncaughtExceptionHandler.INSTANCE);
         drainer.start();
 
         try {
