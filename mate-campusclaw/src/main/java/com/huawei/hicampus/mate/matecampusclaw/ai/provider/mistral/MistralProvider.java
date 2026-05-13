@@ -10,6 +10,7 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -134,7 +135,7 @@ public class MistralProvider implements ApiProvider {
             int textIndex = 0;
             boolean[] thinkingStarted = {false};
 
-            try (var reader = new BufferedReader(new InputStreamReader(response.body()))) {
+            try (var reader = new BufferedReader(new InputStreamReader(response.body(), StandardCharsets.UTF_8))) {
                 String line;
                 while ((line = reader.readLine()) != null) {
                     if (line.isBlank() || !line.startsWith("data: ")) {

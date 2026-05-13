@@ -7,6 +7,7 @@ package com.campusclaw.codingagent.skill;
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -354,7 +355,7 @@ public class SkillManager {
             var pb = new ProcessBuilder("tar", "xzf", tarGzFile.toString(), "-C", destDir.toString())
                     .redirectErrorStream(true);
             var process = pb.start();
-            String output = new String(process.getInputStream().readAllBytes());
+            String output = new String(process.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
             boolean completed = process.waitFor(GIT_TIMEOUT_SECONDS, TimeUnit.SECONDS);
             if (!completed) {
                 process.destroyForcibly();
@@ -542,7 +543,7 @@ public class SkillManager {
                     .directory(targetDir.toFile())
                     .redirectErrorStream(true);
             var process = pb.start();
-            String output = new String(process.getInputStream().readAllBytes());
+            String output = new String(process.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
             boolean completed = process.waitFor(GIT_TIMEOUT_SECONDS, TimeUnit.SECONDS);
             if (!completed) {
                 process.destroyForcibly();

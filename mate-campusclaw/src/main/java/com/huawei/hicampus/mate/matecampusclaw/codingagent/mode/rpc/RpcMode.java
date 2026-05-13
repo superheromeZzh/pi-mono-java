@@ -6,6 +6,7 @@ package com.huawei.hicampus.mate.matecampusclaw.codingagent.mode.rpc;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
 import com.huawei.hicampus.mate.matecampusclaw.agent.event.AgentEndEvent;
@@ -59,7 +60,7 @@ public class RpcMode {
         });
 
         // Read commands from stdin
-        try (var reader = new BufferedReader(new InputStreamReader(System.in))) {
+        try (var reader = new BufferedReader(new InputStreamReader(System.in, StandardCharsets.UTF_8))) {
             String line;
             while ((line = reader.readLine()) != null) {
                 line = line.trim();

@@ -12,6 +12,7 @@ import java.net.Proxy;
 import java.net.ProxySelector;
 import java.net.SocketAddress;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -359,7 +360,7 @@ public class ProxyConfig {
                             valueName)
                     .redirectErrorStream(true)
                     .start();
-            String output = new String(process.getInputStream().readAllBytes());
+            String output = new String(process.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
             int exitCode = process.waitFor();
             return exitCode == 0 ? output : null;
         } catch (Exception e) {

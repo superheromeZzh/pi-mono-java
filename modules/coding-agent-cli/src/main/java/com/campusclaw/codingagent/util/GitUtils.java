@@ -5,6 +5,7 @@
 package com.campusclaw.codingagent.util;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
@@ -134,7 +135,7 @@ public final class GitUtils {
             var pb = new ProcessBuilder(command).directory(workDir.toFile()).redirectErrorStream(false);
 
             var process = pb.start();
-            var stdout = new String(process.getInputStream().readAllBytes());
+            var stdout = new String(process.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
             boolean completed = process.waitFor(TIMEOUT_SECONDS, TimeUnit.SECONDS);
 
             if (!completed) {

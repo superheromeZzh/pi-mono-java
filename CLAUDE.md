@@ -95,6 +95,50 @@ Key runtime concepts:
 
 机器可读字符串（HTTP header、env var、路径、数字格式）默认 `Locale.ROOT`，仅在确有用户语言场景才换其他 Locale。背景：`"I".toLowerCase()` 在土耳其 locale 下 == `"ı"`。
 
+### 字符 ↔ 字节转换必须显式指定编码
+
+**规则**：任何把 `byte[]`/`InputStream`/`OutputStream` 与 `String`/`Reader`/`Writer` 互转的 API 都必须显式传 `Charset`，统一用 `StandardCharsets.UTF_8`（除非协议本身要求其他编码，如 `Windows-1252` 解析 legacy 文件——这种情况要在注释里写明出处）。
+
+**硬约束**（Checkstyle 在 `codecheck.xml` 中以 `RegexpSinglelineJava` 强制，build-failing）：
+
+| 规则 id | 命中 |
+|---|---|
+| `explicit_charset_get_bytes` | 无参 `.getBytes()` |
+| `explicit_charset_input_stream_reader` | 整行无 `Charset/UTF_8` 的 `new InputStreamReader(...)` |
+| `explicit_charset_output_stream_writer` | 同上 `new OutputStreamWriter(...)` |
+| `explicit_charset_file_reader` | 同上 `new FileReader(...)` |
+| `explicit_charset_file_writer` | 同上 `new FileWriter(...)`（包括双参追加形式） |
+
+检测思路：行内出现违规调用且整行没有 `StandardCharsets` / `Charset` / `UTF_8` / `UTF_16` / `US_ASCII` / `ISO_8859` 任一字样即报错——`Charset.forName(...)`、`, StandardCharsets.UTF_8)` 都豁免。副作用是调用被换行折断时（`new InputStreamReader(` 与参数分两行）会误报，把调用合到单行即可（与 palantir 默认行为一致）。
+
+**软约束**（规范要求，靠 review 把关；regex 难以无误判）：
+
+| 场景 | 建议 |
+|---|---|
+| `new String(bytes)` | 显式 `new String(bytes, StandardCharsets.UTF_8)`；regex 难与合法的 `new String(char[])` / `new String(String)` 区分 |
+| `new PrintWriter(out)` | `new PrintWriter(out, false, StandardCharsets.UTF_8)`；单参的 `PrintWriter(Writer)` 是合法重载，regex 无法看类型 |
+| `new Scanner(in)` | `new Scanner(in, StandardCharsets.UTF_8)`；`new Scanner(String)` 把 String 当源文本，无编码概念 |
+| `Files.readString(path)` | 显式 `Files.readString(path, StandardCharsets.UTF_8)`，即便 JDK 默认即 UTF-8 也写出来 |
+
+**理由**：进程读取子进程输出、HTTP 响应、文件、`System.in` 时，若依赖平台默认 charset，Windows 上中文环境曾是 GBK，容器/CI 偶尔仍会出现非 UTF-8 默认；一旦命中，UTF-8 编码的字节流被按 GBK 解码就是不可恢复的乱码。JDK 18+ 已经把默认 charset 统一为 UTF-8（JEP 400），但仍可被 `-Dfile.encoding=...` 或老 JDK 行为覆盖。显式 `StandardCharsets.UTF_8` 让代码在所有 JVM 上行为一致，且 grep 排查时一目了然。
+
+✅ 正例：
+```java
+try (var reader = new BufferedReader(
+        new InputStreamReader(response.body(), StandardCharsets.UTF_8))) { ... }
+
+String output = new String(process.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
+```
+
+❌ 反例：
+```java
+new InputStreamReader(response.body())                        // 依赖平台默认
+new String(process.getInputStream().readAllBytes())           // 同上
+"payload".getBytes()                                          // 同上
+```
+
+注意 `new String(char[])`、`String.toCharArray()`、`Character.toChars(cp)` 这些 `char[] ↔ String` 之间的互转**不在此规则**——`char[]` 本身已经是 UTF-16 code unit 序列，不涉及编码协商，无需也无法传 charset。
+
 ### 数字字面量后缀
 - **long 类型变量赋值的整数字面量必须以 `L` 结尾**（大写）。`60_000` → `60_000L`。避免静默的 int→long 转换。
 - 已经是 long 字面量的，必须用大写 `L` 而非小写 `l`（`UpperEll` 强制；小写 `l` 易与数字 `1` 混淆）。

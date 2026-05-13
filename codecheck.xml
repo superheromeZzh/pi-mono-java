@@ -60,6 +60,45 @@
             <property name="ignoreComments" value="true"/>
         </module>
 
+        <!-- explicit_charset_*: 字符 ↔ 字节互转 API 必须显式传 Charset（统一 StandardCharsets.UTF_8）。
+             覆盖最常见的「单凭语法即可判定无歧义错误」的几个调用点；语义模糊的（如
+             new String(byte[]) vs new String(char[]) 类型相关、Files.readString 默认即 UTF-8）
+             保留为 CLAUDE.md 中的软约束，靠 review 把关。
+             检测思路：行内出现违规调用，且整行没有任何 Charset/UTF_x/ASCII/ISO_8859 字样
+             即报错——`Charset.forName(...)` 或 `, StandardCharsets.UTF_8)` 都能算作豁免。
+             副作用：调用被换行折断时（new InputStreamReader( 和参数分两行）可能误报，
+             修复方式是把调用合并为单行（与 palantir 默认行为一致）。-->
+        <module name="RegexpSinglelineJava">
+            <property name="id" value="explicit_charset_get_bytes"/>
+            <property name="format" value="\.getBytes\(\s*\)"/>
+            <property name="message" value="字符串转字节数组必须显式传 Charset：用 .getBytes(StandardCharsets.UTF_8) 替代无参 .getBytes()。"/>
+            <property name="ignoreComments" value="true"/>
+        </module>
+        <module name="RegexpSinglelineJava">
+            <property name="id" value="explicit_charset_input_stream_reader"/>
+            <property name="format" value="^(?=(?:(?!StandardCharsets|Charset|UTF_8|UTF_16|US_ASCII|ISO_8859).)*$).*\bnew\s+InputStreamReader\s*\("/>
+            <property name="message" value="new InputStreamReader(...) 必须显式传 Charset（StandardCharsets.UTF_8）。"/>
+            <property name="ignoreComments" value="true"/>
+        </module>
+        <module name="RegexpSinglelineJava">
+            <property name="id" value="explicit_charset_output_stream_writer"/>
+            <property name="format" value="^(?=(?:(?!StandardCharsets|Charset|UTF_8|UTF_16|US_ASCII|ISO_8859).)*$).*\bnew\s+OutputStreamWriter\s*\("/>
+            <property name="message" value="new OutputStreamWriter(...) 必须显式传 Charset（StandardCharsets.UTF_8）。"/>
+            <property name="ignoreComments" value="true"/>
+        </module>
+        <module name="RegexpSinglelineJava">
+            <property name="id" value="explicit_charset_file_reader"/>
+            <property name="format" value="^(?=(?:(?!StandardCharsets|Charset|UTF_8|UTF_16|US_ASCII|ISO_8859).)*$).*\bnew\s+FileReader\s*\("/>
+            <property name="message" value="new FileReader(...) 必须显式传 Charset（StandardCharsets.UTF_8）。"/>
+            <property name="ignoreComments" value="true"/>
+        </module>
+        <module name="RegexpSinglelineJava">
+            <property name="id" value="explicit_charset_file_writer"/>
+            <property name="format" value="^(?=(?:(?!StandardCharsets|Charset|UTF_8|UTF_16|US_ASCII|ISO_8859).)*$).*\bnew\s+FileWriter\s*\("/>
+            <property name="message" value="new FileWriter(...) 必须显式传 Charset（StandardCharsets.UTF_8）。"/>
+            <property name="ignoreComments" value="true"/>
+        </module>
+
         <!-- huge_cyclomatic_complexity: 圈复杂度超阈值即拒。
              switchBlockAsSingleDecisionPoint=true: 整段 switch 算 1 个决策点
              而非每 case 一个，避免合理的查表式 switch 被误判为「复杂」。 -->
