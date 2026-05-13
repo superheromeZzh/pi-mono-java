@@ -385,6 +385,7 @@ public class InteractiveMode {
                     model.contextWindow() > 0 ? model.contextWindow() : 200000,
                     model.reasoning());
         }
+
         // Set cwd and thinking level
         String cwd = System.getProperty("user.dir", "");
         footer.setCwd(cwd);
@@ -392,6 +393,7 @@ public class InteractiveMode {
         var thinkingLevel = session.getAgent().getState().getThinkingLevel();
         String thinkingLevelStr = thinkingLevel != null ? thinkingLevel.value() : "medium";
         footer.setThinkingLevel(thinkingLevelStr);
+
         // Set border color based on thinking level (matching campusclaw dynamic border)
         editorContainer.setBorderForThinkingLevel(thinkingLevelStr);
 
@@ -759,6 +761,7 @@ public class InteractiveMode {
                             if (trimmed.startsWith("/new") || trimmed.startsWith("/reload")) {
                                 buildCommandSuggestions(session);
                             }
+
                             // Clear chat display and reset tokens on /new
                             if (trimmed.equals("/new")) {
                                 chatContainer.clear();
@@ -766,6 +769,7 @@ public class InteractiveMode {
                                         new Text("\033[38;2;138;190;183m\u2713 New session started\033[0m", 1, 1));
                                 footer.resetUsage();
                                 lastStatusComponent = null;
+
                                 // Create a new session file
                                 var sm = session.getSessionManager();
                                 if (sm != null) {
@@ -773,6 +777,7 @@ public class InteractiveMode {
                                     sm.createSession(cwd);
                                 }
                             }
+
                             // Update footer after model switch
                             if (trimmed.startsWith("/model ")) {
                                 var newModel = session.getAgent().getState().getModel();
@@ -784,6 +789,7 @@ public class InteractiveMode {
                                             newModel.reasoning());
                                 }
                             }
+
                             // Update footer session name after /name command
                             if (trimmed.startsWith("/name ")) {
                                 footer.setSessionName(trimmed.substring(6).trim());
@@ -1045,6 +1051,7 @@ public class InteractiveMode {
         session.getAgent().setThinkingLevel(next);
         footer.setThinkingLevel(next.value());
         editorContainer.setBorderForThinkingLevel(next.value());
+
         // Persist thinking level change
         var sm = session.getSessionManager();
         if (sm != null) {
@@ -1070,6 +1077,7 @@ public class InteractiveMode {
             candidates = new ArrayList<>(scopedModels);
         } else {
             candidates = modelRegistry.getAllModels();
+
             // Sort models by provider then id for stable ordering
             candidates.sort(
                     Comparator.comparing((Model m) -> m.provider().value()).thenComparing(Model::id));
@@ -1170,6 +1178,7 @@ public class InteractiveMode {
                     session.getAgent().getState().getThinkingLevel() != null
                             ? session.getAgent().getState().getThinkingLevel().value()
                             : "off");
+
             // Persist model change
             var sm = session.getSessionManager();
             if (sm != null) {
@@ -1404,6 +1413,7 @@ public class InteractiveMode {
      */
     private void showStatus(String message) {
         var children = chatContainer.getChildren();
+
         // Reuse last status component if it's the last child
         if (lastStatusComponent != null
                 && !children.isEmpty()
@@ -1450,12 +1460,14 @@ public class InteractiveMode {
                                 msg.usage().cacheWrite(),
                                 cost);
                     }
+
                     // Persist assistant message to session file
                     if (currentSession != null) {
                         var sm = currentSession.getSessionManager();
                         if (sm != null) {
                             sm.appendMessage(msg);
                         }
+
                         // Persist assistant message to ChatMemory (GaussDB)
                         if (chatMemoryStore != null) {
                             try {

@@ -367,6 +367,7 @@ public class CampusClawCommand implements Callable<Integer> {
                 System.err.println("Session file not found: " + inputFile);
                 return 1;
             }
+
             // Determine output path
             Path outputFile;
             if (exportArgs.size() > 1) {
@@ -663,6 +664,7 @@ public class CampusClawCommand implements Callable<Integer> {
         } finally {
             // Note: Do NOT call terminal.close() here.
             // System terminal should not be explicitly closed by the application;
+
             // it will be automatically cleaned up by the OS when the process exits.
             // Explicitly closing it can cause the parent terminal window to exit.
             if (sessionManager != null) {
@@ -838,6 +840,7 @@ public class CampusClawCommand implements Callable<Integer> {
                     System.out.println("Installing skill from: " + gitUrl);
                     String name = manager.install(gitUrl);
                     System.out.println("Skill installed: " + name);
+
                     // Show what was installed (使用支持沙箱的 SkillLoader)
                     var skillLoader = new SkillLoader(sandboxSkillParser, useSandbox);
                     var skills = skillLoader.loadFromDirectory(
@@ -858,6 +861,7 @@ public class CampusClawCommand implements Callable<Integer> {
                     System.out.println("Install skills with: campusclaw skill install <git-url>");
                     return 0;
                 }
+
                 // Calculate column widths
                 int maxName = Math.max(
                         4, infos.stream().mapToInt(i -> i.name().length()).max().orElse(4));

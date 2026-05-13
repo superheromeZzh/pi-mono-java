@@ -316,12 +316,14 @@ public class Agent {
     @SuppressWarnings({"checkstyle:huge_cyclomatic_complexity"})
     public static String formatError(Throwable throwable) {
         var current = throwable;
+
         // Unwrap standard wrapper exceptions
         while (current.getCause() != null
                 && (current instanceof java.util.concurrent.CompletionException
                         || current instanceof java.util.concurrent.ExecutionException)) {
             current = current.getCause();
         }
+
         // Build message including cause chain so the real error is visible
         // (e.g. "Request failed" from SDK wrapping an actual IOException)
         String message = current.getMessage() != null
@@ -333,6 +335,7 @@ public class Agent {
             if (causeMsg != null && !causeMsg.isBlank() && !message.contains(causeMsg)) {
                 message = message + ": " + causeMsg;
             }
+
             // One more level for deeply nested causes (e.g. SSLHandshakeException -> PKIX)
             var rootCause = cause.getCause();
             if (rootCause != null && rootCause != cause) {
@@ -342,6 +345,7 @@ public class Agent {
                 }
             }
         }
+
         // Append proxy hint for connection failures
         if (isConnectionError(current)) {
             message += "\n  提示: 如需使用代理，请添加 --proxy http://127.0.0.1:<端口号> 或设置环境变量 HTTPS_PROXY";

@@ -128,6 +128,7 @@ public class AgentLoop {
                         toolResults.addAll(
                                 toolPipeline.executeAll(resolved, toolExecutionMode, context, signal, eventListener));
                     }
+
                     // Add error results for unknown tools
                     toolResults.addAll(unknownResults);
                     context.appendMessages(new ArrayList<>(toolResults));

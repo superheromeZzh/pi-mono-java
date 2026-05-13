@@ -433,6 +433,7 @@ public class AnthropicProvider implements ApiProvider {
             // Accumulate thinking signature
             String sig = delta.asSignature().signature();
             signatureAcc.computeIfAbsent(idx, k -> new StringBuilder()).append(sig);
+
             // Update the ThinkingContent block with the accumulated signature
             if (idx < contentBlocks.size() && contentBlocks.get(idx) instanceof ThinkingContent tc) {
                 String fullSig = signatureAcc.get(idx).toString();

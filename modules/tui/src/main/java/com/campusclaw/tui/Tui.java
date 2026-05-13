@@ -75,10 +75,12 @@ public class Tui {
      */
     private static boolean isSyncOutputSupported() {
         String termProgram = System.getenv("TERM_PROGRAM");
+
         // Apple Terminal does not support synchronized output and may crash
         if ("Apple_Terminal".equals(termProgram)) {
             return false;
         }
+
         // Most modern terminals support it: iTerm2, kitty, WezTerm, Alacritty, etc.
         return true;
     }
@@ -119,6 +121,7 @@ public class Tui {
     /** Stop the TUI. Shows cursor, moves below content, exits raw mode. */
     public void stop() {
         running = false;
+
         // Move cursor below all content and show it
         TerminalSize size = terminal.getSize();
         terminal.write("\033[" + size.height() + ";1H" + SHOW_CURSOR + "\r\n");

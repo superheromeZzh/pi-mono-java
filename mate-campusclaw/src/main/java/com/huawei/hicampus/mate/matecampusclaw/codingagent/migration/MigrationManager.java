@@ -115,6 +115,7 @@ public class MigrationManager {
         for (MigrationStep step : migrations) {
             if (step.fromVersion() >= current && step.toVersion() <= CURRENT_VERSION) {
                 log.info("Applying migration v{} -> v{}: {}", step.fromVersion(), step.toVersion(), step.description());
+
                 // Create backup before migration
                 createBackup(dataDir, step.fromVersion());
                 try {
@@ -142,6 +143,7 @@ public class MigrationManager {
         Path backupDir = dataDir.resolve(".backups").resolve("v" + version);
         try {
             Files.createDirectories(backupDir);
+
             // Copy key files
             try (var stream = Files.list(dataDir)) {
                 stream.filter(p -> !p.getFileName().toString().startsWith("."))
@@ -179,6 +181,7 @@ public class MigrationManager {
                             if (line.isBlank()) {
                                 continue;
                             }
+
                             // Add parentId if not present
                             if (!line.contains("\"parentId\"")) {
                                 // Insert parentId before the closing brace
@@ -186,6 +189,7 @@ public class MigrationManager {
                                         lastId != null ? ",\"parentId\":\"" + lastId + "\"" : ",\"parentId\":null";
                                 line = line.substring(0, line.length() - 1) + parentField + "}";
                             }
+
                             // Extract id for next iteration
                             int idIdx = line.indexOf("\"id\":\"");
                             if (idIdx >= 0) {

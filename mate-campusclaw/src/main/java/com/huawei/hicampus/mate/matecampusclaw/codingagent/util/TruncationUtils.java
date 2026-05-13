@@ -190,6 +190,7 @@ public final class TruncationUtils {
         if (value == Math.floor(value) && value < 1_000_000) {
             return String.valueOf((long) value);
         }
+
         // One decimal place, strip trailing zero
         String formatted = String.format(Locale.ROOT, "%.1f", value);
         if (formatted.endsWith(".0")) {

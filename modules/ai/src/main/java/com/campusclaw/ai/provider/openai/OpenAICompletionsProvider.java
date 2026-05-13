@@ -343,6 +343,7 @@ public class OpenAICompletionsProvider implements ApiProvider {
                         // If this is the first time we see this tool index, start a block
                         if (!acc.started) {
                             acc.started = true;
+
                             // Finish any open text block first
                             if (textBlockStarted[0]) {
                                 int textIdx = findTextBlockIndex(contentBlocks);
@@ -562,6 +563,7 @@ public class OpenAICompletionsProvider implements ApiProvider {
         accumulated[0] = Math.max(inputTokens, 0);
         accumulated[1] = usage.completionTokens();
         accumulated[2] = cachedTokens;
+
         // cacheWrite is 0 for OpenAI
         accumulated[3] = 0;
     }
@@ -683,6 +685,7 @@ public class OpenAICompletionsProvider implements ApiProvider {
                 // JsonValue could be a string
                 try {
                     String str = value.toString();
+
                     // Remove surrounding quotes if present
                     if (str.startsWith("\"") && str.endsWith("\"")) {
                         str = str.substring(1, str.length() - 1)

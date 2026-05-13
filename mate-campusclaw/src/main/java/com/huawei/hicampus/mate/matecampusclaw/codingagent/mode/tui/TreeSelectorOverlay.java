@@ -47,6 +47,7 @@ public class TreeSelectorOverlay implements Component, Focusable {
         this.empty = items.isEmpty();
 
         this.selectList = new SelectList<>(items, this::renderItem, 20);
+
         // Default to last item
         if (!items.isEmpty()) {
             selectList.setSelectedIndex(items.size() - 1);

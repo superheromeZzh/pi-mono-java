@@ -95,6 +95,7 @@ public class OneShotMode {
                     err.println("\nError: " + (errorMsg != null ? errorMsg : "agent stopped with error"));
                     return 1;
                 }
+
                 // Fallback: if streaming didn't produce output, print text from final message
                 if (!hasOutput[0]) {
                     for (ContentBlock block : am.content()) {

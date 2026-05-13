@@ -329,6 +329,7 @@ public class ProcessAcpBackend implements SubAgentBackend {
                 return option.get("optionId").asText(null);
             }
         }
+
         // Fallback: if asked for "allow" but no kind matches, just return first option.
         if ("allow".equals(kindPrefix) && options.size() > 0 && options.get(0).has("optionId")) {
             return options.get(0).get("optionId").asText(null);

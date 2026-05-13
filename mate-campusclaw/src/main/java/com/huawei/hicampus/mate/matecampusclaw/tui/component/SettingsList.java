@@ -86,6 +86,7 @@ public class SettingsList<T> implements Component, Focusable {
     public SettingsList(List<Entry<T>> entries) {
         this.entries = entries != null ? new ArrayList<>(entries) : new ArrayList<>();
         this.selectedIndex = 0;
+
         // Default styling: dim keys, bold selected line
         this.keyStyleFn = text -> "\033[2m" + text + "\033[0m"; // dim
         this.valueStyleFn = UnaryOperator.identity();

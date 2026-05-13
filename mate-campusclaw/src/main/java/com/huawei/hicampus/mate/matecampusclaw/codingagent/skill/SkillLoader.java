@@ -107,11 +107,13 @@ public class SkillLoader {
                 if (!validationError.isEmpty()) {
                     throw new SkillLoadException("Skill validation failed: " + validationError);
                 }
+
                 // Parse in sandbox
                 log.debug("Parsing skill in sandbox: {}", filePath);
                 return sandboxParser.parseInSandbox(filePath, source);
             } catch (SkillLoadException e) {
                 log.warn("Sandbox parsing failed for {}, falling back to direct parsing: {}", filePath, e.getMessage());
+
                 // Fall back to direct parsing
                 return parseSkillFile(filePath, source);
             }
@@ -128,6 +130,7 @@ public class SkillLoader {
                 skills.add(loadSkillFile(skillFile, source));
             } catch (SkillLoadException e) {
                 log.warn("Failed to load skill from {}: {}", skillFile, e.getMessage());
+
                 // Skip invalid skill files during directory scanning
             }
             return;
@@ -167,6 +170,7 @@ public class SkillLoader {
             } catch (SkillLoadException e) {
                 log.warn(
                         "Sandbox parsing failed for {}, falling back to direct parsing: {}", skillFile, e.getMessage());
+
                 // Fall back to direct parsing if sandbox fails
                 return parseSkillFile(skillFile, source);
             }

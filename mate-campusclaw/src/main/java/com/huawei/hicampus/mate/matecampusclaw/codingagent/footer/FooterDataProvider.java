@@ -163,22 +163,26 @@ public class FooterDataProvider {
      */
     public String formatStatusBar(int width) {
         var sb = new StringBuilder();
+
         // Model name
         sb.append("\033[1m").append(modelName).append("\033[0m");
         if (providerName != null) {
             sb.append(" \033[2m(").append(providerName).append(")\033[0m");
         }
+
         // Thinking level
         if (thinkingLevel != null && thinkingLevel != ThinkingLevel.OFF) {
             sb.append(" \033[33m[")
                     .append(thinkingLevel.name().toLowerCase(Locale.ROOT))
                     .append("]\033[0m");
         }
+
         // Token stats
         if (tokenStats != null) {
             sb.append(" │ ").append(tokenStats.formatTokens());
             sb.append(" ").append(tokenStats.formatCost());
         }
+
         // Streaming indicator
         if (streaming) {
             sb.append(" \033[36m●\033[0m");

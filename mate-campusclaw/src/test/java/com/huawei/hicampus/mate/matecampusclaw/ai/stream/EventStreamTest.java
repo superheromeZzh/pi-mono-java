@@ -44,6 +44,7 @@ class EventStreamTest {
         @Test
         void pushBeforeSubscribeBuffersEvents() {
             var stream = new EventStream<Integer, Integer>(e -> false, e -> e);
+
             // Push events before any subscriber
             stream.push(1);
             stream.push(2);

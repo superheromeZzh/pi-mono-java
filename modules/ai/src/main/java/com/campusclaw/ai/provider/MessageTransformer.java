@@ -88,6 +88,7 @@ public class MessageTransformer {
                             }
                             continue;
                         }
+
                         // Same model with signature: keep for replay
                         if (isSameModel
                                 && tc.thinkingSignature() != null
@@ -95,19 +96,23 @@ public class MessageTransformer {
                             transformedContent.add(cb);
                             continue;
                         }
+
                         // Skip empty thinking blocks
                         if (tc.thinking() == null || tc.thinking().isBlank()) {
                             continue;
                         }
+
                         // Same model: keep as-is
                         if (isSameModel) {
                             transformedContent.add(cb);
                             continue;
                         }
+
                         // Cross-model: convert thinking to plain text
                         transformedContent.add(new TextContent(tc.thinking()));
                     } else if (cb instanceof ToolCall tc) {
                         String normalizedId = normalizeToolCallId(tc.id());
+
                         // Remove thoughtSignature when switching models
                         String sig = isSameModel ? tc.thoughtSignature() : null;
                         if (!normalizedId.equals(tc.id()) || sig != tc.thoughtSignature()) {

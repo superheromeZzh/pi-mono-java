@@ -42,6 +42,7 @@ class GrepToolTest {
     @BeforeEach
     void setUp() {
         grepTool = new GrepTool(bashExecutor, tempDir);
+
         // Force Java fallback for deterministic tests
         grepTool.setRgAvailable(false);
     }

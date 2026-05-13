@@ -111,6 +111,7 @@ public final class ShellResolver {
         if (fromPath != null) {
             return new ShellConfig(fromPath, List.of("-c"));
         }
+
         // Last resort — POSIX systems are required to ship sh.
         return new ShellConfig("sh", List.of("-c"));
     }

@@ -74,6 +74,7 @@ public class GatewayWebSocketHandler extends SimpleChannelInboundHandler<TextWeb
     public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {
         if (evt instanceof WebSocketServerProtocolHandler.HandshakeComplete) {
             String channelId = ctx.channel().id().asShortText();
+
             // Send connect.challenge immediately after handshake
             sendChallenge(ctx);
 

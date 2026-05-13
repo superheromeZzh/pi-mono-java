@@ -954,6 +954,7 @@ class AgentLoopIntegrationTest {
                 CancellationToken signal,
                 AgentToolUpdateCallback onUpdate) {
             started.complete(null);
+
             // Wait for cancellation
             while (!signal.isCancelled()) {
                 try {

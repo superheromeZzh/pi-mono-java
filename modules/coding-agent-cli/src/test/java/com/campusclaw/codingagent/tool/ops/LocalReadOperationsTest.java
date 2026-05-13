@@ -86,6 +86,7 @@ class LocalReadOperationsTest {
             Path file = Files.writeString(tempDir.resolve("test.txt"), "content");
             String mime = ops.detectMimeType(file);
             assertNotNull(mime);
+
             // Different OS/JDK may return different MIME types for .txt
             // but it should not be the fallback for a .txt file typically
         }
@@ -94,6 +95,7 @@ class LocalReadOperationsTest {
         void unknownExtensionFallsBackToOctetStream() throws IOException {
             Path file = Files.writeString(tempDir.resolve("data.xyz123"), "content");
             String mime = ops.detectMimeType(file);
+
             // probeContentType may return null for unknown extensions; we fallback
             assertNotNull(mime);
         }

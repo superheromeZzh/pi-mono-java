@@ -107,6 +107,7 @@ public class GatewayChannel implements Channel {
         if (sessionKey != null) {
             sessionKeyToChannel.remove(sessionKey);
         }
+
         // Clean up pending requests for this channel
         pendingSessionsSend
                 .entrySet()

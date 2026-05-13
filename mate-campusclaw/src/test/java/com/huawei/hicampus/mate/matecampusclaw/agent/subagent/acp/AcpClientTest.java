@@ -79,6 +79,7 @@ class AcpClientTest {
             handleNewSession(reader, output);
             handlePrompt(reader, output);
             output.flush();
+
             // Block until the client closes its end of the pipe, otherwise the piped reader on the
             // client side raises "Write end dead" as soon as this thread exits and races the Done
             // emit from AcpClient.prompt().

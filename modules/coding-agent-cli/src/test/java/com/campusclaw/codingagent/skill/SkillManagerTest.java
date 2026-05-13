@@ -201,6 +201,7 @@ class SkillManagerTest {
             manager.remove("linked-to-remove");
 
             assertFalse(Files.exists(skillsDir.resolve("linked-to-remove")));
+
             // Original directory should still exist
             assertTrue(Files.exists(source));
         }

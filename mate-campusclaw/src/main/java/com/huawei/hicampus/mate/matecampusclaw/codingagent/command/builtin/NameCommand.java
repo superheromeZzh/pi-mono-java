@@ -37,6 +37,7 @@ public class NameCommand implements SlashCommand {
             }
         } else {
             sessionName = arguments.trim();
+
             // Persist session name
             var sm = context.session().getSessionManager();
             if (sm != null) {

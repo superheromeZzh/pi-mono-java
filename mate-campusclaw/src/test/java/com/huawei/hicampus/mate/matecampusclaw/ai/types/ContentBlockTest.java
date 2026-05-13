@@ -109,6 +109,7 @@ class ContentBlockTest {
             var json = mapper.readTree(mapper.writeValueAsString(tc));
             assertEquals("text", json.get("type").asText());
             assertEquals("hello", json.get("text").asText());
+
             // null field is present but null-valued; that's fine for Jackson default
             assertTrue(json.has("textSignature"));
         }

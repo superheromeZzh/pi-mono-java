@@ -355,6 +355,7 @@ public class Editor implements Component, Focusable {
                     addNewLine();
                     return;
                 }
+
                 // Submit
                 if (onSubmit != null) {
                     String text = getText();
@@ -427,6 +428,7 @@ public class Editor implements Component, Focusable {
         // --- Bracketed paste ---
         if (data.startsWith("\033[200~")) {
             String pasteContent = data;
+
             // Strip paste markers
             if (pasteContent.startsWith("\033[200~")) {
                 pasteContent = pasteContent.substring(6);
@@ -794,6 +796,7 @@ public class Editor implements Component, Focusable {
         }
 
         cursorLine = newLine;
+
         // Attempt to place cursor at the preferred visual column
         cursorCol = colFromVisualWidth(lines.get(cursorLine), preferredVisualCol);
     }

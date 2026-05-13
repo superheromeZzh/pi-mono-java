@@ -62,6 +62,7 @@ public class FooterComponent implements Component {
 
     public void setCwd(String cwd) {
         this.cwd = cwd != null ? cwd : "";
+
         // Invalidate branch cache on cwd change
         this.cachedBranch = null;
         this.branchCacheTime = 0;
@@ -173,6 +174,7 @@ public class FooterComponent implements Component {
         if (contextWindow > 0) {
             int totalIn = inputTokens + cacheRead;
             double pct = totalIn * 100.0 / contextWindow;
+
             // Color-code context percentage
             String pctStr = String.format(Locale.ROOT, "%.1f%%", pct);
             if (sb.length() > 0) {
@@ -210,6 +212,7 @@ public class FooterComponent implements Component {
             sb.append("(").append(providerName).append(") ");
         }
         sb.append(modelName);
+
         // Show thinking level only if model supports reasoning (matching campusclaw behavior)
         if (modelSupportsReasoning) {
             String level = thinkingLevel.isEmpty() ? "off" : thinkingLevel;

@@ -304,6 +304,7 @@ public class BedrockProvider implements ApiProvider {
         var thinkingAccumulators = new HashMap<Integer, StringBuilder>();
         var toolAccumulators = new HashMap<Integer, ToolCallAccumulator>();
         var blockIndexToContentIndex = new HashMap<Integer, Integer>();
+
         // Track block types: "text", "thinking", "tool"
         var blockTypes = new HashMap<Integer, String>();
 
@@ -399,7 +400,9 @@ public class BedrockProvider implements ApiProvider {
             eventStream.push(new AssistantMessageEvent.ToolCallStartEvent(
                     contentIdx, buildPartialMessage(model, null, contentBlocks, usage, null)));
         }
+
         // Text and reasoning blocks don't have a start payload in Bedrock;
+
         // we detect them on the first delta event.
     }
 
@@ -600,10 +603,12 @@ public class BedrockProvider implements ApiProvider {
                 if (tc.thinking() == null || tc.thinking().isBlank()) {
                     continue;
                 }
+
                 // Build reasoningContent block
                 var reasoningTextBuilder =
                         software.amazon.awssdk.services.bedrockruntime.model.ReasoningTextBlock.builder()
                                 .text(tc.thinking());
+
                 // Only include signature for Anthropic Claude models
                 if (isAnthropicModel
                         && tc.thinkingSignature() != null

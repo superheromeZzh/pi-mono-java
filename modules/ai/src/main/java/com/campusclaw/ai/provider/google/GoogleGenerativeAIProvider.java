@@ -123,6 +123,7 @@ public class GoogleGenerativeAIProvider implements ApiProvider {
             List<ContentBlock> blocks = new ArrayList<>();
             Usage[] usage = {Usage.empty()};
             StopReason[] stop = {StopReason.STOP};
+
             // Track current block type for accumulation (like TS currentBlock pattern)
             String[] currentType = {null}; // "text", "thinking", or null
             StringBuilder textAcc = new StringBuilder();
@@ -229,6 +230,7 @@ public class GoogleGenerativeAIProvider implements ApiProvider {
                     }
                 }
             }
+
             // Finish any open block
             finishCurrentBlock(
                     currentType[0], blocks, textAcc, thinkingAcc, thinkingSig, eventStream, model, usage[0], stop[0]);

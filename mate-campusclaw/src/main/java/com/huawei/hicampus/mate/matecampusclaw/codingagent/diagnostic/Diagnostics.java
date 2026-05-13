@@ -100,6 +100,7 @@ public class Diagnostics {
 
     private List<DiagnosticResult> checkConfigFiles(Path projectDir) {
         var results = new ArrayList<DiagnosticResult>();
+
         // Global config
         Path globalDir = com.huawei.hicampus.mate.matecampusclaw.codingagent.config.AppPaths.USER_AGENT_DIR;
         if (Files.isDirectory(globalDir)) {
@@ -112,6 +113,7 @@ public class Diagnostics {
                     "Global config directory not found: " + globalDir,
                     "Run the agent once to auto-create it"));
         }
+
         // Project config
         Path projectConfig = projectDir.resolve(com.huawei.hicampus.mate.matecampusclaw.codingagent.config.AppPaths.CONFIG_DIR_NAME);
         if (Files.isDirectory(projectConfig)) {
@@ -174,6 +176,7 @@ public class Diagnostics {
         try {
             String[] parts = version.split("[._-]");
             int major = Integer.parseInt(parts[0]);
+
             // Java 1.x format
             if (major == 1 && parts.length > 1) {
                 return Integer.parseInt(parts[1]);

@@ -363,6 +363,7 @@ class StreamOptionsTest {
             var base = simple.toStreamOptions();
             assertEquals(0.7, base.temperature());
             assertEquals(4096, base.maxTokens());
+
             // reasoning fields are not present in StreamOptions
         }
 

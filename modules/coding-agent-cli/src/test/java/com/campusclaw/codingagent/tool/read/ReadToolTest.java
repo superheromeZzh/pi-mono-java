@@ -123,6 +123,7 @@ class ReadToolTest {
             var result = readTool.execute("c3", Map.of("path", "empty.txt"), null, null);
 
             String text = extractText(result);
+
             // Empty file still has one "line"
             assertNotNull(text);
         }

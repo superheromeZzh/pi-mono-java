@@ -35,6 +35,7 @@ public final class ClipboardUtils {
         if (tryNativeCopy(text)) {
             return true;
         }
+
         // Fall back to OSC 52 (works in most modern terminals)
         return tryOsc52Copy(text);
     }
@@ -57,6 +58,7 @@ public final class ClipboardUtils {
     public static boolean tryOsc52Copy(String text) {
         try {
             String b64 = java.util.Base64.getEncoder().encodeToString(text.getBytes(StandardCharsets.UTF_8));
+
             // OSC 52 format: ESC ] 52 ; c ; <base64> ST
             String osc52 = "\033]52;c;" + b64 + "\033\\";
             System.out.write(osc52.getBytes(StandardCharsets.UTF_8));

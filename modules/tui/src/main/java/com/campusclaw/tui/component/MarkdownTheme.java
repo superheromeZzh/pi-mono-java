@@ -121,6 +121,7 @@ public class MarkdownTheme {
         private static final String BOLD = "\033[1m";
         private static final String ITALIC = "\033[3m";
         private static final String UNDERLINE = "\033[4m";
+
         // RGB colors matching campusclaw dark theme
         private static final String HEADING_COLOR = "\033[38;2;240;198;116m"; // mdHeading #f0c674
         private static final String ACCENT = "\033[38;2;138;190;183m"; // accent #8abeb7

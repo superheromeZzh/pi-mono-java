@@ -114,6 +114,7 @@ class AnthropicProviderTest {
             var result = AnthropicProvider.convertMessages(List.of(tr), false);
 
             assertEquals(1, result.size());
+
             // Tool results are sent as USER messages in the Anthropic API
             assertEquals(MessageParam.Role.USER, result.get(0).role());
         }
@@ -221,6 +222,7 @@ class AnthropicProviderTest {
         @Test
         void computesCostFromUsage() {
             var modelCost = new ModelCost(3.0, 15.0, 0.3, 3.75);
+
             // usage: [input=1000, output=500, cacheRead=200, cacheWrite=100]
             long[] usage = {1000, 500, 200, 100};
 

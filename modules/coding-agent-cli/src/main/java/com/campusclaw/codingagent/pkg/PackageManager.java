@@ -125,6 +125,7 @@ public class PackageManager {
                     paths.add(pkg.location().resolve(skill));
                 }
             }
+
             // Also check for skills/ directory
             Path skillsDir = pkg.location().resolve("skills");
             if (Files.isDirectory(skillsDir)) {

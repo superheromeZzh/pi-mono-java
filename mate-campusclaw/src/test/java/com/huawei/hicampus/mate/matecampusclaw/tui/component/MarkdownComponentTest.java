@@ -107,8 +107,10 @@ class MarkdownComponentTest {
             var md = new MarkdownComponent("# Hello", defaultTheme);
             List<String> lines = md.render(80);
             assertEquals(1, lines.size());
+
             // Should contain ANSI codes (bold+cyan+underline from default theme)
             assertTrue(lines.get(0).contains("\033["));
+
             // But visible text is "Hello"
             assertEquals(5, AnsiUtils.visibleWidth(lines.get(0)));
         }
@@ -133,6 +135,7 @@ class MarkdownComponentTest {
             String input = "```\nfoo\nbar\n```";
             var md = new MarkdownComponent(input, plainTheme);
             List<String> lines = md.render(80);
+
             // Should have: fence, 2 code lines, fence = 4 lines
             assertEquals(4, lines.size());
             assertEquals("```", lines.get(0));
@@ -156,6 +159,7 @@ class MarkdownComponentTest {
             String input = "```\ncode\n```";
             var md = new MarkdownComponent(input, defaultTheme);
             List<String> lines = md.render(80);
+
             // Code line should contain background ANSI code (48;5;236)
             assertTrue(lines.get(1).contains("\033[48;5;236m"));
         }
@@ -165,6 +169,7 @@ class MarkdownComponentTest {
             String input = "```\n  indented\n    more\n```";
             var md = new MarkdownComponent(input, plainTheme);
             List<String> lines = md.render(80);
+
             // Code lines have 2-char prefix + original indentation
             assertTrue(lines.get(1).contains("  indented"));
             assertTrue(lines.get(2).contains("    more"));
@@ -175,6 +180,7 @@ class MarkdownComponentTest {
             String input = "```\ncode without closing";
             var md = new MarkdownComponent(input, plainTheme);
             List<String> lines = md.render(80);
+
             // opening fence + code line + closing fence = 3
             assertEquals(3, lines.size());
         }
@@ -199,6 +205,7 @@ class MarkdownComponentTest {
         void inlineCodeWithDefaultTheme() {
             var md = new MarkdownComponent("Run `npm install`", defaultTheme);
             List<String> lines = md.render(80);
+
             // Should contain accent color ANSI code (#8abeb7)
             assertTrue(lines.get(0).contains("\033[38;2;138;190;183m"));
         }
@@ -237,6 +244,7 @@ class MarkdownComponentTest {
         void boldWithDefaultTheme() {
             var md = new MarkdownComponent("**strong**", defaultTheme);
             List<String> lines = md.render(80);
+
             // Should contain bold ANSI code
             assertTrue(lines.get(0).contains("\033[1m"));
         }
@@ -245,6 +253,7 @@ class MarkdownComponentTest {
         void italicWithDefaultTheme() {
             var md = new MarkdownComponent("*emphasis*", defaultTheme);
             List<String> lines = md.render(80);
+
             // Should contain italic ANSI code
             assertTrue(lines.get(0).contains("\033[3m"));
         }
@@ -291,6 +300,7 @@ class MarkdownComponentTest {
             var md = new MarkdownComponent(input, plainTheme);
             List<String> lines = md.render(80);
             assertEquals(2, lines.size());
+
             // Inner item should have more leading whitespace
             int outerIndent = countLeadingSpaces(lines.get(0));
             int innerIndent = countLeadingSpaces(lines.get(1));
@@ -305,6 +315,7 @@ class MarkdownComponentTest {
             var md = new MarkdownComponent(input, plainTheme);
             List<String> lines = md.render(20);
             assertTrue(lines.size() > 1);
+
             // Continuation lines should be indented to align with first line content
             assertTrue(lines.get(1).startsWith("  "));
         }
@@ -354,6 +365,7 @@ class MarkdownComponentTest {
         void linkWithDefaultTheme() {
             var md = new MarkdownComponent("[click](http://example.com)", defaultTheme);
             List<String> lines = md.render(80);
+
             // Should contain underline ANSI for link text
             assertTrue(lines.get(0).contains("\033[4m"));
         }
@@ -425,6 +437,7 @@ class MarkdownComponentTest {
             String input = "first line\nsecond line";
             var md = new MarkdownComponent(input, plainTheme);
             List<String> lines = md.render(80);
+
             // Should be joined as a single paragraph
             assertEquals(1, lines.size());
             assertTrue(lines.get(0).contains("first line"));
@@ -436,6 +449,7 @@ class MarkdownComponentTest {
             String input = "para one\n\npara two";
             var md = new MarkdownComponent(input, plainTheme);
             List<String> lines = md.render(80);
+
             // para one, empty line, para two
             assertEquals(3, lines.size());
             assertEquals("para one", lines.get(0));
@@ -517,6 +531,7 @@ class MarkdownComponentTest {
             var md = new MarkdownComponent(input, plainTheme);
             List<String> lines = md.render(60);
             assertFalse(lines.isEmpty());
+
             // Verify key elements are present
             assertTrue(lines.stream().anyMatch(l -> l.contains("Main Title")));
             assertTrue(lines.stream().anyMatch(l -> l.contains("bold")));

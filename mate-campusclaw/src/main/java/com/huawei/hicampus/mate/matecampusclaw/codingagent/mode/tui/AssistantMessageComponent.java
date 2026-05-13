@@ -23,6 +23,7 @@ public class AssistantMessageComponent implements Component {
     // Thinking style: italic + gray #808080 (matching campusclaw thinkingText color)
     private static final String ANSI_ITALIC = "\033[3m";
     private static final String ANSI_THINKING_COLOR = "\033[38;2;128;128;128m";
+
     // Spinner colors matching campusclaw: accent for spinner, muted for text
     private static final String ANSI_ACCENT = "\033[38;2;138;190;183m";
     private static final String ANSI_MUTED = "\033[38;2;128;128;128m";

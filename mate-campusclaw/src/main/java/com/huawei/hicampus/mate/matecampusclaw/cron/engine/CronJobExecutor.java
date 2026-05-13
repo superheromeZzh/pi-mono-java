@@ -148,6 +148,7 @@ public class CronJobExecutor {
     private String extractOutput(Agent agent) {
         var messages = agent.getState().getMessages();
         var sb = new StringBuilder();
+
         // Walk messages in reverse to find the last assistant response
         for (int i = messages.size() - 1; i >= 0; i--) {
             Message msg = messages.get(i);
@@ -179,6 +180,7 @@ public class CronJobExecutor {
                     return model.get();
                 }
             }
+
             // Try substring match (e.g., "glm-5" matching "glm-5-plus")
             for (Model m : modelRegistry.getAllModels()) {
                 if (m.id().contains(effectiveId) || effectiveId.contains(m.id())) {

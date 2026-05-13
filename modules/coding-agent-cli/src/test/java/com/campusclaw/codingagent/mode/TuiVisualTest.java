@@ -122,6 +122,7 @@ class TuiVisualTest {
     @Test
     void streamingIndicatorAppearsWhenIncomplete() {
         var assistant = new AssistantMessageComponent();
+
         // No content yet, not complete
         var lines = assistant.render(80);
         String all = String.join("\n", lines.stream().map(this::stripAnsi).toList());
@@ -142,6 +143,7 @@ class TuiVisualTest {
     @Test
     void streamingIndicatorDisappearsWhenContentArrives() {
         var assistant = new AssistantMessageComponent();
+
         // First render: no content
         var lines1 = assistant.render(80);
         assertTrue(

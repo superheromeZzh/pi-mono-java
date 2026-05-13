@@ -85,6 +85,7 @@ class JLineTerminalTest {
             Attributes original = dumbTerminal.getAttributes();
             terminal.enterRawMode();
             terminal.exitRawMode();
+
             // Attributes should be restored (dumb terminal may not change them)
             assertNotNull(dumbTerminal.getAttributes());
         }
@@ -108,6 +109,7 @@ class JLineTerminalTest {
             List<Consumer> listeners = new ArrayList<>();
             terminal.onInput(data -> listeners.add(null));
             terminal.onInput(data -> listeners.add(null));
+
             // No exception means both were registered
             assertEquals(0, listeners.size()); // Not triggered yet
         }
@@ -124,6 +126,7 @@ class JLineTerminalTest {
         @Test
         void doubleCloseDoesNotThrow() {
             terminal.close();
+
             // Second close on a dumb terminal should handle gracefully
             assertDoesNotThrow(() -> {
                 try {

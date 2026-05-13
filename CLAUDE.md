@@ -139,6 +139,59 @@ new String(process.getInputStream().readAllBytes())           // 同上
 
 注意 `new String(char[])`、`String.toCharArray()`、`Character.toChars(cp)` 这些 `char[] ↔ String` 之间的互转**不在此规则**——`char[]` 本身已经是 UTF-16 code unit 序列，不涉及编码协商，无需也无法传 charset。
 
+### 注释符与注释内容之间必须有空格
+
+**规则**：行首的 `//` 与 `/*` 后必须紧跟空白（空格/制表符/换行）或重复同样的符号（`///`、`/**`）。`//foo` / `/*foo*/` 一律拒绝。
+
+**硬约束**（Checkstyle `comment_marker_space`，build-failing）：
+
+| ✅ 正例 | ❌ 反例 |
+|---|---|
+| `// foo` | `//foo` |
+| `/* foo */` | `/*foo*/` |
+| `/** Javadoc */` | — |
+| `///` 三斜线、`//` 空注释 | — |
+
+**检测范围**：正则锚定到「行首空白 + 注释符」，避免字符串字面量里的 `://`、`-//Apple//DTD ...`、shell 脚本里的 `s/foo//` 等被误判。行尾追加的 trailing 注释（如 `int x = 1; //foo`）不在硬规则覆盖范围内——这类情况绝大多数还是会被人手工写成 `// foo`，由代码评审把关即可。
+
+**理由**：注释符紧贴注释内容（`//foo`）会让 IDE 的语法着色把整个 token 当成一个词处理，可读性骤降；折叠/链接识别也常失效。社区主流风格指南（Google Java Style §4.8.6.1、Sun/Oracle 旧规约）均要求空格。零成本守规、build 失败即修。
+
+### 段落注释上方必须空一行
+
+**规则**：独占一行的 `//` 注释，若紧跟在以 `;` 或 `}` 结尾的代码行下方，注释行上方必须空一行。紧贴在 `{` / `(` / `,` 之后的注释（块内开场注释、参数延续注释）不属于「新段落」，不在此规则覆盖范围内。
+
+**硬约束**（Checkstyle `comment_blank_line_before`，RegexpMultiline，build-failing）：
+
+✅ 正例：
+```java
+private static final String ANSI_DIM_KEY = "\033[38;2;102;102;102m";
+
+// Background colors matching campusclaw dark theme
+private static final String BG_PENDING = "\033[48;2;40;40;50m";
+```
+
+```java
+public void foo() {
+    // short-circuit on empty input
+    if (input.isEmpty()) {
+        return;
+    }
+}
+```
+
+❌ 反例：
+```java
+private static final String ANSI_DIM_KEY = "\033[38;2;102;102;102m";
+// Background colors matching campusclaw dark theme
+private static final String BG_PENDING = "\033[48;2;40;40;50m";
+```
+
+**理由**：「段落标题」紧贴上一段代码会让两段在视觉上糊成一片，读者第一眼分不清这条注释是 *上一段的尾巴* 还是 *下一段的标题*。空一行是廉价的视觉分隔。
+
+### 行尾 trailing 注释 // 前必须有空格（软约束）
+
+`int x = 1;//foo` 不允许，应写 `int x = 1; // foo`。不进 Checkstyle 是因为 hard 检查需要排除字符串里的 `://` URL、sed 脚本 `s/foo//;...` 等，正则误报率高。由代码评审把关。
+
 ### 数字字面量后缀
 - **long 类型变量赋值的整数字面量必须以 `L` 结尾**（大写）。`60_000` → `60_000L`。避免静默的 int→long 转换。
 - 已经是 long 字面量的，必须用大写 `L` 而非小写 `l`（`UpperEll` 强制；小写 `l` 易与数字 `1` 混淆）。

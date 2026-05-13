@@ -24,6 +24,7 @@ class DiffViewerTest {
         @Test
         void singleWordChange() {
             String result = DiffViewer.highlightWordDiff("hello world", "hello earth", "\033[31m");
+
             // "world" should be highlighted with INVERSE since it differs from "earth"
             assertTrue(result.contains("\033[7m"), "Should contain INVERSE code");
             assertTrue(result.contains("world"), "Should contain the word 'world'");
@@ -83,6 +84,7 @@ class DiffViewerTest {
             var lines = java.util.List.of(
                     new DiffViewer.DiffLine(DiffViewer.LineType.MODIFIED, 1, 1, "return foo;", "return bar;"));
             String output = DiffViewer.formatUnified(lines, "test.java");
+
             // The output should contain inverse highlighting for the changed word
             assertTrue(output.contains("\033[7m"), "Modified line should have intra-line highlighting");
         }

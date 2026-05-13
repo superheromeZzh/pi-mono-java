@@ -46,6 +46,7 @@ public class BashExecutor {
         argv.add(command);
         ProcessBuilder pb = new ProcessBuilder(argv);
         pb.directory(cwd.toFile());
+
         // Redirect stdin from the null device so the child bash doesn't steal
         // the parent's terminal input, which can break JLine's reader.
         pb.redirectInput(ProcessBuilder.Redirect.from(new java.io.File(nullDevice)));

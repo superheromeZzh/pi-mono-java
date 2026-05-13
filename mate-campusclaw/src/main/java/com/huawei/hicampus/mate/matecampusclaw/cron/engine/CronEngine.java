@@ -333,6 +333,7 @@ public class CronEngine {
             case CronSchedule.Every every -> {
                 long base = Math.max(job.state().lastRunAtMs(), job.createdAtMs());
                 long next = base + every.intervalMs();
+
                 // Apply exponential backoff if there are consecutive errors
                 if (job.state().consecutiveErrors() > 0) {
                     long backoff = Math.min(1000L * (1L << job.state().consecutiveErrors()), 3_600_000L);

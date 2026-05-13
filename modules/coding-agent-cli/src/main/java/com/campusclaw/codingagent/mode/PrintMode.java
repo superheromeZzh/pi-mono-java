@@ -46,6 +46,7 @@ public class PrintMode {
             if (format == OutputFormat.JSON) {
                 writeJsonEvent(event);
             }
+
             // Capture text for TEXT mode
             if (event instanceof MessageEndEvent me) {
                 var msg = me.message();

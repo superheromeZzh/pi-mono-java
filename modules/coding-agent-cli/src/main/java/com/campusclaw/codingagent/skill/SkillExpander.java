@@ -135,6 +135,7 @@ public class SkillExpander {
                         "Sandbox body loading failed for {}, falling back to direct reading: {}",
                         skill.filePath(),
                         e.getMessage());
+
                 // Fall back to direct reading
             }
         }

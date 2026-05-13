@@ -56,6 +56,7 @@ public class KeybindingsComponent implements Component {
     public KeybindingsComponent(List<Keybinding> keybindings) {
         this.keybindings = keybindings != null ? new ArrayList<>(keybindings) : new ArrayList<>();
         this.separator = "  |  ";
+
         // Default styling: bold keys, dim descriptions, dim separator
         this.keyStyleFn = text -> "\033[1m" + text + "\033[0m"; // bold
         this.descStyleFn = text -> "\033[2m" + text + "\033[0m"; // dim
@@ -139,6 +140,7 @@ public class KeybindingsComponent implements Component {
             String styledDesc = descStyleFn != null ? descStyleFn.apply(kb.description()) : kb.description();
             String segment = styledKey + " " + styledDesc;
             segments.add(segment);
+
             // Visible width: key + space + description
             segmentWidths.add(kb.key().length() + 1 + kb.description().length());
         }

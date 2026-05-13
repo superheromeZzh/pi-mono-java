@@ -146,6 +146,7 @@ class OpenAIResponsesProviderTest {
 
             // Should produce 2 items: function_call + easy_input_message (text)
             assertEquals(2, result.size());
+
             // One should be a function call, one an easy input message
             boolean hasFunctionCall = result.stream().anyMatch(ResponseInputItem::isFunctionCall);
             boolean hasEasyMessage = result.stream().anyMatch(ResponseInputItem::isEasyInputMessage);
@@ -410,6 +411,7 @@ class OpenAIResponsesProviderTest {
             var params = provider.buildParams(testModel(), context, null, null, null);
 
             assertNotNull(params);
+
             // Instructions should be set (verified by successful build)
         }
     }

@@ -96,6 +96,7 @@ class SessionPersistenceTest {
             persistence.save("sess-1", List.of(userMsg("test")), file);
 
             String line = Files.readAllLines(file, StandardCharsets.UTF_8).get(0);
+
             // Should parse without error
             assertDoesNotThrow(() -> mapper.readTree(line));
         }

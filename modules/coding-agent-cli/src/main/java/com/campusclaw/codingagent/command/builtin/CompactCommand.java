@@ -53,6 +53,7 @@ public class CompactCommand implements SlashCommand {
         context.output().println("Compacting context...");
         try {
             var result = compactor.compact(new ArrayList<>(messages), model);
+
             // Build new message list with summary
             var newMessages = new ArrayList<Message>();
             if (!result.summary().isEmpty()) {

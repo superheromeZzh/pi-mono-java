@@ -167,6 +167,7 @@ class SelectListTest {
         @Test
         void upArrowWrapsToBottom() {
             var list = createList(items("a", "b", "c"));
+
             // selectedIndex starts at 0
             list.handleInput(KEY_UP);
             assertEquals(2, list.getSelectedIndex());
@@ -256,6 +257,7 @@ class SelectListTest {
         @Test
         void noCallbackDoesNotThrow() {
             var list = createList(items("a", "b"));
+
             // No callbacks set — should not throw
             assertDoesNotThrow(() -> {
                 list.handleInput(KEY_ENTER);
@@ -336,6 +338,7 @@ class SelectListTest {
         void allItemsVisibleWhenWithinMaxHeight() {
             var list = createList(items("a", "b", "c"), 5);
             List<String> lines = list.render(40);
+
             // 3 items, no scroll indicator
             assertEquals(3, lines.size());
         }
@@ -344,6 +347,7 @@ class SelectListTest {
         void scrollIndicatorShownWhenExceedsMaxHeight() {
             var list = createList(items("a", "b", "c", "d", "e"), 3);
             List<String> lines = list.render(40);
+
             // 3 visible items + 1 scroll indicator
             assertEquals(4, lines.size());
             assertTrue(lines.get(3).contains("(1/5)"));
@@ -355,6 +359,7 @@ class SelectListTest {
             list.handleInput(KEY_DOWN);
             list.handleInput(KEY_DOWN);
             List<String> lines = list.render(40);
+
             // Scroll indicator should show (3/5)
             String lastLine = lines.get(lines.size() - 1);
             assertTrue(lastLine.contains("(3/5)"), "Expected (3/5) but got: " + lastLine);
@@ -365,6 +370,7 @@ class SelectListTest {
             var list = createList(items("a", "b", "c", "d", "e", "f", "g"), 3);
             list.setSelectedIndex(3); // "d"
             List<String> lines = list.render(40);
+
             // Window should center around index 3: shows c(2), d(3), e(4)
             assertTrue(lines.get(0).contains("c"));
             assertTrue(lines.get(1).contains("d")); // selected
@@ -376,6 +382,7 @@ class SelectListTest {
             var list = createList(items("a", "b", "c", "d", "e"), 3);
             list.setSelectedIndex(0);
             List<String> lines = list.render(40);
+
             // Window starts at 0: shows a, b, c
             assertTrue(lines.get(0).contains("a"));
             assertTrue(lines.get(1).contains("b"));
@@ -387,6 +394,7 @@ class SelectListTest {
             var list = createList(items("a", "b", "c", "d", "e"), 3);
             list.setSelectedIndex(4);
             List<String> lines = list.render(40);
+
             // Window ends at items.size(): shows c, d, e + scroll indicator
             assertTrue(lines.get(0).contains("c"));
             assertTrue(lines.get(1).contains("d"));
@@ -398,6 +406,7 @@ class SelectListTest {
             var list = createList(items("a", "b", "c"), 1);
             list.setSelectedIndex(1);
             List<String> lines = list.render(40);
+
             // 1 item + scroll indicator
             assertEquals(2, lines.size());
             assertTrue(lines.get(0).contains("b"));
@@ -407,9 +416,11 @@ class SelectListTest {
         @Test
         void navigatingDownScrollsWindow() {
             var list = createList(items("a", "b", "c", "d", "e"), 3);
+
             // Move to last item
             list.setSelectedIndex(4);
             List<String> lines = list.render(40);
+
             // Last 3 items visible
             assertTrue(lines.get(2).contains("e"));
             assertTrue(lines.get(2).startsWith("→ "), "Last visible item should be selected");
@@ -428,6 +439,7 @@ class SelectListTest {
             var list = createList(items("this-is-a-very-long-item-name-that-exceeds-terminal-width"));
             List<String> lines = list.render(20);
             assertEquals(1, lines.size());
+
             // The rendered line should not exceed 20 visible columns
             // (prefix "→ " is 2 chars, leaving 18 for the label)
             String line = lines.get(0);
@@ -483,6 +495,7 @@ class SelectListTest {
         void defaultThemeAppliesAnsiCodes() {
             var list = new SelectList<>(items("a", "b"), s -> s, 10, SelectListTheme.defaultTheme());
             List<String> lines = list.render(40);
+
             // Selected line should contain ANSI escape codes
             assertTrue(lines.get(0).contains("\033["), "Default theme should apply ANSI codes");
         }
@@ -569,10 +582,12 @@ class SelectListTest {
         @Test
         void setMaxHeightChangesVisibleCount() {
             var list = createList(items("a", "b", "c", "d"), 10);
+
             // All items visible, no scroll indicator
             assertEquals(4, list.render(40).size());
 
             list.setMaxHeight(2);
+
             // 2 items + scroll indicator
             assertEquals(3, list.render(40).size());
         }
@@ -666,6 +681,7 @@ class SelectListTest {
             var list = new SelectList<>(bigList, s -> s, 5, plainTheme);
             list.setSelectedIndex(500);
             List<String> lines = list.render(40);
+
             // 5 items + scroll indicator
             assertEquals(6, lines.size());
             assertTrue(lines.get(5).contains("(501/1000)"));
