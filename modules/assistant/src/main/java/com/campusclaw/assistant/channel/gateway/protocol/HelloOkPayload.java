@@ -9,7 +9,14 @@ import java.util.Map;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-@SuppressWarnings("checkstyle:top_class_comment")
+/**
+ * Payload of the server's {@code hello-ok} response to a successful {@code connect}
+ * handshake. Echoes the negotiated protocol version, server identity, advertised
+ * methods/events, an initial state snapshot, and the per-connection policy limits.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/13]
+ * @since [br_eCampusCore 25.1.0_Next]
+ */
 @JsonIgnoreProperties(ignoreUnknown = true)
 public record HelloOkPayload(
         @JsonProperty("type") String type,

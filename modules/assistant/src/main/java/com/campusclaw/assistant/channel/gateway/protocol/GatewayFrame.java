@@ -9,7 +9,15 @@ import java.util.Map;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-@SuppressWarnings("checkstyle:top_class_comment")
+/**
+ * Generic envelope for frames exchanged over the WebSocket gateway protocol. Carries either
+ * a request ({@code type}/{@code id}/{@code method}/{@code params}), an event
+ * ({@code type}/{@code event}/{@code payload}), or a response ({@code type}/{@code id}/{@code ok}/{@code error}),
+ * with optional sequence and per-stream state-version map for delivery ordering.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/13]
+ * @since [br_eCampusCore 25.1.0_Next]
+ */
 @JsonIgnoreProperties(ignoreUnknown = true)
 public record GatewayFrame(
         @JsonProperty("type") String type,

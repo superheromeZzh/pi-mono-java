@@ -10,7 +10,15 @@ import com.campusclaw.codingagent.tool.sandbox.ResourceLimits;
 import com.campusclaw.codingagent.tool.sandbox.SandboxResult;
 import com.campusclaw.codingagent.tool.sandbox.SandboxSecurityPolicy;
 
-@SuppressWarnings("checkstyle:top_class_comment")
+/**
+ * Stand-alone manual smoke test for the long-lived Docker sandbox worker. Configures
+ * {@link DockerSandboxClient} with a persistent (non-ephemeral) Alpine worker, runs an
+ * {@code echo} command, prints the result, and waits on stdin so the operator can inspect
+ * the container before tearing it down. Intended for ad-hoc developer runs, not the CI suite.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/13]
+ * @since [br_eCampusCore 25.1.0_Next]
+ */
 public class SandboxQuickTest {
     public static void main(String[] args) throws Exception {
         System.out.println("=== Docker 沙箱测试 ===\n");

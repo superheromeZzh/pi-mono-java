@@ -9,7 +9,15 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import jakarta.annotation.Nullable;
 
-@SuppressWarnings("checkstyle:top_class_comment")
+/**
+ * Outbound event frame emitted by the JSONL RPC mode. Holds a {@code type} discriminator, an
+ * optional correlation id linking back to the originating {@link RpcCommand}, and either a
+ * {@code data} payload or an {@code error} string. Static factories cover the broadcast,
+ * response, and error shapes.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/13]
+ * @since [br_eCampusCore 25.1.0_Next]
+ */
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public record RpcEvent(
         @JsonProperty("type") String type,

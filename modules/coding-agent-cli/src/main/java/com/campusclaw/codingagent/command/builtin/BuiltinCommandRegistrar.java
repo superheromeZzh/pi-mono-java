@@ -20,7 +20,14 @@ import org.springframework.stereotype.Component;
 
 import jakarta.annotation.PostConstruct;
 
-@SuppressWarnings("checkstyle:top_class_comment")
+/**
+ * Spring-managed registrar that populates {@link SlashCommandRegistry} with the built-in
+ * command set on startup. Registers help, model, compaction, session, auth, providers, loop,
+ * cron and the remaining shell commands; eagerly initialized via {@code @Lazy(false)}.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/13]
+ * @since [br_eCampusCore 25.1.0_Next]
+ */
 @Component
 @Lazy(false)
 public class BuiltinCommandRegistrar {

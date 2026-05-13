@@ -4,7 +4,14 @@
 
 package com.huawei.hicampus.mate.matecampusclaw.codingagent.command;
 
-@SuppressWarnings("checkstyle:top_class_comment")
+/**
+ * Contract for a slash command exposed through the CLI (e.g. {@code /help}, {@code /model}).
+ * Each command advertises a name and description and executes against the supplied
+ * {@link SlashCommandContext} with the raw argument string.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/13]
+ * @since [br_eCampusCore 25.1.0_Next]
+ */
 public interface SlashCommand {
     /**
      * Command name without the slash (e.g., "model", "settings").

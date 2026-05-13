@@ -11,7 +11,13 @@ import com.huawei.hicampus.mate.matecampusclaw.codingagent.command.SlashCommand;
 import com.huawei.hicampus.mate.matecampusclaw.codingagent.command.SlashCommandContext;
 import com.huawei.hicampus.mate.matecampusclaw.codingagent.util.ClipboardUtils;
 
-@SuppressWarnings("checkstyle:top_class_comment")
+/**
+ * Slash command {@code /copy} that locates the most recent assistant message in the session
+ * history and copies its concatenated text content to the system clipboard.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/13]
+ * @since [br_eCampusCore 25.1.0_Next]
+ */
 public class CopyCommand implements SlashCommand {
 
     @Override

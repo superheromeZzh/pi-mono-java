@@ -17,7 +17,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
-@SuppressWarnings("checkstyle:top_class_comment")
+/**
+ * Service that loads and saves {@link Settings} from the global and project JSON files,
+ * deep-merging project overrides on top of global defaults. Exposes both typed accessors
+ * and JSON-key mutators used by the {@code /settings} slash command.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/13]
+ * @since [br_eCampusCore 25.1.0_Next]
+ */
 @Service
 public class SettingsManager {
     private static final Logger log = LoggerFactory.getLogger(SettingsManager.class);

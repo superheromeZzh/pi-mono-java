@@ -13,7 +13,13 @@ import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Select;
 
-@SuppressWarnings("checkstyle:top_class_comment")
+/**
+ * MyBatis mapper backing {@link com.campusclaw.assistant.memory.MyBatisChatMemoryRepository}.
+ * Provides CRUD queries against the {@code chat_memory} table keyed by conversation id.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/13]
+ * @since [br_eCampusCore 25.1.0_Next]
+ */
 @Mapper
 public interface ChatMemoryMapper {
 

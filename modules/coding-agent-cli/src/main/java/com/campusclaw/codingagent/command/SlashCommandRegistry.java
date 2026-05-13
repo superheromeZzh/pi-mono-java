@@ -12,7 +12,14 @@ import java.util.Optional;
 
 import org.springframework.stereotype.Service;
 
-@SuppressWarnings("checkstyle:top_class_comment")
+/**
+ * In-process registry of {@link SlashCommand} instances keyed by command name. Provides
+ * registration, lookup, enumeration, and a parser that dispatches a {@code /name args...}
+ * input line to the matching command handler.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/13]
+ * @since [br_eCampusCore 25.1.0_Next]
+ */
 @Service
 public class SlashCommandRegistry {
     private final Map<String, SlashCommand> commands = new LinkedHashMap<>();

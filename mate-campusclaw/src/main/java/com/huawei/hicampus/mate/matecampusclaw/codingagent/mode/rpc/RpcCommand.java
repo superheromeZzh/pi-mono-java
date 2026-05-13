@@ -9,7 +9,14 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import jakarta.annotation.Nullable;
 
-@SuppressWarnings("checkstyle:top_class_comment")
+/**
+ * Inbound command frame for the JSONL RPC mode. Carries a {@code type} discriminator, an
+ * optional correlation id, and a loose union of payload fields (message, model, thinkingLevel,
+ * value, command) interpreted according to {@code type}.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/13]
+ * @since [br_eCampusCore 25.1.0_Next]
+ */
 @JsonIgnoreProperties(ignoreUnknown = true)
 public record RpcCommand(
         @JsonProperty("type") String type,

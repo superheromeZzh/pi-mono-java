@@ -19,7 +19,15 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 
-@SuppressWarnings("checkstyle:top_class_comment")
+/**
+ * Spring Boot auto-configuration for the assistant module. Registers the default
+ * {@link ObjectMapper} (JSR-310 aware, ISO-8601 dates), the MyBatis-backed
+ * {@link ChatMemoryRepository}/{@link com.huawei.hicampus.mate.matecampusclaw.assistant.memory.ChatMemoryStore} beans,
+ * and enables component plus mapper scanning under {@code com.huawei.hicampus.mate.matecampusclaw.assistant.*}.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/13]
+ * @since [br_eCampusCore 25.1.0_Next]
+ */
 @AutoConfiguration
 @ComponentScan
 @MapperScan("com.huawei.hicampus.mate.matecampusclaw.assistant.mapper")

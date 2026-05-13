@@ -9,7 +9,14 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import org.springframework.stereotype.Service;
 
-@SuppressWarnings("checkstyle:top_class_comment")
+/**
+ * Thread-safe in-memory registry of active {@link Channel} instances keyed by name.
+ * Also tracks the most recently registered channel so callers without a specific target
+ * can fall back to the latest connection.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/13]
+ * @since [br_eCampusCore 25.1.0_Next]
+ */
 @Service
 public class ChannelRegistry {
 

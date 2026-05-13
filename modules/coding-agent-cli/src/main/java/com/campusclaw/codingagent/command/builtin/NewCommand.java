@@ -7,7 +7,13 @@ package com.campusclaw.codingagent.command.builtin;
 import com.campusclaw.codingagent.command.SlashCommand;
 import com.campusclaw.codingagent.command.SlashCommandContext;
 
-@SuppressWarnings("checkstyle:top_class_comment")
+/**
+ * Slash command {@code /new} that resets the current session, clearing conversation history
+ * and starting a fresh agent state.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/13]
+ * @since [br_eCampusCore 25.1.0_Next]
+ */
 public class NewCommand implements SlashCommand {
 
     @Override
