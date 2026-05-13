@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
+import com.campusclaw.agent.util.LoggingUncaughtExceptionHandler;
 import com.campusclaw.codingagent.config.ToolExecutionProperties;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -420,6 +421,8 @@ public class DockerSandboxClient {
                 }
             });
 
+            stdoutReader.setUncaughtExceptionHandler(LoggingUncaughtExceptionHandler.INSTANCE);
+            stderrReader.setUncaughtExceptionHandler(LoggingUncaughtExceptionHandler.INSTANCE);
             stdoutReader.start();
             stderrReader.start();
 

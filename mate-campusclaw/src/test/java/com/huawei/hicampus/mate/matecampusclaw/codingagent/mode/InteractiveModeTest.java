@@ -17,6 +17,7 @@ import java.util.concurrent.CompletableFuture;
 import com.huawei.hicampus.mate.matecampusclaw.agent.Agent;
 import com.huawei.hicampus.mate.matecampusclaw.agent.event.MessageUpdateEvent;
 import com.huawei.hicampus.mate.matecampusclaw.agent.state.AgentState;
+import com.huawei.hicampus.mate.matecampusclaw.agent.util.LoggingUncaughtExceptionHandler;
 import com.huawei.hicampus.mate.matecampusclaw.ai.stream.AssistantMessageEvent;
 import com.huawei.hicampus.mate.matecampusclaw.ai.types.AssistantMessage;
 import com.huawei.hicampus.mate.matecampusclaw.ai.types.TextContent;
@@ -262,6 +263,7 @@ class InteractiveModeTest {
                 sleep(200);
                 terminal.simulateInput("\u0004");
             });
+            thread.setUncaughtExceptionHandler(LoggingUncaughtExceptionHandler.INSTANCE);
             thread.start();
 
             mode.run(session, terminal);
@@ -274,6 +276,7 @@ class InteractiveModeTest {
                 sleep(200);
                 terminal.simulateInput("\u0004");
             });
+            thread.setUncaughtExceptionHandler(LoggingUncaughtExceptionHandler.INSTANCE);
             thread.start();
 
             mode.run(session, terminal);
@@ -288,6 +291,7 @@ class InteractiveModeTest {
                 sleep(200);
                 terminal.simulateInput("\u0004");
             });
+            thread.setUncaughtExceptionHandler(LoggingUncaughtExceptionHandler.INSTANCE);
             thread.start();
 
             mode.run(session, terminal);
@@ -304,6 +308,7 @@ class InteractiveModeTest {
                 sleep(200);
                 terminal.simulateInput("\u0004");
             });
+            thread.setUncaughtExceptionHandler(LoggingUncaughtExceptionHandler.INSTANCE);
             thread.start();
 
             mode.run(session, terminal);
@@ -321,6 +326,7 @@ class InteractiveModeTest {
                 sleep(500);
                 terminal.simulateInput("\u0004");
             });
+            thread.setUncaughtExceptionHandler(LoggingUncaughtExceptionHandler.INSTANCE);
             thread.start();
 
             mode.run(session, terminal);

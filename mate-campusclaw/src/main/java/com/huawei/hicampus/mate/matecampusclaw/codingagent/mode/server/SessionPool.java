@@ -15,6 +15,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import com.huawei.hicampus.mate.matecampusclaw.agent.tool.AgentTool;
+import com.huawei.hicampus.mate.matecampusclaw.agent.util.LoggingUncaughtExceptionHandler;
 import com.huawei.hicampus.mate.matecampusclaw.ai.CampusClawAiService;
 import com.huawei.hicampus.mate.matecampusclaw.ai.model.ModelRegistry;
 import com.huawei.hicampus.mate.matecampusclaw.ai.types.Message;
@@ -105,6 +106,7 @@ public class SessionPool {
         this.cleaner = Executors.newSingleThreadScheduledExecutor(r -> {
             var t = new Thread(r, "session-pool-cleaner");
             t.setDaemon(true);
+            t.setUncaughtExceptionHandler(LoggingUncaughtExceptionHandler.INSTANCE);
             return t;
         });
         cleaner.scheduleAtFixedRate(this::evictIdle, IDLE_TIMEOUT_MINUTES, 5, TimeUnit.MINUTES);
