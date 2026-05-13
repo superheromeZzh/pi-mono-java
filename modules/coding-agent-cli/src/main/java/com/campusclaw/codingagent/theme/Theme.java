@@ -68,7 +68,12 @@ public record Theme(
     public static final String SELECTION = "selection";
     public static final String CURSOR = "cursor";
 
-    /** Get an ANSI color escape for a theme color key. */
+    /**
+     * Returns an ANSI color escape sequence for a theme color key.
+     *
+     * @param key one of the canonical color keys (e.g. {@link #PRIMARY}, {@link #DIFF_ADDED})
+     * @return the ANSI escape, or an empty string when the key is not bound to a color
+     */
     public String ansi(String key) {
         String color = colors.getOrDefault(key, null);
         if (color == null) {
@@ -77,7 +82,13 @@ public record Theme(
         return toAnsi(color);
     }
 
-    /** Convert hex color (#RRGGBB) or named color to ANSI escape. */
+    /**
+     * Converts a hex color ({@code #RRGGBB}) or named color (e.g. {@code "red"},
+     * {@code "bright_yellow"}) into an ANSI escape sequence.
+     *
+     * @param color hex string or recognized color name
+     * @return the corresponding ANSI escape sequence, or the SGR reset for unrecognized inputs
+     */
     public static String toAnsi(String color) {
         if (color.startsWith("#") && color.length() == 7) {
             int r = Integer.parseInt(color.substring(1, 3), 16);

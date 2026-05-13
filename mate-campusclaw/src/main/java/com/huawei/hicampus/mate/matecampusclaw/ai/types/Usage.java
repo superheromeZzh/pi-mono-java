@@ -27,7 +27,11 @@ public record Usage(
         @JsonProperty("totalTokens") int totalTokens,
         @JsonProperty("cost") Cost cost) {
 
-    /** Returns a zero-valued Usage instance with an empty Cost. */
+    /**
+     * Returns a zero-valued {@link Usage} instance with an empty {@link Cost}.
+     *
+     * @return a {@link Usage} with all token counts set to {@code 0} and an empty {@link Cost}
+     */
     public static Usage empty() {
         return new Usage(0, 0, 0, 0, 0, Cost.empty());
     }

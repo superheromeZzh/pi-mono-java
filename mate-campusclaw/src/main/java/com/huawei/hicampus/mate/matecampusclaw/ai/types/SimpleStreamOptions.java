@@ -44,17 +44,30 @@ public record SimpleStreamOptions(
         @JsonProperty("reasoning") @Nullable ThinkingLevel reasoning,
         @JsonProperty("thinkingBudgets") @Nullable ThinkingBudgets thinkingBudgets) {
 
-    /** Returns a SimpleStreamOptions with all fields null. */
+    /**
+     * Returns a {@link SimpleStreamOptions} with every field set to {@code null}.
+     *
+     * @return a fully-null {@link SimpleStreamOptions} instance
+     */
     public static SimpleStreamOptions empty() {
         return new SimpleStreamOptions(null, null, null, null, null, null, null, null, null, null, null);
     }
 
-    /** Returns a new {@link Builder} initialized with default (null) values. */
+    /**
+     * Returns a new {@link Builder} initialized with default (null) values.
+     *
+     * @return a fresh empty {@link Builder}
+     */
     public static Builder builder() {
         return new Builder();
     }
 
-    /** Creates a SimpleStreamOptions from a base {@link StreamOptions} with no reasoning config. */
+    /**
+     * Creates a {@link SimpleStreamOptions} from a base {@link StreamOptions} with no reasoning config.
+     *
+     * @param base source {@link StreamOptions} whose fields are copied verbatim
+     * @return a new {@link SimpleStreamOptions} mirroring {@code base} with reasoning fields unset
+     */
     public static SimpleStreamOptions from(StreamOptions base) {
         return new SimpleStreamOptions(
                 base.temperature(),
@@ -70,7 +83,11 @@ public record SimpleStreamOptions(
                 null);
     }
 
-    /** Returns the base {@link StreamOptions} portion (without reasoning fields). */
+    /**
+     * Returns the base {@link StreamOptions} portion (without reasoning fields).
+     *
+     * @return a {@link StreamOptions} carrying only the fields shared with the base record
+     */
     public StreamOptions toStreamOptions() {
         return new StreamOptions(
                 temperature,
@@ -84,7 +101,11 @@ public record SimpleStreamOptions(
                 metadata);
     }
 
-    /** Returns a new {@link Builder} pre-populated from this instance. */
+    /**
+     * Returns a new {@link Builder} pre-populated from this instance.
+     *
+     * @return a {@link Builder} pre-filled with this record's field values
+     */
     public Builder toBuilder() {
         return new Builder()
                 .temperature(temperature)

@@ -39,17 +39,29 @@ public record StreamOptions(
         @JsonProperty("maxRetryDelayMs") @Nullable Long maxRetryDelayMs,
         @JsonProperty("metadata") @Nullable Map<String, Object> metadata) {
 
-    /** Returns a StreamOptions with all fields null. */
+    /**
+     * Returns a {@link StreamOptions} with every field set to {@code null}.
+     *
+     * @return a fully-null {@link StreamOptions} instance
+     */
     public static StreamOptions empty() {
         return new StreamOptions(null, null, null, null, null, null, null, null, null);
     }
 
-    /** Returns a new {@link Builder} initialized with default (null) values. */
+    /**
+     * Returns a new {@link Builder} initialized with default (null) values.
+     *
+     * @return a fresh empty {@link Builder}
+     */
     public static Builder builder() {
         return new Builder();
     }
 
-    /** Returns a new {@link Builder} pre-populated from this instance. */
+    /**
+     * Returns a new {@link Builder} pre-populated from this instance.
+     *
+     * @return a {@link Builder} pre-filled with this record's field values
+     */
     public Builder toBuilder() {
         return new Builder()
                 .temperature(temperature)
