@@ -70,6 +70,10 @@ public class Compactor {
 
     /**
      * Check if compaction is needed based on estimated token count.
+     *
+     * @param messages the messages
+     * @param contextWindow the contextWindow
+     * @return the result
      */
     public boolean needsCompaction(List<Message> messages, int contextWindow) {
         if (!config.enabled()) {
@@ -82,6 +86,10 @@ public class Compactor {
 
     /**
      * Compact the conversation by summarizing old messages and keeping recent ones.
+     *
+     * @param messages the messages
+     * @param model the model
+     * @return the result
      */
     public CompactionResult compact(List<Message> messages, Model model) {
         // Extract file operations before compaction
@@ -195,7 +203,12 @@ public class Compactor {
         return "";
     }
 
-    /** Rough token estimate: ~4 chars per token. */
+    /**
+     * Rough token estimate: ~4 chars per token.
+     *
+     * @param messages the messages
+     * @return the result
+     */
     static int estimateTokens(List<Message> messages) {
         int total = 0;
         for (Message msg : messages) {

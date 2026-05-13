@@ -188,6 +188,11 @@ public class MessageTransformer {
 
     /**
      * Legacy overload for backward compatibility.
+     *
+     * @param messages the messages to transform
+     * @param targetApi target API style
+     * @param sourceApi source API style
+     * @return the transformed messages
      */
     public static List<Message> transform(List<Message> messages, Api targetApi, Api sourceApi) {
         return transform(messages, targetApi, "", "");
@@ -211,6 +216,9 @@ public class MessageTransformer {
     /**
      * Normalize tool call ID to fit within provider constraints.
      * OpenAI generates very long IDs; Anthropic requires < 64 chars.
+     *
+     * @param id raw tool call id, may be {@code null}
+     * @return id truncated to {@link #MAX_TOOL_CALL_ID_LENGTH}, or the original when short enough
      */
     static String normalizeToolCallId(String id) {
         if (id == null || id.length() <= MAX_TOOL_CALL_ID_LENGTH) {

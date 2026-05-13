@@ -30,12 +30,22 @@ public class AuthStorage {
     private static final Path AUTH_FILE = com.campusclaw.codingagent.config.AppPaths.AUTH_FILE;
     private static final Set<PosixFilePermission> OWNER_ONLY = PosixFilePermissions.fromString("rw-------");
 
-    /** Get credential for a provider. */
+    /**
+     * Get credential for a provider.
+     *
+     * @param provider the provider
+     * @return the result
+     */
     public Optional<Credential> get(String provider) {
         return load().map(m -> m.get(provider));
     }
 
-    /** Get API key string for a provider (from ApiKey credential or OAuth accessToken). */
+    /**
+     * Get API key string for a provider (from ApiKey credential or OAuth accessToken).
+     *
+     * @param provider the provider
+     * @return the result
+     */
     public Optional<String> getApiKey(String provider) {
         return get(provider).map(c -> switch (c) {
             case Credential.ApiKey ak -> ak.key();
@@ -43,26 +53,44 @@ public class AuthStorage {
         });
     }
 
-    /** Store a credential. */
+    /**
+     * Store a credential.
+     *
+     * @param provider the provider
+     * @param credential the credential
+     */
     public void set(String provider, Credential credential) {
         var map = load().orElse(new LinkedHashMap<>());
         map.put(provider, credential);
         save(map);
     }
 
-    /** Remove a credential. */
+    /**
+     * Remove a credential.
+     *
+     * @param provider the provider
+     */
     public void remove(String provider) {
         var map = load().orElse(new LinkedHashMap<>());
         map.remove(provider);
         save(map);
     }
 
-    /** Check if a provider has credentials stored. */
+    /**
+     * Check if a provider has credentials stored.
+     *
+     * @param provider the provider
+     * @return the result
+     */
     public boolean has(String provider) {
         return load().map(m -> m.containsKey(provider)).orElse(false);
     }
 
-    /** List all stored provider names. */
+    /**
+     * List all stored provider names.
+     *
+     * @return the result
+     */
     public Set<String> list() {
         return load().map(Map::keySet).orElse(Set.of());
     }

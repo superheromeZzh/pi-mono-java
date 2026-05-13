@@ -28,6 +28,8 @@ public final class AnsiUtils {
      * Extracts an ANSI escape sequence starting at the given position.
      * Supports CSI (ESC[), OSC (ESC]), and APC (ESC_) sequences.
      *
+     * @param str string to scan
+     * @param pos zero-based start offset
      * @return the escape code and its length, or null if no escape sequence starts at pos
      */
     @SuppressWarnings("checkstyle:huge_cyclomatic_complexity")
@@ -105,6 +107,9 @@ public final class AnsiUtils {
      * Returns the display width of a single code point in a terminal.
      * East Asian fullwidth/wide characters occupy 2 columns; most others occupy 1.
      * Control characters and zero-width characters return 0.
+     *
+     * @param cp Unicode code point
+     * @return display width in terminal columns (0, 1, or 2)
      */
     static int codePointWidth(int cp) {
         // Control characters
@@ -126,6 +131,9 @@ public final class AnsiUtils {
 
     /**
      * Checks if a code point is East Asian Fullwidth or Wide.
+     *
+     * @param cp Unicode code point
+     * @return {@code true} for East Asian fullwidth/wide code points
      */
     @SuppressWarnings("checkstyle:huge_cyclomatic_complexity")
     private static boolean isEastAsianWide(int cp) {
@@ -233,6 +241,9 @@ public final class AnsiUtils {
 
     /**
      * Returns the display width of a grapheme cluster (a string segment from BreakIterator).
+     *
+     * @param grapheme grapheme cluster text
+     * @return display width in terminal columns
      */
     private static int graphemeWidth(String grapheme) {
         if (grapheme.isEmpty()) {

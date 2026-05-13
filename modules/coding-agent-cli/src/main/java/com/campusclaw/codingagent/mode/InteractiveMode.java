@@ -154,6 +154,8 @@ public class InteractiveMode {
 
     /**
      * Sets the initial prompt to send automatically when the TUI starts.
+     *
+     * @param prompt the prompt
      */
     public void setInitialPrompt(String prompt) {
         this.initialPrompt = prompt;
@@ -162,6 +164,8 @@ public class InteractiveMode {
     /**
      * Sets scoped models for Ctrl+P cycling (from --models flag).
      * When set, Ctrl+P cycles only through these models instead of all registered ones.
+     *
+     * @param models the models
      */
     public void setScopedModels(List<Model> models) {
         this.scopedModels = models != null ? models : List.of();
@@ -186,6 +190,9 @@ public class InteractiveMode {
 
     /**
      * Runs the full-screen interactive REPL.
+     *
+     * @param session the session
+     * @param terminal the terminal
      */
     @SuppressWarnings("checkstyle:huge_cyclomatic_complexity")
     public void run(AgentSession session, Terminal terminal) {
@@ -1003,6 +1010,8 @@ public class InteractiveMode {
     /**
      * Cycles thinking level: off → minimal → low → medium → high → xhigh → off.
      * Skips xhigh if model doesn't support it. Shows status message.
+     *
+     * @param session the session
      */
     private void cycleThinkingLevel(AgentSession session) {
         var model = session.getAgent().getState().getModel();
@@ -1044,6 +1053,8 @@ public class InteractiveMode {
     /**
      * Cycles through available models with configured auth.
      * @param forward true for next, false for previous
+     *
+     * @param session the session
      */
     private void cycleModel(AgentSession session, boolean forward) {
         if (modelRegistry == null) {
@@ -1130,6 +1141,8 @@ public class InteractiveMode {
 
     /**
      * Shows the model selector overlay. Replaces the chat area until dismissed.
+     *
+     * @param session the session
      */
     private void showModelSelector(AgentSession session) {
         if (modelRegistry == null) {
@@ -1170,6 +1183,8 @@ public class InteractiveMode {
 
     /**
      * Shows the session selector overlay for /resume.
+     *
+     * @param session the session
      */
     private void showSessionSelector(AgentSession session) {
         String cwd = System.getProperty("user.dir", "");
@@ -1204,6 +1219,8 @@ public class InteractiveMode {
 
     /**
      * Shows the tree selector overlay for /tree command.
+     *
+     * @param session the session
      */
     private void showTreeSelector(AgentSession session) {
         var messages = session.getHistory();
@@ -1260,6 +1277,8 @@ public class InteractiveMode {
 
     /**
      * Shows an overlay component, replacing the chat area.
+     *
+     * @param overlay the overlay
      */
     private void showOverlay(Component overlay) {
         activeOverlay = overlay;
@@ -1334,6 +1353,8 @@ public class InteractiveMode {
     /**
      * Pastes an image from the system clipboard into the conversation.
      * Uses osascript on macOS to detect clipboard image.
+     *
+     * @param session the session
      */
     private void pasteClipboardImage(AgentSession session) {
         try {
@@ -1376,6 +1397,8 @@ public class InteractiveMode {
     /**
      * Shows a temporary status message in the chat area.
      * Reuses the last status line if it's at the bottom (matches campusclaw behavior).
+     *
+     * @param message the message
      */
     private void showStatus(String message) {
         var children = chatContainer.getChildren();
@@ -1395,17 +1418,17 @@ public class InteractiveMode {
     void handleEvent(AgentEvent event) {
         switch (event) {
             case TurnStartEvent e -> {
-                // Create a new AssistantMessageComponent for continuation turns
-                // (after tool calls) so thinking/text from each turn are separate.
+                // Continuation turn after a non-tool finish (follow-up message): close the
+                // previous bubble so the next text delta lazily opens a fresh one.
                 if (currentAssistantMessage != null && currentAssistantMessage.hasContent()) {
                     currentAssistantMessage.setComplete(true);
-                    currentAssistantMessage = new AssistantMessageComponent();
-                    chatContainer.addChild(currentAssistantMessage);
+                    currentAssistantMessage = null;
                 }
             }
             case MessageUpdateEvent e -> {
                 if (currentAssistantMessage == null) {
-                    return;
+                    currentAssistantMessage = new AssistantMessageComponent();
+                    chatContainer.addChild(currentAssistantMessage);
                 }
                 if (e.assistantMessageEvent() instanceof AssistantMessageEvent.TextDeltaEvent delta) {
                     currentAssistantMessage.appendText(delta.delta());
@@ -1445,6 +1468,17 @@ public class InteractiveMode {
                 }
             }
             case ToolExecutionStartEvent e -> {
+                // Close the current assistant bubble before the tool block so any text
+                // that arrives in the next turn opens a fresh bubble below the tool.
+                // Drop the bubble entirely if it never received any thinking/text — an
+                // empty pre-created placeholder shouldn't leave a gap above the tool.
+                if (currentAssistantMessage != null) {
+                    currentAssistantMessage.setComplete(true);
+                    if (!currentAssistantMessage.hasContent()) {
+                        chatContainer.removeChild(currentAssistantMessage);
+                    }
+                    currentAssistantMessage = null;
+                }
                 var tool = new ToolStatusComponent(e.toolName());
                 tool.setArgs(e.args());
                 tool.setExpanded(toolsExpanded);
@@ -1519,6 +1553,9 @@ public class InteractiveMode {
     /**
      * Expands @file references in the input text. Each @filepath token is replaced
      * with the file's content. Matches campusclaw TS @file behavior.
+     *
+     * @param input the input
+     * @return the result
      */
     static String expandFileReferences(String input) {
         if (input == null || !input.contains("@")) {
@@ -1561,6 +1598,10 @@ public class InteractiveMode {
      * Checks if the input is a /skill:name invocation or a prompt template command,
      * both of which should be sent to AgentSession.prompt() for expansion instead
      * of being processed as slash commands.
+     *
+     * @param input the input
+     * @param session the session
+     * @return the result
      */
     private boolean isSkillOrTemplate(String input, AgentSession session) {
         if (input.startsWith("/skill:")) {
@@ -1581,6 +1622,8 @@ public class InteractiveMode {
     /**
      * Builds the full list of slash command suggestions for autocomplete,
      * combining built-in commands, skills, and prompt templates.
+     *
+     * @param session the session
      */
     private void buildCommandSuggestions(AgentSession session) {
         var suggestions = new ArrayList<CommandSuggestion>();

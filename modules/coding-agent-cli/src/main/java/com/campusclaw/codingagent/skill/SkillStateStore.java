@@ -47,6 +47,8 @@ public class SkillStateStore {
     /**
      * Loads the set of disabled skill names.
      * Returns an empty set if the file is missing or unreadable.
+     *
+     * @return the result
      */
     public Set<String> loadDisabled() {
         Path file = skillsDir.resolve(STATE_FILE);
@@ -67,12 +69,20 @@ public class SkillStateStore {
         return loadDisabled().contains(name);
     }
 
-    /** Idempotently marks the skill as disabled. */
+    /**
+     * Idempotently marks the skill as disabled.
+     *
+     * @param name the name
+     */
     public void disable(String name) {
         mutate(set -> set.add(name));
     }
 
-    /** Idempotently marks the skill as enabled. */
+    /**
+     * Idempotently marks the skill as enabled.
+     *
+     * @param name the name
+     */
     public void enable(String name) {
         mutate(set -> set.remove(name));
     }

@@ -45,13 +45,22 @@ public class MigrationManager {
         registerBuiltins();
     }
 
-    /** Register a migration step. */
+    /**
+     * Register a migration step.
+     *
+     * @param step the step
+     */
     public void register(MigrationStep step) {
         migrations.add(step);
         migrations.sort(Comparator.comparingInt(MigrationStep::fromVersion));
     }
 
-    /** Get the current schema version for a data directory. */
+    /**
+     * Get the current schema version for a data directory.
+     *
+     * @param dataDir the dataDir
+     * @return the result
+     */
     public int getCurrentVersion(Path dataDir) {
         Path versionFile = dataDir.resolve(VERSION_FILE);
         if (!Files.exists(versionFile)) {
@@ -65,18 +74,37 @@ public class MigrationManager {
         }
     }
 
-    /** Set the schema version for a data directory. */
+    /**
+     * Set the schema version for a data directory.
+     *
+     * @param dataDir the dataDir
+     * @param version the version
+     *
+     * @throws IOException if the operation fails
+     */
     public void setVersion(Path dataDir, int version) throws IOException {
         Files.createDirectories(dataDir);
         Files.writeString(dataDir.resolve(VERSION_FILE), String.valueOf(version));
     }
 
-    /** Check if migration is needed. */
+    /**
+     * Check if migration is needed.
+     *
+     * @param dataDir the dataDir
+     * @return the result
+     */
     public boolean needsMigration(Path dataDir) {
         return getCurrentVersion(dataDir) < CURRENT_VERSION;
     }
 
-    /** Run all needed migrations. */
+    /**
+     * Run all needed migrations.
+     *
+     * @param dataDir the dataDir
+     * @return the result
+     *
+     * @throws IOException if the operation fails
+     */
     public List<String> migrate(Path dataDir) throws IOException {
         int current = getCurrentVersion(dataDir);
         if (current >= CURRENT_VERSION) {
@@ -104,7 +132,12 @@ public class MigrationManager {
         return applied;
     }
 
-    /** Create a backup of the data directory before migration. */
+    /**
+     * Create a backup of the data directory before migration.
+     *
+     * @param dataDir the dataDir
+     * @param version the version
+     */
     private void createBackup(Path dataDir, int version) {
         Path backupDir = dataDir.resolve(".backups").resolve("v" + version);
         try {

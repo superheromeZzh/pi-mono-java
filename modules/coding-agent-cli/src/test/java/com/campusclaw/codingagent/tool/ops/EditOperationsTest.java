@@ -21,6 +21,8 @@ class EditOperationsTest {
 
     /**
      * Verifies that a class implementing EditOperations gets both read and write capabilities.
+     *
+     * @throws IOException if the operation fails
      */
     @Test
     void editOperationsCombinesReadAndWrite() throws IOException {

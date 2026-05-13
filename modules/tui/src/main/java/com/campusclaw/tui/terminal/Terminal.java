@@ -18,6 +18,8 @@ public interface Terminal {
 
     /**
      * Writes raw data (text and ANSI escape sequences) to the terminal output.
+     *
+     * @param data raw bytes / ANSI sequences to emit
      */
     void write(String data);
 
@@ -29,11 +31,16 @@ public interface Terminal {
     /**
      * Moves the cursor to the specified row and column (0-based).
      * Uses the ANSI CUP (Cursor Position) escape sequence.
+     *
+     * @param row zero-based row index
+     * @param col zero-based column index
      */
     void moveCursor(int row, int col);
 
     /**
      * Returns the current terminal dimensions.
+     *
+     * @return the current {@link TerminalSize}
      */
     TerminalSize getSize();
 
@@ -41,11 +48,15 @@ public interface Terminal {
      * Registers a listener that is called when input data arrives.
      * The listener receives raw key sequences (may include ANSI escape sequences).
      * Multiple listeners can be registered; all are invoked in registration order.
+     *
+     * @param listener callback invoked with each raw input chunk
      */
     void onInput(Consumer<String> listener);
 
     /**
      * Registers a listener that is called when the terminal is resized.
+     *
+     * @param listener callback invoked with the new terminal size on every resize
      */
     void onResize(Consumer<TerminalSize> listener);
 

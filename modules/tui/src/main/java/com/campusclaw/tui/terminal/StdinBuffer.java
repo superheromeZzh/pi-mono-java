@@ -78,6 +78,8 @@ public class StdinBuffer {
 
     /**
      * Returns true if the buffer has no pending data.
+     *
+     * @return {@code true} when the buffer is empty
      */
     public boolean isEmpty() {
         return buffer.length() == 0;
@@ -92,6 +94,8 @@ public class StdinBuffer {
 
     /**
      * Returns the number of buffered characters.
+     *
+     * @return current buffer length in chars
      */
     public int size() {
         return buffer.length();
@@ -105,6 +109,9 @@ public class StdinBuffer {
      * Attempts to parse an escape sequence starting at position 0 in the buffer.
      * Returns the complete sequence string and removes it from the buffer, or
      * returns null if the sequence is incomplete.
+     *
+     * @param now current monotonic timestamp in millis (used for the bare-ESC timeout)
+     * @return the parsed escape sequence text, or {@code null} when more input is needed
      */
     private String tryParseEscapeSequence(long now) {
         int len = buffer.length();
@@ -152,6 +159,8 @@ public class StdinBuffer {
      * Parses a CSI (Control Sequence Introducer) sequence: {@code \033[ params final}.
      * Parameters are bytes in 0x30-0x3F, intermediate bytes in 0x20-0x2F,
      * and the final byte is in 0x40-0x7E.
+     *
+     * @return the parsed CSI sequence text, or {@code null} when more input is needed
      */
     private String tryParseCSI() {
         int len = buffer.length();

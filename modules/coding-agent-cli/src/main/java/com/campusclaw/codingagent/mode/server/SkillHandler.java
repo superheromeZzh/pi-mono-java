@@ -54,6 +54,9 @@ public class SkillHandler {
 
     /**
      * POST /api/skills — multipart file upload (.zip, .tar.gz, .tgz).
+     *
+     * @param request the request
+     * @return the result
      */
     public Mono<ServerResponse> upload(ServerRequest request) {
         return request.multipartData().flatMap(parts -> {
@@ -89,6 +92,9 @@ public class SkillHandler {
 
     /**
      * GET /api/skills — list all installed skills.
+     *
+     * @param request the request
+     * @return the result
      */
     public Mono<ServerResponse> list(ServerRequest request) {
         return Mono.fromCallable(skillManager::list)
@@ -100,6 +106,9 @@ public class SkillHandler {
 
     /**
      * DELETE /api/skills/{name} — remove a skill package.
+     *
+     * @param request the request
+     * @return the result
      */
     public Mono<ServerResponse> delete(ServerRequest request) {
         String name = request.pathVariable("name");
@@ -115,12 +124,22 @@ public class SkillHandler {
                         Exception.class, e -> ServerResponse.status(500).bodyValue(Map.of("error", e.getMessage())));
     }
 
-    /** POST /api/skills/{name}/enable — enable a skill by its skill name (idempotent). */
+    /**
+     * POST /api/skills/{name}/enable — enable a skill by its skill name (idempotent).
+     *
+     * @param request the request
+     * @return the result
+     */
     public Mono<ServerResponse> enable(ServerRequest request) {
         return toggle(request, true);
     }
 
-    /** POST /api/skills/{name}/disable — disable a skill by its skill name (idempotent). */
+    /**
+     * POST /api/skills/{name}/disable — disable a skill by its skill name (idempotent).
+     *
+     * @param request the request
+     * @return the result
+     */
     public Mono<ServerResponse> disable(ServerRequest request) {
         return toggle(request, false);
     }

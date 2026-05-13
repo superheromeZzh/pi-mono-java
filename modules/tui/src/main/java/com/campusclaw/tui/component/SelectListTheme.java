@@ -38,39 +38,72 @@ public class SelectListTheme {
 
     // --- Styling accessors ---
 
-    /** Styles the arrow prefix ("→") for the selected item. */
+    /**
+     * Styles the arrow prefix ("→") for the selected item.
+     *
+     * @param text raw prefix text
+     * @return styled prefix
+     */
     public String selectedPrefix(String text) {
         return selectedPrefix.apply(text);
     }
 
-    /** Styles the entire line of the selected item. */
+    /**
+     * Styles the entire line of the selected item.
+     *
+     * @param text raw line text
+     * @return styled line
+     */
     public String selectedText(String text) {
         return selectedText.apply(text);
     }
 
-    /** Styles description text. */
+    /**
+     * Styles description text.
+     *
+     * @param text raw description text
+     * @return styled description
+     */
     public String description(String text) {
         return description.apply(text);
     }
 
-    /** Styles the scroll indicator (e.g. "(3/10)"). */
+    /**
+     * Styles the scroll indicator (e.g. "(3/10)").
+     *
+     * @param text raw indicator text
+     * @return styled indicator
+     */
     public String scrollInfo(String text) {
         return scrollInfo.apply(text);
     }
 
-    /** Styles the "no matching items" message. */
+    /**
+     * Styles the "no matching items" message.
+     *
+     * @param text raw message text
+     * @return styled message
+     */
     public String noMatch(String text) {
         return noMatch.apply(text);
     }
 
     // --- Presets ---
 
-    /** Plain theme — identity functions, no ANSI styling. Useful for testing. */
+    /**
+     * Plain theme — identity functions, no ANSI styling. Useful for testing.
+     *
+     * @return a theme that applies no styling
+     */
     public static SelectListTheme plainTheme() {
         return builder().build();
     }
 
-    /** Default theme with ANSI colors: blue prefix, bold selection, dim descriptions. */
+    /**
+     * Default theme with ANSI colors: blue prefix, bold selection, dim descriptions.
+     *
+     * @return the styled default theme
+     */
     public static SelectListTheme defaultTheme() {
         return builder()
                 .selectedPrefix(text -> "\033[34m" + text + "\033[0m") // blue

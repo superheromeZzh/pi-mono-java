@@ -48,6 +48,9 @@ public class SettingsList<T> implements Component, Focusable {
 
         /**
          * Creates an entry using {@code value.toString()} as the display value.
+         *
+         * @param key the entry label
+         * @param value the entry value
          */
         public Entry(String key, T value) {
             this(key, value, value != null ? value.toString() : "");
@@ -77,6 +80,8 @@ public class SettingsList<T> implements Component, Focusable {
 
     /**
      * Creates a SettingsList with the given entries and default styling.
+     *
+     * @param entries initial settings entries; may be {@code null}
      */
     public SettingsList(List<Entry<T>> entries) {
         this.entries = entries != null ? new ArrayList<>(entries) : new ArrayList<>();

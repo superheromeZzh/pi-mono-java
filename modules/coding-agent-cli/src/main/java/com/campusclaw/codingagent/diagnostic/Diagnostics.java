@@ -43,12 +43,20 @@ public class Diagnostics {
         List<DiagnosticResult> run();
     }
 
-    /** Register a diagnostic check. */
+    /**
+     * Register a diagnostic check.
+     *
+     * @param check the check
+     */
     public void registerCheck(DiagnosticCheck check) {
         checks.add(check);
     }
 
-    /** Run all diagnostic checks. */
+    /**
+     * Run all diagnostic checks.
+     *
+     * @return the result
+     */
     public List<DiagnosticResult> runAll() {
         List<DiagnosticResult> results = new ArrayList<>();
         for (DiagnosticCheck check : checks) {
@@ -62,7 +70,11 @@ public class Diagnostics {
         return results;
     }
 
-    /** Register built-in checks. */
+    /**
+     * Register built-in checks.
+     *
+     * @param projectDir the projectDir
+     */
     public void registerBuiltins(Path projectDir) {
         registerCheck(() -> checkJavaVersion());
         registerCheck(() -> checkConfigFiles(projectDir));
@@ -172,7 +184,12 @@ public class Diagnostics {
         }
     }
 
-    /** Format all results as a readable report. */
+    /**
+     * Format all results as a readable report.
+     *
+     * @param results the results
+     * @return the result
+     */
     public static String formatReport(List<DiagnosticResult> results) {
         var sb = new StringBuilder();
         sb.append("=== Diagnostic Report ===\n\n");

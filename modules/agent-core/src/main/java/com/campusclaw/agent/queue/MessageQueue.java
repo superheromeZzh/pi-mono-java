@@ -52,6 +52,8 @@ public class MessageQueue {
 
     /**
      * Drains messages using the currently configured delivery mode.
+     *
+     * @return the drained messages in delivery order
      */
     public List<Message> drain() {
         lock.lock();

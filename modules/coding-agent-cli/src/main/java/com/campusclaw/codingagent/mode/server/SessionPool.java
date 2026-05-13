@@ -59,6 +59,7 @@ public class SessionPool {
 
     private final Map<String, Entry> sessions = new ConcurrentHashMap<>();
     private final ScheduledExecutorService cleaner;
+    private com.campusclaw.agent.subagent.SubAgentRegistry subAgentRegistry;
 
     record Entry(AgentSession session, long lastAccess) {}
 
@@ -117,6 +118,8 @@ public class SessionPool {
      * If conversationId is null, a new session is created with a generated ID.
      *
      * @return the resolved session reference
+     *
+     * @param conversationId the conversationId
      */
     public SessionRef getOrCreate(String conversationId) {
         if (conversationId != null && !conversationId.isBlank()) {
@@ -140,6 +143,8 @@ public class SessionPool {
      * Removes a conversation and its session.
      *
      * @return true if the conversation existed and was removed
+     *
+     * @param conversationId the conversationId
      */
     public boolean remove(String conversationId) {
         var removed = sessions.remove(conversationId);
@@ -155,6 +160,9 @@ public class SessionPool {
      * Re-keys a pool entry under a new conversation ID. Used by the WS
      * {@code new_session} command, which rotates the conversation ID so the
      * fresh history goes to its own JSONL file.
+     *
+     * @param oldId the oldId
+     * @param newId the newId
      */
     public void rekey(String oldId, String newId) {
         var entry = sessions.remove(oldId);
@@ -163,9 +171,23 @@ public class SessionPool {
         }
     }
 
-    /** Returns the number of active sessions. */
+    /**
+     * Returns the number of active sessions.
+     *
+     * @return the result
+     */
     public int size() {
         return sessions.size();
+    }
+
+    /**
+     * Attaches a {@link com.campusclaw.agent.subagent.SubAgentRegistry} so each session created
+     * by this pool can cascade-cancel its sub-agents on abort.
+     *
+     * @param registry the registry
+     */
+    public void setSubAgentRegistry(com.campusclaw.agent.subagent.SubAgentRegistry registry) {
+        this.subAgentRegistry = registry;
     }
 
     /** Shuts down the cleaner thread and closes any open SessionManager writers. */
@@ -185,6 +207,9 @@ public class SessionPool {
                 new SkillLoader(sandboxParser, useSandbox),
                 new SkillExpander(sandboxParser, useSandbox),
                 tools);
+        if (subAgentRegistry != null) {
+            session.setSubAgentRegistry(subAgentRegistry);
+        }
 
         if (!persistenceEnabled) {
             session.initialize(baseConfig);
@@ -216,7 +241,12 @@ public class SessionPool {
         return session;
     }
 
-    /** Returns the JSONL path that {@link SessionManager} would use for this id. */
+    /**
+     * Returns the JSONL path that {@link SessionManager} would use for this id.
+     *
+     * @param sessionId the sessionId
+     * @return the result
+     */
     private Path sessionFilePath(String sessionId) {
         String safePath = "--" + serverCwd.replaceFirst("^[/\\\\]", "").replaceAll("[/\\\\:]", "-") + "--";
         return AppPaths.SESSIONS_DIR.resolve(safePath).resolve(sessionId + ".jsonl");

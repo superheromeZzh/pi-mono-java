@@ -34,7 +34,12 @@ public class SessionTreePersistence {
         this(com.campusclaw.codingagent.config.AppPaths.SESSIONS_DIR);
     }
 
-    /** Save a session tree to a JSONL file. */
+    /**
+     * Save a session tree to a JSONL file.
+     *
+     * @param sessionName the sessionName
+     * @param tree the tree
+     */
     public void save(String sessionName, SessionTree tree) {
         Path file = sessionDir.resolve(sessionName + ".jsonl");
         try {
@@ -52,7 +57,12 @@ public class SessionTreePersistence {
         }
     }
 
-    /** Append a single entry to an existing session file. */
+    /**
+     * Append a single entry to an existing session file.
+     *
+     * @param sessionName the sessionName
+     * @param entry the entry
+     */
     public void appendEntry(String sessionName, SessionEntry entry) {
         Path file = sessionDir.resolve(sessionName + ".jsonl");
         try {
@@ -66,7 +76,12 @@ public class SessionTreePersistence {
         }
     }
 
-    /** Load a session tree from a JSONL file. */
+    /**
+     * Load a session tree from a JSONL file.
+     *
+     * @param sessionName the sessionName
+     * @return the result
+     */
     public SessionTree load(String sessionName) {
         Path file = sessionDir.resolve(sessionName + ".jsonl");
         SessionTree tree = new SessionTree();
@@ -95,7 +110,11 @@ public class SessionTreePersistence {
         return tree;
     }
 
-    /** List all available session names. */
+    /**
+     * List all available session names.
+     *
+     * @return the result
+     */
     public java.util.List<String> listSessions() {
         if (!Files.isDirectory(sessionDir)) {
             return java.util.List.of();
@@ -111,7 +130,12 @@ public class SessionTreePersistence {
         }
     }
 
-    /** Delete a session file. */
+    /**
+     * Delete a session file.
+     *
+     * @param sessionName the sessionName
+     * @return the result
+     */
     public boolean delete(String sessionName) {
         try {
             return Files.deleteIfExists(sessionDir.resolve(sessionName + ".jsonl"));

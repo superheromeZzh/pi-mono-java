@@ -96,7 +96,11 @@ public class EditorContainer implements Component, Focusable {
         dismissSuggestions();
     }
 
-    /** Add a submitted prompt to command history for up/down navigation. */
+    /**
+     * Add a submitted prompt to command history for up/down navigation.
+     *
+     * @param text the text
+     */
     public void addToHistory(String text) {
         editor.addToHistory(text);
     }
@@ -105,12 +109,20 @@ public class EditorContainer implements Component, Focusable {
         return editor;
     }
 
-    /** Sets the border color ANSI code (e.g. CYAN for normal, YELLOW for bash mode). */
+    /**
+     * Sets the border color ANSI code (e.g. CYAN for normal, YELLOW for bash mode).
+     *
+     * @param color the color
+     */
     public void setBorderColor(String color) {
         this.borderColor = color;
     }
 
-    /** Sets the border color based on thinking level (matching campusclaw dynamic border). */
+    /**
+     * Sets the border color based on thinking level (matching campusclaw dynamic border).
+     *
+     * @param level the level
+     */
     public void setBorderForThinkingLevel(String level) {
         this.borderColor = switch (level != null ? level.toLowerCase(Locale.ROOT) : "off") {
             case "off" -> THINKING_OFF;
@@ -125,12 +137,18 @@ public class EditorContainer implements Component, Focusable {
 
     /**
      * Sets the available slash commands for autocomplete.
+     *
+     * @param commands the commands
      */
     public void setCommands(List<CommandSuggestion> commands) {
         this.allCommands = commands != null ? List.copyOf(commands) : List.of();
     }
 
-    /** Returns true if the slash command suggestion menu is currently visible. */
+    /**
+     * Returns true if the slash command suggestion menu is currently visible.
+     *
+     * @return the result
+     */
     public boolean isShowingSuggestions() {
         return showingSuggestions;
     }

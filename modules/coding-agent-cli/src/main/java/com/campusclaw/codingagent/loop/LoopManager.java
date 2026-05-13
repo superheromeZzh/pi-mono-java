@@ -47,6 +47,9 @@ public class LoopManager implements MessageSubmitter {
     /**
      * Initialize with the interactive mode's submit queue and execution flag.
      * Must be called before start/stop operations.
+     *
+     * @param submitQueue the submitQueue
+     * @param executingPrompt the executingPrompt
      */
     public void init(BlockingQueue<String> submitQueue, AtomicBoolean executingPrompt) {
         this.submitQueue = submitQueue;
@@ -64,6 +67,11 @@ public class LoopManager implements MessageSubmitter {
      * Skips iterations when the agent is busy (skip-if-running).
      *
      * @return the loop ID
+     *
+     * @param prompt the prompt
+     * @param intervalMs the intervalMs
+     *
+     * @throws IllegalStateException if the operation fails
      */
     public String start(String prompt, long intervalMs) {
         if (scheduler == null) {

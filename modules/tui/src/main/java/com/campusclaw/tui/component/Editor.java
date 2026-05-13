@@ -129,12 +129,20 @@ public class Editor implements Component, Focusable {
     // Public API
     // -------------------------------------------------------------------
 
-    /** Returns the full text content (lines joined with \n). */
+    /**
+     * Returns the full text content (lines joined with {@code \n}).
+     *
+     * @return the editor contents
+     */
     public String getText() {
         return String.join("\n", lines);
     }
 
-    /** Sets the text content, resetting cursor to the end. */
+    /**
+     * Sets the text content, resetting cursor to the end.
+     *
+     * @param text new editor contents; {@code null} is treated as empty
+     */
     public void setText(String text) {
         String normalized = normalizeText(text != null ? text : "");
         String[] split = normalized.split("\n", -1);
@@ -151,19 +159,32 @@ public class Editor implements Component, Focusable {
         lastAction = null;
     }
 
-    /** Returns the current cursor position as [line, column]. */
+    /**
+     * Returns the current cursor position as {@code [line, column]}.
+     *
+     * @return a two-element array containing the cursor's row and column
+     */
     public int[] getCursorPosition() {
         return new int[] {cursorLine, cursorCol};
     }
 
-    /** Sets the cursor position, clamped to valid range. */
+    /**
+     * Sets the cursor position, clamped to valid range.
+     *
+     * @param line target row
+     * @param col target column
+     */
     public void setCursorPosition(int line, int col) {
         cursorLine = Math.max(0, Math.min(line, lines.size() - 1));
         cursorCol = Math.max(0, Math.min(col, lines.get(cursorLine).length()));
         preferredVisualCol = -1;
     }
 
-    /** Returns the lines (defensive copy). */
+    /**
+     * Returns the lines (defensive copy).
+     *
+     * @return a defensive copy of the editor's current lines
+     */
     public List<String> getLines() {
         return new ArrayList<>(lines);
     }
@@ -176,7 +197,11 @@ public class Editor implements Component, Focusable {
         this.onSubmit = onSubmit;
     }
 
-    /** When true, Enter submits and Shift+Enter/Alt+Enter inserts newline. */
+    /**
+     * When true, Enter submits and Shift+Enter/Alt+Enter inserts newline.
+     *
+     * @param submitOnEnter whether Enter acts as submit
+     */
     public void setSubmitOnEnter(boolean submitOnEnter) {
         this.submitOnEnter = submitOnEnter;
     }
@@ -185,7 +210,11 @@ public class Editor implements Component, Focusable {
         this.placeholder = placeholder;
     }
 
-    /** Adds an entry to the command history. Deduplicates consecutive entries. */
+    /**
+     * Adds an entry to the command history. Deduplicates consecutive entries.
+     *
+     * @param text entry to record; blank or duplicate entries are ignored
+     */
     public void addToHistory(String text) {
         if (text == null || text.isBlank()) {
             return;
@@ -969,6 +998,10 @@ public class Editor implements Component, Focusable {
     /**
      * Word-wrap a single line into chunks.
      * Wraps at word boundaries when possible, falls back to character-level breaks.
+     *
+     * @param line the source line
+     * @param maxWidth max visual width per chunk
+     * @return chunks covering the line in display order
      */
     private List<TextChunk> wordWrapLine(String line, int maxWidth) {
         if (line == null || line.isEmpty() || maxWidth <= 0) {
@@ -1044,7 +1077,11 @@ public class Editor implements Component, Focusable {
     // Helpers
     // -------------------------------------------------------------------
 
-    /** Insert text at cursor position (may be multi-line). Does NOT push undo snapshot. */
+    /**
+     * Insert text at cursor position (may be multi-line). Does NOT push undo snapshot.
+     *
+     * @param text text to insert; {@code null} or empty is a no-op
+     */
     private void insertTextInternal(String text) {
         if (text == null || text.isEmpty()) {
             return;
@@ -1074,7 +1111,11 @@ public class Editor implements Component, Focusable {
         preferredVisualCol = -1;
     }
 
-    /** Delete n characters backward from cursor. */
+    /**
+     * Delete n characters backward from cursor.
+     *
+     * @param count number of characters to remove (may merge across line breaks)
+     */
     private void deleteBackward(int count) {
         int remaining = count;
         while (remaining > 0) {
@@ -1098,7 +1139,12 @@ public class Editor implements Component, Focusable {
         preferredVisualCol = -1;
     }
 
-    /** Returns the first grapheme of a string, or the first char if BreakIterator fails. */
+    /**
+     * Returns the first grapheme of a string, or the first char if BreakIterator fails.
+     *
+     * @param text source text
+     * @return the leading grapheme cluster, or empty string when input is empty
+     */
     private static String firstGrapheme(String text) {
         if (text == null || text.isEmpty()) {
             return "";
@@ -1110,7 +1156,12 @@ public class Editor implements Component, Focusable {
         return end == BreakIterator.DONE ? text.substring(0, 1) : text.substring(0, end);
     }
 
-    /** Returns the length of the last grapheme in text. */
+    /**
+     * Returns the length of the last grapheme in text.
+     *
+     * @param text source text
+     * @return the trailing grapheme's char length, or 0 when input is empty
+     */
     private static int lastGraphemeLength(String text) {
         if (text == null || text.isEmpty()) {
             return 0;
@@ -1122,7 +1173,13 @@ public class Editor implements Component, Focusable {
         return prev == BreakIterator.DONE ? text.length() : last - prev;
     }
 
-    /** Find the column offset corresponding to a given visual width target. */
+    /**
+     * Find the column offset corresponding to a given visual width target.
+     *
+     * @param line source line
+     * @param targetVisualWidth desired visual column
+     * @return the closest char-column offset matching the target visual width
+     */
     private static int colFromVisualWidth(String line, int targetVisualWidth) {
         if (line.isEmpty()) {
             return 0;

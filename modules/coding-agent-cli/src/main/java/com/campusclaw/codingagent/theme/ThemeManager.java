@@ -38,12 +38,21 @@ public class ThemeManager {
         activeTheme = themes.get("default");
     }
 
-    /** Get the active theme. */
+    /**
+     * Get the active theme.
+     *
+     * @return the result
+     */
     public Theme getActiveTheme() {
         return activeTheme;
     }
 
-    /** Set active theme by name. */
+    /**
+     * Set active theme by name.
+     *
+     * @param name the name
+     * @return the result
+     */
     public boolean setActiveTheme(String name) {
         Theme theme = themes.get(name);
         if (theme == null) {
@@ -53,22 +62,39 @@ public class ThemeManager {
         return true;
     }
 
-    /** Get all available theme names. */
+    /**
+     * Get all available theme names.
+     *
+     * @return the result
+     */
     public List<String> getThemeNames() {
         return List.copyOf(themes.keySet());
     }
 
-    /** Get a theme by name. */
+    /**
+     * Get a theme by name.
+     *
+     * @param name the name
+     * @return the result
+     */
     public Optional<Theme> getTheme(String name) {
         return Optional.ofNullable(themes.get(name));
     }
 
-    /** Register a custom theme. */
+    /**
+     * Register a custom theme.
+     *
+     * @param theme the theme
+     */
     public void register(Theme theme) {
         themes.put(theme.name(), theme);
     }
 
-    /** Load custom themes from a directory. */
+    /**
+     * Load custom themes from a directory.
+     *
+     * @param dir the dir
+     */
     public void loadFromDirectory(Path dir) {
         if (!Files.isDirectory(dir)) {
             return;

@@ -67,6 +67,7 @@ public class AgentSession {
     private List<PromptTemplateEntry> promptTemplates = List.of();
     private Agent agent;
     private boolean initialized;
+    private com.campusclaw.agent.subagent.SubAgentRegistry subAgentRegistry;
 
     public AgentSession(
             CampusClawAiService piAiService,
@@ -168,6 +169,22 @@ public class AgentSession {
     public void abort() {
         requireInitialized();
         agent.abort();
+        var registry = subAgentRegistry;
+        if (registry != null) {
+            registry.cancelAll("parent-abort");
+        }
+    }
+
+    /**
+     * Attaches a {@link com.campusclaw.agent.subagent.SubAgentRegistry} so {@link #abort()} can
+     * cascade-cancel any open sub-agent sessions. Without this, sub-agent cancellation still
+     * happens through the per-tool {@code CancellationToken}, but stale sessions across edge cases
+     * (e.g. between turns) would be missed.
+     *
+     * @param registry the registry
+     */
+    public void setSubAgentRegistry(com.campusclaw.agent.subagent.SubAgentRegistry registry) {
+        this.subAgentRegistry = registry;
     }
 
     /**
@@ -194,6 +211,8 @@ public class AgentSession {
 
     /**
      * Returns the skill registry for this session.
+     *
+     * @return the result
      */
     public SkillRegistry getSkillRegistry() {
         return skillRegistry;
@@ -201,6 +220,8 @@ public class AgentSession {
 
     /**
      * Returns whether this session has been initialized.
+     *
+     * @return the result
      */
     public boolean isInitialized() {
         return initialized;
@@ -234,6 +255,8 @@ public class AgentSession {
      * Returns the current model ID, or {@code "unknown"} if no model is set.
      *
      * @throws IllegalStateException if the session is not initialized
+     *
+     * @return the result
      */
     public String getModelId() {
         requireInitialized();
@@ -245,6 +268,8 @@ public class AgentSession {
      * Returns whether the agent is currently streaming a response.
      *
      * @throws IllegalStateException if the session is not initialized
+     *
+     * @return the result
      */
     public boolean isStreaming() {
         requireInitialized();
@@ -279,6 +304,8 @@ public class AgentSession {
 
     /**
      * Returns the loaded prompt templates for this session.
+     *
+     * @return the result
      */
     public List<PromptTemplateEntry> getPromptTemplates() {
         return promptTemplates;
@@ -286,6 +313,8 @@ public class AgentSession {
 
     /**
      * Sets the session manager for persistence. Must be called before initialize().
+     *
+     * @param sessionManager the sessionManager
      */
     public void setSessionManager(SessionManager sessionManager) {
         this.sessionManager = sessionManager;
@@ -293,6 +322,8 @@ public class AgentSession {
 
     /**
      * Returns the session manager, or null if not set.
+     *
+     * @return the result
      */
     public SessionManager getSessionManager() {
         return sessionManager;
@@ -335,6 +366,9 @@ public class AgentSession {
 
     /**
      * Expands a prompt template command like "/templatename arg1 arg2".
+     *
+     * @param input the input
+     * @return the result
      */
     String expandPromptTemplate(String input) {
         if (!input.startsWith("/")) {
@@ -397,6 +431,10 @@ public class AgentSession {
      * - Provider/ID: "zai/glm-5"
      * - Fuzzy substring: "sonnet" matches "claude-sonnet-4-20250514"
      * - Thinking suffix: "sonnet:high" (thinking level is stripped, not applied here)
+     *
+     * @param modelId the model pattern (id, provider/id, or fuzzy substring; may include a thinking suffix)
+     * @return the resolved {@link Model}
+     * @throws IllegalArgumentException when no model matches the given pattern
      */
     @SuppressWarnings("checkstyle:huge_cyclomatic_complexity")
     Model resolveModel(String modelId) {

@@ -299,6 +299,9 @@ public class Autocomplete implements Component, Focusable {
 
     /**
      * Computes file path suggestions for the given partial path.
+     *
+     * @param partial the partial path the user has typed
+     * @return matching path completions in display order
      */
     @SuppressWarnings("checkstyle:huge_cyclomatic_complexity")
     static List<String> computeFileSuggestions(String partial) {

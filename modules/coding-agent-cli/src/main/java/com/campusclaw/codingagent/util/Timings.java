@@ -75,7 +75,11 @@ public class Timings {
     private final Map<String, String> activeParents = new ConcurrentHashMap<>();
     private volatile boolean enabled = true;
 
-    /** Start a named timing span. */
+    /**
+     * Start a named timing span.
+     *
+     * @param name the name
+     */
     public void start(String name) {
         if (!enabled) {
             return;
@@ -83,7 +87,12 @@ public class Timings {
         activeSpans.put(name, System.nanoTime());
     }
 
-    /** Start a nested timing span with a parent. */
+    /**
+     * Start a nested timing span with a parent.
+     *
+     * @param name the name
+     * @param parentName the parentName
+     */
     public void start(String name, String parentName) {
         if (!enabled) {
             return;
@@ -92,12 +101,23 @@ public class Timings {
         activeParents.put(name, parentName);
     }
 
-    /** End a timing span and record it. */
+    /**
+     * End a timing span and record it.
+     *
+     * @param name the name
+     * @return the result
+     */
     public @Nullable TimingSpan end(String name) {
         return end(name, null);
     }
 
-    /** End a timing span with optional metadata. */
+    /**
+     * End a timing span with optional metadata.
+     *
+     * @param name the name
+     * @param metadata the metadata
+     * @return the result
+     */
     public @Nullable TimingSpan end(String name, @Nullable Map<String, String> metadata) {
         if (!enabled) {
             return null;
@@ -113,7 +133,14 @@ public class Timings {
         return span;
     }
 
-    /** Measure a block of code and return the result. */
+    /**
+     * Measure a block of code and return the result.
+     *
+     * @param <T> the <T>
+     * @param name the name
+     * @param block the block
+     * @return the result
+     */
     public <T> T measure(String name, java.util.function.Supplier<T> block) {
         start(name);
         try {
@@ -123,7 +150,12 @@ public class Timings {
         }
     }
 
-    /** Measure a void block of code. */
+    /**
+     * Measure a void block of code.
+     *
+     * @param name the name
+     * @param block the block
+     */
     public void measure(String name, Runnable block) {
         start(name);
         try {
@@ -133,7 +165,12 @@ public class Timings {
         }
     }
 
-    /** Get statistics for a named span across all recordings. */
+    /**
+     * Get statistics for a named span across all recordings.
+     *
+     * @param name the name
+     * @return the result
+     */
     public Optional<TimingStats> getStats(String name) {
         List<Double> durations = spans.stream()
                 .filter(s -> s.name().equals(name))
@@ -159,17 +196,30 @@ public class Timings {
                 percentile(durations, 0.99)));
     }
 
-    /** Get all recorded spans. */
+    /**
+     * Get all recorded spans.
+     *
+     * @return the result
+     */
     public List<TimingSpan> getSpans() {
         return List.copyOf(spans);
     }
 
-    /** Get spans for a specific name. */
+    /**
+     * Get spans for a specific name.
+     *
+     * @param name the name
+     * @return the result
+     */
     public List<TimingSpan> getSpans(String name) {
         return spans.stream().filter(s -> s.name().equals(name)).toList();
     }
 
-    /** Get stats for all named spans. */
+    /**
+     * Get stats for all named spans.
+     *
+     * @return the result
+     */
     public List<TimingStats> getAllStats() {
         Set<String> names = new LinkedHashSet<>();
         spans.forEach(s -> names.add(s.name()));
@@ -180,7 +230,11 @@ public class Timings {
         return stats;
     }
 
-    /** Format a summary report of all timings. */
+    /**
+     * Format a summary report of all timings.
+     *
+     * @return the result
+     */
     public String formatReport() {
         var sb = new StringBuilder();
         sb.append("=== Timing Report ===\n");
@@ -199,7 +253,11 @@ public class Timings {
         activeParents.clear();
     }
 
-    /** Enable or disable timing recording. */
+    /**
+     * Enable or disable timing recording.
+     *
+     * @param enabled the enabled
+     */
     public void setEnabled(boolean enabled) {
         this.enabled = enabled;
     }

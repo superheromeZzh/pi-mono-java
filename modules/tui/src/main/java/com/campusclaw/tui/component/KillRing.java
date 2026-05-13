@@ -41,7 +41,11 @@ public class KillRing {
         }
     }
 
-    /** Get the most recent entry without modifying the ring. Returns null if empty. */
+    /**
+     * Get the most recent entry without modifying the ring.
+     *
+     * @return the most recent entry, or {@code null} when the ring is empty
+     */
     public String peek() {
         return ring.isEmpty() ? null : ring.get(ring.size() - 1);
     }
@@ -54,12 +58,20 @@ public class KillRing {
         }
     }
 
-    /** Returns the number of entries in the ring. */
+    /**
+     * Returns the number of entries in the ring.
+     *
+     * @return current entry count
+     */
     public int size() {
         return ring.size();
     }
 
-    /** Returns true if the ring is empty. */
+    /**
+     * Returns true if the ring is empty.
+     *
+     * @return {@code true} when the ring is empty
+     */
     public boolean isEmpty() {
         return ring.isEmpty();
     }

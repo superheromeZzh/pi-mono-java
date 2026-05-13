@@ -68,6 +68,9 @@ public enum Provider {
      * Matching is also case-insensitive and treats {@code _} and {@code -} as
      * equivalent so {@code AZURE_OPENAI} matches {@code "azure-openai"} and
      * {@code "azure_openai"}.
+     *
+     * @param value user-supplied provider identifier
+     * @return matching {@link Provider}, or empty when unrecognised
      */
     public static Optional<Provider> tryFromValue(String value) {
         if (value == null || value.isBlank()) {

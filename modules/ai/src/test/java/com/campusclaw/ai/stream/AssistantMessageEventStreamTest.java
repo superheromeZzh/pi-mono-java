@@ -28,7 +28,12 @@ import reactor.test.StepVerifier;
 
 class AssistantMessageEventStreamTest {
 
-    /** Creates a minimal AssistantMessage for use in tests. */
+    /**
+     * Creates a minimal AssistantMessage for use in tests.
+     *
+     * @param reason stop reason embedded in the resulting message
+     * @return a minimal assistant message
+     */
     private AssistantMessage sampleMessage(StopReason reason) {
         return new AssistantMessage(
                 List.of(new TextContent("hello")),

@@ -46,7 +46,11 @@ public class NameCommand implements SlashCommand {
         }
     }
 
-    /** Returns the current session name, or null if not set. */
+    /**
+     * Returns the current session name, or null if not set.
+     *
+     * @return the result
+     */
     public String getSessionName() {
         return sessionName;
     }

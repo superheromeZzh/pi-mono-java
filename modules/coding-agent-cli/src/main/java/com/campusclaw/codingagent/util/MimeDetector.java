@@ -103,7 +103,12 @@ public final class MimeDetector {
             Map.entry("exe", "application/x-executable"),
             Map.entry("dll", "application/x-dosexec"));
 
-    /** Detect MIME type by file extension. */
+    /**
+     * Detect MIME type by file extension.
+     *
+     * @param path the path
+     * @return the result
+     */
     public static String fromExtension(Path path) {
         String name = path.getFileName().toString();
         int dot = name.lastIndexOf('.');
@@ -114,7 +119,12 @@ public final class MimeDetector {
         return EXTENSION_MAP.getOrDefault(ext, "application/octet-stream");
     }
 
-    /** Detect MIME type by file content probing (uses java.nio). */
+    /**
+     * Detect MIME type by file content probing (uses java.nio).
+     *
+     * @param path the path
+     * @return the result
+     */
     public static Optional<String> probe(Path path) {
         try {
             String type = Files.probeContentType(path);
@@ -124,12 +134,22 @@ public final class MimeDetector {
         }
     }
 
-    /** Best-effort MIME detection: try probe first, fall back to extension. */
+    /**
+     * Best-effort MIME detection: try probe first, fall back to extension.
+     *
+     * @param path the path
+     * @return the result
+     */
     public static String detect(Path path) {
         return probe(path).orElseGet(() -> fromExtension(path));
     }
 
-    /** Check if MIME type represents a text file. */
+    /**
+     * Check if MIME type represents a text file.
+     *
+     * @param mimeType the mimeType
+     * @return the result
+     */
     public static boolean isText(String mimeType) {
         return mimeType.startsWith("text/")
                 || "application/json".equals(mimeType)
@@ -137,17 +157,32 @@ public final class MimeDetector {
                 || "application/xml".equals(mimeType);
     }
 
-    /** Check if MIME type represents an image. */
+    /**
+     * Check if MIME type represents an image.
+     *
+     * @param mimeType the mimeType
+     * @return the result
+     */
     public static boolean isImage(String mimeType) {
         return mimeType.startsWith("image/");
     }
 
-    /** Check if MIME type represents a binary file. */
+    /**
+     * Check if MIME type represents a binary file.
+     *
+     * @param mimeType the mimeType
+     * @return the result
+     */
     public static boolean isBinary(String mimeType) {
         return !isText(mimeType) && !isImage(mimeType);
     }
 
-    /** Get file extension from path. */
+    /**
+     * Get file extension from path.
+     *
+     * @param path the path
+     * @return the result
+     */
     public static String getExtension(Path path) {
         String name = path.getFileName().toString();
         int dot = name.lastIndexOf('.');

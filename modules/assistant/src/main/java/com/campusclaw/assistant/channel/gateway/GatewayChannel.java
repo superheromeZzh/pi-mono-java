@@ -88,6 +88,9 @@ public class GatewayChannel implements Channel {
 
     /**
      * Register a WebSocket session.
+     *
+     * @param channelId the channel id reported by Netty
+     * @param ctx the Netty context for the channel
      */
     public void registerSession(String channelId, ChannelHandlerContext ctx) {
         sessionContexts.put(channelId, ctx);
@@ -95,6 +98,8 @@ public class GatewayChannel implements Channel {
 
     /**
      * Remove a WebSocket session.
+     *
+     * @param channelId the channel id to detach (and clear any pending requests for)
      */
     public void removeSession(String channelId) {
         sessionContexts.remove(channelId);
@@ -111,6 +116,10 @@ public class GatewayChannel implements Channel {
     /**
      * Register a pending sessions.send request so the final result
      * can be sent as a response frame with the original reqId.
+     *
+     * @param reqId request id from the original {@code sessions.send} frame
+     * @param channelId channel that issued the request
+     * @param sessionKey assistant session key targeted by the request
      */
     public void registerPendingSessionsSend(String reqId, String channelId, String sessionKey) {
         pendingSessionsSend.put(reqId, new PendingRequest(reqId, channelId, sessionKey));
@@ -120,6 +129,10 @@ public class GatewayChannel implements Channel {
      * Handle an incoming message from a client.
      * Forwards the message to the current interactive session's agent via LoopManager,
      * so the agent can process it using any available tools (CronTool, LoopTool, etc.).
+     *
+     * @param channelId originating channel id
+     * @param sessionKey assistant session key associated with the channel
+     * @param content raw message content from the client
      */
     public void handleIncomingMessage(String channelId, String sessionKey, String content) {
         // Associate sessionKey with channel
@@ -144,6 +157,8 @@ public class GatewayChannel implements Channel {
     /**
      * Listen for AgentResponseEvent and send the result as a response frame
      * to the pending sessions.send caller.
+     *
+     * @param event the agent response event carrying the final message
      */
     @EventListener
     public void onAgentResponse(AgentResponseEvent event) {
@@ -164,6 +179,10 @@ public class GatewayChannel implements Channel {
 
     /**
      * Send a message to a specific session.
+     *
+     * @param channelId target channel id
+     * @param sessionKey target session key
+     * @param message message body to deliver as a {@code final} event
      */
     public void sendMessageToSession(String channelId, String sessionKey, String message) {
         ChannelHandlerContext ctx = sessionContexts.get(channelId);
@@ -184,6 +203,10 @@ public class GatewayChannel implements Channel {
 
     /**
      * Send a streaming delta to a session.
+     *
+     * @param channelId target channel id
+     * @param sessionKey target session key
+     * @param delta incremental chunk to deliver as a {@code delta} event
      */
     public void sendDeltaToSession(String channelId, String sessionKey, String delta) {
         ChannelHandlerContext ctx = sessionContexts.get(channelId);
@@ -205,6 +228,11 @@ public class GatewayChannel implements Channel {
     /**
      * Complete a pending sessions.send request by sending a response frame
      * with the agent's result.
+     *
+     * @param reqId original request id
+     * @param channelId target channel id
+     * @param sessionKey target session key
+     * @param resultMessage final assistant message text
      */
     private void completePendingSessionsSend(String reqId, String channelId, String sessionKey, String resultMessage) {
         pendingSessionsSend.remove(reqId);
@@ -245,6 +273,10 @@ public class GatewayChannel implements Channel {
 
     /**
      * Complete all pending requests for a given channel (used for fallback/error cases).
+     *
+     * @param channelId channel whose pending requests should be drained
+     * @param sessionKey target session key carried in the response payload
+     * @param resultMessage result text returned to each pending request
      */
     private void completePendingSessionsSendForChannel(String channelId, String sessionKey, String resultMessage) {
         pendingSessionsSend.entrySet().removeIf(entry -> {
@@ -272,6 +304,8 @@ public class GatewayChannel implements Channel {
 
     /**
      * Get the number of connected sessions.
+     *
+     * @return current count of registered channels
      */
     public int getSessionCount() {
         return sessionContexts.size();
@@ -279,6 +313,9 @@ public class GatewayChannel implements Channel {
 
     /**
      * Check if a session is connected.
+     *
+     * @param channelId channel id to look up
+     * @return {@code true} when a context is registered for this channel
      */
     public boolean hasSession(String channelId) {
         return sessionContexts.containsKey(channelId);

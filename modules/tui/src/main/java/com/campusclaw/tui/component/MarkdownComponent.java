@@ -251,7 +251,12 @@ public class MarkdownComponent implements Component {
 
     /**
      * Renders a contiguous run of list items (unordered or ordered, possibly mixed).
-     * Returns the index after the last consumed line.
+     *
+     * @param rawLines source markdown lines
+     * @param startIdx index of the first line in the run
+     * @param width target render width
+     * @param out collector for rendered output lines
+     * @return the index after the last consumed line
      */
     private int renderList(String[] rawLines, int startIdx, int width, List<String> out) {
         int i = startIdx;
@@ -310,7 +315,12 @@ public class MarkdownComponent implements Component {
 
     /**
      * Renders a contiguous run of blockquote lines (> ...).
-     * Returns the index after the last consumed line.
+     *
+     * @param rawLines source markdown lines
+     * @param startIdx index of the first blockquote line
+     * @param width target render width
+     * @param out collector for rendered output lines
+     * @return the index after the last consumed line
      */
     private int renderBlockquote(String[] rawLines, int startIdx, int width, List<String> out) {
         // Collect blockquote content
@@ -347,7 +357,12 @@ public class MarkdownComponent implements Component {
 
     /**
      * Renders a markdown table with box-drawing borders.
-     * Returns the index after the last consumed line.
+     *
+     * @param rawLines source markdown lines
+     * @param startIdx index of the table header line
+     * @param width target render width
+     * @param out collector for rendered output lines
+     * @return the index after the last consumed line
      */
     @SuppressWarnings("checkstyle:huge_cyclomatic_complexity")
     private int renderTable(String[] rawLines, int startIdx, int width, List<String> out) {
@@ -536,6 +551,9 @@ public class MarkdownComponent implements Component {
     /**
      * Applies inline Markdown formatting (bold, italic, code, links) to text.
      * Processes in a specific order to handle nesting correctly.
+     *
+     * @param text raw inline text containing markdown markers
+     * @return text with ANSI styling substituted for markdown markers
      */
     String renderInline(String text) {
         // Process in order: code (which should not have further formatting),
@@ -628,6 +646,12 @@ public class MarkdownComponent implements Component {
 
     /**
      * Replaces all occurrences of a pattern, using a function to produce replacements.
+     *
+     * @param text input text
+     * @param pattern pattern to match
+     * @param replacer function producing the replacement for each match
+     * @param placeholders shared placeholder list (used by callers to stash processed segments)
+     * @return text with all matches replaced
      */
     private static String replaceAll(
             String text,
