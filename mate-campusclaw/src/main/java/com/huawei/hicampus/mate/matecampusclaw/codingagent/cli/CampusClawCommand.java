@@ -748,7 +748,6 @@ public class CampusClawCommand implements Callable<Integer> {
                 }
                 String source = filteredArgs.get(0);
                 System.out.println("Installing package: " + source + (local ? " (local)" : " (global)"));
-                // TODO: implement actual package installation (npm/git clone)
                 System.out.println("Package installation is not yet fully implemented.");
                 System.out.println("Add the source to your settings.json packages array manually:");
                 System.out.println("  \"packages\": [\"" + source + "\"]");
