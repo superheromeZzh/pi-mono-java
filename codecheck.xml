@@ -99,6 +99,23 @@
             <property name="ignoreComments" value="true"/>
         </module>
 
+        <!-- comment_marker_space: 行首注释符 // 与 /* 之后必须紧跟空白（空格/制表符/换行）
+             或者重复同样的符号（`///` 三斜线、`/**` Javadoc 起始）。
+             正例：`// foo`、`/** ... */`、`/* foo */`、`//` 空注释、`///`、`/**`。
+             反例：`//foo`、`/*foo*/`。
+             理由：注释符紧贴注释内容（`//foo`）极大降低可读性，IDE 折叠/语法着色
+             也会失效。空格之后再写文字是社区惯例（Google / Sun / Oracle 风格指南均要求）。
+             检测范围：仅匹配「行首空白前缀 + 注释符」的情况——避免字符串字面量中
+             `://`、`-//Apple//DTD ...`、shell 脚本里的 `s/foo//` 等被误判。
+             行尾追加的 trailing 注释（如 `int x = 1; //foo`）不在此规则覆盖范围内，
+             以代码评审把关。 -->
+        <module name="RegexpSinglelineJava">
+            <property name="id" value="comment_marker_space"/>
+            <property name="format" value="^[ \t]*(?://[^/ \t]|/\*[^* \t])"/>
+            <property name="message" value="注释符与注释内容之间必须有空格：// 后留空格再写内容（/* 同理）。"/>
+            <property name="ignoreComments" value="false"/>
+        </module>
+
         <!-- huge_cyclomatic_complexity: 圈复杂度超阈值即拒。
              switchBlockAsSingleDecisionPoint=true: 整段 switch 算 1 个决策点
              而非每 case 一个，避免合理的查表式 switch 被误判为「复杂」。 -->
