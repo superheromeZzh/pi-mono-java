@@ -1383,7 +1383,6 @@ public class InteractiveMode {
             save.waitFor();
 
             if (Files.exists(tmpFile) && Files.size(tmpFile) > 0) {
-                // TODO: Attach image to message when image support is implemented
                 showStatus("已粘贴图片: " + tmpFile.getFileName());
             } else {
                 showStatus("读取剪贴板图片失败");
