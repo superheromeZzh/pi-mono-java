@@ -54,8 +54,13 @@ public class SessionCommand implements SlashCommand {
 
         // Message stats
         var messages = state.getMessages();
-        int userCount = 0, assistantCount = 0, toolCount = 0;
-        long totalInput = 0L, totalOutput = 0L, totalCacheRead = 0L, totalCacheWrite = 0L;
+        int userCount = 0;
+        int assistantCount = 0;
+        int toolCount = 0;
+        long totalInput = 0L;
+        long totalOutput = 0L;
+        long totalCacheRead = 0L;
+        long totalCacheWrite = 0L;
         double totalCost = 0;
 
         for (Message msg : messages) {

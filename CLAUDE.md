@@ -93,6 +93,26 @@ Key runtime concepts:
 - 已经是 long 字面量的，必须用大写 `L` 而非小写 `l`（`UpperEll` 强制；小写 `l` 易与数字 `1` 混淆）。
 - float 字面量必须以 `f` 或 `F` 结尾（Java 编译器本身就强制）。
 
+### 每行只声明一个变量
+Checkstyle 规则 `one_variable_per_declaration`（即 `MultipleVariableDeclarations`）禁止串联声明：
+
+❌ 反例：
+```java
+int userCount = 0, assistantCount = 0, toolCount = 0;
+int m = a.size(), n = b.size();
+```
+
+✅ 正例：
+```java
+int userCount = 0;
+int assistantCount = 0;
+int toolCount = 0;
+```
+
+理由：diff 时新增/删除某个变量会污染其他变量行；IDE 提取/重命名串联声明易遗漏；类型与多份初始化挤一行影响阅读。
+
+注：`for (int i = 0, j = 0; ...; ...)` 不在禁止之列——Checkstyle 默认只校验 `VARIABLE_DEF` 而非 `FOR_INIT`，多变量 for 初始化器是惯用法。
+
 ### Imports（Spotless 自动处理）
 分组顺序 `java`, `javax`, `com`, `org`, *，未使用的 import 会被自动删除。
 

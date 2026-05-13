@@ -109,6 +109,18 @@
             <property name="ignoreComments" value="true"/>
         </module>
 
+        <!-- one_variable_per_declaration: 每条 declaration 只能声明一个变量。
+             禁止 `int a = 0, b = 0;` / `int m = a.size(), n = b.size();` 这类串联声明：
+             一、diff 时新增/删除某个变量会污染其他变量行；
+             二、IDE 提取/重命名时串联声明常被遗漏；
+             三、类型与多份初始化逻辑挤在一行影响阅读。
+             改成多行 `int a = 0;` `int b = 0;` 即可。
+             同时覆盖类字段与方法局部变量；不限制 `for (int i = 0, j = 0; ...; ...)`
+             这类 for 初始化器（Checkstyle 默认只检查 VARIABLE_DEF 不检查 FOR_INIT）。 -->
+        <module name="MultipleVariableDeclarations">
+            <property name="id" value="one_variable_per_declaration"/>
+        </module>
+
         <!-- JavaDocFormat: 一旦方法写了 Javadoc，就必须严格合规——@param 覆盖所有参数、
              非 void 方法必须有 @return、@throws 必须覆盖签名声明的受检异常。
              仍然**不**强制每个方法都有 Javadoc（无 Javadoc 的方法不报错）。
