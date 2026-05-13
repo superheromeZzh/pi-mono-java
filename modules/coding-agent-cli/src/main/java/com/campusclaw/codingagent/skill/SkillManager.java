@@ -334,6 +334,7 @@ public class SkillManager {
             ZipEntry entry;
             while ((entry = zis.getNextEntry()) != null) {
                 Path entryPath = destDir.resolve(entry.getName()).normalize();
+
                 // Guard against zip-slip
                 if (!entryPath.startsWith(destDir)) {
                     throw new IOException("Zip entry outside target directory: " + entry.getName());
@@ -444,6 +445,7 @@ public class SkillManager {
         for (Skill skill : diskSkills) {
             // Try to find manifest entry for this skill's parent directory
             String dirName = skill.baseDir().getFileName().toString();
+
             // Walk up to find the top-level directory under skillsDir
             String topDir = resolveTopDir(skill.baseDir());
 
@@ -587,6 +589,7 @@ public class SkillManager {
 
     private void addToManifest(InstalledSkillRecord record) {
         List<InstalledSkillRecord> records = loadManifest();
+
         // Remove existing entry with same name
         records.removeIf(r -> r.name().equals(record.name()));
         records.add(record);
@@ -623,6 +626,7 @@ public class SkillManager {
         var pb = new ProcessBuilder("git", "clone", "--depth", "1", gitUrl, targetDir.toString())
                 .redirectErrorStream(true);
         var process = pb.start();
+
         // Consume output to avoid blocking
         process.getInputStream().readAllBytes();
         boolean completed = process.waitFor(GIT_TIMEOUT_SECONDS, TimeUnit.SECONDS);

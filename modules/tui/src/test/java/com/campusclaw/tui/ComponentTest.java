@@ -32,6 +32,7 @@ class ComponentTest {
         @Test
         void handleInputDefaultDoesNothing() {
             Component component = new SimpleComponent("test");
+
             // Should not throw
             component.handleInput("a");
         }

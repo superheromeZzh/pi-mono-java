@@ -110,6 +110,7 @@ public class JLineTerminal implements Terminal {
         Size size = jline.getSize();
         int width = size.getColumns();
         int height = size.getRows();
+
         // Fall back to sensible defaults if the terminal reports 0
         return new TerminalSize(width > 0 ? width : 80, height > 0 ? height : 24);
     }
@@ -134,6 +135,7 @@ public class JLineTerminal implements Terminal {
     public void enterRawMode() {
         savedAttributes = jline.getAttributes();
         jline.enterRawMode();
+
         // JLine's enterRawMode() doesn't disable ISIG, so Ctrl+C still generates
         // SIGINT and the 0x03 character is consumed by the OS. Disable ISIG so
         // Ctrl+C is delivered as a regular character to the input reader.
@@ -185,6 +187,7 @@ public class JLineTerminal implements Terminal {
                     }
                     buf.setLength(0);
                     buf.append((char) c);
+
                     // Only drain for escape sequences — the rest of the sequence may
                     // still be arriving and must be delivered together (otherwise a
                     // standalone ESC fires the abort handler). Regular keystrokes
@@ -210,6 +213,7 @@ public class JLineTerminal implements Terminal {
                     // Unexpected error during reading
                     throw new UncheckedIOException("Error reading terminal input", e);
                 }
+
                 // Expected: closed during shutdown
             }
         });

@@ -482,6 +482,7 @@ public class OpenAIResponsesProvider implements ApiProvider {
             if (cb instanceof TextContent tc) {
                 text.append(tc.text());
             }
+
             // Images in user messages handled via content parts when needed
         }
         return ResponseInputItem.ofEasyInputMessage(EasyInputMessage.builder()
@@ -504,6 +505,7 @@ public class OpenAIResponsesProvider implements ApiProvider {
                         .arguments(serializeArguments(tc.arguments()))
                         .build()));
             }
+
             // ThinkingContent is dropped for cross-provider compatibility
         }
         if (!textContent.isEmpty()) {

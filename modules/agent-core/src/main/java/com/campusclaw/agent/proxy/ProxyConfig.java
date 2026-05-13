@@ -102,16 +102,19 @@ public class ProxyConfig {
      */
     public static ProxyConfig fromEnvironment() {
         ProxyConfig config = new ProxyConfig();
+
         // HTTP_PROXY / http_proxy
         String httpProxyUrl = coalesce(System.getenv("HTTP_PROXY"), System.getenv("http_proxy"));
         if (httpProxyUrl != null) {
             config.httpProxy = parseProxyUrl(httpProxyUrl);
         }
+
         // HTTPS_PROXY / https_proxy
         String httpsProxyUrl = coalesce(System.getenv("HTTPS_PROXY"), System.getenv("https_proxy"));
         if (httpsProxyUrl != null) {
             config.httpsProxy = parseProxyUrl(httpsProxyUrl);
         }
+
         // NO_PROXY / no_proxy
         String noProxy = coalesce(System.getenv("NO_PROXY"), System.getenv("no_proxy"));
         if (noProxy != null) {
@@ -152,6 +155,7 @@ public class ProxyConfig {
             if ("http".equalsIgnoreCase(scheme) && httpProxy != null) {
                 return httpProxy;
             }
+
             // HTTPS falls back to HTTP proxy
             if ("https".equalsIgnoreCase(scheme) && httpProxy != null) {
                 return httpProxy;
@@ -234,6 +238,7 @@ public class ProxyConfig {
                 log.warn("Proxy connection failed: {} via {}", uri, sa, ioe);
             }
         });
+
         // Install authenticator if needed
         if ((httpProxy != null && httpProxy.username() != null)
                 || (httpsProxy != null && httpsProxy.username() != null)) {
@@ -313,11 +318,13 @@ public class ProxyConfig {
             if (enableOutput == null || !enableOutput.contains("0x1")) {
                 return null;
             }
+
             // Read proxy server value (e.g. "127.0.0.1:7890" or "http=...:8080;https=...:8080")
             String serverOutput = regQuery("ProxyServer");
             if (serverOutput == null) {
                 return null;
             }
+
             // Extract the value after REG_SZ
             String proxyServer = null;
             for (String line : serverOutput.split("\n")) {
@@ -331,6 +338,7 @@ public class ProxyConfig {
             if (proxyServer == null || proxyServer.isBlank()) {
                 return null;
             }
+
             // Handle compound format: "http=host:port;https=host:port;..."
             if (proxyServer.contains("=")) {
                 for (String part : proxyServer.split(";")) {
@@ -342,6 +350,7 @@ public class ProxyConfig {
                 }
                 return null;
             }
+
             // Simple format: "host:port"
             return parseHostPort(proxyServer);
         } catch (Exception e) {
@@ -372,6 +381,7 @@ public class ProxyConfig {
         if (hostPort == null || hostPort.isBlank()) {
             return null;
         }
+
         // If it already looks like a URL, delegate to parseProxyUrl
         if (hostPort.contains("://")) {
             return parseProxyUrl(hostPort);

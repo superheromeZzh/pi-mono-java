@@ -71,6 +71,7 @@ class ChatWebSocketHandlerTest {
     private AgentSession session;
     private SessionPool pool;
     private AtomicReference<AgentEventListener> listenerRef;
+
     // Test-supplied script that replays a specific event sequence through the
     // captured listener when session.prompt(...) is called.
     private Consumer<AgentEventListener> promptScript;
@@ -260,6 +261,7 @@ class ChatWebSocketHandlerTest {
         // Stand up a fresh server wired with a real ModelCatalogService so we
         // exercise the actual filtering logic, not a mock.
         var modelRegistry = new com.huawei.hicampus.mate.matecampusclaw.ai.model.ModelRegistry();
+
         // The registry's @PostConstruct doesn't run outside Spring, so seed it manually.
         modelRegistry.register(new com.huawei.hicampus.mate.matecampusclaw.ai.types.Model(
                 "test-a",
@@ -318,6 +320,7 @@ class ChatWebSocketHandlerTest {
         JsonNode models = data.path("models");
         assertTrue(models.isArray(), "models should be an array");
         assertEquals(2, models.size());
+
         // Sorted by provider then id, so test-a comes before test-b.
         assertEquals("test-a", models.get(0).path("id").asText());
         assertEquals("openai", models.get(0).path("provider").asText());
@@ -388,6 +391,7 @@ class ChatWebSocketHandlerTest {
         assertNotNull(returned, "new_session response must carry the rotated conversation_id");
         assertNotEquals("", returned, "rotated conversation_id must not be empty");
         verify(sm).close();
+
         // Session was rotated: pool.rekey is called and getSessionManager is
         // updated to a fresh SessionManager. The mock SM should not have
         // received any further append calls.
@@ -400,6 +404,7 @@ class ChatWebSocketHandlerTest {
         JsonNode response = runRequestResponse("{\"type\":\"new_session\",\"id\":\"ns2\"}", "ns2");
 
         assertTrue(response.path("success").asBoolean());
+
         // The returned id must be the same one assigned at handshake (no rotation
         // when persistence is off, since there is no JSONL file to refresh).
         assertNotEquals("", response.path("data").path("conversation_id").asText());

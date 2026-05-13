@@ -125,6 +125,7 @@ public class ConversationLister {
         }
 
         // Filename is authoritative for the id (it's what clients reconnect with);
+
         // header id is sanity-checked but not required to match.
         String fileId = stripJsonlSuffix(file.getFileName().toString());
         if (idFromHeader != null && !idFromHeader.equals(fileId)) {

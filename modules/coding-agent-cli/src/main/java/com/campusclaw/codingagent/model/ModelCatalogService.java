@@ -141,6 +141,7 @@ public class ModelCatalogService {
                 }
             }
         }
+
         // Always include custom-provider models, even if not matched by patterns.
         for (Model m : all) {
             if (m.provider() == Provider.CUSTOM && !alreadyIn(picked, m)) {

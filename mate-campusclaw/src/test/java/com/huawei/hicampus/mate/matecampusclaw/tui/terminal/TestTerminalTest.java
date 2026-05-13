@@ -141,6 +141,7 @@ class TestTerminalTest {
         @Test
         void moveCursorWritesAnsi() {
             terminal.moveCursor(3, 7);
+
             // ANSI CUP is 1-based: row 3 -> 4, col 7 -> 8
             assertTrue(terminal.getFullOutput().contains("\033[4;8H"));
         }

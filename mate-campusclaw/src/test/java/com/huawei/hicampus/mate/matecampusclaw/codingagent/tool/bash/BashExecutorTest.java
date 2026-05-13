@@ -68,6 +68,7 @@ class BashExecutorTest {
         void usesWorkingDirectory() throws IOException {
             var result = executor.execute("pwd", tempDir, defaultOptions());
             assertEquals(0, result.exitCode());
+
             // On macOS, /var may symlink to /private/var, so just check the directory name
             assertTrue(result.stdout().trim().endsWith(tempDir.getFileName().toString()));
         }

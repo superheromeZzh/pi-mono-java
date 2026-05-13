@@ -389,6 +389,7 @@ public class MarkdownComponent implements Component {
                 break;
             }
             List<String> row = parseTableRow(line);
+
             // Pad or truncate to match header column count
             while (row.size() < numCols) {
                 row.add("");
@@ -436,6 +437,7 @@ public class MarkdownComponent implements Component {
             for (int c = 0; c < numCols; c++) {
                 colWidths[c] = Math.max(1, (int) ((double) naturalWidths[c] / totalNatural * availableForCells));
             }
+
             // Distribute leftover
             int allocated = 0;
             for (int w : colWidths) {

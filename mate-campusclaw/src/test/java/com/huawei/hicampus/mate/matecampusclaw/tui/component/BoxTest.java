@@ -43,8 +43,10 @@ class BoxTest {
         void noBorderWithPadding() {
             var box = new Box(new Text("hi"), null, 1, 2, 1, null, null);
             List<String> lines = box.render(20);
+
             // 1 top pad + 1 content + 1 bottom pad = 3
             assertEquals(3, lines.size());
+
             // Content line should have 2-char left padding
             assertTrue(lines.get(1).startsWith("  "));
         }
@@ -69,6 +71,7 @@ class BoxTest {
         void singleBorderStructure() {
             var box = new Box(new Text("hi"), BorderStyle.SINGLE);
             List<String> lines = box.render(20);
+
             // top border + content + bottom border = 3
             assertEquals(3, lines.size());
 
@@ -100,6 +103,7 @@ class BoxTest {
         void singleBorderWithPadding() {
             var box = new Box(new Text("hi"), BorderStyle.SINGLE, 1);
             List<String> lines = box.render(20);
+
             // top border + 1 pad + content + 1 pad + bottom border = 5
             assertEquals(5, lines.size());
 
@@ -166,8 +170,10 @@ class BoxTest {
             UnaryOperator<String> color = s -> RED + s + RESET;
             var box = new Box(new Text("hi"), BorderStyle.SINGLE, 0, 0, 0, null, color);
             List<String> lines = box.render(20);
+
             // Top border should contain RED
             assertTrue(lines.get(0).contains(RED));
+
             // Content vertical borders should contain RED
             assertTrue(lines.get(1).contains(RED));
         }
@@ -178,8 +184,10 @@ class BoxTest {
             UnaryOperator<String> bg = s -> BG_BLUE + s + RESET;
             var box = new Box(new Text("hi"), BorderStyle.SINGLE, 0, 0, 0, bg, borderColor);
             List<String> lines = box.render(20);
+
             // Border has color
             assertTrue(lines.get(0).contains(RED));
+
             // Content has background
             assertTrue(lines.get(1).contains(BG_BLUE));
         }
@@ -197,6 +205,7 @@ class BoxTest {
             UnaryOperator<String> bg = s -> BG_BLUE + s + RESET;
             var box = new Box(new Text("hello"), BorderStyle.SINGLE, 0, 0, 0, bg, null);
             List<String> lines = box.render(20);
+
             // Content line should have background
             assertTrue(lines.get(1).contains(BG_BLUE));
         }
@@ -206,6 +215,7 @@ class BoxTest {
             UnaryOperator<String> bg = s -> BG_BLUE + s + RESET;
             var box = new Box(new Text("hi"), BorderStyle.SINGLE, 0, 0, 1, bg, null);
             List<String> lines = box.render(20);
+
             // Padding lines (index 1 and 3) should have background
             assertTrue(lines.get(1).contains(BG_BLUE));
             assertTrue(lines.get(3).contains(BG_BLUE));
@@ -258,6 +268,7 @@ class BoxTest {
         void multiLineChildInBox() {
             var box = new Box(new Text("line1\nline2"), BorderStyle.SINGLE);
             List<String> lines = box.render(20);
+
             // top + 2 content + bottom = 4
             assertEquals(4, lines.size());
             assertTrue(lines.get(0).startsWith("┌"));
@@ -273,6 +284,7 @@ class BoxTest {
             container.addChild(new Text("second"));
             var box = new Box(container, BorderStyle.ROUNDED);
             List<String> lines = box.render(20);
+
             // top + 2 content + bottom = 4
             assertEquals(4, lines.size());
             assertTrue(lines.get(0).startsWith("╭"));
@@ -319,6 +331,7 @@ class BoxTest {
         void emptyChildText() {
             var box = new Box(new Text(""), BorderStyle.SINGLE);
             List<String> lines = box.render(20);
+
             // Empty text returns no lines → box has top + bottom border only
             assertEquals(2, lines.size());
         }
@@ -327,6 +340,7 @@ class BoxTest {
         void veryNarrowBoxStillRenders() {
             var box = new Box(new Text("hello"), BorderStyle.SINGLE);
             List<String> lines = box.render(4);
+
             // Should not crash; content width clamped to 1
             assertFalse(lines.isEmpty());
         }

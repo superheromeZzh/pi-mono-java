@@ -62,6 +62,7 @@ class FuzzyMatchTest {
             String haystack = "  line1  \n  line2  \nline3";
             var result = FuzzyMatch.fuzzyFindText(haystack, "line1\nline2");
             assertNotNull(result);
+
             // Should match the first two lines
             assertEquals("  line1  \n  line2  ", haystack.substring(result.start(), result.end()));
         }

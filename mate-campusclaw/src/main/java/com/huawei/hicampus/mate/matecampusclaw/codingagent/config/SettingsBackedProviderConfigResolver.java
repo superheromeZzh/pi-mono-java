@@ -80,6 +80,7 @@ public class SettingsBackedProviderConfigResolver implements ProviderConfigResol
         if (direct != null) {
             return direct;
         }
+
         // Allow case-insensitive / underscore-insensitive matching for the JSON key.
         for (var e : settings.provider().entrySet()) {
             String key = e.getKey();

@@ -126,6 +126,7 @@ class BedrockProviderTest {
             var result = BedrockProvider.convertMessages(List.of(am));
 
             assertEquals(1, result.size());
+
             // Should have 2 content blocks in single assistant message
             assertTrue(result.get(0).hasContent());
             assertEquals(2, result.get(0).content().size());
@@ -138,6 +139,7 @@ class BedrockProviderTest {
             var result = BedrockProvider.convertMessages(List.of(tr));
 
             assertEquals(1, result.size());
+
             // Tool results sent as user role in Bedrock
             assertEquals("user", result.get(0).roleAsString());
         }
@@ -184,6 +186,7 @@ class BedrockProviderTest {
             var result = BedrockProvider.convertMessages(List.of(am));
 
             assertEquals(1, result.size());
+
             // Thinking (as text fallback) + text = 2 blocks
             assertEquals(2, result.get(0).content().size());
         }

@@ -115,6 +115,7 @@ public class ChatWebSocketHandler {
     public Publisher<Void> handle(WebsocketInbound in, WebsocketOutbound out, String conversationIdHint) {
         SessionPool.SessionRef ref = pool.getOrCreate(conversationIdHint);
         AgentSession session = ref.session();
+
         // Holds the current conversation id. Rotated by `new_session` when
         // persistence is enabled, so emitted frames always carry the live id
         // matching the JSONL file the session is writing to.
@@ -128,6 +129,7 @@ public class ChatWebSocketHandler {
             if (json != null) {
                 outbound.emitNext(json, BUSY_LOOP);
             }
+
             // Persist assistant messages on completion. Mirrors InteractiveMode's
             // MessageEndEvent handler so the WS endpoint and CLI write identical
             // JSONL streams.
@@ -137,6 +139,7 @@ public class ChatWebSocketHandler {
                     sm.appendMessage(am);
                 }
             }
+
             // Model-level error (assistant completed with stopReason=ERROR) is
             // not the same as a runtime exception on session.prompt(). Surface it
             // with an additional `error` frame so frontends don't have to dig
@@ -464,6 +467,7 @@ public class ChatWebSocketHandler {
                 var m = new LinkedHashMap<String, Object>();
                 m.put("type", "done");
                 m.put("conversation_id", conversationId);
+
                 // Pull the last AssistantMessage out of the turn's message history
                 // and surface its final text + usage + stopReason, so frontends don't
                 // have to track assistant bubbles themselves. In multi-turn tool

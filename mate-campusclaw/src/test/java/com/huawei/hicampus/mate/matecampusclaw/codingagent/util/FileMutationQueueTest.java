@@ -78,6 +78,7 @@ class FileMutationQueueTest {
                     queue.withLock(path1, () -> {
                         entered.set(true);
                         barrier.await(5, TimeUnit.SECONDS);
+
                         // Hold the lock until latch is counted down
                         latch.await(5, TimeUnit.SECONDS);
                         return null;
@@ -165,6 +166,7 @@ class FileMutationQueueTest {
 
             // All tasks executed
             assertEquals(taskCount, executionOrder.size());
+
             // Max concurrent should be 1 (serialized)
             assertEquals(1, maxConcurrent.get(), "Same-file operations must be serialized");
         }
@@ -192,6 +194,7 @@ class FileMutationQueueTest {
                             int current = concurrentCount.incrementAndGet();
                             maxConcurrent.updateAndGet(prev -> Math.max(prev, current));
                             insideLockLatch.countDown();
+
                             // Wait until all threads are inside their locks
                             allCanProceed.await(5, TimeUnit.SECONDS);
                             concurrentCount.decrementAndGet();

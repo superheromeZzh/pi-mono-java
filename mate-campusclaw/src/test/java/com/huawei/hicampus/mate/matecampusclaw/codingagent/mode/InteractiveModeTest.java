@@ -118,12 +118,14 @@ class InteractiveModeTest {
             var tool = new com.huawei.hicampus.mate.matecampusclaw.codingagent.mode.tui.ToolStatusComponent("bash");
             var running = tool.render(80);
             String runningOutput = String.join("", running);
+
             // Tool shows bold name on pending bg
             assertTrue(runningOutput.contains("bash"));
 
             tool.setComplete(false);
             var done = tool.render(80);
             String doneOutput = String.join("", done);
+
             // Tool shows bold name on success bg
             assertTrue(doneOutput.contains("bash"));
         }
@@ -134,6 +136,7 @@ class InteractiveModeTest {
             tool.setComplete(true);
             var lines = tool.render(80);
             String output = String.join("", lines);
+
             // Tool shows bold name on error bg
             assertTrue(output.contains("bash"));
             assertTrue(output.contains("\033[48;2;60;40;40m")); // error bg
@@ -184,6 +187,7 @@ class InteractiveModeTest {
         void contextPercentageColorCoding() {
             var footer = new com.huawei.hicampus.mate.matecampusclaw.codingagent.mode.tui.FooterComponent();
             footer.setModel("zai", "glm-5", 1000, false);
+
             // 95% usage — should be red
             footer.updateUsage(950, 0, 0, 0, 0);
             var lines = footer.render(120);
@@ -244,6 +248,7 @@ class InteractiveModeTest {
             var comp = new com.huawei.hicampus.mate.matecampusclaw.codingagent.mode.tui.BashExecutionComponent("sleep 10", false);
             var lines = comp.render(80);
             String output = String.join("\n", lines);
+
             // BashExecutionComponent shows "running..." in gray when incomplete
             String stripped = output.replaceAll("\033\\[[;\\d]*[a-zA-Z]", "");
             assertTrue(stripped.contains("running..."));
@@ -280,6 +285,7 @@ class InteractiveModeTest {
             thread.start();
 
             mode.run(session, terminal);
+
             // Welcome text may scroll off in small terminal; check for content that's visible
             String output = terminal.getFullOutput();
             assertTrue(output.contains("CampusClaw can explain") || output.contains("v0.1.0"));

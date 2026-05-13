@@ -82,6 +82,7 @@ public class AcpMode {
             }
         });
         transport.start("acp-mode-reader");
+
         // Block until stdin closes / process exits.
         try {
             while (!Thread.currentThread().isInterrupted() && input.available() >= 0) {

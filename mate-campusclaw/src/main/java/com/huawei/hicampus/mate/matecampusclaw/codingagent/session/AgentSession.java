@@ -156,6 +156,7 @@ public class AgentSession {
 
         // Expand prompt templates first (/templatename args...)
         String expanded = expandPromptTemplate(userInput);
+
         // Then expand skill commands (/skill:name args...)
         expanded = skillExpander.expand(expanded, skillRegistry);
         return agent.prompt(expanded);

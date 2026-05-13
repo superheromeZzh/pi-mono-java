@@ -145,6 +145,7 @@ public class LoopCommand implements SlashCommand {
         if (s == null || s.length() < 2) {
             return -1;
         }
+
         // Extract trailing non-digit suffix
         int i = 0;
         while (i < s.length() && (Character.isDigit(s.charAt(i)) || s.charAt(i) == '.')) {

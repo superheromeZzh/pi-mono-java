@@ -83,6 +83,7 @@ class InputTest {
         void insertAtMiddle() {
             var input = new Input();
             input.setValue("ac");
+
             // Need to set cursor manually — setValue preserves cursor but clamps
             input.handleInput(KEY_HOME);
             input.handleInput(KEY_RIGHT);
@@ -453,6 +454,7 @@ class InputTest {
             var input = new Input("Type here...");
             input.setFocused(true);
             List<String> lines = input.render(40);
+
             // When focused with empty value, should show cursor, not placeholder
             assertTrue(lines.get(0).contains("\033[7m"), "Should show cursor when focused");
         }

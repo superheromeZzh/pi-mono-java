@@ -72,6 +72,7 @@ public class CronRunLog {
         try {
             List<String> lines = Files.readAllLines(logFile, StandardCharsets.UTF_8);
             var records = new ArrayList<CronRunRecord>();
+
             // Read from end for most recent
             int start = Math.max(0, lines.size() - limit);
             for (int i = start; i < lines.size(); i++) {

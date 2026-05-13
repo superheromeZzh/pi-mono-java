@@ -122,6 +122,7 @@ public class AuthStorage {
             Files.createDirectories(AUTH_FILE.getParent());
             String json = MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(map);
             Files.writeString(AUTH_FILE, json, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
+
             // Set owner-only permissions (600)
             try {
                 Files.setPosixFilePermissions(AUTH_FILE, OWNER_ONLY);

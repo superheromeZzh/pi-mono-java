@@ -199,6 +199,7 @@ public class SystemSchedulerInstaller {
                 + " 2>&1 " + CRONTAB_MARKER;
 
         String existing = getCurrentCrontab();
+
         // Remove any existing campusclaw entry
         String cleaned = existing.lines()
                 .filter(l -> !l.contains(CRONTAB_MARKER))
@@ -388,6 +389,7 @@ public class SystemSchedulerInstaller {
                     .getCodeSource()
                     .getLocation()
                     .toURI());
+
             // JAR is at modules/coding-agent-cli/build/libs/*.jar
             // launcher script is at the repo root
             Path root = jarPath.getParent().getParent().getParent().getParent().getParent();
@@ -397,6 +399,7 @@ public class SystemSchedulerInstaller {
             }
         } catch (Exception ignored) {
         }
+
         // Fallback: look relative to cwd
         Path cwd = Path.of(System.getProperty("user.dir")).resolve(scriptName);
         if (Files.exists(cwd)) {

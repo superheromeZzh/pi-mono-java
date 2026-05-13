@@ -110,6 +110,7 @@ final class DiffUtils {
         }
 
         List<int[]> changes = new ArrayList<>();
+
         // Each change: [oldLineStart, oldLineEnd, newLineStart, newLineEnd]
         changes.add(new int[] {oldDiffStart, oldDiffEnd, newDiffStart, newDiffEnd});
         return changes;
@@ -140,18 +141,22 @@ final class DiffUtils {
             int newEnd,
             List<int[]> changes) {
         int[] change = changes.get(0);
+
         // Context before
         for (int i = oldStart; i < change[0]; i++) {
             sb.append(' ').append(oldLines[i]).append('\n');
         }
+
         // Removed lines
         for (int i = change[0]; i < change[1]; i++) {
             sb.append('-').append(oldLines[i]).append('\n');
         }
+
         // Added lines
         for (int i = change[2]; i < change[3]; i++) {
             sb.append('+').append(newLines[i]).append('\n');
         }
+
         // Context after
         for (int i = change[1]; i < oldEnd; i++) {
             sb.append(' ').append(oldLines[i]).append('\n');

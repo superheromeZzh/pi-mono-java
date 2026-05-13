@@ -185,6 +185,7 @@ public class DockerSandboxClient {
         if (workerContainerId == null) {
             return false;
         }
+
         // 检查容器是否存在且正在运行
         ProcessResult result = executeDockerCommand(List.of("inspect", "-f", "{{.State.Running}}", workerContainerId));
         return result.exitCode == 0 && "true".equals(result.stdout.trim());
@@ -309,6 +310,7 @@ public class DockerSandboxClient {
             runCmd.add("--rm");
             runCmd.add("--name");
             runCmd.add(containerName);
+
             // Note: Network is needed to install bash in ephemeral containers
             runCmd.add("-v");
             runCmd.add(currentDir + ":" + workspace);
@@ -356,6 +358,7 @@ public class DockerSandboxClient {
 
         } catch (Exception e) {
             log.error("Failed to execute command in ephemeral container", e);
+
             // 尝试清理
             executeDockerCommand(List.of("rm", "-f", containerName));
             return SandboxResult.error("Execution failed: " + e.getMessage(), "");
@@ -462,10 +465,12 @@ public class DockerSandboxClient {
         if (!dockerAvailable) {
             return false;
         }
+
         // 临时容器模式：只要 Docker 可用即可
         if (properties.isUseEphemeralContainers()) {
             return true;
         }
+
         // 常驻 Worker 模式：检查 worker 是否健康
         return isWorkerHealthy();
     }

@@ -151,6 +151,7 @@ class SkillExpanderTest {
         @Test
         void handlesFileWithNoFrontmatter() throws IOException {
             Skill skill = createSkillWithFile("plain", null, "Plain body content.");
+
             // Override with valid registration
             Skill registered = new Skill("plain", "Plain skill", skill.filePath(), skill.baseDir(), "project", false);
             registry.register(registered);

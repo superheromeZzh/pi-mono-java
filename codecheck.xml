@@ -19,6 +19,26 @@
         <property name="fileExtensions" value="java"/>
     </module>
 
+    <!-- comment_blank_line_before: 行注释 // 紧跟在以 `;` 或 `}` 结尾的代码行下方时，
+         中间必须空一行——把「段落标题式注释」与上一段代码视觉分开。
+         匹配示例（BAD）：
+             int x = 1;
+             // next section
+         应当写为（GOOD）：
+             int x = 1;
+
+             // next section
+         排除：
+         - `///` 三斜线（DocC-style）；
+         - 上一行以 `{`、`(`、`,` 等结尾——块内开场或参数延续不属于「新段落」。
+         由 RegexpMultiline 在 Checker 级跨行扫描；不影响 trailing 注释（同一行的 `; //...`）。 -->
+    <module name="RegexpMultiline">
+        <property name="id" value="comment_blank_line_before"/>
+        <property name="format" value="[;}][ \t]*\r?\n[ \t]*//[^/\r\n]"/>
+        <property name="fileExtensions" value="java"/>
+        <property name="message" value="独占一行的 // 注释紧跟在 ; 或 } 之后时，请在注释行上方空一行。"/>
+    </module>
+
     <module name="TreeWalker">
         <module name="SuppressWarningsHolder"/>
 

@@ -33,6 +33,7 @@ public class CopyCommand implements SlashCommand {
     @Override
     public void execute(SlashCommandContext context, String arguments) {
         var messages = context.session().getHistory();
+
         // Find last assistant message
         String lastReply = null;
         for (int i = messages.size() - 1; i >= 0; i--) {

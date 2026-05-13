@@ -424,6 +424,7 @@ public class Input implements Component, Focusable {
             return;
         }
         pushUndo();
+
         // Strip newlines for single-line input
         String cleaned = text.replace("\n", "").replace("\r", "");
         value = value.substring(0, cursor) + cleaned + value.substring(cursor);

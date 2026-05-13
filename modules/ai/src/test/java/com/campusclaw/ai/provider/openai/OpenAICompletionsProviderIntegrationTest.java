@@ -251,6 +251,7 @@ class OpenAICompletionsProviderIntegrationTest {
             var finalMsg = eventStream.result().block();
 
             assertNotNull(finalMsg);
+
             // OpenAI includes cached tokens in prompt_tokens, provider subtracts
             assertEquals(70, finalMsg.usage().input()); // 100 - 30
             assertEquals(5, finalMsg.usage().output());

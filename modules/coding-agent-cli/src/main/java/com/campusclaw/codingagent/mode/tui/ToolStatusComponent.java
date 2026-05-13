@@ -36,10 +36,12 @@ public class ToolStatusComponent implements Component {
     private static final String ANSI_TOOL_OUTPUT = "\033[38;2;128;128;128m";
     private static final String ANSI_ACCENT = "\033[38;2;138;190;183m";
     private static final String ANSI_DIM_KEY = "\033[38;2;102;102;102m";
+
     // Background colors matching campusclaw dark theme
     private static final String BG_PENDING = "\033[48;2;40;40;50m";
     private static final String BG_SUCCESS = "\033[48;2;40;50;40m";
     private static final String BG_ERROR = "\033[48;2;60;40;40m";
+
     // Diff colors
     private static final String ANSI_RED = "\033[31m";
     private static final String ANSI_GREEN = "\033[32m";
@@ -128,6 +130,7 @@ public class ToolStatusComponent implements Component {
                 for (String line : contentLines) {
                     lines.add(bgLine(" " + truncateText(line, contentWidth), width, bg));
                 }
+
                 // Collapse hint (only if there would be truncation)
                 if (contentLines.length > previewLimit) {
                     String hint = ANSI_TOOL_OUTPUT + "("
@@ -254,6 +257,7 @@ public class ToolStatusComponent implements Component {
                 return colorizeContent(content.toString());
             }
         }
+
         // Bash: command is in the title, content is just the output
         if ("bash".equals(toolName)) {
             if (complete && resultSummary != null) {
@@ -324,6 +328,7 @@ public class ToolStatusComponent implements Component {
     private static String bgLine(String content, int width, String bg) {
         int visLen = AnsiUtils.visibleWidth(content);
         int pad = Math.max(0, width - visLen);
+
         // Replace every ANSI_RESET in content with reset+bg so background stays continuous
         String fixed = content.replace(ANSI_RESET, ANSI_RESET + bg);
         return bg + fixed + bg + " ".repeat(pad) + ANSI_RESET;

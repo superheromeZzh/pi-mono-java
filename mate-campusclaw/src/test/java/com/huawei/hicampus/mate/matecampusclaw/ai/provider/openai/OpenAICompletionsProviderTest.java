@@ -187,6 +187,7 @@ class OpenAICompletionsProviderTest {
 
             assertEquals(1, result.size());
             assertTrue(result.get(0).isAssistant());
+
             // ThinkingContent is silently dropped; only text sent as string
             var assistantParam = result.get(0).asAssistant();
             assertTrue(assistantParam.content().isPresent());

@@ -78,6 +78,7 @@ class AgentSessionTest {
     @BeforeEach
     void setUp() {
         modelRegistry = new ModelRegistry();
+
         // Register test models (init() is package-private)
         modelRegistry.register(new Model(
                 "claude-sonnet-4-20250514",

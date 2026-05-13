@@ -346,6 +346,7 @@ public class SelectList<T> implements Component, Focusable {
 
         // Try to center the selected item in the visible window
         int start = selectedIndex - visibleCount / 2;
+
         // Clamp to valid range
         start = Math.max(0, Math.min(start, items.size() - visibleCount));
         return start;

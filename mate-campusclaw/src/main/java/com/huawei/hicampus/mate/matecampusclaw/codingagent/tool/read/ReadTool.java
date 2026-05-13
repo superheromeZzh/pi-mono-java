@@ -146,6 +146,7 @@ public class ReadTool implements AgentTool {
         String content = new String(rawBytes, StandardCharsets.UTF_8);
 
         String[] allLines = content.split("\n", -1);
+
         // Remove trailing empty line from split if content ends with newline
         int totalLines = allLines.length;
         if (content.endsWith("\n") && totalLines > 0) {

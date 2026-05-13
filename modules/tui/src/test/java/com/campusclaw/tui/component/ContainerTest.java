@@ -106,6 +106,7 @@ class ContainerTest {
             var text = new Text("hi");
             container.addChild(text);
             List<String> lines = container.render(40);
+
             // Text component pads to full width
             assertEquals(40, lines.get(0).length());
         }
@@ -125,6 +126,7 @@ class ContainerTest {
             container.addChild(new Text(""));
             container.addChild(new Text("visible"));
             List<String> lines = container.render(20);
+
             // Empty text returns no lines, so only "visible" appears
             assertEquals(1, lines.size());
             assertTrue(lines.get(0).contains("visible"));
@@ -143,6 +145,7 @@ class ContainerTest {
             // Render to populate cache
             List<String> first = text.render(20);
             container.invalidate();
+
             // After invalidation, text should re-render fresh
             List<String> second = text.render(20);
             assertNotSame(first, second);

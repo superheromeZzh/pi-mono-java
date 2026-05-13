@@ -97,6 +97,7 @@ public class Box implements Component {
     @Override
     public List<String> render(int width) {
         boolean hasBorder = borderStyle != null;
+
         // Border takes 1 column on each side
         int borderWidth = hasBorder ? 1 : 0;
         int contentWidth = Math.max(1, width - (borderWidth * 2) - (paddingX * 2));
@@ -123,6 +124,7 @@ public class Box implements Component {
         String leftPad = " ".repeat(paddingX);
         for (String line : childLines) {
             String padded = leftPad + line;
+
             // Pad to innerWidth
             int visLen = AnsiUtils.visibleWidth(padded);
             int rightPad = Math.max(0, innerWidth - visLen);

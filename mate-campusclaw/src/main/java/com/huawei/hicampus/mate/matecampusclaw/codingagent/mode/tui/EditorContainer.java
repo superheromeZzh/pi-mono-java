@@ -29,8 +29,10 @@ public class EditorContainer implements Component, Focusable {
 
     // Default border is "border" blue from theme
     public static final String BORDER_DEFAULT = "\033[38;2;95;135;255m";
+
     // Bash mode border: green #b5bd68
     public static final String BORDER_BASH = "\033[38;2;181;189;104m";
+
     // Thinking level border colors (from campusclaw dark theme)
     public static final String THINKING_OFF = "\033[38;2;80;80;80m"; // #505050
     public static final String THINKING_MINIMAL = "\033[38;2;110;110;110m"; // #6e6e6e
@@ -170,6 +172,7 @@ public class EditorContainer implements Component, Focusable {
             acceptSuggestion();
             return;
         }
+
         // Shift+Tab — cycle to previous suggestion
         if (KEY_SHIFT_TAB.equals(data) && showingSuggestions) {
             cyclePrev();
@@ -189,14 +192,17 @@ public class EditorContainer implements Component, Focusable {
     @Override
     public List<String> render(int width) {
         var lines = new ArrayList<String>();
+
         // Top separator
         lines.add(borderColor + "─".repeat(width) + ANSI_RESET);
+
         // Editor line(s)
         lines.addAll(editor.render(width));
 
         // Slash command suggestions with scrolling window
         if (showingSuggestions && !filteredSuggestions.isEmpty()) {
             int total = filteredSuggestions.size();
+
             // Calculate visible window centered on selected item (matching pi-mono SelectList)
             int startIndex = Math.max(0, Math.min(suggestionIndex - MAX_SUGGESTIONS / 2, total - MAX_SUGGESTIONS));
             int endIndex = Math.min(startIndex + MAX_SUGGESTIONS, total);
@@ -247,6 +253,7 @@ public class EditorContainer implements Component, Focusable {
                 }
                 lines.add(line);
             }
+
             // Show scroll position indicator when not all items are visible
             if (startIndex > 0 || endIndex < total) {
                 lines.add("\033[2m  (" + (suggestionIndex + 1) + "/" + total + ")\033[0m");

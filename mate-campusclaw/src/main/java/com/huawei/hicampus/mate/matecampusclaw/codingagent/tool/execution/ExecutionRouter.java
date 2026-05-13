@@ -233,6 +233,7 @@ public class ExecutionRouter {
                 return executeSandbox(toolName, params, signal, onUpdate);
             } else {
                 log.warn("High risk operation but sandbox unavailable: {}", toolName);
+
                 // 安全检查
                 performSafetyCheck(toolName, params);
             }
@@ -318,6 +319,7 @@ public class ExecutionRouter {
 
     private List<String> buildBashCommand(Map<String, Object> params) {
         String command = (String) params.get("command");
+
         // Use 'sh' which is available in all Alpine containers (busybox ash)
         // This avoids the need to install bash separately
         return List.of("sh", "-c", command);

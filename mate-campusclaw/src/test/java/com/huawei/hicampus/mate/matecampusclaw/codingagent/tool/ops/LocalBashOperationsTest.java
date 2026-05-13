@@ -93,6 +93,7 @@ class LocalBashOperationsTest {
         void timeoutKillsLongRunningProcess() throws IOException {
             BashResult result =
                     ops.exec("sleep 60", tempDir, new BashExecOptions(null, null, Duration.ofMillis(500), null));
+
             // Timeout should kill the process, returning null exit code
             assertNull(result.exitCode());
         }
