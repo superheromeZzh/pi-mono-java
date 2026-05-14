@@ -130,9 +130,13 @@ public class SpawnAgentTool implements AgentTool {
         }
 
         Duration timeout = resolveTimeout(params.get("timeout_seconds"));
+        String cwd = asString(params.get("cwd"));
+        if (cwd == null || cwd.isBlank()) {
+            cwd = System.getProperty("user.dir");
+        }
         SubAgentBackend.OpenRequest openRequest = new SubAgentBackend.OpenRequest(
                 DEFAULT_PARENT_AGENT_ID,
-                asString(params.get("cwd")),
+                cwd,
                 asString(params.get("model")),
                 asString(params.get("thinking")),
                 Map.of(),
