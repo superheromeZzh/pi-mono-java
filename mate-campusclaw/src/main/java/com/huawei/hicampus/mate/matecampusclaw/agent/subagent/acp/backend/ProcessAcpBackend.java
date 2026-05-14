@@ -41,6 +41,7 @@ import org.slf4j.LoggerFactory;
 
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Sinks;
+import reactor.core.publisher.Sinks.EmitFailureHandler;
 
 /**
  * Generic {@link SubAgentBackend} that launches an ACP server as a child process and speaks the
@@ -56,6 +57,14 @@ public class ProcessAcpBackend implements SubAgentBackend {
     private static final Duration DEFAULT_INIT_TIMEOUT = Duration.ofSeconds(30L);
 
     private static final Duration DEFAULT_ASK_PARENT_TIMEOUT = Duration.ofSeconds(30L);
+
+    /**
+     * Reactor multicast sinks fail concurrent emits with {@code FAIL_NON_SERIALIZED}; busy-loop
+     * retry recovers without losing events. See {@link com.huawei.hicampus.mate.matecampusclaw.agent.subagent.acp.AcpClient}
+     * for the original observation.
+     */
+    private static final EmitFailureHandler RETRY_NON_SERIALIZED =
+            EmitFailureHandler.busyLooping(Duration.ofMillis(50L));
 
     private final String id;
     private final Config config;
@@ -141,9 +150,9 @@ public class ProcessAcpBackend implements SubAgentBackend {
         var subscription = handle.client
                 .events()
                 .subscribe(
-                        event -> bridge.tryEmitNext(event),
-                        error -> bridge.tryEmitError(error),
-                        () -> bridge.tryEmitComplete());
+                        event -> bridge.emitNext(event, RETRY_NON_SERIALIZED),
+                        error -> bridge.emitError(error, RETRY_NON_SERIALIZED),
+                        () -> bridge.emitComplete(RETRY_NON_SERIALIZED));
 
         if (signal != null) {
             signal.onCancel(() -> handle.client.cancel());
@@ -154,8 +163,10 @@ public class ProcessAcpBackend implements SubAgentBackend {
             try {
                 handle.client.prompt(text, timeout);
             } catch (RuntimeException ex) {
-                bridge.tryEmitNext(new SubAgentEvent.Error("ACP_PROMPT", enrichPromptError(ex, handle), false));
-                bridge.tryEmitComplete();
+                bridge.emitNext(
+                        new SubAgentEvent.Error("ACP_PROMPT", enrichPromptError(ex, handle), false),
+                        RETRY_NON_SERIALIZED);
+                bridge.emitComplete(RETRY_NON_SERIALIZED);
             }
         });
 
