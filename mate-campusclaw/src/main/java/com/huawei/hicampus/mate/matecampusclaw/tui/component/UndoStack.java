@@ -54,7 +54,9 @@ public class UndoStack<S> {
         return stack.remove(stack.size() - 1);
     }
 
-    /** Remove all snapshots. */
+    /**
+     * Remove all snapshots.
+     */
     public void clear() {
         stack.clear();
     }

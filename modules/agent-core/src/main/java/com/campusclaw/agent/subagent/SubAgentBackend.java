@@ -74,7 +74,9 @@ public interface SubAgentBackend {
         }
     }
 
-    /** Outcome a parent agent returns in response to a {@link SubAgentEvent.PermissionRequest}. */
+    /**
+     * Outcome a parent agent returns in response to a {@link SubAgentEvent.PermissionRequest}.
+     */
     enum PermissionOutcome {
         ALLOW_ONCE,
         ALLOW_ALWAYS,

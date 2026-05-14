@@ -237,7 +237,9 @@ public class SandboxSkillParser {
      * @return body 内容
      * @throws SkillLoadException 加载失败
      */
-    /** POSIX sh script that strips frontmatter and emits the SKILL.md body. */
+    /**
+     * POSIX sh script that strips frontmatter and emits the SKILL.md body.
+     */
     private static final String EXTRACT_BODY_SCRIPT_TEMPLATE =
             """
             # 解码 base64 内容

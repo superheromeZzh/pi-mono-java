@@ -92,7 +92,9 @@ public class MistralProvider implements ApiProvider {
         return eventStream;
     }
 
-    /** Mutable state shared across the Mistral SSE chunk handlers. */
+    /**
+     * Mutable state shared across the Mistral SSE chunk handlers.
+     */
     private static final class MistralStreamState {
         final List<ContentBlock> accumulatedBlocks = new ArrayList<>();
         final StringBuilder currentText = new StringBuilder();

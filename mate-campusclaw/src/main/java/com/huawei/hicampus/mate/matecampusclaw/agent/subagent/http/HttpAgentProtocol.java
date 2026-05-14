@@ -42,16 +42,24 @@ public final class HttpAgentProtocol {
 
     private HttpAgentProtocol() {}
 
-    /** Body of {@code POST /sessions}. */
+    /**
+     * Body of {@code POST /sessions}.
+     */
     public record NewSessionRequest(String parentAgentId, String cwd, String model, String thinking) {}
 
-    /** Reply to {@code POST /sessions}. */
+    /**
+     * Reply to {@code POST /sessions}.
+     */
     public record NewSessionResponse(String sessionId) {}
 
-    /** Body of {@code POST /sessions/{id}/prompt}. */
+    /**
+     * Body of {@code POST /sessions/{id}/prompt}.
+     */
     public record PromptRequest(String task) {}
 
-    /** Body of {@code POST /sessions/{id}/cancel}. */
+    /**
+     * Body of {@code POST /sessions/{id}/cancel}.
+     */
     public record CancelRequest(String reason) {}
 
     /**

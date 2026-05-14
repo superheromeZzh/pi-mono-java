@@ -19,7 +19,9 @@ import org.springframework.stereotype.Component;
 @Component
 public class ApprovalClassifier {
 
-    /** Risk bucket for a tool call. */
+    /**
+     * Risk bucket for a tool call.
+     */
     public enum Risk {
         READ_ONLY,
         FILE_WRITE,

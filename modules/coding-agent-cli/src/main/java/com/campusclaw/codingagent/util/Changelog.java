@@ -129,7 +129,9 @@ public class Changelog {
         return !getUnread().isEmpty();
     }
 
-    /** Mark all entries as read up to the latest version. */
+    /**
+     * Mark all entries as read up to the latest version.
+     */
     public void markAllRead() {
         if (!entries.isEmpty()) {
             lastReadVersion = entries.get(0).version();

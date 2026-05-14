@@ -151,7 +151,9 @@ public class SourceInfo {
         return sb.toString();
     }
 
-    /** Clear all registered sources. */
+    /**
+     * Clear all registered sources.
+     */
     public void clear() {
         registry.clear();
     }

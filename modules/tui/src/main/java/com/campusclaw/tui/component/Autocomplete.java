@@ -302,7 +302,9 @@ public class Autocomplete implements Component, Focusable {
      * @param partial the partial path the user has typed
      * @return matching path completions in display order
      */
-    /** Parsed result of splitting a partial path into directory and filename prefix. */
+    /**
+     * Parsed result of splitting a partial path into directory and filename prefix.
+     */
     private record DirPrefix(Path dir, String prefix) {}
 
     static List<String> computeFileSuggestions(String partial) {

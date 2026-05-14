@@ -32,7 +32,9 @@ import java.util.concurrent.TimeUnit;
  */
 public final class ShellResolver {
 
-    /** Resolved shell plus the flag used to pass a single command string. */
+    /**
+     * Resolved shell plus the flag used to pass a single command string.
+     */
     public record ShellConfig(String shell, List<String> args) {
         public ShellConfig {
             args = List.copyOf(args);
@@ -61,7 +63,9 @@ public final class ShellResolver {
         }
     }
 
-    /** Reset the cache. Intended for tests. */
+    /**
+     * Reset the cache. Intended for tests.
+     */
     static void resetCacheForTesting() {
         cached = null;
     }

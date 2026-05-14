@@ -60,7 +60,9 @@ public class AcpClient implements AutoCloseable {
                 AcpProtocol.RequestPermissionRequest request, PermissionContext ctx);
     }
 
-    /** Context made available to {@link PermissionHandler} implementations. */
+    /**
+     * Context made available to {@link PermissionHandler} implementations.
+     */
     public record PermissionContext(String sessionId) {}
 
     public AcpClient(ObjectMapper mapper, InputStream input, OutputStream output) {

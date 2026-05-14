@@ -50,7 +50,9 @@ public class KillRing {
         return ring.isEmpty() ? null : ring.get(ring.size() - 1);
     }
 
-    /** Move the last entry to the front (for yank-pop cycling). */
+    /**
+     * Move the last entry to the front (for yank-pop cycling).
+     */
     public void rotate() {
         if (ring.size() > 1) {
             String last = ring.remove(ring.size() - 1);
@@ -76,7 +78,9 @@ public class KillRing {
         return ring.isEmpty();
     }
 
-    /** Remove all entries. */
+    /**
+     * Remove all entries.
+     */
     public void clear() {
         ring.clear();
     }

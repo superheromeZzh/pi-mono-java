@@ -33,6 +33,8 @@ public record ParentPermissionRequest(
         options = options == null ? List.of() : List.copyOf(options);
     }
 
-    /** Option exposed by the backend (e.g. {"optionId":"allow_once","kind":"allow_once","name":"Allow once"}). */
+    /**
+     * Option exposed by the backend (e.g. {"optionId":"allow_once","kind":"allow_once","name":"Allow once"}).
+     */
     public record Option(String optionId, String kind, String name) {}
 }

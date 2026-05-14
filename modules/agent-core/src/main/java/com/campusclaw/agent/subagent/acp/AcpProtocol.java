@@ -83,7 +83,9 @@ public final class AcpProtocol {
         }
     }
 
-    /** JSON-RPC 2.0 error object. */
+    /**
+     * JSON-RPC 2.0 error object.
+     */
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public record Error(int code, String message, JsonNode data) {
 
@@ -94,12 +96,16 @@ public final class AcpProtocol {
         public static final int INTERNAL_ERROR = -32603;
     }
 
-    /** Params for the {@code initialize} request. */
+    /**
+     * Params for the {@code initialize} request.
+     */
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public record InitializeRequest(
             int protocolVersion, ClientCapabilities clientCapabilities, ClientInfo clientInfo) {}
 
-    /** Capabilities the client advertises during {@code initialize}. */
+    /**
+     * Capabilities the client advertises during {@code initialize}.
+     */
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public record ClientCapabilities(FsCapability fs, Boolean terminal) {
 
@@ -108,36 +114,52 @@ public final class AcpProtocol {
         }
     }
 
-    /** Filesystem sub-capability flags. */
+    /**
+     * Filesystem sub-capability flags.
+     */
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public record FsCapability(boolean readTextFile, boolean writeTextFile) {}
 
-    /** Client identity reported during {@code initialize}. */
+    /**
+     * Client identity reported during {@code initialize}.
+     */
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public record ClientInfo(String name, String version) {}
 
-    /** Reply to {@code initialize}. */
+    /**
+     * Reply to {@code initialize}.
+     */
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public record InitializeResponse(
             int protocolVersion, JsonNode agentCapabilities, JsonNode agentInfo, JsonNode authMethods) {}
 
-    /** Params for {@code session/new}. */
+    /**
+     * Params for {@code session/new}.
+     */
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public record NewSessionRequest(String cwd, List<Map<String, Object>> mcpServers) {}
 
-    /** Reply to {@code session/new}. */
+    /**
+     * Reply to {@code session/new}.
+     */
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public record NewSessionResponse(String sessionId) {}
 
-    /** Params for {@code session/prompt}. */
+    /**
+     * Params for {@code session/prompt}.
+     */
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public record PromptRequest(String sessionId, List<ContentBlock> prompt) {}
 
-    /** Reply to {@code session/prompt}. */
+    /**
+     * Reply to {@code session/prompt}.
+     */
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public record PromptResponse(String stopReason) {}
 
-    /** Params for the {@code session/cancel} notification. */
+    /**
+     * Params for the {@code session/cancel} notification.
+     */
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public record CancelRequest(String sessionId) {}
 
@@ -154,11 +176,15 @@ public final class AcpProtocol {
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public record RequestPermissionRequest(String sessionId, JsonNode toolCall, JsonNode options) {}
 
-    /** Reply to {@code session/request_permission}. */
+    /**
+     * Reply to {@code session/request_permission}.
+     */
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public record RequestPermissionResponse(Outcome outcome) {
 
-        /** Outcome of a permission decision. */
+        /**
+         * Outcome of a permission decision.
+         */
         @JsonInclude(JsonInclude.Include.NON_NULL)
         public record Outcome(String outcome, String optionId) {
 
@@ -172,7 +198,9 @@ public final class AcpProtocol {
         }
     }
 
-    /** ACP {@code ContentBlock} for prompts. Only text is exercised by the parent today. */
+    /**
+     * ACP {@code ContentBlock} for prompts. Only text is exercised by the parent today.
+     */
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public record ContentBlock(String type, String text) {
 

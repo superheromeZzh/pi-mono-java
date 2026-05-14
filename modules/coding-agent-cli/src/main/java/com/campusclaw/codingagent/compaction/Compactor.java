@@ -44,7 +44,9 @@ public class Compactor {
         Be concise but thorough. Focus on information that would be needed to continue the conversation.
         """;
 
-    /** Agent role name used to look up {@code settings.agent.<name>.model} overrides. */
+    /**
+     * Agent role name used to look up {@code settings.agent.<name>.model} overrides.
+     */
     public static final String AGENT_NAME = "summarizer";
 
     private final CampusClawAiService aiService;
