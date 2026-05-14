@@ -188,6 +188,38 @@ System.out.println("DEBUG: state = " + state);                      // 改 log.d
 
 **理由**：项目已普遍引入 SLF4J（128 个文件），`LoggingUncaughtExceptionHandler` 已经把后台线程未捕获异常导到 `log.error`。日志型 print 残留在代码里就是可观测性漏洞——上规则一次性堵住，并把「stdout 是契约」的少数类用注解显式标注，杜绝增量。`new InteractiveMode` 路径里类似的事件发布失败、`InteractiveMode#close` 兜底分支，这些都应当走 `log.error("...", e)`，不要在用户终端噪音里再混入诊断信息。
 
+### 日志消息禁用中文（含标点）
+
+**规则**：所有 SLF4J 日志调用——`log.trace/debug/info/warn/error`、`logger.log(...)`——的**消息模板字面量**不得包含中文字符或中文标点（`：，。、；！？""''（）【】《》`）。运行时拼进 `{}` 占位符的**变量值**（用户输入、文件内容、上游响应等）不在此规则范围——这些值本身不可控，规则只管模板。
+
+**为什么不限中文区销售也要管**：CampusClaw 不只服务中文区客户。日志消费方包括海外团队的 SRE、ELK/Splunk 全文检索、grep/awk 流水线、CI 截图、客户附带的 support bundle——一旦消息含中文：
+- 海外协作者读不懂、机器翻译丢失上下文，事故响应变慢
+- 字节流被错误 charset 解码即不可恢复乱码（同 [[feedback_explicit_charset]] 一脉相承）
+- grep 正则、`logstash` mutate filter 难以匹配，告警规则失灵
+- 终端/IDE/邮件客户端字体缺失或 BiDi 渲染下错位
+- Audit / compliance 日志按英文存档是合规习惯
+
+**硬约束**（Checkstyle `no_chinese_in_log`，build-failing；存量 0，规则上锁防止回潮）：
+
+| 规则 id | 命中 |
+|---|---|
+| `no_chinese_in_log` | `(log\|logger\|LOGGER\|LOG).(trace\|debug\|info\|warn\|error)(` 后首个字符串字面量内含 Unicode 4E00–9FFF（CJK 表意） / 3000–303F（CJK 符号标点） / FF00–FFEF（半角与全角形式）任意字符 |
+
+| ✅ 正例 | ❌ 反例 |
+|---|---|
+| `log.info("docker available: {}", available);` | `log.info("Docker 可用: {}", available);` |
+| `log.warn("sandbox unavailable");` | `log.warn("沙箱不可用！");` |
+| `log.error("auto-recovery test failed");` | `log.error("✗ 自动恢复测试失败!");` |
+| `log.info("worker container id: {}", id);` | `log.info("Worker 容器 ID: {}", id);` |
+
+**用户可见文本**（CLI 输出、TUI 渲染、面向终端用户的提示）走 i18n / 资源束或直接 println 即可，与日志走两条路——日志是给运维和开发看的诊断流，不是给最终用户的产品文案。
+
+**绕过**：极端情况（如复现某 charset bug 时必须打中文示例）可在该方法上加 `@SuppressWarnings("checkstyle:no_chinese_in_log")` 局部豁免——但 PR review 应拒绝任何新增豁免，存量为零，不要破例。盘点命令：
+
+```bash
+grep -rnE '\b(log|logger|LOGGER|LOG)\.(trace|debug|info|warn|error)\s*\(\s*"[^"]*[一-鿿　-〿＀-￯]' --include='*.java' modules/
+```
+
 ### 注释符与注释内容之间必须有空格
 
 **规则**：行首的 `//` 与 `/*` 后必须紧跟空白（空格/制表符/换行）或重复同样的符号（`///`、`/**`）。`//foo` / `/*foo*/` 一律拒绝。

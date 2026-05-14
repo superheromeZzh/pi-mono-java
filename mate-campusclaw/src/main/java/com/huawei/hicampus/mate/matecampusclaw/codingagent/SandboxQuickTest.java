@@ -27,7 +27,7 @@ public class SandboxQuickTest {
     private static final Logger log = LoggerFactory.getLogger(SandboxQuickTest.class);
 
     public static void main(String[] args) throws Exception {
-        log.info("=== Docker 沙箱测试 ===");
+        log.info("=== docker sandbox smoke test ===");
 
         ToolExecutionProperties props = new ToolExecutionProperties();
         props.setSandboxExecutionEnabled(true);
@@ -39,28 +39,28 @@ public class SandboxQuickTest {
 
         SandboxSecurityPolicy policy = new SandboxSecurityPolicy();
 
-        log.info("初始化 Docker 客户端...");
-        log.info("配置: useEphemeralContainers = {}", props.isUseEphemeralContainers());
+        log.info("initializing docker client");
+        log.info("config: useEphemeralContainers={}", props.isUseEphemeralContainers());
 
         DockerSandboxClient client = new DockerSandboxClient(props, policy);
 
-        log.info("Docker 可用: {}", client.isAvailable());
-        log.info("Worker 容器 ID: {}", client.getWorkerContainerId());
+        log.info("docker available: {}", client.isAvailable());
+        log.info("worker container id: {}", client.getWorkerContainerId());
 
         if (client.isAvailable()) {
-            log.info("执行测试命令: echo 'Hello from Sandbox'");
+            log.info("executing test command: echo 'Hello from Sandbox'");
             SandboxResult result =
                     client.execute(java.util.List.of("echo", "Hello from Sandbox"), ResourceLimits.defaults());
-            log.info("退出码: {}", result.getExitCode());
-            log.info("输出: {}", result.getStdout().trim());
+            log.info("exit code: {}", result.getExitCode());
+            log.info("stdout: {}", result.getStdout().trim());
         } else {
-            log.warn("沙箱不可用！");
+            log.warn("sandbox unavailable");
         }
 
-        log.info("按 Enter 键关闭沙箱并退出...");
+        log.info("press Enter to shut down the sandbox and exit");
         System.in.read();
 
         client.shutdown();
-        log.info("沙箱已关闭");
+        log.info("sandbox shut down");
     }
 }

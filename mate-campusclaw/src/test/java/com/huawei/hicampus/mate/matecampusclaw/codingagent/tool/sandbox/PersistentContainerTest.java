@@ -20,7 +20,7 @@ public class PersistentContainerTest {
     private static final Logger log = LoggerFactory.getLogger(PersistentContainerTest.class);
 
     public static void main(String[] args) throws Exception {
-        log.info("=== 常驻容器模式测试 ===");
+        log.info("=== persistent container smoke test ===");
 
         ToolExecutionProperties props = new ToolExecutionProperties();
         props.setSandboxExecutionEnabled(true);
@@ -32,53 +32,53 @@ public class PersistentContainerTest {
 
         SandboxSecurityPolicy policy = new SandboxSecurityPolicy();
 
-        log.info("1. 初始化 DockerSandboxClient...");
-        log.info("   useEphemeralContainers = {}", props.isUseEphemeralContainers());
+        log.info("1. initializing DockerSandboxClient");
+        log.info("   useEphemeralContainers={}", props.isUseEphemeralContainers());
 
         DockerSandboxClient client = new DockerSandboxClient(props, policy);
 
-        log.info("   Docker 可用: {}", client.isAvailable());
-        log.info("   Worker ID: {}", client.getWorkerContainerId());
+        log.info("   docker available: {}", client.isAvailable());
+        log.info("   worker id: {}", client.getWorkerContainerId());
 
         if (client.isAvailable()) {
-            log.info("2. 测试执行命令...");
+            log.info("2. executing test command");
             SandboxResult result = client.execute(
                     java.util.List.of("echo", "Hello from persistent container"), ResourceLimits.defaults());
-            log.info("   退出码: {}", result.getExitCode());
-            log.info("   输出: {}", result.getStdout().trim());
+            log.info("   exit code: {}", result.getExitCode());
+            log.info("   stdout: {}", result.getStdout().trim());
 
-            log.info("3. 测试容器删除后自动恢复...");
+            log.info("3. testing auto-recovery after container removal");
             String workerId = client.getWorkerContainerId();
-            log.info("   当前 Worker ID: {}", workerId);
+            log.info("   current worker id: {}", workerId);
 
-            log.info("   手动删除容器...");
+            log.info("   manually removing container");
             ProcessBuilder pb = new ProcessBuilder("docker", "rm", "-f", workerId);
             pb.inheritIO();
             Process p = pb.start();
             p.waitFor();
 
-            log.info("   等待容器删除...");
+            log.info("   waiting for container removal");
             Thread.sleep(1000);
 
-            log.info("   再次执行命令（应该自动恢复）...");
+            log.info("   re-executing command (should auto-recover)");
             result = client.execute(java.util.List.of("echo", "Recovered!"), ResourceLimits.defaults());
-            log.info("   退出码: {}", result.getExitCode());
-            log.info("   输出: {}", result.getStdout().trim());
-            log.info("   新 Worker ID: {}", client.getWorkerContainerId());
+            log.info("   exit code: {}", result.getExitCode());
+            log.info("   stdout: {}", result.getStdout().trim());
+            log.info("   new worker id: {}", client.getWorkerContainerId());
 
             if (result.getExitCode() == 0
                     && "Recovered!".equals(result.getStdout().trim())) {
-                log.info("✓ 自动恢复测试通过!");
+                log.info("auto-recovery test passed");
             } else {
-                log.error("✗ 自动恢复测试失败!");
-                log.error("   错误: {}", result.getStderr());
+                log.error("auto-recovery test failed");
+                log.error("   stderr: {}", result.getStderr());
             }
         } else {
-            log.error("✗ Docker 沙箱不可用!");
+            log.error("docker sandbox unavailable");
         }
 
-        log.info("4. 清理...");
+        log.info("4. cleanup");
         client.shutdown();
-        log.info("   完成");
+        log.info("   done");
     }
 }

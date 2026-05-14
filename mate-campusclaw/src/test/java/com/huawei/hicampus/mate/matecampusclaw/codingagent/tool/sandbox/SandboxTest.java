@@ -35,16 +35,16 @@ public class SandboxTest {
 
         DockerSandboxClient client = new DockerSandboxClient(props, policy);
 
-        log.info("Docker 可用: {}", client.isAvailable());
-        log.info("Worker 容器 ID: {}", client.getWorkerContainerId());
+        log.info("docker available: {}", client.isAvailable());
+        log.info("worker container id: {}", client.getWorkerContainerId());
 
         if (client.isAvailable()) {
-            log.info("执行测试命令: ls -la");
+            log.info("executing test command: ls -la");
             SandboxResult result = client.execute(java.util.List.of("ls", "-la"), ResourceLimits.defaults());
-            log.info("退出码: {}", result.getExitCode());
-            log.info("输出:\n{}", result.getStdout());
+            log.info("exit code: {}", result.getExitCode());
+            log.info("stdout:\n{}", result.getStdout());
             if (!result.getStderr().isEmpty()) {
-                log.warn("错误: {}", result.getStderr());
+                log.warn("stderr: {}", result.getStderr());
             }
         }
 

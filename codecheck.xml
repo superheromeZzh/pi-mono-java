@@ -145,6 +145,23 @@
             <property name="ignoreComments" value="true"/>
         </module>
 
+        <!-- no_chinese_in_log: 日志消息模板字面量禁含 CJK 字符或中日韩全角标点。
+             CampusClaw 不只服务中文区客户——日志消费方包括海外 SRE、ELK/Splunk 全文检索、
+             grep/awk 流水线、CI 截图、客户附带的 support bundle。一旦消息含中文：
+             海外协作者读不懂、charset 误解码即不可恢复乱码、grep / logstash mutate 难以匹配、
+             终端字体缺失或 BiDi 渲染下错位、合规归档非英文不便审计。
+             检测：行内出现 (log|logger|LOGGER|LOG).(trace|debug|info|warn|error)( 且首个 String
+             字面量内含 Unicode 4E00–9FFF（CJK 统一表意） / 3000–303F（CJK 符号标点） /
+             FF00–FFEF（半角与全角形式）任意字符即报错。变量值通过 {} 占位符传入不受限——
+             规则只管模板字面量。ignoreComments=true 让 javadoc 举反例不被误判。
+             当前仓内存量已为 0，规则上锁防止回潮。 -->
+        <module name="RegexpSinglelineJava">
+            <property name="id" value="no_chinese_in_log"/>
+            <property name="format" value="\b(log|logger|LOGGER|LOG)\.(trace|debug|info|warn|error)\s*\(\s*&quot;[^&quot;]*[一-鿿　-〿＀-￯]"/>
+            <property name="message" value="日志消息模板禁含中文字符 / 全角标点：请改写为英文（变量值通过 {} 占位符传入不受限）。"/>
+            <property name="ignoreComments" value="true"/>
+        </module>
+
         <!-- comment_marker_space: 行首注释符 // 与 /* 之后必须紧跟空白（空格/制表符/换行）
              或者重复同样的符号（`///` 三斜线、`/**` Javadoc 起始）。
              正例：`// foo`、`/** ... */`、`/* foo */`、`//` 空注释、`///`、`/**`。
