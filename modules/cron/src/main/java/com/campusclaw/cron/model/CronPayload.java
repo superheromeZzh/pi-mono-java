@@ -21,7 +21,9 @@ import org.springframework.lang.Nullable;
 @JsonSubTypes({@JsonSubTypes.Type(value = CronPayload.AgentPrompt.class, name = "agent_prompt")})
 public sealed interface CronPayload {
 
-    /** Execute an AI agent with the given prompt. */
+    /**
+     * Execute an AI agent with the given prompt.
+     */
     record AgentPrompt(
             String prompt, @Nullable String systemPrompt, @Nullable String modelId, @Nullable List<String> allowedTools)
             implements CronPayload {}

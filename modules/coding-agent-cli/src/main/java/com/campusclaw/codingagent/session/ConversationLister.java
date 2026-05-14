@@ -45,7 +45,9 @@ public class ConversationLister {
 
     private final ObjectMapper mapper = new ObjectMapper();
 
-    /** Listed conversation entry. Wire-format-friendly via Jackson. */
+    /**
+     * Listed conversation entry. Wire-format-friendly via Jackson.
+     */
     public record Entry(String id, String title, int messageCount, String createdAt, String updatedAt) {}
 
     /**

@@ -31,7 +31,9 @@ public class SessionCommand implements SlashCommand {
         return "Show session info and stats";
     }
 
-    /** Per-message-type counts and accumulated token/cost stats over a session's history. */
+    /**
+     * Per-message-type counts and accumulated token/cost stats over a session's history.
+     */
     private record SessionStats(
             int userCount,
             int assistantCount,

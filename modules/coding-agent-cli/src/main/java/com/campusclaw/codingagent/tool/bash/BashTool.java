@@ -39,7 +39,9 @@ import org.springframework.stereotype.Component;
 @ConditionalOnProperty(name = "tool.execution.hybrid-enabled", havingValue = "false", matchIfMissing = true)
 public class BashTool implements AgentTool {
 
-    /** No default timeout — matches campusclaw behavior (timeout only if explicitly set). */
+    /**
+     * No default timeout — matches campusclaw behavior (timeout only if explicitly set).
+     */
     static final int NO_TIMEOUT = 0;
 
     static final int MAX_OUTPUT_LINES = 2000;

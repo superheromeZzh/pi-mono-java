@@ -238,7 +238,9 @@ class AgentEventTest {
             assertEquals("search", turnEnd.toolResults().getFirst().toolName());
         }
 
-        /** JSON fixture for {@link #messageUpdateEventFromJson()} — large nested payload kept out of the test body. */
+        /**
+         * JSON fixture for {@link #messageUpdateEventFromJson()} — large nested payload kept out of the test body.
+         */
         private static final String MESSAGE_UPDATE_EVENT_JSON =
                 """
                 {

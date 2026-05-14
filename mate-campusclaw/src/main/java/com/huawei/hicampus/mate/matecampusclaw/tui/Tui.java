@@ -93,7 +93,9 @@ public class Tui {
         this.inputHandler = handler;
     }
 
-    /** Start the TUI. Enters raw mode, hides cursor, clears screen. */
+    /**
+     * Start the TUI. Enters raw mode, hides cursor, clears screen.
+     */
     public void start() {
         running = true;
         terminal.clearListeners();
@@ -118,7 +120,9 @@ public class Tui {
         terminal.onResize(size -> render());
     }
 
-    /** Stop the TUI. Shows cursor, moves below content, exits raw mode. */
+    /**
+     * Stop the TUI. Shows cursor, moves below content, exits raw mode.
+     */
     public void stop() {
         running = false;
 
@@ -128,7 +132,9 @@ public class Tui {
         terminal.exitRawMode();
     }
 
-    /** Range of lines that changed between previous and new frame; {@code null} when nothing changed. */
+    /**
+     * Range of lines that changed between previous and new frame; {@code null} when nothing changed.
+     */
     private record ChangeRange(int first, int last, boolean appendStart) {}
 
     /**

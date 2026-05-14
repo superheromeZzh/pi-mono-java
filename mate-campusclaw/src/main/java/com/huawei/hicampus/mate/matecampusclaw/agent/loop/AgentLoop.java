@@ -157,7 +157,9 @@ public class AgentLoop {
         }
     }
 
-    /** Result of consuming the LLM event stream until cancellation or completion. */
+    /**
+     * Result of consuming the LLM event stream until cancellation or completion.
+     */
     private record StreamConsumeResult(AssistantMessage message, boolean assistantStarted) {}
 
     private AssistantMessage invokeModel(AgentContext context, AgentEventListener listener, CancellationToken signal) {

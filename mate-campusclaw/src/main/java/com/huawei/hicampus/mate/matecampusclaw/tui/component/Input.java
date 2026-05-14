@@ -137,7 +137,9 @@ public class Input implements Component, Focusable {
         // No cached state
     }
 
-    /** Horizontally-scrolled window over {@link #value} suitable for rendering. */
+    /**
+     * Horizontally-scrolled window over {@link #value} suitable for rendering.
+     */
     private record Viewport(String visibleText, int cursorDisplayPos) {}
 
     @Override

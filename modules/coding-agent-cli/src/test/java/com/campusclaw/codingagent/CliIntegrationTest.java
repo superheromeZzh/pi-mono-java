@@ -132,7 +132,9 @@ class CliIntegrationTest {
                 new EditTool(editOps, mutationQueue, tempDir));
     }
 
-    /** Combines read+write for EditTool. */
+    /**
+     * Combines read+write for EditTool.
+     */
     private static class LocalEditOps implements EditOperations {
         private final LocalReadOperations read = new LocalReadOperations();
         private final LocalWriteOperations write = new LocalWriteOperations();

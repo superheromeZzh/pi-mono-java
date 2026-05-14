@@ -23,12 +23,18 @@ import org.springframework.lang.Nullable;
 })
 public sealed interface CronSchedule {
 
-    /** One-shot schedule at a specific timestamp. */
+    /**
+     * One-shot schedule at a specific timestamp.
+     */
     record At(long timestampMs) implements CronSchedule {}
 
-    /** Recurring schedule at a fixed interval. */
+    /**
+     * Recurring schedule at a fixed interval.
+     */
     record Every(long intervalMs) implements CronSchedule {}
 
-    /** Recurring schedule using a Spring-compatible cron expression. */
+    /**
+     * Recurring schedule using a Spring-compatible cron expression.
+     */
     record CronExpr(String expression, @Nullable String timezone) implements CronSchedule {}
 }

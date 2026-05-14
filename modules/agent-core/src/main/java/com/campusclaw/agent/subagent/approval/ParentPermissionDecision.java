@@ -16,7 +16,9 @@ package com.campusclaw.agent.subagent.approval;
  */
 public record ParentPermissionDecision(Outcome outcome, String optionId) {
 
-    /** High-level outcome of a permission round-trip. */
+    /**
+     * High-level outcome of a permission round-trip.
+     */
     public enum Outcome {
         SELECTED,
         CANCELLED

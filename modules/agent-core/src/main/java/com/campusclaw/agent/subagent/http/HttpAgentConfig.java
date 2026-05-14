@@ -33,7 +33,9 @@ public record HttpAgentConfig(
         Duration requestTimeout,
         Duration promptTimeout) {
 
-    /** Authentication schemes supported by {@link HttpAgentBackend}. */
+    /**
+     * Authentication schemes supported by {@link HttpAgentBackend}.
+     */
     public enum AuthType {
         NONE,
         BEARER,

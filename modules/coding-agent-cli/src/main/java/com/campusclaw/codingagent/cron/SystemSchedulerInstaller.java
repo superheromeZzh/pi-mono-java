@@ -83,7 +83,9 @@ public class SystemSchedulerInstaller {
 
     // --- macOS launchd ---
 
-    /** launchd plist template — single {@code %s,%s,%d,%s,%s} replacement (label/launcher/interval/logDir/logDir). */
+    /**
+     * launchd plist template — single {@code %s,%s,%d,%s,%s} replacement (label/launcher/interval/logDir/logDir).
+     */
     private static final String PLIST_TEMPLATE =
             """
             <?xml version="1.0" encoding="UTF-8"?>

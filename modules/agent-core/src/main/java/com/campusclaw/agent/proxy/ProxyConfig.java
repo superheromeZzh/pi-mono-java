@@ -220,7 +220,9 @@ public class ProxyConfig {
         this.httpsProxy = proxy;
     }
 
-    /** Install as system-wide proxy selector. */
+    /**
+     * Install as system-wide proxy selector.
+     */
     public void installAsDefault() {
         ProxyConfig self = this;
         ProxySelector.setDefault(new ProxySelector() {

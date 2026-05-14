@@ -192,7 +192,9 @@ public class SessionPool {
         this.subAgentRegistry = registry;
     }
 
-    /** Shuts down the cleaner thread and closes any open SessionManager writers. */
+    /**
+     * Shuts down the cleaner thread and closes any open SessionManager writers.
+     */
     public void shutdown() {
         cleaner.shutdownNow();
         sessions.values().forEach(e -> closeQuietly(e.session()));

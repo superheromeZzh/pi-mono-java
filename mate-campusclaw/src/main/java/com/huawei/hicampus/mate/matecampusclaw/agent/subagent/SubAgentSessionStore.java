@@ -25,7 +25,9 @@ public interface SubAgentSessionStore {
 
     List<SubAgentSessionRecord> listOpen();
 
-    /** No-op store used when persistence is intentionally disabled. */
+    /**
+     * No-op store used when persistence is intentionally disabled.
+     */
     SubAgentSessionStore NOOP = new SubAgentSessionStore() {
 
         @Override

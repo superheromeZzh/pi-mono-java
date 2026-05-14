@@ -54,7 +54,9 @@ public class GrepTool implements AgentTool {
     static final int MAX_RESULTS = 500;
     static final Duration TIMEOUT = Duration.ofSeconds(30);
 
-    /** File type to extensions mapping, matching ripgrep's --type behavior. */
+    /**
+     * File type to extensions mapping, matching ripgrep's --type behavior.
+     */
     static final Map<String, Set<String>> TYPE_EXTENSIONS = Map.ofEntries(
             Map.entry("js", Set.of(".js", ".mjs", ".cjs", ".jsx")),
             Map.entry("ts", Set.of(".ts", ".mts", ".cts", ".tsx")),

@@ -420,7 +420,9 @@ public final class AnsiUtils {
     // Internal helpers for wrapTextWithAnsi
     // -------------------------------------------------------------------
 
-    /** Mutable cursor over the in-progress wrapped line — used to keep wrapSingleLine flat. */
+    /**
+     * Mutable cursor over the in-progress wrapped line — used to keep wrapSingleLine flat.
+     */
     private static final class WrapCursor {
         StringBuilder line = new StringBuilder();
         int visibleLen;
@@ -507,7 +509,9 @@ public final class AnsiUtils {
         }
     }
 
-    /** Tagged segment yielded by {@link #segmentAnsiAware}: either an ANSI code or a visible grapheme. */
+    /**
+     * Tagged segment yielded by {@link #segmentAnsiAware}: either an ANSI code or a visible grapheme.
+     */
     private record WordSegment(boolean ansi, String value) {}
 
     private static List<WordSegment> segmentAnsiAware(String word) {

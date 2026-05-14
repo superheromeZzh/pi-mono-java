@@ -189,7 +189,9 @@ public class ProcessAcpBackend implements SubAgentBackend {
         return handle;
     }
 
-    /** Static configuration for a {@link ProcessAcpBackend}. */
+    /**
+     * Static configuration for a {@link ProcessAcpBackend}.
+     */
     public record Config(
             String command,
             List<String> args,

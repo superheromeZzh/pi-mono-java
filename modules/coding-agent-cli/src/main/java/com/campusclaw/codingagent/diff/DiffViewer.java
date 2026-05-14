@@ -15,7 +15,9 @@ import java.util.List;
  */
 public class DiffViewer {
 
-    /** ANSI color codes. */
+    /**
+     * ANSI color codes.
+     */
     private static final String RED = "\033[31m";
 
     private static final String GREEN = "\033[32m";

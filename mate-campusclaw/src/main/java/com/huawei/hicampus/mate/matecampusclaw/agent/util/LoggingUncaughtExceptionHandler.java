@@ -20,7 +20,9 @@ import org.slf4j.LoggerFactory;
  */
 public final class LoggingUncaughtExceptionHandler implements Thread.UncaughtExceptionHandler {
 
-    /** Shared singleton instance — register this on every directly-instantiated {@link Thread}. */
+    /**
+     * Shared singleton instance — register this on every directly-instantiated {@link Thread}.
+     */
     public static final LoggingUncaughtExceptionHandler INSTANCE = new LoggingUncaughtExceptionHandler();
 
     private static final Logger log = LoggerFactory.getLogger(LoggingUncaughtExceptionHandler.class);

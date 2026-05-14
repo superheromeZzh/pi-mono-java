@@ -162,7 +162,9 @@ public class MigrationManager {
         }
     }
 
-    /** Register built-in migrations. */
+    /**
+     * Register built-in migrations.
+     */
     private void registerBuiltins() {
         // v1 -> v2: Add parentId to session entries for tree support
         register(new MigrationStep(1, 2, "Add session tree support (parentId field)", dataDir -> {

@@ -101,7 +101,9 @@ class ComponentTest {
     // Test helpers
     // -------------------------------------------------------------------
 
-    /** Minimal Component implementation for testing. */
+    /**
+     * Minimal Component implementation for testing.
+     */
     static class SimpleComponent implements Component {
         private final List<String> lines;
         private boolean rendered = false;
@@ -126,7 +128,9 @@ class ComponentTest {
         }
     }
 
-    /** Component that also implements Focusable. */
+    /**
+     * Component that also implements Focusable.
+     */
     static class FocusableComponent implements Component, Focusable {
         private boolean focused = false;
 

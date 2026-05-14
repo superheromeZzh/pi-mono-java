@@ -41,10 +41,14 @@ public class ApiProviderRegistry {
 
     private final Object lock = new Object();
 
-    /** Primary index: Api -> provider (last registration wins). */
+    /**
+     * Primary index: Api -> provider (last registration wins).
+     */
     private final Map<Api, ApiProvider> providersByApi = new ConcurrentHashMap<>();
 
-    /** Tracks which sourceId registered which providers, for bulk unregister. */
+    /**
+     * Tracks which sourceId registered which providers, for bulk unregister.
+     */
     private final Map<String, List<ApiProvider>> providersBySource = new ConcurrentHashMap<>();
 
     /**

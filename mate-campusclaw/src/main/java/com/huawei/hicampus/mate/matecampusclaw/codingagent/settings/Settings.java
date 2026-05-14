@@ -26,7 +26,9 @@ import jakarta.annotation.Nullable;
 public record Settings(
         @JsonProperty("defaultProvider") @Nullable String defaultProvider,
         @JsonProperty("defaultModel") @Nullable String defaultModel,
-        /** opencode-style alias for defaultModel (e.g. "anthropic/claude-sonnet-4"). */
+        /**
+         * opencode-style alias for defaultModel (e.g. "anthropic/claude-sonnet-4").
+         */
         @JsonProperty("model") @Nullable String model,
         @JsonProperty("defaultThinkingLevel") @Nullable String defaultThinkingLevel,
         @JsonProperty("transport") @Nullable String transport,
@@ -51,9 +53,13 @@ public record Settings(
         @JsonProperty("branchSummary") @Nullable BranchSummarySettings branchSummary,
         @JsonProperty("terminal") @Nullable TerminalSettings terminal,
         @JsonProperty("images") @Nullable ImageSettings images,
-        /** Per-provider config: API key / base URL / headers (opencode-style). */
+        /**
+         * Per-provider config: API key / base URL / headers (opencode-style).
+         */
         @JsonProperty("provider") @Nullable Map<String, ProviderConfig> provider,
-        /** Per-agent overrides: e.g. {"summarizer": {"model": "..."}}. */
+        /**
+         * Per-agent overrides: e.g. {"summarizer": {"model": "..."}}.
+         */
         @JsonProperty("agent") @Nullable Map<String, AgentConfig> agent) {
     public static Settings empty() {
         return new Settings(
@@ -127,7 +133,9 @@ public record Settings(
     @JsonIgnoreProperties(ignoreUnknown = true)
     public record ProviderConfig(
             @JsonProperty("apiKey") @Nullable String apiKey,
-            /** Both {@code baseURL} (opencode) and {@code baseUrl} are accepted. */
+            /**
+             * Both {@code baseURL} (opencode) and {@code baseUrl} are accepted.
+             */
             @JsonProperty("baseURL") @Nullable String baseURL,
             @JsonProperty("baseUrl") @Nullable String baseUrlAlt,
             @JsonProperty("headers") @Nullable Map<String, String> headers) {

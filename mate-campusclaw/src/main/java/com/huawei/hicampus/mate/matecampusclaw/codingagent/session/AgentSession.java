@@ -360,7 +360,9 @@ public class AgentSession {
         agent.setSystemPrompt(systemPrompt);
     }
 
-    /** Overload for backward compatibility. */
+    /**
+     * Overload for backward compatibility.
+     */
     public void reload() {
         reload(null);
     }

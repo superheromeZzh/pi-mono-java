@@ -959,7 +959,9 @@ public class Editor implements Component, Focusable {
         return result;
     }
 
-    /** Text chunk for word wrapping — tracks text and position in original line. */
+    /**
+     * Text chunk for word wrapping — tracks text and position in original line.
+     */
     private record TextChunk(String text, int startIndex, int endIndex) {}
 
     /**

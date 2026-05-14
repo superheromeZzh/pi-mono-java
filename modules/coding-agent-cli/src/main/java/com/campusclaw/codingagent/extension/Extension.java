@@ -83,9 +83,13 @@ public interface Extension {
         return List.of();
     }
 
-    /** Called when the extension is loaded. */
+    /**
+     * Called when the extension is loaded.
+     */
     default void onLoad() {}
 
-    /** Called when the extension is unloaded. */
+    /**
+     * Called when the extension is unloaded.
+     */
     default void onUnload() {}
 }

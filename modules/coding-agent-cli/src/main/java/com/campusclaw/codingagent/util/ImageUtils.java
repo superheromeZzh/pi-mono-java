@@ -32,9 +32,13 @@ import org.slf4j.LoggerFactory;
 public final class ImageUtils {
     private static final Logger log = LoggerFactory.getLogger(ImageUtils.class);
 
-    /** Maximum dimension for images sent to LLM (preserves aspect ratio). */
+    /**
+     * Maximum dimension for images sent to LLM (preserves aspect ratio).
+     */
     public static final int MAX_LLM_DIMENSION = 2048;
-    /** Maximum file size for images (5 MB). */
+    /**
+     * Maximum file size for images (5 MB).
+     */
     public static final long MAX_FILE_SIZE = 5 * 1024 * 1024;
 
     private ImageUtils() {}

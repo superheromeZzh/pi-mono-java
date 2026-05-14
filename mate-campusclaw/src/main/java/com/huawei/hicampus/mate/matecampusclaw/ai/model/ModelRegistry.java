@@ -48,7 +48,9 @@ public class ModelRegistry {
 
     private final Object lock = new Object();
 
-    /** Two-level index: Provider -> (modelId -> Model). */
+    /**
+     * Two-level index: Provider -> (modelId -> Model).
+     */
     private final Map<Provider, Map<String, Model>> models = new ConcurrentHashMap<>();
 
     /**

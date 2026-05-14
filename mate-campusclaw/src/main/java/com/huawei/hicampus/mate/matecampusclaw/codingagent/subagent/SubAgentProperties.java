@@ -45,10 +45,14 @@ public class SubAgentProperties {
         this.backends = backends == null ? new LinkedHashMap<>() : backends;
     }
 
-    /** Per-backend configuration shape. */
+    /**
+     * Per-backend configuration shape.
+     */
     public static class BackendSpec {
 
-        /** Backend transport: {@code acp} (process + ndJSON) or {@code http}. */
+        /**
+         * Backend transport: {@code acp} (process + ndJSON) or {@code http}.
+         */
         private String type;
 
         private boolean disabled;

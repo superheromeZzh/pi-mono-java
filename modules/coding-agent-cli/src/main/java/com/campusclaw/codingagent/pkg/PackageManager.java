@@ -54,7 +54,9 @@ public class PackageManager {
         this.packagesDir = packagesDir;
     }
 
-    /** Scan packages directory for installed packages. */
+    /**
+     * Scan packages directory for installed packages.
+     */
     public void scan() {
         installed.clear();
         if (!Files.isDirectory(packagesDir)) {

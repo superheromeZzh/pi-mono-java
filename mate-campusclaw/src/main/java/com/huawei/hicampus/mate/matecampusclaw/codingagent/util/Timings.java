@@ -246,7 +246,9 @@ public class Timings {
         return sb.toString();
     }
 
-    /** Clear all recorded spans. */
+    /**
+     * Clear all recorded spans.
+     */
     public void clear() {
         spans.clear();
         activeSpans.clear();

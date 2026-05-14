@@ -57,24 +57,32 @@ public sealed interface AssistantMessageEvent
 
     // --- Stream lifecycle ---
 
-    /** Stream begins; carries the initial partial assistant message. */
+    /**
+     * Stream begins; carries the initial partial assistant message.
+     */
     record StartEvent(@JsonProperty("partial") AssistantMessage partial) implements AssistantMessageEvent {}
 
     // --- Text content events ---
 
-    /** A new text content block begins at the given index. */
+    /**
+     * A new text content block begins at the given index.
+     */
     record TextStartEvent(
             @JsonProperty("contentIndex") int contentIndex, @JsonProperty("partial") AssistantMessage partial)
             implements AssistantMessageEvent {}
 
-    /** Incremental text content delta. */
+    /**
+     * Incremental text content delta.
+     */
     record TextDeltaEvent(
             @JsonProperty("contentIndex") int contentIndex,
             @JsonProperty("delta") String delta,
             @JsonProperty("partial") AssistantMessage partial)
             implements AssistantMessageEvent {}
 
-    /** Text content block at the given index is complete. */
+    /**
+     * Text content block at the given index is complete.
+     */
     record TextEndEvent(
             @JsonProperty("contentIndex") int contentIndex,
             @JsonProperty("content") String content,
@@ -83,19 +91,25 @@ public sealed interface AssistantMessageEvent
 
     // --- Thinking content events ---
 
-    /** A new thinking content block begins at the given index. */
+    /**
+     * A new thinking content block begins at the given index.
+     */
     record ThinkingStartEvent(
             @JsonProperty("contentIndex") int contentIndex, @JsonProperty("partial") AssistantMessage partial)
             implements AssistantMessageEvent {}
 
-    /** Incremental thinking content delta. */
+    /**
+     * Incremental thinking content delta.
+     */
     record ThinkingDeltaEvent(
             @JsonProperty("contentIndex") int contentIndex,
             @JsonProperty("delta") String delta,
             @JsonProperty("partial") AssistantMessage partial)
             implements AssistantMessageEvent {}
 
-    /** Thinking content block at the given index is complete. */
+    /**
+     * Thinking content block at the given index is complete.
+     */
     record ThinkingEndEvent(
             @JsonProperty("contentIndex") int contentIndex,
             @JsonProperty("content") String content,
@@ -104,19 +118,25 @@ public sealed interface AssistantMessageEvent
 
     // --- Tool call events ---
 
-    /** A new tool call content block begins at the given index. */
+    /**
+     * A new tool call content block begins at the given index.
+     */
     record ToolCallStartEvent(
             @JsonProperty("contentIndex") int contentIndex, @JsonProperty("partial") AssistantMessage partial)
             implements AssistantMessageEvent {}
 
-    /** Incremental tool call arguments delta (JSON fragment). */
+    /**
+     * Incremental tool call arguments delta (JSON fragment).
+     */
     record ToolCallDeltaEvent(
             @JsonProperty("contentIndex") int contentIndex,
             @JsonProperty("delta") String delta,
             @JsonProperty("partial") AssistantMessage partial)
             implements AssistantMessageEvent {}
 
-    /** Tool call at the given index is complete with the final parsed ToolCall. */
+    /**
+     * Tool call at the given index is complete with the final parsed ToolCall.
+     */
     record ToolCallEndEvent(
             @JsonProperty("contentIndex") int contentIndex,
             @JsonProperty("toolCall") ToolCall toolCall,

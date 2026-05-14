@@ -70,7 +70,9 @@ public class ToolExecutionPipeline {
         return toToolResultMessage(toolCall, toolName, outcome.result(), outcome.isError());
     }
 
-    /** Composite of an {@link AgentToolResult} and its error flag — internal handoff between phases. */
+    /**
+     * Composite of an {@link AgentToolResult} and its error flag — internal handoff between phases.
+     */
     private record Outcome(AgentToolResult result, boolean isError) {}
 
     // Returns the synthesized blocking ToolResultMessage if the beforeToolCall hook rejected
