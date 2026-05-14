@@ -36,32 +36,41 @@ public class AcpTransport implements AutoCloseable {
     private static final Logger log = LoggerFactory.getLogger(AcpTransport.class);
 
     /**
-     * Opt-in JSONL trace of every ACP envelope (in/out). Set env {@code CAMPUSCLAW_ACP_TRACE=1}
-     * to enable; file lives at {@code ~/.campusclaw/acp-trace.jsonl} and is truncated on the
-     * first envelope of each JVM run. Used to diagnose "no answer" issues on platforms where
-     * logback console output is swallowed by TUI rendering.
+     * Opt-in JSONL trace of every ACP envelope (in/out). Enable via either
+     * {@code CAMPUSCLAW_ACP_TRACE=1} env var or {@code -Dcampusclaw.acp.trace=1} JVM property.
+     * File lives at {@code ~/.campusclaw/acp-trace.jsonl} (TRUNCATE on each JVM start).
+     * Used to diagnose "no answer" issues when TUI rendering swallows console logs.
      */
     private static final PrintWriter TRACE = openTrace();
 
     private static PrintWriter openTrace() {
-        String enable = System.getenv("CAMPUSCLAW_ACP_TRACE");
-        if (enable == null || enable.isBlank() || "0".equals(enable.trim())) {
+        String env = System.getenv("CAMPUSCLAW_ACP_TRACE");
+        String prop = System.getProperty("campusclaw.acp.trace");
+        boolean enabled = isTruthy(env) || isTruthy(prop);
+        if (!enabled) {
+            log.info("ACP trace: disabled (set CAMPUSCLAW_ACP_TRACE=1 or -Dcampusclaw.acp.trace=1)");
             return null;
         }
         try {
             Path dir = Paths.get(System.getProperty("user.home", "."), ".campusclaw");
             Files.createDirectories(dir);
             Path file = dir.resolve("acp-trace.jsonl");
-            return new PrintWriter(Files.newBufferedWriter(
+            PrintWriter writer = new PrintWriter(Files.newBufferedWriter(
                     file,
                     StandardCharsets.UTF_8,
                     StandardOpenOption.CREATE,
                     StandardOpenOption.TRUNCATE_EXISTING,
                     StandardOpenOption.WRITE));
+            log.info("ACP trace: writing to {}", file.toAbsolutePath());
+            return writer;
         } catch (IOException ex) {
-            log.warn("failed to open ACP trace file: {}", ex.toString());
+            log.warn("ACP trace: failed to open trace file: {}", ex.toString());
             return null;
         }
+    }
+
+    private static boolean isTruthy(String s) {
+        return s != null && !s.isBlank() && !"0".equals(s.trim()) && !"false".equalsIgnoreCase(s.trim());
     }
 
     private static void trace(String direction, String payload) {
