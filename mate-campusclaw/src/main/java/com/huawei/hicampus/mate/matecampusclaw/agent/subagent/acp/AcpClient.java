@@ -25,6 +25,7 @@ import org.slf4j.LoggerFactory;
 
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Sinks;
+import reactor.core.publisher.Sinks.EmitFailureHandler;
 
 /**
  * JSON-RPC client driving an ACP server over an {@link AcpTransport}. Performs the
@@ -39,6 +40,16 @@ import reactor.core.publisher.Sinks;
 public class AcpClient implements AutoCloseable {
 
     private static final Logger log = LoggerFactory.getLogger(AcpClient.class);
+
+    /**
+     * Busy-loop retry handler for concurrent emits to {@link #events}. Reader thread (text/tool
+     * deltas) and prompt thread (Done) can collide; default {@code tryEmitNext} returns
+     * {@code FAIL_NON_SERIALIZED} on collision and silently drops the event. Without this,
+     * the final {@code agent_message_chunk} can be lost when it arrives close to the prompt
+     * response — observed on Windows where stream timing is tighter than on macOS.
+     */
+    private static final EmitFailureHandler RETRY_NON_SERIALIZED =
+            EmitFailureHandler.busyLooping(java.time.Duration.ofMillis(50L));
 
     private final ObjectMapper mapper;
     private final AcpTransport transport;
@@ -110,7 +121,7 @@ public class AcpClient implements AutoCloseable {
         AcpProtocol.Envelope reply = call(AcpProtocol.METHOD_PROMPT, request, timeout);
         var response = mapper.convertValue(reply.result(), AcpProtocol.PromptResponse.class);
         AcpStopReason stop = AcpStopReason.fromWire(response.stopReason());
-        events.tryEmitNext(new SubAgentEvent.Done(stop.toSubAgent()));
+        events.emitNext(new SubAgentEvent.Done(stop.toSubAgent()), RETRY_NON_SERIALIZED);
         return stop;
     }
 
@@ -128,7 +139,7 @@ public class AcpClient implements AutoCloseable {
 
     @Override
     public void close() {
-        events.tryEmitComplete();
+        events.emitComplete(RETRY_NON_SERIALIZED);
         transport.close();
         pending.values()
                 .forEach(future ->
@@ -213,7 +224,7 @@ public class AcpClient implements AutoCloseable {
             }
             SubAgentEvent event = AcpEventMapper.toSubAgentEvent(update.update(), mapper);
             if (event != null) {
-                events.tryEmitNext(event);
+                events.emitNext(event, RETRY_NON_SERIALIZED);
             }
         } catch (RuntimeException ex) {
             log.warn("failed to decode session/update: {}", ex.toString());
@@ -250,8 +261,10 @@ public class AcpClient implements AutoCloseable {
     }
 
     private void onTransportError(Throwable cause) {
-        events.tryEmitNext(new SubAgentEvent.Error("ACP_TRANSPORT", String.valueOf(cause.getMessage()), false));
-        events.tryEmitComplete();
+        events.emitNext(
+                new SubAgentEvent.Error("ACP_TRANSPORT", String.valueOf(cause.getMessage()), false),
+                RETRY_NON_SERIALIZED);
+        events.emitComplete(RETRY_NON_SERIALIZED);
         pending.values().forEach(future -> future.completeExceptionally(cause));
         pending.clear();
     }
