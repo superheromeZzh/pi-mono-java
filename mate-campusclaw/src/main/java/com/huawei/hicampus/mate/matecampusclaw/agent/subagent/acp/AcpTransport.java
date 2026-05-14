@@ -9,7 +9,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
@@ -29,6 +34,47 @@ import org.slf4j.LoggerFactory;
 public class AcpTransport implements AutoCloseable {
 
     private static final Logger log = LoggerFactory.getLogger(AcpTransport.class);
+
+    /**
+     * Opt-in JSONL trace of every ACP envelope (in/out). Set env {@code CAMPUSCLAW_ACP_TRACE=1}
+     * to enable; file lives at {@code ~/.campusclaw/acp-trace.jsonl} and is truncated on the
+     * first envelope of each JVM run. Used to diagnose "no answer" issues on platforms where
+     * logback console output is swallowed by TUI rendering.
+     */
+    private static final PrintWriter TRACE = openTrace();
+
+    private static PrintWriter openTrace() {
+        String enable = System.getenv("CAMPUSCLAW_ACP_TRACE");
+        if (enable == null || enable.isBlank() || "0".equals(enable.trim())) {
+            return null;
+        }
+        try {
+            Path dir = Paths.get(System.getProperty("user.home", "."), ".campusclaw");
+            Files.createDirectories(dir);
+            Path file = dir.resolve("acp-trace.jsonl");
+            return new PrintWriter(Files.newBufferedWriter(
+                    file,
+                    StandardCharsets.UTF_8,
+                    StandardOpenOption.CREATE,
+                    StandardOpenOption.TRUNCATE_EXISTING,
+                    StandardOpenOption.WRITE));
+        } catch (IOException ex) {
+            log.warn("failed to open ACP trace file: {}", ex.toString());
+            return null;
+        }
+    }
+
+    private static void trace(String direction, String payload) {
+        if (TRACE == null) {
+            return;
+        }
+        synchronized (TRACE) {
+            TRACE.print(direction);
+            TRACE.print(' ');
+            TRACE.println(payload);
+            TRACE.flush();
+        }
+    }
 
     private final ObjectMapper mapper;
     private final InputStream input;
@@ -67,6 +113,7 @@ public class AcpTransport implements AutoCloseable {
                 output.write('\n');
                 output.flush();
             }
+            trace(">", new String(payload, StandardCharsets.UTF_8));
         } catch (IOException ex) {
             throw new SubAgentException("ACP_WRITE_FAILED", "failed to write ACP envelope", ex);
         }
@@ -112,6 +159,7 @@ public class AcpTransport implements AutoCloseable {
         if (trimmed.isEmpty()) {
             return;
         }
+        trace("<", trimmed);
         try {
             AcpProtocol.Envelope envelope = mapper.readValue(trimmed, AcpProtocol.Envelope.class);
             onMessage.accept(envelope);
