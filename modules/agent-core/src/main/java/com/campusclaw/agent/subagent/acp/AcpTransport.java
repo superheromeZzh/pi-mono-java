@@ -36,19 +36,20 @@ public class AcpTransport implements AutoCloseable {
     private static final Logger log = LoggerFactory.getLogger(AcpTransport.class);
 
     /**
-     * Opt-in JSONL trace of every ACP envelope (in/out). Enable via either
-     * {@code CAMPUSCLAW_ACP_TRACE=1} env var or {@code -Dcampusclaw.acp.trace=1} JVM property.
-     * File lives at {@code ~/.campusclaw/acp-trace.jsonl} (TRUNCATE on each JVM start).
-     * Used to diagnose "no answer" issues when TUI rendering swallows console logs.
+     * JSONL trace of every ACP envelope (in/out). Default ON to make "no answer" issues
+     * diagnosable without env-var rituals — TUI swallows logback console output and Windows
+     * env propagation is unreliable. Opt out with {@code CAMPUSCLAW_ACP_TRACE=0} (or
+     * {@code -Dcampusclaw.acp.trace=0}). File lives at {@code ~/.campusclaw/acp-trace.jsonl}
+     * (TRUNCATE on each JVM start). Writes a startup marker line so the file always exists
+     * after class load — its presence/contents proves the JVM ran with the latest code.
      */
     private static final PrintWriter TRACE = openTrace();
 
     private static PrintWriter openTrace() {
         String env = System.getenv("CAMPUSCLAW_ACP_TRACE");
         String prop = System.getProperty("campusclaw.acp.trace");
-        boolean enabled = isTruthy(env) || isTruthy(prop);
-        if (!enabled) {
-            log.info("ACP trace: disabled (set CAMPUSCLAW_ACP_TRACE=1 or -Dcampusclaw.acp.trace=1)");
+        if (isFalsy(env) || isFalsy(prop)) {
+            log.info("ACP trace: disabled by CAMPUSCLAW_ACP_TRACE=0 / -Dcampusclaw.acp.trace=0");
             return null;
         }
         try {
@@ -61,6 +62,9 @@ public class AcpTransport implements AutoCloseable {
                     StandardOpenOption.CREATE,
                     StandardOpenOption.TRUNCATE_EXISTING,
                     StandardOpenOption.WRITE));
+            writer.println("# acp-trace started at " + java.time.Instant.now() + " (jvm pid="
+                    + ProcessHandle.current().pid() + ")");
+            writer.flush();
             log.info("ACP trace: writing to {}", file.toAbsolutePath());
             return writer;
         } catch (IOException ex) {
@@ -69,8 +73,12 @@ public class AcpTransport implements AutoCloseable {
         }
     }
 
-    private static boolean isTruthy(String s) {
-        return s != null && !s.isBlank() && !"0".equals(s.trim()) && !"false".equalsIgnoreCase(s.trim());
+    private static boolean isFalsy(String s) {
+        if (s == null) {
+            return false;
+        }
+        String t = s.trim();
+        return "0".equals(t) || "false".equalsIgnoreCase(t) || "off".equalsIgnoreCase(t);
     }
 
     private static void trace(String direction, String payload) {
