@@ -179,6 +179,7 @@ public class SpawnAgentTool implements AgentTool {
             AgentToolUpdateCallback onUpdate,
             Duration timeout) {
         var transcript = new StringBuilder();
+        var thoughtFallback = new StringBuilder();
         var stopReason = new AtomicReference<SubAgentEvent.StopReason>();
         var errorRef = new AtomicReference<SubAgentEvent.Error>();
         var done = new CountDownLatch(1);
@@ -186,7 +187,7 @@ public class SpawnAgentTool implements AgentTool {
         var cancelledByParent = new java.util.concurrent.atomic.AtomicBoolean(false);
         var subscription = backend.prompt(session, task, signal)
                 .subscribe(
-                        event -> handleEvent(event, transcript, stopReason, errorRef, onUpdate),
+                        event -> handleEvent(event, transcript, thoughtFallback, stopReason, errorRef, onUpdate),
                         err -> {
                             errorRef.compareAndSet(null, new SubAgentEvent.Error("STREAM", err.getMessage(), false));
                             done.countDown();
@@ -224,18 +225,23 @@ public class SpawnAgentTool implements AgentTool {
         if (errorRef.get() != null) {
             return textResult("Error: " + errorRef.get().message());
         }
-        return buildResult(transcript.toString(), stopReason.get());
+        return buildResult(transcript.toString(), thoughtFallback.toString(), stopReason.get());
     }
 
     private static void handleEvent(
             SubAgentEvent event,
             StringBuilder transcript,
+            StringBuilder thoughtFallback,
             AtomicReference<SubAgentEvent.StopReason> stopReason,
             AtomicReference<SubAgentEvent.Error> errorRef,
             AgentToolUpdateCallback onUpdate) {
-        if (event instanceof SubAgentEvent.TextDelta delta && delta.stream() == SubAgentEvent.Stream.OUTPUT) {
-            transcript.append(delta.text());
-            onUpdate.onUpdate(new AgentToolResult(List.of(new TextContent(transcript.toString())), null));
+        if (event instanceof SubAgentEvent.TextDelta delta) {
+            if (delta.stream() == SubAgentEvent.Stream.OUTPUT) {
+                transcript.append(delta.text());
+                onUpdate.onUpdate(new AgentToolResult(List.of(new TextContent(transcript.toString())), null));
+            } else if (delta.stream() == SubAgentEvent.Stream.THOUGHT) {
+                thoughtFallback.append(delta.text());
+            }
         } else if (event instanceof SubAgentEvent.Done d) {
             stopReason.set(d.stopReason());
         } else if (event instanceof SubAgentEvent.Error err) {
@@ -243,8 +249,19 @@ public class SpawnAgentTool implements AgentTool {
         }
     }
 
-    private static AgentToolResult buildResult(String transcript, SubAgentEvent.StopReason stopReason) {
-        String body = transcript.isBlank() ? "(sub-agent returned no output)" : transcript;
+    private static AgentToolResult buildResult(
+            String transcript, String thoughtFallback, SubAgentEvent.StopReason stopReason) {
+        String body;
+        if (!transcript.isBlank()) {
+            body = transcript;
+        } else if (!thoughtFallback.isBlank()) {
+            // Some backends (non-Anthropic models behind a Claude-compatible gateway) only
+            // emit agent_thought_chunk and never a final agent_message_chunk. Fall back to
+            // the thought stream so the user sees the actual response instead of empty output.
+            body = thoughtFallback;
+        } else {
+            body = "(sub-agent returned no output)";
+        }
         String suffix = stopReason == null ? "" : "\n\n[stop=" + stopReason + "]";
         return new AgentToolResult(List.of(new TextContent(body + suffix)), null);
     }
