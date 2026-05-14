@@ -96,36 +96,74 @@ public class AgentLoop {
         }
         List<Message> pendingTurnInputs = List.copyOf(prompts);
         eventListener.onEvent(new AgentStartEvent());
+        int turn = 0;
         try {
             while (!signal.isCancelled()) {
+                turn++;
+                AcpTransport.note("AgentLoop.turn=" + turn + " start msgCount="
+                        + context.messages().size());
                 eventListener.onEvent(new TurnStartEvent());
                 emitPendingInputs(pendingTurnInputs, eventListener);
-                var assistantMessage = invokeModel(context, eventListener, signal);
+                AssistantMessage assistantMessage = invokeModelTraced(turn, context, eventListener, signal);
                 context.appendMessage(assistantMessage);
                 context.setAssistantMessage(assistantMessage);
                 eventListener.onEvent(new MessageEndEvent(assistantMessage));
                 if (assistantMessage.stopReason() == StopReason.ERROR
                         || assistantMessage.stopReason() == StopReason.ABORTED) {
+                    AcpTransport.note("AgentLoop.turn=" + turn + " end stopReason=" + assistantMessage.stopReason());
                     eventListener.onEvent(new TurnEndEvent(assistantMessage, List.of()));
                     break;
                 }
                 var toolCalls = extractToolCalls(assistantMessage);
+                AcpTransport.note("AgentLoop.turn=" + turn + " extractedToolCalls=" + toolCalls.size());
                 if (!toolCalls.isEmpty()) {
-                    pendingTurnInputs = runToolPhase(context, signal, eventListener, assistantMessage, toolCalls);
+                    pendingTurnInputs =
+                            runToolPhaseTraced(turn, context, signal, eventListener, assistantMessage, toolCalls);
                     continue;
                 }
                 var followUpMessages = drainFollowUpMessages();
                 eventListener.onEvent(new TurnEndEvent(assistantMessage, List.of()));
                 if (followUpMessages.isEmpty()) {
+                    AcpTransport.note("AgentLoop.turn=" + turn + " end no-tools no-followup");
                     break;
                 }
                 context.appendMessages(followUpMessages);
                 pendingTurnInputs = followUpMessages;
             }
+            AcpTransport.note("AgentLoop.exit cancelled=" + signal.isCancelled() + " totalTurns=" + turn);
             return context.messages();
         } finally {
             eventListener.onEvent(new AgentEndEvent(context.messages()));
         }
+    }
+
+    private AssistantMessage invokeModelTraced(
+            int turn, AgentContext context, AgentEventListener listener, CancellationToken signal) {
+        try {
+            return invokeModel(context, listener, signal);
+        } catch (RuntimeException ex) {
+            AcpTransport.note("AgentLoop.turn=" + turn + " invokeModel threw: " + ex);
+            throw ex;
+        }
+    }
+
+    private List<Message> runToolPhaseTraced(
+            int turn,
+            AgentContext context,
+            CancellationToken signal,
+            AgentEventListener eventListener,
+            AssistantMessage assistantMessage,
+            List<ToolCall> toolCalls) {
+        List<Message> result;
+        try {
+            result = runToolPhase(context, signal, eventListener, assistantMessage, toolCalls);
+        } catch (RuntimeException ex) {
+            AcpTransport.note("AgentLoop.turn=" + turn + " runToolPhase threw: " + ex);
+            throw ex;
+        }
+        AcpTransport.note("AgentLoop.turn=" + turn + " runToolPhase done msgCount="
+                + context.messages().size() + " cancelled=" + signal.isCancelled());
+        return result;
     }
 
     private List<Message> runToolPhase(
@@ -190,19 +228,22 @@ public class AgentLoop {
 
     private static void noteAssistant(AssistantMessage msg, int messageCount) {
         int textChars = 0;
-        int toolUses = 0;
+        int toolCalls = 0;
+        int thinking = 0;
         int otherBlocks = 0;
         for (var block : msg.content()) {
             if (block instanceof TextContent tc) {
                 textChars += tc.text() == null ? 0 : tc.text().length();
-            } else if (block.getClass().getSimpleName().contains("ToolUse")) {
-                toolUses++;
+            } else if (block instanceof ToolCall) {
+                toolCalls++;
+            } else if (block.getClass().getSimpleName().contains("Thinking")) {
+                thinking++;
             } else {
                 otherBlocks++;
             }
         }
         AcpTransport.note("AgentLoop.invokeModel returned: textChars=" + textChars
-                + " toolUses=" + toolUses + " otherBlocks=" + otherBlocks
+                + " toolCalls=" + toolCalls + " thinking=" + thinking + " otherBlocks=" + otherBlocks
                 + " stopReason=" + msg.stopReason() + " msgCountInCtx=" + messageCount);
     }
 
