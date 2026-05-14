@@ -125,6 +125,14 @@ public class ProcessAcpBackend implements SubAgentBackend {
         }
     }
 
+    private static String enrichPromptError(RuntimeException cause, RuntimeHandle handle) {
+        String baseMsg = cause.getMessage() == null ? cause.toString() : cause.getMessage();
+        String alive = handle.process.isAlive() ? "still alive" : ("exited code=" + safeExitCode(handle.process));
+        String tail = handle.stderr.snapshot();
+        String suffix = tail.isEmpty() ? "" : "; child stderr tail:\n" + tail;
+        return baseMsg + " [child " + alive + "]" + suffix;
+    }
+
     @Override
     public Flux<SubAgentEvent> prompt(SubAgentSession session, String text, CancellationToken signal) {
         RuntimeHandle handle = requireHandle(session);
@@ -146,7 +154,7 @@ public class ProcessAcpBackend implements SubAgentBackend {
             try {
                 handle.client.prompt(text, timeout);
             } catch (RuntimeException ex) {
-                bridge.tryEmitNext(new SubAgentEvent.Error("ACP_PROMPT", ex.getMessage(), false));
+                bridge.tryEmitNext(new SubAgentEvent.Error("ACP_PROMPT", enrichPromptError(ex, handle), false));
                 bridge.tryEmitComplete();
             }
         });
