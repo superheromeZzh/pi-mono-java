@@ -47,13 +47,42 @@ class ApprovalClassifierTest {
     }
 
     @Test
-    void defaultPolicyAllowsOnlyReadOnly() {
-        var policy = new DefaultApprovalPolicy();
+    void allowModeAutoAllowsEverything() {
+        var policy = new DefaultApprovalPolicy("allow");
+
+        assertThat(policy.decide(ApprovalClassifier.Risk.READ_ONLY, "read")).isEqualTo(ApprovalDecision.AUTO_ALLOW);
+        assertThat(policy.decide(ApprovalClassifier.Risk.FILE_WRITE, "write")).isEqualTo(ApprovalDecision.AUTO_ALLOW);
+        assertThat(policy.decide(ApprovalClassifier.Risk.EXEC, "bash")).isEqualTo(ApprovalDecision.AUTO_ALLOW);
+        assertThat(policy.decide(ApprovalClassifier.Risk.NETWORK, "webfetch")).isEqualTo(ApprovalDecision.AUTO_ALLOW);
+        assertThat(policy.decide(ApprovalClassifier.Risk.UNKNOWN, "x")).isEqualTo(ApprovalDecision.AUTO_ALLOW);
+    }
+
+    @Test
+    void askModeAllowsOnlyReadOnly() {
+        var policy = new DefaultApprovalPolicy("ask");
 
         assertThat(policy.decide(ApprovalClassifier.Risk.READ_ONLY, "read")).isEqualTo(ApprovalDecision.AUTO_ALLOW);
         assertThat(policy.decide(ApprovalClassifier.Risk.FILE_WRITE, "write")).isEqualTo(ApprovalDecision.ASK_PARENT);
         assertThat(policy.decide(ApprovalClassifier.Risk.EXEC, "bash")).isEqualTo(ApprovalDecision.ASK_PARENT);
         assertThat(policy.decide(ApprovalClassifier.Risk.NETWORK, "webfetch")).isEqualTo(ApprovalDecision.ASK_PARENT);
         assertThat(policy.decide(ApprovalClassifier.Risk.UNKNOWN, "x")).isEqualTo(ApprovalDecision.ASK_PARENT);
+    }
+
+    @Test
+    void denyModeDeniesEverything() {
+        var policy = new DefaultApprovalPolicy("deny");
+
+        assertThat(policy.decide(ApprovalClassifier.Risk.READ_ONLY, "read")).isEqualTo(ApprovalDecision.DENY);
+        assertThat(policy.decide(ApprovalClassifier.Risk.EXEC, "bash")).isEqualTo(ApprovalDecision.DENY);
+    }
+
+    @Test
+    void blankAndUnknownConfigFallBackToAllow() {
+        assertThat(new DefaultApprovalPolicy(null).decide(ApprovalClassifier.Risk.EXEC, "bash"))
+                .isEqualTo(ApprovalDecision.AUTO_ALLOW);
+        assertThat(new DefaultApprovalPolicy("").decide(ApprovalClassifier.Risk.EXEC, "bash"))
+                .isEqualTo(ApprovalDecision.AUTO_ALLOW);
+        assertThat(new DefaultApprovalPolicy("garbage").decide(ApprovalClassifier.Risk.EXEC, "bash"))
+                .isEqualTo(ApprovalDecision.AUTO_ALLOW);
     }
 }

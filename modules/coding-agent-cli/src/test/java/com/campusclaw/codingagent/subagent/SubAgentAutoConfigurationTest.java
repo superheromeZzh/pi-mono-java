@@ -102,7 +102,7 @@ class SubAgentAutoConfigurationTest {
 
         @Bean
         DefaultApprovalPolicy defaultApprovalPolicy() {
-            return new DefaultApprovalPolicy();
+            return new DefaultApprovalPolicy("allow");
         }
 
         @Bean

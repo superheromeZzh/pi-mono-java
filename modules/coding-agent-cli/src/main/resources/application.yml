@@ -92,6 +92,13 @@ tool:
 # disabled=true 可临时关闭某条而不删整段
 subagent:
   enabled: true
+  approval:
+    # 子代理工具调用权限策略：
+    #   allow - 全部 AUTO_ALLOW（子代理共用父代理信任域，开箱即用，默认值）
+    #   ask   - 只读工具 AUTO_ALLOW，其它走 ParentPermissionResolver；
+    #           默认 TimeoutDeniedResolver 直接拒，需自行实现 interactive resolver 才有意义
+    #   deny  - 全部拒绝（用于演练 / 沙盒测试）
+    default: allow
   backends:
     claude-code:
       type: acp
