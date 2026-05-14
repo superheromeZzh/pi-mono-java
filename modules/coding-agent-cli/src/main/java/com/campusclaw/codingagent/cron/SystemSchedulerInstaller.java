@@ -170,6 +170,7 @@ public class SystemSchedulerInstaller {
                         .start()
                         .waitFor();
             } catch (Exception ignored) {
+                // legacy unload also failed — plist file removal below is still safe
             }
         }
         Files.deleteIfExists(PLIST_PATH);
@@ -287,6 +288,7 @@ public class SystemSchedulerInstaller {
                     .start()
                     .waitFor();
         } catch (Exception ignored) {
+            // pre-existing task may not exist — recreate below regardless
         }
 
         try {
@@ -405,6 +407,7 @@ public class SystemSchedulerInstaller {
                 return script;
             }
         } catch (Exception ignored) {
+            // jar location lookup is best-effort — fall through to cwd-relative resolution
         }
 
         // Fallback: look relative to cwd

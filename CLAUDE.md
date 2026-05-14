@@ -188,6 +188,24 @@ System.out.println("DEBUG: state = " + state);                      // 改 log.d
 
 **理由**：项目已普遍引入 SLF4J（128 个文件），`LoggingUncaughtExceptionHandler` 已经把后台线程未捕获异常导到 `log.error`。日志型 print 残留在代码里就是可观测性漏洞——上规则一次性堵住，并把「stdout 是契约」的少数类用注解显式标注，杜绝增量。`new InteractiveMode` 路径里类似的事件发布失败、`InteractiveMode#close` 兜底分支，这些都应当走 `log.error("...", e)`，不要在用户终端噪音里再混入诊断信息。
 
+### 禁止空 catch 块吞异常
+
+**规则**：`catch (...) { }` 形式（包括 `catch (Exception ignored) {}` 这种「假装合规」的写法）一律拒绝——异常被静默丢弃，故障一旦发生，日志/监控/复现路径全部失声，溯源只能靠猜。
+
+合规出口只有两条：
+1. **交给 SLF4J**：`log.debug/warn/error("contextual message", e)`，让异常进入正常日志链路；
+2. **确实是无害的 fall-through**：catch 体内**必须**留一行解释性注释，写明*为什么*忽略安全（如 "Windows 不支持 POSIX 权限"、"格式错误的 SSE 行 — 跳过即可"），让 reviewer 一眼能判断这是「有意忽略」而非「忘了处理」。
+
+**硬约束**（Checkstyle `no_empty_catch_block`，build-failing）：内置 `EmptyCatchBlock` 模块，`commentFormat=.*` 接受任意非空注释；变量名豁免留默认 `^$`——即便起名 `ignored`/`expected` 也照样拒，强制把理由写出来。
+
+| ✅ 正例 | ❌ 反例 |
+|---|---|
+| `catch (IOException e) { log.warn("failed to flush cache", e); }` | `catch (IOException e) { }` |
+| `catch (Exception ignored) { /* legacy unload also failed — file removal below is safe */ }` | `catch (Exception ignored) { }` |
+| `catch (NumberFormatException ignored) { // skip unknown enum value from settings.json }` | `catch (Exception ignored) {}` |
+
+**理由**：空 catch 是可观测性的最大单点漏洞——比 `printStackTrace`、比 `System.err.println` 都糟，因为后两者至少在 stderr 留下痕迹，空 catch 连这个都没有。即便确认异常无害，强制写注释也是廉价的"signed acknowledgement"，让六个月后维护此代码的人不必怀疑"这是不是 bug"。本仓 PR review 应当拒绝任何形如 `} catch (...) { }` 的新增——存量在引入规则时已清零，规则上锁防止回潮。
+
 ### 日志消息禁用中文（含标点）
 
 **规则**：所有 SLF4J 日志调用——`log.trace/debug/info/warn/error`、`logger.log(...)`——的**消息模板字面量**不得包含中文字符或中文标点（`：，。、；！？""''（）【】《》`）。运行时拼进 `{}` 占位符的**变量值**（用户输入、文件内容、上游响应等）不在此规则范围——这些值本身不可控，规则只管模板。
