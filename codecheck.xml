@@ -217,6 +217,55 @@
             <property name="format" value="^[a-z][a-zA-Z0-9]*$"/>
         </module>
 
+        <!-- no_fake_assertion_*: 测试代码必须包含**真实**的断言检查，禁止「虚假断言」。
+             虚假断言指语义上恒成立、无法验证被测代码行为的断言——它在 CI 上永远绿，
+             看似有覆盖率实则什么都没测，是单测里最隐蔽的「无效资产」。本仓的硬约束
+             分三个角度覆盖最常见的虚假写法，存量为 0，规则上锁防止回潮：
+
+             1) no_fake_assertion_constant：断言常量自身。
+                ❌ assertTrue(true)            assertTrue(true, "msg")
+                ❌ assertFalse(false)          assertFalse(false, () -> "msg")
+                ❌ assertNull(null)
+                这些断言不引用任何被测变量，唯一作用是让测试方法「看起来有断言」，
+                典型出现在测试占位、TODO 删除残留、AI 生成代码兜底。
+             2) no_fake_assertion_self_compare：左右两侧完全相同的等值/同一比较。
+                ❌ assertEquals(x, x)          assertSame(Foo.BAR, Foo.BAR)
+                ❌ assertEquals(1, 1)          assertNotEquals("a", "a")
+                ❌ assertEquals("foo bar", "foo bar")
+                同 token 自比恒真（或恒假），等同于没有断言。正则用反向引用 \1 严格匹配
+                「首参与第二参字面相同」，复杂表达式（含括号/换行）不会误报。
+             3) no_fake_assertion_assertj_literal：AssertJ 字面量自我断言。
+                ❌ assertThat(true).isTrue()     assertThat(false).isFalse()
+                ❌ assertThat(null).isNull()     assertThat(true).isNotNull()
+                等同于角度 1，只是换了 fluent 写法。
+
+             检测范围：覆盖 src/main 与 src/test/java——不仅限测试目录，是因为生产代码里
+             写 `assertTrue(true)` 一样是 dead code（且通常是误删条件后的残余）。
+             ignoreComments=true 让 javadoc 举反例不被误判。
+
+             **不覆盖**的情况（靠 PR review 与单测覆盖率把关）：
+             - `@Test` 方法整体没有任何断言（Checkstyle 的 regex 难以稳健地跨越方法体大括号）；
+             - `assertNotNull(someJustConstructedObject)` 这类语义弱断言；
+             - `verify(mock)` 完全没设期望的 mockito 调用——存在但无意义。 -->
+        <module name="RegexpSinglelineJava">
+            <property name="id" value="no_fake_assertion_constant"/>
+            <property name="format" value="\bassert(?:True\s*\(\s*true|False\s*\(\s*false|Null\s*\(\s*null)\s*[,)]"/>
+            <property name="message" value="禁止虚假断言：assertTrue(true)/assertFalse(false)/assertNull(null) 不引用任何被测变量，等同于没有断言。请改为断言被测代码真实产生的值。"/>
+            <property name="ignoreComments" value="true"/>
+        </module>
+        <module name="RegexpSinglelineJava">
+            <property name="id" value="no_fake_assertion_self_compare"/>
+            <property name="format" value="\bassert(?:Equals|Same|NotEquals|NotSame)\s*\(\s*([^,()\n]+?)\s*,\s*\1\s*[,)]"/>
+            <property name="message" value="禁止虚假断言：assertEquals/assertSame 等左右两侧完全相同等同于没有断言。请让一侧是期望值字面量、另一侧是被测代码产生的实际值。"/>
+            <property name="ignoreComments" value="true"/>
+        </module>
+        <module name="RegexpSinglelineJava">
+            <property name="id" value="no_fake_assertion_assertj_literal"/>
+            <property name="format" value="\bassertThat\s*\(\s*(?:true|false|null)\s*\)\s*\.\s*(?:isTrue|isFalse|isNull|isNotNull)"/>
+            <property name="message" value="禁止虚假断言：assertThat(true).isTrue() 这类对字面量的 AssertJ 断言等同于没有断言。请把被测代码产生的实际值传入 assertThat(...)。"/>
+            <property name="ignoreComments" value="true"/>
+        </module>
+
         <!-- no_empty_catch_block: 禁止用「空 catch 块」静默吞掉异常。
              空 catch（含 `catch (Exception ignored) {}` 这种形式）让异常在生产环境彻底失声——
              日志拿不到、监控拿不到、复现也复现不出，故障溯源时只能靠猜。

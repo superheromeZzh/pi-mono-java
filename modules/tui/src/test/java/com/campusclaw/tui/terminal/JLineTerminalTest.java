@@ -6,7 +6,6 @@ package com.campusclaw.tui.terminal;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -86,8 +85,10 @@ class JLineTerminalTest {
             terminal.enterRawMode();
             terminal.exitRawMode();
 
-            // Attributes should be restored (dumb terminal may not change them)
-            assertNotNull(dumbTerminal.getAttributes());
+            // After a full enterRawMode + exitRawMode round-trip, attributes must equal what they were
+            // before (round-trip restoration). Attributes lacks .equals(), so compare its toString,
+            // which serializes the full flag set.
+            assertEquals(original.toString(), dumbTerminal.getAttributes().toString());
         }
     }
 

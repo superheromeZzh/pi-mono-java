@@ -119,8 +119,6 @@ class CampusClawAiServiceTest {
             var context = new Context(null, List.of(new UserMessage("hi", 1)), null);
             var eventStream = service.stream(ANTHROPIC_MODEL, context, null);
 
-            assertNotNull(eventStream);
-
             StepVerifier.create(eventStream.asFlux())
                     .expectNextMatches(e -> e instanceof AssistantMessageEvent.StartEvent)
                     .expectNextMatches(e -> e instanceof AssistantMessageEvent.TextStartEvent)
@@ -191,8 +189,6 @@ class CampusClawAiServiceTest {
 
             var context = new Context(null, List.of(new UserMessage("hi", 1)), null);
             var eventStream = service.streamSimple(ANTHROPIC_MODEL, context, null);
-
-            assertNotNull(eventStream);
 
             StepVerifier.create(eventStream.asFlux())
                     .expectNextMatches(e -> e instanceof AssistantMessageEvent.StartEvent)
@@ -372,12 +368,21 @@ class CampusClawAiServiceTest {
 
             var context = new Context(null, List.of(new UserMessage("hi", 1)), null);
 
-            // Both should work and route correctly
+            // Each stream's first event should carry the api value of the provider that produced it,
+            // proving registry-by-api dispatch worked.
             var anthropicStream = service.stream(ANTHROPIC_MODEL, context, null);
-            assertNotNull(anthropicStream);
+            StepVerifier.create(anthropicStream.asFlux())
+                    .expectNextMatches(e -> e instanceof AssistantMessageEvent.StartEvent s
+                            && Api.ANTHROPIC_MESSAGES.value().equals(s.partial().api()))
+                    .thenCancel()
+                    .verify();
 
             var openaiStream = service.stream(OPENAI_MODEL, context, null);
-            assertNotNull(openaiStream);
+            StepVerifier.create(openaiStream.asFlux())
+                    .expectNextMatches(e -> e instanceof AssistantMessageEvent.StartEvent s
+                            && Api.OPENAI_RESPONSES.value().equals(s.partial().api()))
+                    .thenCancel()
+                    .verify();
         }
     }
 

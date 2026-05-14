@@ -5,7 +5,7 @@
 package com.huawei.hicampus.mate.matecampusclaw.ai.provider.openai;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -372,7 +372,13 @@ class OpenAIResponsesProviderTest {
 
             var params = provider.buildParams(testModel(), context, null, null, null);
 
-            assertNotNull(params);
+            // Without overrides: model id propagates, maxOutputTokens defaults to min(model.maxTokens, 32000),
+            // no temperature/tools/instructions set
+            assertEquals("gpt-4o", params.model().orElseThrow().asString());
+            assertEquals(16384L, params.maxOutputTokens().orElseThrow());
+            assertTrue(params.temperature().isEmpty());
+            assertTrue(params.tools().isEmpty());
+            assertTrue(params.instructions().isEmpty());
         }
 
         @Test
@@ -381,7 +387,7 @@ class OpenAIResponsesProviderTest {
 
             var params = provider.buildParams(testModel(), context, 4096, null, null);
 
-            assertNotNull(params);
+            assertEquals(4096L, params.maxOutputTokens().orElseThrow());
         }
 
         @Test
@@ -390,7 +396,7 @@ class OpenAIResponsesProviderTest {
 
             var params = provider.buildParams(testModel(), context, null, 0.7, null);
 
-            assertNotNull(params);
+            assertEquals(0.7, params.temperature().orElseThrow(), 0.0001);
         }
 
         @Test
@@ -401,7 +407,7 @@ class OpenAIResponsesProviderTest {
 
             var params = provider.buildParams(testModel(), context, null, null, null);
 
-            assertNotNull(params);
+            assertEquals(1, params.tools().orElseThrow().size());
         }
 
         @Test
@@ -410,9 +416,8 @@ class OpenAIResponsesProviderTest {
 
             var params = provider.buildParams(testModel(), context, null, null, null);
 
-            assertNotNull(params);
-
-            // Instructions should be set (verified by successful build)
+            // Responses API surfaces the system prompt via the dedicated "instructions" field
+            assertEquals("Be helpful.", params.instructions().orElseThrow());
         }
     }
 
@@ -447,8 +452,9 @@ class OpenAIResponsesProviderTest {
             var options = StreamOptions.builder().apiKey("test-key").build();
 
             var stream = provider.stream(testModel(), context, options);
-            assertNotNull(stream);
-            assertNotNull(stream.asFlux());
+
+            // asFlux() returns a stable, multicast view of the same Sink
+            assertSame(stream.asFlux(), stream.asFlux());
         }
 
         @Test
@@ -457,8 +463,8 @@ class OpenAIResponsesProviderTest {
             var options = SimpleStreamOptions.builder().apiKey("test-key").build();
 
             var stream = provider.streamSimple(testModel(), context, options);
-            assertNotNull(stream);
-            assertNotNull(stream.asFlux());
+
+            assertSame(stream.asFlux(), stream.asFlux());
         }
     }
 }

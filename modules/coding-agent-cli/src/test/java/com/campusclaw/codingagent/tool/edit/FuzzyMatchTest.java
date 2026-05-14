@@ -53,8 +53,12 @@ class FuzzyMatchTest {
 
         @Test
         void matchesWithDifferentIndentation() {
-            var result = FuzzyMatch.fuzzyFindText("    indented\n    line", "indented\nline");
-            assertNotNull(result);
+            String haystack = "    indented\n    line";
+            var result = FuzzyMatch.fuzzyFindText(haystack, "indented\nline");
+
+            // Whitespace-normalized fuzzy match returns the haystack range that maps to the needle,
+            // including the differently-indented prefix that was normalized away.
+            assertEquals(haystack, haystack.substring(result.start(), result.end()));
         }
 
         @Test

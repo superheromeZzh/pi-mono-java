@@ -345,14 +345,14 @@ class MessageTest {
                         2L),
                 new ToolResultMessage("tc", "tool", List.of(new TextContent("ok")), null, false, 3L));
 
-        for (var msg : messages) {
-            var role =
-                    switch (msg) {
-                        case UserMessage u -> "user";
-                        case AssistantMessage a -> "assistant";
-                        case ToolResultMessage t -> "toolResult";
-                    };
-            assertNotNull(role);
-        }
+        List<String> roles = messages.stream()
+                .map(msg -> switch (msg) {
+                    case UserMessage u -> "user";
+                    case AssistantMessage a -> "assistant";
+                    case ToolResultMessage t -> "toolResult";
+                })
+                .toList();
+
+        assertEquals(List.of("user", "assistant", "toolResult"), roles);
     }
 }

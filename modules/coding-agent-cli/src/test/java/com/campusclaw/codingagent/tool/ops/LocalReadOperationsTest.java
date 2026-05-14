@@ -7,7 +7,6 @@ package com.campusclaw.codingagent.tool.ops;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -85,10 +84,10 @@ class LocalReadOperationsTest {
         void textFile() throws IOException {
             Path file = Files.writeString(tempDir.resolve("test.txt"), "content");
             String mime = ops.detectMimeType(file);
-            assertNotNull(mime);
 
-            // Different OS/JDK may return different MIME types for .txt
-            // but it should not be the fallback for a .txt file typically
+            // Different OS/JDK may return different MIME for .txt — but it should be a text/* type,
+            // not the application/octet-stream fallback
+            assertTrue(mime.startsWith("text/"), "expected text/* for .txt, got: " + mime);
         }
 
         @Test
@@ -96,8 +95,8 @@ class LocalReadOperationsTest {
             Path file = Files.writeString(tempDir.resolve("data.xyz123"), "content");
             String mime = ops.detectMimeType(file);
 
-            // probeContentType may return null for unknown extensions; we fallback
-            assertNotNull(mime);
+            // probeContentType returns null for unknown extensions → ReadOperations falls back
+            assertEquals("application/octet-stream", mime);
         }
     }
 }
