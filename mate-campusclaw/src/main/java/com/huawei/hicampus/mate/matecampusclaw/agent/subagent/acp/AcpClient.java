@@ -42,19 +42,27 @@ public class AcpClient implements AutoCloseable {
     private static final Logger log = LoggerFactory.getLogger(AcpClient.class);
 
     /**
-     * Busy-loop retry handler for concurrent emits to {@link #events}. Reader thread (text/tool
-     * deltas) and prompt thread (Done) can collide; default {@code tryEmitNext} returns
-     * {@code FAIL_NON_SERIALIZED} on collision and silently drops the event. Without this,
-     * the final {@code agent_message_chunk} can be lost when it arrives close to the prompt
-     * response — observed on Windows where stream timing is tighter than on macOS.
+     * Busy-loop retry handler for concurrent emits to {@link #events}. Reader thread emits all
+     * events on this sink (including the synthesized {@code Done} produced from a
+     * {@code session/prompt} response — see {@link #handleResponse}); downstream subscribers that
+     * call {@code emitNext} on a derived sink (e.g. backend bridge) may briefly collide with the
+     * reader, so we retry rather than dropping.
      */
     private static final EmitFailureHandler RETRY_NON_SERIALIZED =
             EmitFailureHandler.busyLooping(java.time.Duration.ofMillis(50L));
 
+    /**
+     * Tracks an in-flight JSON-RPC request so {@link #handleResponse} can dispatch by method.
+     *
+     * @param method JSON-RPC method name (e.g. {@code session/prompt})
+     * @param future future completed when the matching response envelope arrives
+     */
+    private record Pending(String method, CompletableFuture<AcpProtocol.Envelope> future) {}
+
     private final ObjectMapper mapper;
     private final AcpTransport transport;
     private final AtomicLong nextRequestId = new AtomicLong(1L);
-    private final Map<Long, CompletableFuture<AcpProtocol.Envelope>> pending = new ConcurrentHashMap<>();
+    private final Map<Long, Pending> pending = new ConcurrentHashMap<>();
     private final Sinks.Many<SubAgentEvent> events = Sinks.many().multicast().onBackpressureBuffer(1024, false);
 
     private volatile String sessionId;
@@ -120,9 +128,7 @@ public class AcpClient implements AutoCloseable {
         var request = new AcpProtocol.PromptRequest(sessionId, List.of(AcpProtocol.ContentBlock.text(text)));
         AcpProtocol.Envelope reply = call(AcpProtocol.METHOD_PROMPT, request, timeout);
         var response = mapper.convertValue(reply.result(), AcpProtocol.PromptResponse.class);
-        AcpStopReason stop = AcpStopReason.fromWire(response.stopReason());
-        events.emitNext(new SubAgentEvent.Done(stop.toSubAgent()), RETRY_NON_SERIALIZED);
-        return stop;
+        return AcpStopReason.fromWire(response.stopReason());
     }
 
     public void cancel() {
@@ -141,16 +147,15 @@ public class AcpClient implements AutoCloseable {
     public void close() {
         events.emitComplete(RETRY_NON_SERIALIZED);
         transport.close();
-        pending.values()
-                .forEach(future ->
-                        future.completeExceptionally(new SubAgentException("ACP_CLOSED", "transport closed")));
+        pending.values().forEach(p -> p.future()
+                .completeExceptionally(new SubAgentException("ACP_CLOSED", "transport closed")));
         pending.clear();
     }
 
     private AcpProtocol.Envelope call(String method, Object params, Duration timeout) {
         long id = nextRequestId.getAndIncrement();
         var future = new CompletableFuture<AcpProtocol.Envelope>();
-        pending.put(id, future);
+        pending.put(id, new Pending(method, future));
         try {
             JsonNode tree = mapper.valueToTree(params);
             transport.send(AcpProtocol.Envelope.request(id, method, tree));
@@ -203,10 +208,31 @@ public class AcpClient implements AutoCloseable {
             return;
         }
         long id = n.longValue();
-        CompletableFuture<AcpProtocol.Envelope> future = pending.remove(id);
-        if (future != null) {
-            future.complete(envelope);
+        Pending p = pending.remove(id);
+        if (p == null) {
+            return;
         }
+
+        // For session/prompt responses, synthesize and emit Done from the reader thread *before*
+        // completing the future. The reader thread processes session/update notifications and the
+        // response in wire order; emitting Done here guarantees all preceding TextDelta events have
+        // already been pushed to the sink, so downstream operators that use takeUntil(Done) never
+        // truncate the final agent_message_chunk. Previously Done was emitted by the prompt thread
+        // after future.complete unparked it, which on Windows could outrace a final TextDelta that
+        // the reader thread had not yet processed.
+        if (AcpProtocol.METHOD_PROMPT.equals(p.method()) && envelope.error() == null && envelope.result() != null) {
+            try {
+                var response = mapper.convertValue(envelope.result(), AcpProtocol.PromptResponse.class);
+                AcpStopReason stop = AcpStopReason.fromWire(response.stopReason());
+                AcpTransport.note("AcpClient.emit Done(stopReason=" + stop + ") [reader-thread]");
+                events.emitNext(new SubAgentEvent.Done(stop.toSubAgent()), RETRY_NON_SERIALIZED);
+                AcpTransport.note("AcpClient.emit-done Done(stopReason=" + stop + ") [reader-thread]");
+            } catch (RuntimeException ex) {
+                AcpTransport.note("AcpClient.handleResponse Done-emit threw: " + ex);
+                log.warn("failed to synthesize Done from prompt response: {}", ex.toString());
+            }
+        }
+        p.future().complete(envelope);
     }
 
     private void handleNotification(AcpProtocol.Envelope envelope) {
@@ -274,7 +300,7 @@ public class AcpClient implements AutoCloseable {
                 new SubAgentEvent.Error("ACP_TRANSPORT", String.valueOf(cause.getMessage()), false),
                 RETRY_NON_SERIALIZED);
         events.emitComplete(RETRY_NON_SERIALIZED);
-        pending.values().forEach(future -> future.completeExceptionally(cause));
+        pending.values().forEach(p -> p.future().completeExceptionally(cause));
         pending.clear();
     }
 }

@@ -68,6 +68,22 @@ class AcpClientTest {
                         e instanceof SubAgentEvent.TextDelta td && td.text().equals("world"));
         assertThat(sawText).isTrue();
 
+        // Done must arrive strictly after every TextDelta — Done is now emitted on the reader
+        // thread from handleResponse(METHOD_PROMPT), which guarantees no in-flight update can be
+        // dropped by downstream takeUntil(Done). See AcpClient.handleResponse.
+        int doneIndex = -1;
+        int lastTextIndex = -1;
+        for (int i = 0; i < events.size(); i++) {
+            SubAgentEvent e = events.get(i);
+            if (e instanceof SubAgentEvent.Done) {
+                doneIndex = i;
+            } else if (e instanceof SubAgentEvent.TextDelta) {
+                lastTextIndex = i;
+            }
+        }
+        assertThat(doneIndex).as("Done event index").isGreaterThanOrEqualTo(0);
+        assertThat(doneIndex).as("Done must follow every TextDelta").isGreaterThan(lastTextIndex);
+
         client.close();
         serverThread.join(2_000L);
     }
