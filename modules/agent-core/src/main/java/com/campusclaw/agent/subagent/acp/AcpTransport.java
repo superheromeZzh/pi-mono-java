@@ -93,6 +93,23 @@ public class AcpTransport implements AutoCloseable {
         }
     }
 
+    /**
+     * Public diagnostic marker written to the same trace file. Used by other classes
+     * (AcpClient, SpawnAgentTool) to record pipeline checkpoints alongside raw envelopes.
+     *
+     * @param message free-form message to record
+     */
+    public static void note(String message) {
+        if (TRACE == null) {
+            return;
+        }
+        synchronized (TRACE) {
+            TRACE.print("# ");
+            TRACE.println(message);
+            TRACE.flush();
+        }
+    }
+
     private final ObjectMapper mapper;
     private final InputStream input;
     private final OutputStream output;
