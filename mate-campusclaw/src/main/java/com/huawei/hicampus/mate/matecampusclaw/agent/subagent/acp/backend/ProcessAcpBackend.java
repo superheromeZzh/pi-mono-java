@@ -4,10 +4,16 @@
 
 package com.huawei.hicampus.mate.matecampusclaw.agent.subagent.acp.backend;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Paths;
 import java.time.Duration;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Deque;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -27,6 +33,7 @@ import com.huawei.hicampus.mate.matecampusclaw.agent.subagent.approval.ParentPer
 import com.huawei.hicampus.mate.matecampusclaw.agent.subagent.approval.ParentPermissionRequest;
 import com.huawei.hicampus.mate.matecampusclaw.agent.subagent.approval.ParentPermissionResolver;
 import com.huawei.hicampus.mate.matecampusclaw.agent.tool.CancellationToken;
+import com.huawei.hicampus.mate.matecampusclaw.agent.util.LoggingUncaughtExceptionHandler;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import org.slf4j.Logger;
@@ -84,19 +91,37 @@ public class ProcessAcpBackend implements SubAgentBackend {
     @Override
     public SubAgentSession open(OpenRequest request) {
         SubAgentSessionKey key = SubAgentSessionKey.newKey(request.parentAgentId(), id);
-        Process process = startProcess(request);
+        SpawnResult spawn = startProcess(request, "acp-stderr-" + id + "-" + key.uuid());
+        Process process = spawn.process();
+        StderrTail stderr = spawn.stderr();
         AcpClient client = new AcpClient(mapper, process.getInputStream(), process.getOutputStream());
         client.setPermissionHandler((req, ctx) -> resolvePermission(req, ctx, key));
         client.start("acp-reader-" + id + "-" + key.uuid());
         try {
             client.initialize(config.clientName(), config.clientVersion(), DEFAULT_INIT_TIMEOUT);
             String runtimeSessionId = client.newSession(request.cwd(), DEFAULT_INIT_TIMEOUT);
-            handles.put(key.asString(), new RuntimeHandle(process, client));
+            handles.put(key.asString(), new RuntimeHandle(process, client, stderr));
             return new SubAgentSession(key, runtimeSessionId, this);
         } catch (RuntimeException ex) {
             client.close();
             process.destroyForcibly();
-            throw ex;
+            throw enrich(ex, process, stderr);
+        }
+    }
+
+    private static SubAgentException enrich(RuntimeException cause, Process process, StderrTail stderr) {
+        String alive = process.isAlive() ? "still alive" : ("exited code=" + safeExitCode(process));
+        String tail = stderr.snapshot();
+        String suffix = tail.isEmpty() ? "" : "; child stderr tail:\n" + tail;
+        String baseMsg = cause.getMessage() == null ? cause.toString() : cause.getMessage();
+        return new SubAgentException("ACP_OPEN_FAILED", baseMsg + " [child " + alive + "]" + suffix, cause);
+    }
+
+    private static String safeExitCode(Process process) {
+        try {
+            return String.valueOf(process.exitValue());
+        } catch (IllegalThreadStateException ex) {
+            return "unknown";
         }
     }
 
@@ -163,7 +188,7 @@ public class ProcessAcpBackend implements SubAgentBackend {
         }
     }
 
-    private Process startProcess(OpenRequest request) {
+    private SpawnResult startProcess(OpenRequest request, String drainerName) {
         List<String> argv = buildArgv();
         ProcessBuilder pb = new ProcessBuilder(argv);
         if (request.cwd() != null && !request.cwd().isBlank()) {
@@ -172,12 +197,34 @@ public class ProcessAcpBackend implements SubAgentBackend {
         Map<String, String> env = pb.environment();
         config.env().forEach(env::put);
         request.env().forEach(env::put);
-        pb.redirectError(ProcessBuilder.Redirect.INHERIT);
+
+        // Pipe stderr (don't INHERIT) so we can surface the child's panic message inside
+        // SubAgentException on failure. Plain INHERIT gets swallowed by TUI rendering.
+        pb.redirectError(ProcessBuilder.Redirect.PIPE);
+        Process process;
         try {
-            return pb.start();
+            process = pb.start();
         } catch (IOException ex) {
             throw new SubAgentException(
                     "ACP_SPAWN_FAILED", "failed to launch " + config.command() + " (argv=" + argv + ")", ex);
+        }
+        StderrTail tail = new StderrTail();
+        Thread drainer =
+                Thread.ofVirtual().name(drainerName).unstarted(() -> drainStderr(process.getErrorStream(), tail));
+        drainer.setUncaughtExceptionHandler(LoggingUncaughtExceptionHandler.INSTANCE);
+        drainer.start();
+        return new SpawnResult(process, tail);
+    }
+
+    private static void drainStderr(InputStream stderr, StderrTail tail) {
+        try (var reader = new BufferedReader(new InputStreamReader(stderr, StandardCharsets.UTF_8))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                tail.append(line);
+                log.debug("[acp-child stderr] {}", line);
+            }
+        } catch (IOException ex) {
+            log.debug("stderr drainer ended: {}", ex.toString());
         }
     }
 
@@ -239,7 +286,31 @@ public class ProcessAcpBackend implements SubAgentBackend {
         }
     }
 
-    private record RuntimeHandle(Process process, AcpClient client) {}
+    private record RuntimeHandle(Process process, AcpClient client, StderrTail stderr) {}
+
+    private record SpawnResult(Process process, StderrTail stderr) {}
+
+    /**
+     * Bounded ring buffer for the child process's recent stderr lines. Capped at
+     * {@value #MAX_LINES} lines so a chatty child can't OOM the parent.
+     */
+    private static final class StderrTail {
+
+        private static final int MAX_LINES = 80;
+
+        private final Deque<String> lines = new ArrayDeque<>(MAX_LINES);
+
+        synchronized void append(String line) {
+            if (lines.size() >= MAX_LINES) {
+                lines.pollFirst();
+            }
+            lines.addLast(line);
+        }
+
+        synchronized String snapshot() {
+            return String.join("\n", lines);
+        }
+    }
 
     /**
      * Returns the live ACP client for a session, intended for tests and permission wiring.
