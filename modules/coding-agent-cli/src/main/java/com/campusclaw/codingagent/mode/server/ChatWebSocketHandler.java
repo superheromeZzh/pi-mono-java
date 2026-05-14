@@ -116,55 +116,62 @@ public class ChatWebSocketHandler {
         SessionPool.SessionRef ref = pool.getOrCreate(conversationIdHint);
         AgentSession session = ref.session();
 
-        // Holds the current conversation id. Rotated by `new_session` when
-        // persistence is enabled, so emitted frames always carry the live id
-        // matching the JSONL file the session is writing to.
+        // convIdRef is rotated by `new_session` when persistence is enabled so
+        // emitted frames always carry the live id matching the JSONL file the
+        // session is currently writing to.
         AtomicReference<String> convIdRef = new AtomicReference<>(ref.conversationId());
         log.info("WebSocket connected: conversation={}", convIdRef.get());
-
         Sinks.Many<String> outbound = Sinks.many().multicast().onBackpressureBuffer();
+        Runnable unsubscribe = session.subscribe(event -> forwardSessionEvent(event, session, convIdRef, outbound));
 
-        Runnable unsubscribe = session.subscribe(event -> {
-            String json = serializeEvent(event, convIdRef.get());
-            if (json != null) {
-                outbound.emitNext(json, BUSY_LOOP);
+        Mono<Void> inboundPipeline = in.receive()
+                .asString()
+                .doOnNext(raw -> handleCommand(raw, session, convIdRef, outbound))
+                .then();
+        Flux<String> heartbeat = Flux.interval(HEARTBEAT_INTERVAL).map(i -> PONG_FRAME);
+        Mono<Void> sendPipeline =
+                out.sendString(Flux.merge(outbound.asFlux(), heartbeat)).then();
+        Mono<Void> cleanup = buildCloseHook(in, session, convIdRef, outbound, unsubscribe);
+        return Mono.when(inboundPipeline, sendPipeline, cleanup);
+    }
+
+    private void forwardSessionEvent(
+            AgentEvent event, AgentSession session, AtomicReference<String> convIdRef, Sinks.Many<String> outbound) {
+        String json = serializeEvent(event, convIdRef.get());
+        if (json != null) {
+            outbound.emitNext(json, BUSY_LOOP);
+        }
+
+        // Persist assistant messages on completion. Mirrors InteractiveMode's
+        // MessageEndEvent handler so the WS endpoint and CLI write identical
+        // JSONL streams.
+        if (event instanceof MessageEndEvent me && me.message() instanceof AssistantMessage am) {
+            SessionManager sm = session.getSessionManager();
+            if (sm != null) {
+                sm.appendMessage(am);
             }
 
-            // Persist assistant messages on completion. Mirrors InteractiveMode's
-            // MessageEndEvent handler so the WS endpoint and CLI write identical
-            // JSONL streams.
-            if (event instanceof MessageEndEvent me && me.message() instanceof AssistantMessage am) {
-                SessionManager sm = session.getSessionManager();
-                if (sm != null) {
-                    sm.appendMessage(am);
-                }
-            }
-
-            // Model-level error (assistant completed with stopReason=ERROR) is
-            // not the same as a runtime exception on session.prompt(). Surface it
-            // with an additional `error` frame so frontends don't have to dig
-            // into message.stopReason. See docs/plans/ws-chat-plan.md.
-            if (event instanceof MessageEndEvent me
-                    && me.message() instanceof AssistantMessage am
-                    && am.stopReason() == StopReason.ERROR) {
+            // Model-level error (assistant stopReason=ERROR) isn't the same as a
+            // runtime exception on session.prompt(). Surface it with an extra
+            // `error` frame so frontends don't have to dig into message.stopReason.
+            // See docs/plans/ws-chat-plan.md.
+            if (am.stopReason() == StopReason.ERROR) {
                 String errorText = am.errorMessage() != null ? am.errorMessage() : "model returned stopReason=error";
                 String errorJson = serializeErrorFrame(convIdRef.get(), errorText);
                 if (errorJson != null) {
                     outbound.emitNext(errorJson, BUSY_LOOP);
                 }
             }
-        });
+        }
+    }
 
-        Mono<Void> inboundPipeline = in.receive()
-                .asString()
-                .doOnNext(raw -> handleCommand(raw, session, convIdRef, outbound))
-                .then();
-
-        Flux<String> heartbeat = Flux.interval(HEARTBEAT_INTERVAL).map(i -> PONG_FRAME);
-        Flux<String> toSend = Flux.merge(outbound.asFlux(), heartbeat);
-        Mono<Void> sendPipeline = out.sendString(toSend).then();
-
-        Mono<Void> cleanup = in.receiveCloseStatus()
+    private Mono<Void> buildCloseHook(
+            WebsocketInbound in,
+            AgentSession session,
+            AtomicReference<String> convIdRef,
+            Sinks.Many<String> outbound,
+            Runnable unsubscribe) {
+        return in.receiveCloseStatus()
                 .doFinally(sig -> {
                     String cid = convIdRef.get();
                     log.info("WebSocket closed: conversation={} signal={}", cid, sig);
@@ -179,8 +186,6 @@ public class ChatWebSocketHandler {
                     outbound.emitComplete(BUSY_LOOP);
                 })
                 .then();
-
-        return Mono.when(inboundPipeline, sendPipeline, cleanup);
     }
 
     // =========================================================================
@@ -404,94 +409,106 @@ public class ChatWebSocketHandler {
     // own cadence.
     // =========================================================================
 
-    @SuppressWarnings("checkstyle:huge_cyclomatic_complexity")
     private String serializeEvent(AgentEvent event, String conversationId) {
         try {
-            if (event instanceof AgentStartEvent) {
-                return MAPPER.writeValueAsString(Map.of("type", "agent_start", "conversation_id", conversationId));
-            } else if (event instanceof MessageStartEvent ms) {
-                var m = new LinkedHashMap<String, Object>();
-                m.put("type", "message_start");
-                m.put("conversation_id", conversationId);
-                if (ms.message() != null) {
-                    m.put("message", messageToNode(ms.message()));
-                }
-                return MAPPER.writeValueAsString(m);
-            } else if (event instanceof MessageUpdateEvent mu) {
-                if (mu.message() == null) {
-                    return null;
-                }
-                var m = new LinkedHashMap<String, Object>();
-                m.put("type", "message_update");
-                m.put("message", messageToNode(mu.message()));
-                return MAPPER.writeValueAsString(m);
-            } else if (event instanceof MessageEndEvent me) {
-                var m = new LinkedHashMap<String, Object>();
-                m.put("type", "message_end");
-                if (me.message() != null) {
-                    m.put("message", messageToNode(me.message()));
-                }
-                return MAPPER.writeValueAsString(m);
-            } else if (event instanceof ToolExecutionStartEvent te) {
-                var m = new LinkedHashMap<String, Object>();
-                m.put("type", "tool_start");
-                m.put("toolCallId", te.toolCallId());
-                m.put("toolName", te.toolName());
-                if (te.args() != null) {
-                    m.put("args", te.args());
-                }
-                return MAPPER.writeValueAsString(m);
-            } else if (event instanceof ToolExecutionUpdateEvent tu) {
-                var m = new LinkedHashMap<String, Object>();
-                m.put("type", "tool_update");
-                m.put("toolCallId", tu.toolCallId());
-                m.put("toolName", tu.toolName());
-                if (tu.args() != null) {
-                    m.put("args", tu.args());
-                }
-                if (tu.partialResult() != null) {
-                    m.put("partialResult", tu.partialResult());
-                }
-                return MAPPER.writeValueAsString(m);
-            } else if (event instanceof ToolExecutionEndEvent te) {
-                var m = new LinkedHashMap<String, Object>();
-                m.put("type", "tool_end");
-                m.put("toolCallId", te.toolCallId());
-                m.put("toolName", te.toolName());
-                m.put("isError", te.isError());
-                if (te.result() != null) {
-                    m.put("result", te.result());
-                }
-                return MAPPER.writeValueAsString(m);
-            } else if (event instanceof AgentEndEvent ae) {
-                var m = new LinkedHashMap<String, Object>();
-                m.put("type", "done");
-                m.put("conversation_id", conversationId);
-
-                // Pull the last AssistantMessage out of the turn's message history
-                // and surface its final text + usage + stopReason, so frontends don't
-                // have to track assistant bubbles themselves. In multi-turn tool
-                // loops (A → tool → A → tool → A), this is always the last A.
-                AssistantMessage last = findLastAssistantMessage(ae.messages());
-                if (last != null) {
-                    String finalText = extractText(last);
-                    if (!finalText.isEmpty()) {
-                        m.put("finalText", finalText);
-                    }
-                    if (last.usage() != null) {
-                        m.put("usage", last.usage());
-                    }
-                    if (last.stopReason() != null) {
-                        m.put("stopReason", last.stopReason().value());
-                    }
-                }
-                return MAPPER.writeValueAsString(m);
-            }
-            return null;
+            Map<String, Object> frame = buildEventFrame(event, conversationId);
+            return frame == null ? null : MAPPER.writeValueAsString(frame);
         } catch (Exception e) {
             log.warn("Failed to serialize WS event: {}", event.getClass().getSimpleName(), e);
             return null;
         }
+    }
+
+    private Map<String, Object> buildEventFrame(AgentEvent event, String conversationId) {
+        if (event instanceof AgentStartEvent) {
+            return Map.of("type", "agent_start", "conversation_id", conversationId);
+        }
+        if (event instanceof MessageStartEvent ms) {
+            return messageFrame("message_start", conversationId, ms.message());
+        }
+        if (event instanceof MessageUpdateEvent mu) {
+            return mu.message() == null ? null : messageFrame("message_update", null, mu.message());
+        }
+        if (event instanceof MessageEndEvent me) {
+            return messageFrame("message_end", null, me.message());
+        }
+        if (event instanceof ToolExecutionStartEvent te) {
+            return toolFrame("tool_start", te.toolCallId(), te.toolName(), te.args(), null, null, null);
+        }
+        if (event instanceof ToolExecutionUpdateEvent tu) {
+            return toolFrame("tool_update", tu.toolCallId(), tu.toolName(), tu.args(), tu.partialResult(), null, null);
+        }
+        if (event instanceof ToolExecutionEndEvent te) {
+            return toolFrame("tool_end", te.toolCallId(), te.toolName(), null, null, te.result(), te.isError());
+        }
+        if (event instanceof AgentEndEvent ae) {
+            return buildDoneFrame(ae, conversationId);
+        }
+        return null;
+    }
+
+    private Map<String, Object> messageFrame(String type, String conversationId, Message message) {
+        var m = new LinkedHashMap<String, Object>();
+        m.put("type", type);
+        if (conversationId != null) {
+            m.put("conversation_id", conversationId);
+        }
+        if (message != null) {
+            m.put("message", messageToNode(message));
+        }
+        return m;
+    }
+
+    private static Map<String, Object> toolFrame(
+            String type,
+            String toolCallId,
+            String toolName,
+            Object args,
+            Object partialResult,
+            Object result,
+            Boolean isError) {
+        var m = new LinkedHashMap<String, Object>();
+        m.put("type", type);
+        m.put("toolCallId", toolCallId);
+        m.put("toolName", toolName);
+        if (args != null) {
+            m.put("args", args);
+        }
+        if (partialResult != null) {
+            m.put("partialResult", partialResult);
+        }
+        if (isError != null) {
+            m.put("isError", isError);
+        }
+        if (result != null) {
+            m.put("result", result);
+        }
+        return m;
+    }
+
+    private Map<String, Object> buildDoneFrame(AgentEndEvent ae, String conversationId) {
+        var m = new LinkedHashMap<String, Object>();
+        m.put("type", "done");
+        m.put("conversation_id", conversationId);
+
+        // Surface the last AssistantMessage's text/usage/stopReason so frontends
+        // don't need to track assistant bubbles themselves; in tool loops
+        // (A → tool → A → tool → A) this is always the trailing A.
+        AssistantMessage last = findLastAssistantMessage(ae.messages());
+        if (last == null) {
+            return m;
+        }
+        String finalText = extractText(last);
+        if (!finalText.isEmpty()) {
+            m.put("finalText", finalText);
+        }
+        if (last.usage() != null) {
+            m.put("usage", last.usage());
+        }
+        if (last.stopReason() != null) {
+            m.put("stopReason", last.stopReason().value());
+        }
+        return m;
     }
 
     // =========================================================================

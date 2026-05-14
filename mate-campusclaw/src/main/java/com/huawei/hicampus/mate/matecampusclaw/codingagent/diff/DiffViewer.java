@@ -122,56 +122,57 @@ public class DiffViewer {
     public static String formatSideBySide(List<DiffLine> lines, int colWidth) {
         var sb = new StringBuilder();
         String separator = " │ ";
-        String headerFmt = "%-" + colWidth + "s" + separator + "%-" + colWidth + "s";
+        String colFmt = "%-" + colWidth + "s";
         sb.append(CYAN)
-                .append(String.format(headerFmt, "Old", "New"))
+                .append(String.format(colFmt + separator + colFmt, "Old", "New"))
                 .append(RESET)
                 .append('\n');
         sb.append("─".repeat(colWidth))
                 .append("─┼─")
                 .append("─".repeat(colWidth))
                 .append('\n');
-
         for (DiffLine line : lines) {
             String left = truncate(line.oldText != null ? line.oldText : "", colWidth);
             String right = truncate(line.newText != null ? line.newText : "", colWidth);
-            String leftFmt = "%-" + colWidth + "s";
-            String rightFmt = "%-" + colWidth + "s";
-
-            switch (line.type) {
-                case SAME ->
-                    sb.append(DIM)
-                            .append(String.format(leftFmt, left))
-                            .append(separator)
-                            .append(String.format(rightFmt, right))
-                            .append(RESET)
-                            .append('\n');
-                case REMOVED ->
-                    sb.append(RED)
-                            .append(String.format(leftFmt, left))
-                            .append(RESET)
-                            .append(separator)
-                            .append(String.format(rightFmt, ""))
-                            .append('\n');
-                case ADDED ->
-                    sb.append(String.format(leftFmt, ""))
-                            .append(separator)
-                            .append(GREEN)
-                            .append(String.format(rightFmt, right))
-                            .append(RESET)
-                            .append('\n');
-                case MODIFIED ->
-                    sb.append(RED)
-                            .append(String.format(leftFmt, left))
-                            .append(RESET)
-                            .append(separator)
-                            .append(GREEN)
-                            .append(String.format(rightFmt, right))
-                            .append(RESET)
-                            .append('\n');
-            }
+            appendDiffRow(sb, line.type, left, right, colFmt, separator);
         }
         return sb.toString();
+    }
+
+    private static void appendDiffRow(
+            StringBuilder sb, LineType type, String left, String right, String colFmt, String separator) {
+        switch (type) {
+            case SAME ->
+                sb.append(DIM)
+                        .append(String.format(colFmt, left))
+                        .append(separator)
+                        .append(String.format(colFmt, right))
+                        .append(RESET)
+                        .append('\n');
+            case REMOVED ->
+                sb.append(RED)
+                        .append(String.format(colFmt, left))
+                        .append(RESET)
+                        .append(separator)
+                        .append(String.format(colFmt, ""))
+                        .append('\n');
+            case ADDED ->
+                sb.append(String.format(colFmt, ""))
+                        .append(separator)
+                        .append(GREEN)
+                        .append(String.format(colFmt, right))
+                        .append(RESET)
+                        .append('\n');
+            case MODIFIED ->
+                sb.append(RED)
+                        .append(String.format(colFmt, left))
+                        .append(RESET)
+                        .append(separator)
+                        .append(GREEN)
+                        .append(String.format(colFmt, right))
+                        .append(RESET)
+                        .append('\n');
+        }
     }
 
     /**

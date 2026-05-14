@@ -238,10 +238,9 @@ class AgentEventTest {
             assertEquals("search", turnEnd.toolResults().getFirst().toolName());
         }
 
-        @Test
-        void messageUpdateEventFromJson() throws JsonProcessingException {
-            var json =
-                    """
+        /** JSON fixture for {@link #messageUpdateEventFromJson()} — large nested payload kept out of the test body. */
+        private static final String MESSAGE_UPDATE_EVENT_JSON =
+                """
                 {
                   "type": "message_update",
                   "message": {
@@ -301,8 +300,9 @@ class AgentEventTest {
                   }
                 }""";
 
-            var event = mapper.readValue(json, AgentEvent.class);
-
+        @Test
+        void messageUpdateEventFromJson() throws JsonProcessingException {
+            var event = mapper.readValue(MESSAGE_UPDATE_EVENT_JSON, AgentEvent.class);
             assertInstanceOf(MessageUpdateEvent.class, event);
             var update = (MessageUpdateEvent) event;
             assertInstanceOf(AssistantMessage.class, update.message());

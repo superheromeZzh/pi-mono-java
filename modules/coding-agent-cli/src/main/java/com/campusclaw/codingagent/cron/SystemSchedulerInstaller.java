@@ -83,47 +83,55 @@ public class SystemSchedulerInstaller {
 
     // --- macOS launchd ---
 
+    /** launchd plist template — single {@code %s,%s,%d,%s,%s} replacement (label/launcher/interval/logDir/logDir). */
+    private static final String PLIST_TEMPLATE =
+            """
+            <?xml version="1.0" encoding="UTF-8"?>
+            <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" \
+            "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+            <plist version="1.0">
+            <dict>
+                <key>Label</key>
+                <string>%s</string>
+                <key>ProgramArguments</key>
+                <array>
+                    <string>%s</string>
+                    <string>--cron-tick</string>
+                </array>
+                <key>StartInterval</key>
+                <integer>%d</integer>
+                <key>StandardOutPath</key>
+                <string>%s/cron-tick.log</string>
+                <key>StandardErrorPath</key>
+                <string>%s/cron-tick.err</string>
+                <key>RunAtLoad</key>
+                <true/>
+            </dict>
+            </plist>
+            """;
+
     private String installLaunchd(int intervalSeconds) throws IOException {
         Path logDir = Path.of(System.getProperty("user.home")).resolve(".campusclaw/agent/cron");
         Files.createDirectories(logDir);
         Files.createDirectories(PLIST_PATH.getParent());
-
-        String plist =
-                """
-                <?xml version="1.0" encoding="UTF-8"?>
-                <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" \
-                "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-                <plist version="1.0">
-                <dict>
-                    <key>Label</key>
-                    <string>%s</string>
-                    <key>ProgramArguments</key>
-                    <array>
-                        <string>%s</string>
-                        <string>--cron-tick</string>
-                    </array>
-                    <key>StartInterval</key>
-                    <integer>%d</integer>
-                    <key>StandardOutPath</key>
-                    <string>%s/cron-tick.log</string>
-                    <key>StandardErrorPath</key>
-                    <string>%s/cron-tick.err</string>
-                    <key>RunAtLoad</key>
-                    <true/>
-                </dict>
-                </plist>
-                """
-                        .formatted(LABEL, launcherScript, intervalSeconds, logDir, logDir);
-
+        String plist = PLIST_TEMPLATE.formatted(LABEL, launcherScript, intervalSeconds, logDir, logDir);
         Files.writeString(PLIST_PATH, plist);
+        reloadLaunchd();
+        return "Installed launchd agent: " + PLIST_PATH
+                + "\nInterval: every " + intervalSeconds + "s"
+                + "\nLogs: " + logDir + "/cron-tick.log";
+    }
 
-        // Load into launchd
+    // Stop an existing plist (if any) and reload the new one. Falls back to
+    // the legacy `launchctl load` path if `bootstrap` is unavailable.
+    private void reloadLaunchd() {
         try {
             new ProcessBuilder("launchctl", "bootout", "gui/" + getUid(), PLIST_PATH.toString())
                     .redirectErrorStream(true)
                     .start()
                     .waitFor();
         } catch (Exception ignored) {
+            // bootout fails when not loaded — safe to ignore.
         }
         try {
             int exit = new ProcessBuilder("launchctl", "bootstrap", "gui/" + getUid(), PLIST_PATH.toString())
@@ -131,19 +139,16 @@ public class SystemSchedulerInstaller {
                     .start()
                     .waitFor();
             if (exit != 0) {
-                // Fallback to legacy load
                 new ProcessBuilder("launchctl", "load", PLIST_PATH.toString())
                         .redirectErrorStream(true)
                         .start()
                         .waitFor();
             }
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
+        } catch (Exception e) {
+            if (e instanceof InterruptedException) {
+                Thread.currentThread().interrupt();
+            }
         }
-
-        return "Installed launchd agent: " + PLIST_PATH
-                + "\nInterval: every " + intervalSeconds + "s"
-                + "\nLogs: " + logDir + "/cron-tick.log";
     }
 
     private String uninstallLaunchd() throws IOException {

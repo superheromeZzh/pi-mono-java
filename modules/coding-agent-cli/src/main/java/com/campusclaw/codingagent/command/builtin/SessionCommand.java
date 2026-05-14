@@ -4,6 +4,7 @@
 
 package com.campusclaw.codingagent.command.builtin;
 
+import java.util.List;
 import java.util.Locale;
 
 import com.campusclaw.ai.types.AssistantMessage;
@@ -30,15 +31,52 @@ public class SessionCommand implements SlashCommand {
         return "Show session info and stats";
     }
 
-    @SuppressWarnings("checkstyle:huge_cyclomatic_complexity")
+    /** Per-message-type counts and accumulated token/cost stats over a session's history. */
+    private record SessionStats(
+            int userCount,
+            int assistantCount,
+            int toolCount,
+            long totalInput,
+            long totalOutput,
+            long totalCacheRead,
+            long totalCacheWrite,
+            double totalCost) {}
+
     @Override
     public void execute(SlashCommandContext context, String arguments) {
         var session = context.session();
         var state = session.getAgent().getState();
         var model = state.getModel();
         var out = context.output();
-
         out.println("Session Info:");
+        printModelInfo(out, model, state);
+        SessionStats stats = collectStats(state.getMessages());
+        printMessageStats(out, state.getMessages().size(), stats);
+        if (model != null && model.contextWindow() > 0) {
+            long used = stats.totalInput() + stats.totalOutput();
+            double pct = (double) used / model.contextWindow() * 100;
+            out.println("  Context usage: " + String.format(Locale.ROOT, "%.1f%%", pct) + " of "
+                    + formatTokens(model.contextWindow()));
+        }
+        int skillCount = session.getSkillRegistry().getAll().size();
+        int templateCount = session.getPromptTemplates().size();
+        if (skillCount > 0 || templateCount > 0) {
+            out.println("  Resources: " + skillCount + " skill(s), " + templateCount + " template(s)");
+        }
+        out.println("  CWD: " + System.getProperty("user.dir"));
+        var sm = session.getSessionManager();
+        if (sm != null) {
+            out.println("  Session ID: " + sm.getSessionId());
+            if (sm.getSessionFile() != null) {
+                out.println("  Session file: " + sm.getSessionFile());
+            }
+        }
+    }
+
+    private static void printModelInfo(
+            com.campusclaw.codingagent.command.SlashCommandContext.OutputWriter out,
+            com.campusclaw.ai.types.Model model,
+            com.campusclaw.agent.state.AgentState state) {
         out.println("  Model: " + (model != null ? model.id() : "unknown"));
         if (model != null && model.provider() != null) {
             out.println("  Provider: " + model.provider().name());
@@ -46,14 +84,13 @@ public class SessionCommand implements SlashCommand {
         if (model != null && model.contextWindow() > 0) {
             out.println("  Context window: " + formatTokens(model.contextWindow()));
         }
-
         var thinkingLevel = state.getThinkingLevel();
         if (thinkingLevel != null) {
             out.println("  Thinking: " + thinkingLevel.value());
         }
+    }
 
-        // Message stats
-        var messages = state.getMessages();
+    private static SessionStats collectStats(List<Message> messages) {
         int userCount = 0;
         int assistantCount = 0;
         int toolCount = 0;
@@ -62,7 +99,6 @@ public class SessionCommand implements SlashCommand {
         long totalCacheRead = 0L;
         long totalCacheWrite = 0L;
         double totalCost = 0;
-
         for (Message msg : messages) {
             if (msg instanceof UserMessage) {
                 userCount++;
@@ -81,41 +117,29 @@ public class SessionCommand implements SlashCommand {
                 toolCount++;
             }
         }
+        return new SessionStats(
+                userCount,
+                assistantCount,
+                toolCount,
+                totalInput,
+                totalOutput,
+                totalCacheRead,
+                totalCacheWrite,
+                totalCost);
+    }
 
-        out.println("  Messages: " + messages.size() + " (" + userCount + " user, " + assistantCount + " assistant, "
-                + toolCount + " tool)");
-        out.println("  Tokens: ↑" + formatTokens((int) totalInput) + " ↓" + formatTokens((int) totalOutput));
-        if (totalCacheRead > 0 || totalCacheWrite > 0) {
-            out.println("  Cache: R" + formatTokens((int) totalCacheRead) + " W" + formatTokens((int) totalCacheWrite));
+    private static void printMessageStats(
+            com.campusclaw.codingagent.command.SlashCommandContext.OutputWriter out, int total, SessionStats stats) {
+        out.println("  Messages: " + total + " (" + stats.userCount() + " user, " + stats.assistantCount()
+                + " assistant, " + stats.toolCount() + " tool)");
+        out.println("  Tokens: ↑" + formatTokens((int) stats.totalInput()) + " ↓"
+                + formatTokens((int) stats.totalOutput()));
+        if (stats.totalCacheRead() > 0 || stats.totalCacheWrite() > 0) {
+            out.println("  Cache: R" + formatTokens((int) stats.totalCacheRead()) + " W"
+                    + formatTokens((int) stats.totalCacheWrite()));
         }
-        if (totalCost > 0) {
-            out.println("  Cost: $" + String.format(Locale.ROOT, "%.4f", totalCost));
-        }
-
-        // Context usage
-        if (model != null && model.contextWindow() > 0) {
-            long used = totalInput + totalOutput;
-            double pct = (double) used / model.contextWindow() * 100;
-            out.println("  Context usage: " + String.format(Locale.ROOT, "%.1f%%", pct) + " of "
-                    + formatTokens(model.contextWindow()));
-        }
-
-        // Skills and templates
-        int skillCount = session.getSkillRegistry().getAll().size();
-        int templateCount = session.getPromptTemplates().size();
-        if (skillCount > 0 || templateCount > 0) {
-            out.println("  Resources: " + skillCount + " skill(s), " + templateCount + " template(s)");
-        }
-
-        out.println("  CWD: " + System.getProperty("user.dir"));
-
-        // Session file info
-        var sm = session.getSessionManager();
-        if (sm != null) {
-            out.println("  Session ID: " + sm.getSessionId());
-            if (sm.getSessionFile() != null) {
-                out.println("  Session file: " + sm.getSessionFile());
-            }
+        if (stats.totalCost() > 0) {
+            out.println("  Cost: $" + String.format(Locale.ROOT, "%.4f", stats.totalCost()));
         }
     }
 

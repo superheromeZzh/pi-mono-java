@@ -192,77 +192,62 @@ public class EditorContainer implements Component, Focusable {
     @Override
     public List<String> render(int width) {
         var lines = new ArrayList<String>();
-
-        // Top separator
         lines.add(borderColor + "─".repeat(width) + ANSI_RESET);
-
-        // Editor line(s)
         lines.addAll(editor.render(width));
-
-        // Slash command suggestions with scrolling window
         if (showingSuggestions && !filteredSuggestions.isEmpty()) {
-            int total = filteredSuggestions.size();
-
-            // Calculate visible window centered on selected item (matching pi-mono SelectList)
-            int startIndex = Math.max(0, Math.min(suggestionIndex - MAX_SUGGESTIONS / 2, total - MAX_SUGGESTIONS));
-            int endIndex = Math.min(startIndex + MAX_SUGGESTIONS, total);
-
-            for (int i = startIndex; i < endIndex; i++) {
-                var suggestion = filteredSuggestions.get(i);
-                boolean isSelected = (i == suggestionIndex);
-                String prefix = isSelected ? "→ " : "  ";
-                int availableWidth = Math.max(1, width - 2);
-
-                String display = "/" + suggestion.name();
-                if (suggestion.description() != null
-                        && !suggestion.description().isEmpty()) {
-                    String desc = " — " + suggestion.description();
-                    int nameWidth = AnsiUtils.visibleWidth(display);
-                    if (nameWidth + desc.length() > availableWidth) {
-                        int remaining = availableWidth - nameWidth - 4;
-                        if (remaining > 10) {
-                            desc = " — "
-                                    + suggestion
-                                            .description()
-                                            .substring(
-                                                    0,
-                                                    Math.min(
-                                                            remaining,
-                                                            suggestion
-                                                                    .description()
-                                                                    .length()));
-                            if (remaining < suggestion.description().length()) {
-                                desc += "…";
-                            }
-                        } else {
-                            desc = "";
-                        }
-                    }
-                    display += desc;
-                }
-
-                if (AnsiUtils.visibleWidth(display) > availableWidth) {
-                    display = AnsiUtils.sliceByColumn(display, 0, availableWidth - 1) + "…";
-                }
-
-                String line;
-                if (isSelected) {
-                    line = "\033[34m" + prefix + "\033[0m\033[1m" + display + "\033[0m";
-                } else {
-                    line = "\033[2m" + prefix + display + "\033[0m";
-                }
-                lines.add(line);
-            }
-
-            // Show scroll position indicator when not all items are visible
-            if (startIndex > 0 || endIndex < total) {
-                lines.add("\033[2m  (" + (suggestionIndex + 1) + "/" + total + ")\033[0m");
-            }
+            appendSuggestionLines(lines, width);
         }
-
-        // Bottom separator
         lines.add(borderColor + "─".repeat(width) + ANSI_RESET);
         return lines;
+    }
+
+    private void appendSuggestionLines(List<String> lines, int width) {
+        int total = filteredSuggestions.size();
+
+        // Visible window centered on the selected item (matching pi-mono SelectList).
+        int startIndex = Math.max(0, Math.min(suggestionIndex - MAX_SUGGESTIONS / 2, total - MAX_SUGGESTIONS));
+        int endIndex = Math.min(startIndex + MAX_SUGGESTIONS, total);
+        int availableWidth = Math.max(1, width - 2);
+        for (int i = startIndex; i < endIndex; i++) {
+            lines.add(formatSuggestionLine(filteredSuggestions.get(i), i == suggestionIndex, availableWidth));
+        }
+        if (startIndex > 0 || endIndex < total) {
+            lines.add("\033[2m  (" + (suggestionIndex + 1) + "/" + total + ")\033[0m");
+        }
+    }
+
+    private static String formatSuggestionLine(CommandSuggestion suggestion, boolean isSelected, int availableWidth) {
+        String prefix = isSelected ? "→ " : "  ";
+        String display = buildSuggestionDisplay(suggestion, availableWidth);
+        if (AnsiUtils.visibleWidth(display) > availableWidth) {
+            display = AnsiUtils.sliceByColumn(display, 0, availableWidth - 1) + "…";
+        }
+        return isSelected
+                ? "\033[34m" + prefix + "\033[0m\033[1m" + display + "\033[0m"
+                : "\033[2m" + prefix + display + "\033[0m";
+    }
+
+    private static String buildSuggestionDisplay(CommandSuggestion suggestion, int availableWidth) {
+        String display = "/" + suggestion.name();
+        String descriptionText = suggestion.description();
+        if (descriptionText == null || descriptionText.isEmpty()) {
+            return display;
+        }
+        String desc = " — " + descriptionText;
+        int nameWidth = AnsiUtils.visibleWidth(display);
+        if (nameWidth + desc.length() <= availableWidth) {
+            return display + desc;
+        }
+        int remaining = availableWidth - nameWidth - 4;
+        if (remaining <= 10) {
+            return display;
+        }
+        int take = Math.min(remaining, descriptionText.length());
+        String truncated = " — " + descriptionText.substring(0, take);
+        if (remaining < descriptionText.length()) {
+            truncated += "…";
+        }
+        return display + truncated;
     }
 
     @Override

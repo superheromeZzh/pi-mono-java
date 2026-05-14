@@ -27,6 +27,7 @@ import com.huawei.hicampus.mate.matecampusclaw.agent.tool.ToolCallWithTool;
 import com.huawei.hicampus.mate.matecampusclaw.agent.tool.ToolExecutionMode;
 import com.huawei.hicampus.mate.matecampusclaw.agent.tool.ToolExecutionPipeline;
 import com.huawei.hicampus.mate.matecampusclaw.ai.stream.AssistantMessageEvent;
+import com.huawei.hicampus.mate.matecampusclaw.ai.stream.AssistantMessageEventStream;
 import com.huawei.hicampus.mate.matecampusclaw.ai.types.AssistantMessage;
 import com.huawei.hicampus.mate.matecampusclaw.ai.types.Context;
 import com.huawei.hicampus.mate.matecampusclaw.ai.types.Message;
@@ -88,76 +89,65 @@ public class AgentLoop {
             List<Message> prompts, AgentContext context, AgentEventListener listener, CancellationToken signal) {
         Objects.requireNonNull(context, "context");
         Objects.requireNonNull(signal, "signal");
-
         AgentEventListener eventListener = listener != null ? listener : event -> {};
-
         if (!prompts.isEmpty()) {
             context.appendMessages(prompts);
         }
-
         List<Message> pendingTurnInputs = List.copyOf(prompts);
         eventListener.onEvent(new AgentStartEvent());
-
         try {
             while (!signal.isCancelled()) {
                 eventListener.onEvent(new TurnStartEvent());
                 emitPendingInputs(pendingTurnInputs, eventListener);
-
                 var assistantMessage = invokeModel(context, eventListener, signal);
                 context.appendMessage(assistantMessage);
                 context.setAssistantMessage(assistantMessage);
                 eventListener.onEvent(new MessageEndEvent(assistantMessage));
-
-                // Stop on error or aborted stop reasons
                 if (assistantMessage.stopReason() == StopReason.ERROR
                         || assistantMessage.stopReason() == StopReason.ABORTED) {
                     eventListener.onEvent(new TurnEndEvent(assistantMessage, List.of()));
                     break;
                 }
-
                 var toolCalls = extractToolCalls(assistantMessage);
                 if (!toolCalls.isEmpty()) {
-                    // Separate resolved tools from unknown tools
-                    var resolved = new ArrayList<ToolCallWithTool>();
-                    var unknownResults = new ArrayList<ToolResultMessage>();
-                    resolveToolCallsSafe(toolCalls, context.tools(), resolved, unknownResults);
-
-                    // Execute resolved tools via pipeline
-                    var toolResults = new ArrayList<ToolResultMessage>();
-                    if (!resolved.isEmpty()) {
-                        toolResults.addAll(
-                                toolPipeline.executeAll(resolved, toolExecutionMode, context, signal, eventListener));
-                    }
-
-                    // Add error results for unknown tools
-                    toolResults.addAll(unknownResults);
-                    context.appendMessages(new ArrayList<>(toolResults));
-
-                    var steeringMessages = drainSteeringMessages();
-                    if (!steeringMessages.isEmpty()) {
-                        context.appendMessages(steeringMessages);
-                    }
-
-                    eventListener.onEvent(new TurnEndEvent(assistantMessage, toolResults));
-                    pendingTurnInputs = steeringMessages;
+                    pendingTurnInputs = runToolPhase(context, signal, eventListener, assistantMessage, toolCalls);
                     continue;
                 }
-
                 var followUpMessages = drainFollowUpMessages();
                 eventListener.onEvent(new TurnEndEvent(assistantMessage, List.of()));
-                if (!followUpMessages.isEmpty()) {
-                    context.appendMessages(followUpMessages);
-                    pendingTurnInputs = followUpMessages;
-                    continue;
+                if (followUpMessages.isEmpty()) {
+                    break;
                 }
-
-                break;
+                context.appendMessages(followUpMessages);
+                pendingTurnInputs = followUpMessages;
             }
-
             return context.messages();
         } finally {
             eventListener.onEvent(new AgentEndEvent(context.messages()));
         }
+    }
+
+    private List<Message> runToolPhase(
+            AgentContext context,
+            CancellationToken signal,
+            AgentEventListener eventListener,
+            AssistantMessage assistantMessage,
+            List<ToolCall> toolCalls) {
+        var resolved = new ArrayList<ToolCallWithTool>();
+        var unknownResults = new ArrayList<ToolResultMessage>();
+        resolveToolCallsSafe(toolCalls, context.tools(), resolved, unknownResults);
+        var toolResults = new ArrayList<ToolResultMessage>();
+        if (!resolved.isEmpty()) {
+            toolResults.addAll(toolPipeline.executeAll(resolved, toolExecutionMode, context, signal, eventListener));
+        }
+        toolResults.addAll(unknownResults);
+        context.appendMessages(new ArrayList<>(toolResults));
+        var steeringMessages = drainSteeringMessages();
+        if (!steeringMessages.isEmpty()) {
+            context.appendMessages(steeringMessages);
+        }
+        eventListener.onEvent(new TurnEndEvent(assistantMessage, toolResults));
+        return steeringMessages;
     }
 
     private void emitPendingInputs(List<Message> pendingTurnInputs, AgentEventListener listener) {
@@ -167,22 +157,40 @@ public class AgentLoop {
         }
     }
 
-    @SuppressWarnings("checkstyle:huge_cyclomatic_complexity")
+    /** Result of consuming the LLM event stream until cancellation or completion. */
+    private record StreamConsumeResult(AssistantMessage message, boolean assistantStarted) {}
+
     private AssistantMessage invokeModel(AgentContext context, AgentEventListener listener, CancellationToken signal) {
         var transformedMessages = transformMessages(context.messages(), signal);
         var llmMessages = convertToLlm.convert(transformedMessages);
         var llmContext = new Context(context.systemPrompt(), llmMessages, toLlmTools(context.tools()));
-
         var stream = streamFunction.stream(model, llmContext, streamOptions);
-
-        // Wire cancellation to immediately complete the upstream Flux, disposing the HTTP
-        // subscription so ESC responds without waiting for the next SSE chunk.
         var cancelSink = Sinks.<Object>one();
         signal.onCancel(() -> cancelSink.tryEmitEmpty());
+        var result = consumeStream(stream, cancelSink, listener, signal);
+        if (signal.isCancelled()) {
+            return synthesizeAbortedMessage(result, listener);
+        }
+        var assistantMessage = result.message();
+        if (assistantMessage == null) {
+            assistantMessage = stream.result().block();
+            if (assistantMessage != null && !result.assistantStarted()) {
+                listener.onEvent(new MessageStartEvent(assistantMessage));
+            }
+        }
+        if (assistantMessage == null) {
+            throw new IllegalStateException("LLM stream completed without producing an assistant message");
+        }
+        return assistantMessage;
+    }
 
+    private StreamConsumeResult consumeStream(
+            AssistantMessageEventStream stream,
+            Sinks.One<Object> cancelSink,
+            AgentEventListener listener,
+            CancellationToken signal) {
         AssistantMessage assistantMessage = null;
         var assistantStarted = false;
-
         for (var event : stream.asFlux().takeUntilOther(cancelSink.asMono()).toIterable()) {
             if (signal.isCancelled()) {
                 break;
@@ -197,42 +205,28 @@ public class AgentLoop {
             }
             assistantMessage = currentMessage;
         }
+        return new StreamConsumeResult(assistantMessage, assistantStarted);
+    }
 
-        if (signal.isCancelled()) {
-            // Synthesize an ABORTED message so the outer loop terminates cleanly
-            // instead of falling through to result().block() (which would hang on the torn-down stream).
-            var aborted = new AssistantMessage(
-                    assistantMessage != null ? assistantMessage.content() : List.of(),
-                    assistantMessage != null
-                            ? assistantMessage.api()
-                            : model.api().value(),
-                    assistantMessage != null
-                            ? assistantMessage.provider()
-                            : model.provider().value(),
-                    assistantMessage != null ? assistantMessage.model() : model.id(),
-                    assistantMessage != null ? assistantMessage.responseId() : null,
-                    assistantMessage != null ? assistantMessage.usage() : null,
-                    StopReason.ABORTED,
-                    null,
-                    System.currentTimeMillis());
-            if (!assistantStarted) {
-                listener.onEvent(new MessageStartEvent(aborted));
-            }
-            return aborted;
+    // Synthesize an ABORTED message so the outer loop terminates cleanly
+    // instead of falling through to result().block(), which would hang on the
+    // torn-down stream.
+    private AssistantMessage synthesizeAbortedMessage(StreamConsumeResult result, AgentEventListener listener) {
+        var msg = result.message();
+        var aborted = new AssistantMessage(
+                msg != null ? msg.content() : List.of(),
+                msg != null ? msg.api() : model.api().value(),
+                msg != null ? msg.provider() : model.provider().value(),
+                msg != null ? msg.model() : model.id(),
+                msg != null ? msg.responseId() : null,
+                msg != null ? msg.usage() : null,
+                StopReason.ABORTED,
+                null,
+                System.currentTimeMillis());
+        if (!result.assistantStarted()) {
+            listener.onEvent(new MessageStartEvent(aborted));
         }
-
-        if (assistantMessage == null) {
-            assistantMessage = stream.result().block();
-            if (assistantMessage != null && !assistantStarted) {
-                listener.onEvent(new MessageStartEvent(assistantMessage));
-            }
-        }
-
-        if (assistantMessage == null) {
-            throw new IllegalStateException("LLM stream completed without producing an assistant message");
-        }
-
-        return assistantMessage;
+        return aborted;
     }
 
     private List<Message> transformMessages(List<Message> messages, CancellationToken signal) {

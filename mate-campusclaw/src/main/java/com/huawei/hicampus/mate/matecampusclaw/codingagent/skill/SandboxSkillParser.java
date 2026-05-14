@@ -32,6 +32,71 @@ public class SandboxSkillParser {
 
     private final DockerSandboxClient sandboxClient;
 
+    /**
+     * Shell script template (POSIX sh) that parses a SKILL.md frontmatter block
+     * inside the sandbox container. The single {@code %s} placeholder receives
+     * the base64-encoded file contents. Kept as a constant so the method body
+     * is just substitution — the script itself is data, not logic.
+     */
+    private static final String PARSE_SCRIPT_TEMPLATE =
+            """
+            # 解码 base64 内容
+            CONTENT=$(echo '%s' | base64 -d)
+
+            # 提取 frontmatter
+            case "$CONTENT" in
+                ---*) ;;
+                *)
+                    echo '{"name":"unnamed-skill","description":"","disableModelInvocation":false}'
+                    exit 0
+                    ;;
+            esac
+
+            # 提取 --- 之间的 YAML (排除第一个和最后一个 ---)
+            YAML=$(echo "$CONTENT" | awk '/^---/{if(seen){exit}seen=1;next}/^---/{exit}1')
+
+            # 解析字段 - 直接从 YAML 提取
+            name_val=""
+            desc_val=""
+            disable_val="false"
+
+            # 使用 grep 和 sed 提取 (POSIX 兼容)
+            name_line=$(echo "$YAML" | grep "^[[:space:]]*name:")
+            if [ -n "$name_line" ]; then
+                name_val=$(echo "$name_line" | sed 's/^[[:space:]]*name:[[:space:]]*//;s/^[[:space:]]*//;s/[[:space:]]*$//')
+            fi
+
+            desc_line=$(echo "$YAML" | grep "^[[:space:]]*description:")
+            if [ -n "$desc_line" ]; then
+                desc_val=$(echo "$desc_line" | sed 's/^[[:space:]]*description:[[:space:]]*//;s/^[[:space:]]*//;s/[[:space:]]*$//')
+            fi
+
+            disable_line=$(echo "$YAML" | grep "^[[:space:]]*disable-model-invocation:")
+            if [ -n "$disable_line" ]; then
+                disable_raw=$(echo "$disable_line" | sed 's/^[[:space:]]*disable-model-invocation:[[:space:]]*//;s/^[[:space:]]*//;s/[[:space:]]*$//')
+                disable_val=$(echo "$disable_raw" | tr '[:upper:]' '[:lower:]')
+            fi
+
+            # 默认值
+            if [ -z "$name_val" ]; then
+                name_val="unnamed-skill"
+            fi
+
+            # 转义 JSON 字符串 (简单转义双引号)
+            name_escaped=$(echo "$name_val" | sed 's/"/\\\\"/g')
+            desc_escaped=$(echo "$desc_val" | sed 's/"/\\\\"/g')
+
+            # 布尔值
+            if [ "$disable_val" = "true" ]; then
+                disable_bool="true"
+            else
+                disable_bool="false"
+            fi
+
+            # 输出 JSON
+            printf '{"name":"%%s","description":"%%s","disableModelInvocation":%%s}' "$name_escaped" "$desc_escaped" "$disable_bool"
+            """;
+
     @Autowired
     public SandboxSkillParser(DockerSandboxClient sandboxClient) {
         this.sandboxClient = sandboxClient;
@@ -97,64 +162,7 @@ public class SandboxSkillParser {
      * @return the result
      */
     private String buildParseScript(String base64Content) {
-        return """
-            # 解码 base64 内容
-            CONTENT=$(echo '%s' | base64 -d)
-
-            # 提取 frontmatter
-            case "$CONTENT" in
-                ---*) ;;
-                *)
-                    echo '{"name":"unnamed-skill","description":"","disableModelInvocation":false}'
-                    exit 0
-                    ;;
-            esac
-
-            # 提取 --- 之间的 YAML (排除第一个和最后一个 ---)
-            YAML=$(echo "$CONTENT" | awk '/^---/{if(seen){exit}seen=1;next}/^---/{exit}1')
-
-            # 解析字段 - 直接从 YAML 提取
-            name_val=""
-            desc_val=""
-            disable_val="false"
-
-            # 使用 grep 和 sed 提取 (POSIX 兼容)
-            name_line=$(echo "$YAML" | grep "^[[:space:]]*name:")
-            if [ -n "$name_line" ]; then
-                name_val=$(echo "$name_line" | sed 's/^[[:space:]]*name:[[:space:]]*//;s/^[[:space:]]*//;s/[[:space:]]*$//')
-            fi
-
-            desc_line=$(echo "$YAML" | grep "^[[:space:]]*description:")
-            if [ -n "$desc_line" ]; then
-                desc_val=$(echo "$desc_line" | sed 's/^[[:space:]]*description:[[:space:]]*//;s/^[[:space:]]*//;s/[[:space:]]*$//')
-            fi
-
-            disable_line=$(echo "$YAML" | grep "^[[:space:]]*disable-model-invocation:")
-            if [ -n "$disable_line" ]; then
-                disable_raw=$(echo "$disable_line" | sed 's/^[[:space:]]*disable-model-invocation:[[:space:]]*//;s/^[[:space:]]*//;s/[[:space:]]*$//')
-                disable_val=$(echo "$disable_raw" | tr '[:upper:]' '[:lower:]')
-            fi
-
-            # 默认值
-            if [ -z "$name_val" ]; then
-                name_val="unnamed-skill"
-            fi
-
-            # 转义 JSON 字符串 (简单转义双引号)
-            name_escaped=$(echo "$name_val" | sed 's/"/\\\\"/g')
-            desc_escaped=$(echo "$desc_val" | sed 's/"/\\\\"/g')
-
-            # 布尔值
-            if [ "$disable_val" = "true" ]; then
-                disable_bool="true"
-            else
-                disable_bool="false"
-            fi
-
-            # 输出 JSON
-            printf '{"name":"%%s","description":"%%s","disableModelInvocation":%%s}' "$name_escaped" "$desc_escaped" "$disable_bool"
-            """
-                .formatted(base64Content);
+        return PARSE_SCRIPT_TEMPLATE.formatted(base64Content);
     }
 
     /**
@@ -229,71 +237,61 @@ public class SandboxSkillParser {
      * @return body 内容
      * @throws SkillLoadException 加载失败
      */
+    /** POSIX sh script that strips frontmatter and emits the SKILL.md body. */
+    private static final String EXTRACT_BODY_SCRIPT_TEMPLATE =
+            """
+            # 解码 base64 内容
+            CONTENT=$(echo '%s' | base64 -d)
+
+            # 提取 body（去掉 frontmatter）- POSIX sh 兼容
+            # 策略：删除从开头到第二个 --- 的所有内容
+            strip_frontmatter() {
+                _content="$1"
+                case "$_content" in
+                    ---*)
+                        ;;
+                    *)
+                        echo "$_content"
+                        return
+                        ;;
+                esac
+
+                # 使用 awk 删除第一个 --- 到第二个 --- 之间的所有内容（包括这两个标记）
+                # 保留第二个 --- 之后的内容
+                echo "$_content" | awk '
+                    /^---$/ {
+                        if (count == 0) {
+                            count = 1
+                            next
+                        } else if (count == 1) {
+                            count = 2
+                            next
+                        }
+                    }
+                    count == 2 { print }
+                '
+            }
+
+            strip_frontmatter "$CONTENT"
+            """;
+
     public String loadBodyInSandbox(Path skillMdPath) {
         if (!isAvailable()) {
             throw new SkillLoadException("Sandbox not available for loading skill body: " + skillMdPath);
         }
-
         try {
-            // 1. 读取文件内容（宿主机）
             String content = Files.readString(skillMdPath, StandardCharsets.UTF_8);
-
-            // 2. 使用 base64 编码内容
             String base64Content = Base64.getEncoder().encodeToString(content.getBytes(StandardCharsets.UTF_8));
-
-            // 3. 构建沙箱脚本：提取 body 部分 (POSIX sh 兼容)
-            String extractScript =
-                    """
-                # 解码 base64 内容
-                CONTENT=$(echo '%s' | base64 -d)
-
-                # 提取 body（去掉 frontmatter）- POSIX sh 兼容
-                # 策略：删除从开头到第二个 --- 的所有内容
-                strip_frontmatter() {
-                    _content="$1"
-                    case "$_content" in
-                        ---*)
-                            ;;
-                        *)
-                            echo "$_content"
-                            return
-                            ;;
-                    esac
-
-                    # 使用 awk 删除第一个 --- 到第二个 --- 之间的所有内容（包括这两个标记）
-                    # 保留第二个 --- 之后的内容
-                    echo "$_content" | awk '
-                        /^---$/ {
-                            if (count == 0) {
-                                count = 1
-                                next
-                            } else if (count == 1) {
-                                count = 2
-                                next
-                            }
-                        }
-                        count == 2 { print }
-                    '
-                }
-
-                strip_frontmatter "$CONTENT"
-                """
-                            .formatted(base64Content);
-
-            // 4. 在沙箱中执行
+            String extractScript = EXTRACT_BODY_SCRIPT_TEMPLATE.formatted(base64Content);
             var result = sandboxClient.execute(List.of("sh", "-c", extractScript), ResourceLimits.defaults());
-
             if (result.isTimeout()) {
                 throw new SkillLoadException("Skill body loading timed out in sandbox: " + skillMdPath);
             }
-
             if (result.getExitCode() != 0) {
                 throw new SkillLoadException(
                         "Skill body loading failed in sandbox: " + skillMdPath + "\nstderr: " + result.getStderr());
             }
-
             return result.getStdout();
-
         } catch (IOException e) {
             throw new SkillLoadException("Failed to read skill file for body extraction: " + skillMdPath, e);
         }

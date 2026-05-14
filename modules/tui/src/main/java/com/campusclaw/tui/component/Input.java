@@ -137,179 +137,160 @@ public class Input implements Component, Focusable {
         // No cached state
     }
 
+    /** Horizontally-scrolled window over {@link #value} suitable for rendering. */
+    private record Viewport(String visibleText, int cursorDisplayPos) {}
+
     @Override
     public List<String> render(int width) {
         int availableWidth = width - PROMPT_WIDTH;
         if (availableWidth <= 0) {
             return List.of(PROMPT);
         }
-
-        // Show placeholder when empty and not focused
         if (value.isEmpty() && placeholder != null && !placeholder.isEmpty() && !focused) {
-            String placeholderText = "\033[2m" + truncateToWidth(placeholder, availableWidth) + "\033[0m";
-            int visLen = AnsiUtils.visibleWidth(placeholderText);
-            String padding = " ".repeat(Math.max(0, availableWidth - visLen));
-            return List.of(PROMPT + placeholderText + padding);
+            return List.of(renderPlaceholder(availableWidth));
         }
-
-        // Calculate visible portion with horizontal scrolling
-        String visibleText;
-        int cursorDisplayPos;
-        int totalWidth = AnsiUtils.visibleWidth(value);
-
-        if (totalWidth < availableWidth) {
-            // Everything fits
-            visibleText = value;
-            cursorDisplayPos = cursor;
-        } else {
-            // Horizontal scrolling needed
-            int scrollWidth = cursor == value.length() ? availableWidth - 1 : availableWidth;
-            int cursorCol = AnsiUtils.visibleWidth(value.substring(0, cursor));
-            int halfWidth = scrollWidth / 2;
-
-            int startCol;
-            if (cursorCol < halfWidth) {
-                startCol = 0;
-            } else if (cursorCol > totalWidth - halfWidth) {
-                startCol = Math.max(0, totalWidth - scrollWidth);
-            } else {
-                startCol = Math.max(0, cursorCol - halfWidth);
-            }
-
-            visibleText = AnsiUtils.sliceByColumn(value, startCol, startCol + scrollWidth);
-            String beforeCursor =
-                    AnsiUtils.sliceByColumn(value, startCol, startCol + Math.max(0, cursorCol - startCol));
-            cursorDisplayPos = beforeCursor.length();
-        }
-
-        // Build line with cursor
+        Viewport vp = computeViewport(availableWidth);
         StringBuilder sb = new StringBuilder(PROMPT);
-
         if (focused) {
-            String before = visibleText.substring(0, Math.min(cursorDisplayPos, visibleText.length()));
-            String after = cursorDisplayPos < visibleText.length() ? visibleText.substring(cursorDisplayPos) : "";
-
-            sb.append(before);
-            if (!after.isEmpty()) {
-                String firstG = firstGrapheme(after);
-                sb.append("\033[7m").append(firstG).append("\033[27m");
-                sb.append(after.substring(firstG.length()));
-            } else {
-                sb.append("\033[7m \033[27m");
-            }
+            appendWithCursorHighlight(sb, vp);
         } else {
-            sb.append(visibleText);
+            sb.append(vp.visibleText());
         }
-
-        // Pad to fill available width
         int visLen = AnsiUtils.visibleWidth(sb.toString()) - PROMPT_WIDTH;
-        int padding = Math.max(0, availableWidth - visLen);
-        sb.append(" ".repeat(padding));
-
+        sb.append(" ".repeat(Math.max(0, availableWidth - visLen)));
         return List.of(sb.toString());
     }
 
-    @SuppressWarnings("checkstyle:huge_cyclomatic_complexity")
+    private String renderPlaceholder(int availableWidth) {
+        String placeholderText = "\033[2m" + truncateToWidth(placeholder, availableWidth) + "\033[0m";
+        int visLen = AnsiUtils.visibleWidth(placeholderText);
+        return PROMPT + placeholderText + " ".repeat(Math.max(0, availableWidth - visLen));
+    }
+
+    private Viewport computeViewport(int availableWidth) {
+        int totalWidth = AnsiUtils.visibleWidth(value);
+        if (totalWidth < availableWidth) {
+            return new Viewport(value, cursor);
+        }
+        int scrollWidth = cursor == value.length() ? availableWidth - 1 : availableWidth;
+        int cursorCol = AnsiUtils.visibleWidth(value.substring(0, cursor));
+        int halfWidth = scrollWidth / 2;
+        int startCol;
+        if (cursorCol < halfWidth) {
+            startCol = 0;
+        } else if (cursorCol > totalWidth - halfWidth) {
+            startCol = Math.max(0, totalWidth - scrollWidth);
+        } else {
+            startCol = Math.max(0, cursorCol - halfWidth);
+        }
+        String visibleText = AnsiUtils.sliceByColumn(value, startCol, startCol + scrollWidth);
+        String beforeCursor = AnsiUtils.sliceByColumn(value, startCol, startCol + Math.max(0, cursorCol - startCol));
+        return new Viewport(visibleText, beforeCursor.length());
+    }
+
+    private static void appendWithCursorHighlight(StringBuilder sb, Viewport vp) {
+        String visibleText = vp.visibleText();
+        int cursorPos = Math.min(vp.cursorDisplayPos(), visibleText.length());
+        sb.append(visibleText, 0, cursorPos);
+        String after = cursorPos < visibleText.length() ? visibleText.substring(cursorPos) : "";
+        if (after.isEmpty()) {
+            sb.append("\033[7m \033[27m");
+            return;
+        }
+        String firstG = firstGrapheme(after);
+        sb.append("\033[7m").append(firstG).append("\033[27m");
+        sb.append(after.substring(firstG.length()));
+    }
+
+    /**
+     * Lazily-built keymap of exact-match key sequences to handler actions —
+     * mirrors {@link Editor}'s keymap structure to keep handleInput flat.
+     */
+    private java.util.Map<String, Runnable> keymap;
+
+    private java.util.Map<String, Runnable> keymap() {
+        if (keymap == null) {
+            var map = new java.util.HashMap<String, Runnable>();
+            map.put(KEY_CTRL_Z, this::undo);
+            map.put(KEY_CTRL_W, this::deleteWordBackward);
+            map.put(KEY_ALT_D, this::deleteWordForward);
+            map.put(KEY_CTRL_U, this::deleteToLineStart);
+            map.put(KEY_CTRL_K, this::deleteToLineEnd);
+            map.put(KEY_CTRL_Y, this::yank);
+            map.put(KEY_ALT_Y, this::yankPop);
+            map.put(KEY_DELETE, this::handleForwardDelete);
+            for (String k : new String[] {KEY_BACKSPACE, KEY_BACKSPACE_BS}) {
+                map.put(k, this::handleBackspace);
+            }
+            for (String k : new String[] {KEY_LEFT, KEY_CTRL_B}) {
+                map.put(k, this::moveCursorLeftOne);
+            }
+            for (String k : new String[] {KEY_RIGHT, KEY_CTRL_F}) {
+                map.put(k, this::moveCursorRightOne);
+            }
+            for (String k : new String[] {KEY_HOME, KEY_CTRL_A}) {
+                map.put(k, this::moveCursorToStart);
+            }
+            for (String k : new String[] {KEY_END, KEY_CTRL_E}) {
+                map.put(k, this::moveCursorToEnd);
+            }
+            for (String k : new String[] {KEY_ALT_LEFT, KEY_CTRL_LEFT, KEY_ALT_B}) {
+                map.put(k, this::moveWordBackward);
+            }
+            for (String k : new String[] {KEY_ALT_RIGHT, KEY_CTRL_RIGHT, KEY_ALT_F}) {
+                map.put(k, this::moveWordForward);
+            }
+            keymap = map;
+        }
+        return keymap;
+    }
+
     @Override
     public void handleInput(String data) {
-        // Escape / Ctrl+C
         if (KEY_ESCAPE.equals(data) || KEY_CTRL_C.equals(data)) {
             if (onEscape != null) {
                 onEscape.run();
             }
             return;
         }
-
-        // Undo
-        if (KEY_CTRL_Z.equals(data)) {
-            undo();
-            return;
-        }
-
-        // Submit
         if (KEY_ENTER.equals(data) || KEY_NEWLINE.equals(data)) {
             if (onSubmit != null) {
                 onSubmit.accept(value);
             }
             return;
         }
-
-        // Deletion
-        if (KEY_BACKSPACE.equals(data) || KEY_BACKSPACE_BS.equals(data)) {
-            handleBackspace();
+        Runnable bound = keymap().get(data);
+        if (bound != null) {
+            bound.run();
             return;
         }
-        if (KEY_DELETE.equals(data)) {
-            handleForwardDelete();
-            return;
-        }
-        if (KEY_CTRL_W.equals(data)) {
-            deleteWordBackward();
-            return;
-        }
-        if (KEY_ALT_D.equals(data)) {
-            deleteWordForward();
-            return;
-        }
-        if (KEY_CTRL_U.equals(data)) {
-            deleteToLineStart();
-            return;
-        }
-        if (KEY_CTRL_K.equals(data)) {
-            deleteToLineEnd();
-            return;
-        }
-
-        // Kill ring
-        if (KEY_CTRL_Y.equals(data)) {
-            yank();
-            return;
-        }
-        if (KEY_ALT_Y.equals(data)) {
-            yankPop();
-            return;
-        }
-
-        // Cursor movement
-        if (KEY_LEFT.equals(data) || KEY_CTRL_B.equals(data)) {
-            lastAction = null;
-            if (cursor > 0) {
-                cursor -= lastGraphemeLength(value.substring(0, cursor));
-            }
-            return;
-        }
-        if (KEY_RIGHT.equals(data) || KEY_CTRL_F.equals(data)) {
-            lastAction = null;
-            if (cursor < value.length()) {
-                cursor += firstGrapheme(value.substring(cursor)).length();
-            }
-            return;
-        }
-        if (KEY_HOME.equals(data) || KEY_CTRL_A.equals(data)) {
-            lastAction = null;
-            cursor = 0;
-            return;
-        }
-        if (KEY_END.equals(data) || KEY_CTRL_E.equals(data)) {
-            lastAction = null;
-            cursor = value.length();
-            return;
-        }
-
-        // Word movement
-        if (KEY_ALT_LEFT.equals(data) || KEY_CTRL_LEFT.equals(data) || KEY_ALT_B.equals(data)) {
-            moveWordBackward();
-            return;
-        }
-        if (KEY_ALT_RIGHT.equals(data) || KEY_CTRL_RIGHT.equals(data) || KEY_ALT_F.equals(data)) {
-            moveWordForward();
-            return;
-        }
-
-        // Regular character input
         if (!data.isEmpty() && data.charAt(0) >= 32 && !data.startsWith("\033")) {
             insertCharacter(data);
         }
+    }
+
+    private void moveCursorLeftOne() {
+        lastAction = null;
+        if (cursor > 0) {
+            cursor -= lastGraphemeLength(value.substring(0, cursor));
+        }
+    }
+
+    private void moveCursorRightOne() {
+        lastAction = null;
+        if (cursor < value.length()) {
+            cursor += firstGrapheme(value.substring(cursor)).length();
+        }
+    }
+
+    private void moveCursorToStart() {
+        lastAction = null;
+        cursor = 0;
+    }
+
+    private void moveCursorToEnd() {
+        lastAction = null;
+        cursor = value.length();
     }
 
     // -------------------------------------------------------------------

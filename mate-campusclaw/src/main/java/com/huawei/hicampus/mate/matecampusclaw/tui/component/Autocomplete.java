@@ -172,7 +172,6 @@ public class Autocomplete implements Component, Focusable {
         return result;
     }
 
-    @SuppressWarnings("checkstyle:huge_cyclomatic_complexity")
     @Override
     public void handleInput(String data) {
         // Tab — trigger or cycle completions
@@ -303,70 +302,70 @@ public class Autocomplete implements Component, Focusable {
      * @param partial the partial path the user has typed
      * @return matching path completions in display order
      */
-    @SuppressWarnings("checkstyle:huge_cyclomatic_complexity")
+    /** Parsed result of splitting a partial path into directory and filename prefix. */
+    private record DirPrefix(Path dir, String prefix) {}
+
     static List<String> computeFileSuggestions(String partial) {
-        if (partial == null || partial.isEmpty()) {
-            partial = ".";
-        }
-
-        Path inputPath = Paths.get(partial);
-        Path dir;
-        String prefix;
-
-        if (partial.endsWith("/") || partial.endsWith("\\")) {
-            dir = inputPath;
-            prefix = "";
-        } else {
-            dir = inputPath.getParent();
-            if (dir == null) {
-                dir = Paths.get(".");
-            }
-            prefix = inputPath.getFileName() != null ? inputPath.getFileName().toString() : "";
-        }
-
-        if (!Files.isDirectory(dir)) {
+        DirPrefix dp = parseDirPrefix(partial);
+        if (!Files.isDirectory(dp.dir())) {
             return Collections.emptyList();
         }
+        List<String> matches = collectMatches(dp);
+        sortMatches(matches, dp.prefix());
+        return matches;
+    }
 
+    private static DirPrefix parseDirPrefix(String partial) {
+        String effective = (partial == null || partial.isEmpty()) ? "." : partial;
+        Path inputPath = Paths.get(effective);
+        if (effective.endsWith("/") || effective.endsWith("\\")) {
+            return new DirPrefix(inputPath, "");
+        }
+        Path dir = inputPath.getParent();
+        if (dir == null) {
+            dir = Paths.get(".");
+        }
+        String prefix =
+                inputPath.getFileName() != null ? inputPath.getFileName().toString() : "";
+        return new DirPrefix(dir, prefix);
+    }
+
+    private static List<String> collectMatches(DirPrefix dp) {
         List<String> matches = new ArrayList<>();
-        try (DirectoryStream<Path> stream = Files.newDirectoryStream(dir)) {
+        try (DirectoryStream<Path> stream = Files.newDirectoryStream(dp.dir())) {
+            Path cwdDot = Paths.get(".");
             for (Path entry : stream) {
                 String name = entry.getFileName().toString();
-                if (prefix.isEmpty() || FuzzyMatcher.matches(prefix, name)) {
-                    String fullPath;
-                    if (dir.equals(Paths.get("."))) {
-                        fullPath = name;
-                    } else {
-                        fullPath = dir.resolve(name).toString();
-                    }
-                    if (Files.isDirectory(entry)) {
-                        fullPath += "/";
-                    }
-                    matches.add(fullPath);
+                if (!dp.prefix().isEmpty() && !FuzzyMatcher.matches(dp.prefix(), name)) {
+                    continue;
                 }
+                String fullPath =
+                        dp.dir().equals(cwdDot) ? name : dp.dir().resolve(name).toString();
+                if (Files.isDirectory(entry)) {
+                    fullPath += "/";
+                }
+                matches.add(fullPath);
             }
         } catch (IOException e) {
-            // Silently return empty on I/O errors
-            return Collections.emptyList();
+            return new ArrayList<>();
         }
-
-        // Sort by fuzzy match score (best first), then alphabetically
-        if (!prefix.isEmpty()) {
-            String finalPrefix = prefix;
-            matches.sort((a, b) -> {
-                String nameA = Paths.get(a).getFileName().toString();
-                String nameB = Paths.get(b).getFileName().toString();
-                int scoreA = FuzzyMatcher.score(finalPrefix, nameA);
-                int scoreB = FuzzyMatcher.score(finalPrefix, nameB);
-                if (scoreA != scoreB) {
-                    return Integer.compare(scoreB, scoreA);
-                }
-                return nameA.compareToIgnoreCase(nameB);
-            });
-        } else {
-            matches.sort(String.CASE_INSENSITIVE_ORDER);
-        }
-
         return matches;
+    }
+
+    private static void sortMatches(List<String> matches, String prefix) {
+        if (prefix.isEmpty()) {
+            matches.sort(String.CASE_INSENSITIVE_ORDER);
+            return;
+        }
+        matches.sort((a, b) -> {
+            String nameA = Paths.get(a).getFileName().toString();
+            String nameB = Paths.get(b).getFileName().toString();
+            int scoreA = FuzzyMatcher.score(prefix, nameA);
+            int scoreB = FuzzyMatcher.score(prefix, nameB);
+            if (scoreA != scoreB) {
+                return Integer.compare(scoreB, scoreA);
+            }
+            return nameA.compareToIgnoreCase(nameB);
+        });
     }
 }

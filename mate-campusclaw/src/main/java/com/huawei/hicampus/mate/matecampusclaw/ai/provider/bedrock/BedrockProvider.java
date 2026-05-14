@@ -289,73 +289,44 @@ public class BedrockProvider implements ApiProvider {
         };
     }
 
+    /**
+     * Mutable bundle for the Bedrock Converse stream. Bedrock indexes its
+     * content blocks by an opaque {@code contentBlockIndex} that comes from the
+     * server — we map each one to our local {@code contentBlocks} list index
+     * and to its block type ("text", "thinking", "tool").
+     */
+    private static final class BedrockStreamState {
+        final ArrayList<ContentBlock> contentBlocks = new ArrayList<>();
+        final long[] accumulatedUsage = {0, 0, 0, 0}; // input, output, cacheRead, cacheWrite
+        final HashMap<Integer, StringBuilder> textAccumulators = new HashMap<>();
+        final HashMap<Integer, StringBuilder> thinkingAccumulators = new HashMap<>();
+        final HashMap<Integer, ToolCallAccumulator> toolAccumulators = new HashMap<>();
+        final HashMap<Integer, Integer> blockIndexToContentIndex = new HashMap<>();
+        final HashMap<Integer, String> blockTypes = new HashMap<>();
+        StopReason stopReason;
+    }
+
     private void processStream(
             BedrockRuntimeAsyncClient client,
             ConverseStreamRequest request,
             Model model,
             AssistantMessageEventStream eventStream) {
-
-        var contentBlocks = new ArrayList<ContentBlock>();
-        var accumulatedUsage = new long[] {0, 0, 0, 0}; // input, output, cacheRead, cacheWrite
-        StopReason[] stopReason = {null};
-
-        // Track content blocks by their Bedrock contentBlockIndex
-        var textAccumulators = new HashMap<Integer, StringBuilder>();
-        var thinkingAccumulators = new HashMap<Integer, StringBuilder>();
-        var toolAccumulators = new HashMap<Integer, ToolCallAccumulator>();
-        var blockIndexToContentIndex = new HashMap<Integer, Integer>();
-
-        // Track block types: "text", "thinking", "tool"
-        var blockTypes = new HashMap<Integer, String>();
-
+        var state = new BedrockStreamState();
         var visitor = ConverseStreamResponseHandler.Visitor.builder()
-                .onContentBlockStart(e -> handleContentBlockStart(
-                        e,
-                        model,
-                        contentBlocks,
-                        accumulatedUsage,
-                        textAccumulators,
-                        thinkingAccumulators,
-                        toolAccumulators,
-                        blockIndexToContentIndex,
-                        blockTypes,
-                        eventStream))
-                .onContentBlockDelta(e -> handleContentBlockDelta(
-                        e,
-                        model,
-                        contentBlocks,
-                        accumulatedUsage,
-                        textAccumulators,
-                        thinkingAccumulators,
-                        toolAccumulators,
-                        blockIndexToContentIndex,
-                        blockTypes,
-                        eventStream))
-                .onContentBlockStop(e -> handleContentBlockStop(
-                        e,
-                        model,
-                        contentBlocks,
-                        accumulatedUsage,
-                        textAccumulators,
-                        thinkingAccumulators,
-                        toolAccumulators,
-                        blockIndexToContentIndex,
-                        blockTypes,
-                        eventStream))
-                .onMessageStop(e -> stopReason[0] = mapStopReason(e.stopReasonAsString()))
+                .onContentBlockStart(e -> handleContentBlockStart(e, state, model, eventStream))
+                .onContentBlockDelta(e -> handleContentBlockDelta(e, state, model, eventStream))
+                .onContentBlockStop(e -> handleContentBlockStop(e, state, model, eventStream))
+                .onMessageStop(e -> state.stopReason = mapStopReason(e.stopReasonAsString()))
                 .onMetadata(e -> {
                     TokenUsage usage = e.usage();
                     if (usage != null) {
-                        parseUsage(usage, accumulatedUsage);
+                        parseUsage(usage, state.accumulatedUsage);
                     }
                 })
                 .build();
-
         var handler =
                 ConverseStreamResponseHandler.builder().subscriber(visitor).build();
-
         CompletableFuture<Void> future = client.converseStream(request, handler);
-
         try {
             future.join();
         } catch (Exception e) {
@@ -363,184 +334,184 @@ public class BedrockProvider implements ApiProvider {
             eventStream.error(cause instanceof Exception ex ? ex : new RuntimeException(cause));
             return;
         }
-
-        // Emit final done event
-        var finalStopReason = stopReason[0] != null ? stopReason[0] : StopReason.STOP;
-        var finalMessage = buildPartialMessage(model, null, contentBlocks, accumulatedUsage, finalStopReason);
-        eventStream.pushDone(finalStopReason, finalMessage);
+        var finalStopReason = state.stopReason != null ? state.stopReason : StopReason.STOP;
+        eventStream.pushDone(finalStopReason, partialFrom(state, model, finalStopReason));
     }
 
     private void handleContentBlockStart(
-            ContentBlockStartEvent e,
-            Model model,
-            List<ContentBlock> contentBlocks,
-            long[] usage,
-            Map<Integer, StringBuilder> textAccumulators,
-            Map<Integer, StringBuilder> thinkingAccumulators,
-            Map<Integer, ToolCallAccumulator> toolAccumulators,
-            Map<Integer, Integer> blockIndexToContentIndex,
-            Map<Integer, String> blockTypes,
-            AssistantMessageEventStream eventStream) {
-
+            ContentBlockStartEvent e, BedrockStreamState state, Model model, AssistantMessageEventStream eventStream) {
         int blockIdx = e.contentBlockIndex();
         var start = e.start();
-
-        if (start != null && start.toolUse() != null) {
-            // Tool use block
-            var toolStart = start.toolUse();
-            var acc = new ToolCallAccumulator();
-            acc.id = toolStart.toolUseId();
-            acc.name = toolStart.name();
-            toolAccumulators.put(blockIdx, acc);
-            blockTypes.put(blockIdx, "tool");
-
-            contentBlocks.add(new ToolCall(acc.id, acc.name, Map.of(), null));
-            int contentIdx = contentBlocks.size() - 1;
-            blockIndexToContentIndex.put(blockIdx, contentIdx);
-            eventStream.push(new AssistantMessageEvent.ToolCallStartEvent(
-                    contentIdx, buildPartialMessage(model, null, contentBlocks, usage, null)));
+        if (start == null || start.toolUse() == null) {
+            // Text/thinking blocks have no start payload — detected on first delta.
+            return;
         }
-
-        // Text and reasoning blocks don't have a start payload in Bedrock;
-
-        // we detect them on the first delta event.
+        var toolStart = start.toolUse();
+        var acc = new ToolCallAccumulator();
+        acc.id = toolStart.toolUseId();
+        acc.name = toolStart.name();
+        state.toolAccumulators.put(blockIdx, acc);
+        state.blockTypes.put(blockIdx, "tool");
+        state.contentBlocks.add(new ToolCall(acc.id, acc.name, Map.of(), null));
+        int contentIdx = state.contentBlocks.size() - 1;
+        state.blockIndexToContentIndex.put(blockIdx, contentIdx);
+        eventStream.push(new AssistantMessageEvent.ToolCallStartEvent(contentIdx, partialFrom(state, model, null)));
     }
 
     private void handleContentBlockDelta(
-            ContentBlockDeltaEvent e,
-            Model model,
-            List<ContentBlock> contentBlocks,
-            long[] usage,
-            Map<Integer, StringBuilder> textAccumulators,
-            Map<Integer, StringBuilder> thinkingAccumulators,
-            Map<Integer, ToolCallAccumulator> toolAccumulators,
-            Map<Integer, Integer> blockIndexToContentIndex,
-            Map<Integer, String> blockTypes,
-            AssistantMessageEventStream eventStream) {
-
+            ContentBlockDeltaEvent e, BedrockStreamState state, Model model, AssistantMessageEventStream eventStream) {
         int blockIdx = e.contentBlockIndex();
         var delta = e.delta();
         if (delta == null) {
             return;
         }
-
-        // Reasoning content delta
         if (delta.reasoningContent() != null && delta.reasoningContent().text() != null) {
-            String thinkingText = delta.reasoningContent().text();
-            if (!blockTypes.containsKey(blockIdx)) {
-                // First thinking delta — create the block
-                blockTypes.put(blockIdx, "thinking");
-                thinkingAccumulators.put(blockIdx, new StringBuilder());
-                contentBlocks.add(new ThinkingContent("", null, false));
-                int contentIdx = contentBlocks.size() - 1;
-                blockIndexToContentIndex.put(blockIdx, contentIdx);
-                eventStream.push(new AssistantMessageEvent.ThinkingStartEvent(
-                        contentIdx, buildPartialMessage(model, null, contentBlocks, usage, null)));
-            }
-            var acc = thinkingAccumulators.get(blockIdx);
-            if (acc != null) {
-                acc.append(thinkingText);
-                Integer contentIdx = blockIndexToContentIndex.get(blockIdx);
-                if (contentIdx != null) {
-                    contentBlocks.set(contentIdx, new ThinkingContent(acc.toString(), null, false));
-                    eventStream.push(new AssistantMessageEvent.ThinkingDeltaEvent(
-                            contentIdx, thinkingText, buildPartialMessage(model, null, contentBlocks, usage, null)));
-                }
-            }
+            applyThinkingDelta(blockIdx, delta.reasoningContent().text(), state, model, eventStream);
             return;
         }
-
-        // Text content delta
         if (delta.text() != null) {
-            String text = delta.text();
-            if (!blockTypes.containsKey(blockIdx)) {
-                // First text delta — create the block
-                blockTypes.put(blockIdx, "text");
-                textAccumulators.put(blockIdx, new StringBuilder());
-                contentBlocks.add(new TextContent("", null));
-                int contentIdx = contentBlocks.size() - 1;
-                blockIndexToContentIndex.put(blockIdx, contentIdx);
-                eventStream.push(new AssistantMessageEvent.TextStartEvent(
-                        contentIdx, buildPartialMessage(model, null, contentBlocks, usage, null)));
-            }
-            var acc = textAccumulators.get(blockIdx);
-            if (acc != null) {
-                acc.append(text);
-                Integer contentIdx = blockIndexToContentIndex.get(blockIdx);
-                if (contentIdx != null) {
-                    contentBlocks.set(contentIdx, new TextContent(acc.toString(), null));
-                    eventStream.push(new AssistantMessageEvent.TextDeltaEvent(
-                            contentIdx, text, buildPartialMessage(model, null, contentBlocks, usage, null)));
-                }
-            }
+            applyTextDelta(blockIdx, delta.text(), state, model, eventStream);
             return;
         }
-
-        // Tool use input delta
         if (delta.toolUse() != null && delta.toolUse().input() != null) {
-            var acc = toolAccumulators.get(blockIdx);
-            if (acc != null) {
-                String inputDelta = delta.toolUse().input();
-                acc.arguments.append(inputDelta);
-                Integer contentIdx = blockIndexToContentIndex.get(blockIdx);
-                if (contentIdx != null) {
-                    eventStream.push(new AssistantMessageEvent.ToolCallDeltaEvent(
-                            contentIdx, inputDelta, buildPartialMessage(model, null, contentBlocks, usage, null)));
-                }
+            applyToolUseDelta(blockIdx, delta.toolUse().input(), state, model, eventStream);
+        }
+    }
+
+    private void applyThinkingDelta(
+            int blockIdx,
+            String thinkingText,
+            BedrockStreamState state,
+            Model model,
+            AssistantMessageEventStream eventStream) {
+        if (!state.blockTypes.containsKey(blockIdx)) {
+            state.blockTypes.put(blockIdx, "thinking");
+            state.thinkingAccumulators.put(blockIdx, new StringBuilder());
+            state.contentBlocks.add(new ThinkingContent("", null, false));
+            int contentIdx = state.contentBlocks.size() - 1;
+            state.blockIndexToContentIndex.put(blockIdx, contentIdx);
+            eventStream.push(new AssistantMessageEvent.ThinkingStartEvent(contentIdx, partialFrom(state, model, null)));
+        }
+        var acc = state.thinkingAccumulators.get(blockIdx);
+        if (acc == null) {
+            return;
+        }
+        acc.append(thinkingText);
+        Integer contentIdx = state.blockIndexToContentIndex.get(blockIdx);
+        if (contentIdx == null) {
+            return;
+        }
+        state.contentBlocks.set(contentIdx, new ThinkingContent(acc.toString(), null, false));
+        eventStream.push(new AssistantMessageEvent.ThinkingDeltaEvent(
+                contentIdx, thinkingText, partialFrom(state, model, null)));
+    }
+
+    private void applyTextDelta(
+            int blockIdx, String text, BedrockStreamState state, Model model, AssistantMessageEventStream eventStream) {
+        if (!state.blockTypes.containsKey(blockIdx)) {
+            state.blockTypes.put(blockIdx, "text");
+            state.textAccumulators.put(blockIdx, new StringBuilder());
+            state.contentBlocks.add(new TextContent("", null));
+            int contentIdx = state.contentBlocks.size() - 1;
+            state.blockIndexToContentIndex.put(blockIdx, contentIdx);
+            eventStream.push(new AssistantMessageEvent.TextStartEvent(contentIdx, partialFrom(state, model, null)));
+        }
+        var acc = state.textAccumulators.get(blockIdx);
+        if (acc == null) {
+            return;
+        }
+        acc.append(text);
+        Integer contentIdx = state.blockIndexToContentIndex.get(blockIdx);
+        if (contentIdx == null) {
+            return;
+        }
+        state.contentBlocks.set(contentIdx, new TextContent(acc.toString(), null));
+        eventStream.push(new AssistantMessageEvent.TextDeltaEvent(contentIdx, text, partialFrom(state, model, null)));
+    }
+
+    private void applyToolUseDelta(
+            int blockIdx,
+            String inputDelta,
+            BedrockStreamState state,
+            Model model,
+            AssistantMessageEventStream eventStream) {
+        var acc = state.toolAccumulators.get(blockIdx);
+        if (acc == null) {
+            return;
+        }
+        acc.arguments.append(inputDelta);
+        Integer contentIdx = state.blockIndexToContentIndex.get(blockIdx);
+        if (contentIdx == null) {
+            return;
+        }
+        eventStream.push(
+                new AssistantMessageEvent.ToolCallDeltaEvent(contentIdx, inputDelta, partialFrom(state, model, null)));
+    }
+
+    private void handleContentBlockStop(
+            ContentBlockStopEvent e, BedrockStreamState state, Model model, AssistantMessageEventStream eventStream) {
+        int blockIdx = e.contentBlockIndex();
+        Integer contentIdx = state.blockIndexToContentIndex.get(blockIdx);
+        if (contentIdx == null) {
+            return;
+        }
+        String type = state.blockTypes.get(blockIdx);
+        if (type == null) {
+            return;
+        }
+        switch (type) {
+            case "text" -> finalizeTextBlock(blockIdx, contentIdx, state, model, eventStream);
+            case "thinking" -> finalizeThinkingBlock(blockIdx, contentIdx, state, model, eventStream);
+            case "tool" -> finalizeToolBlock(blockIdx, contentIdx, state, model, eventStream);
+            default -> {
+                // ignore unknown block types
             }
         }
     }
 
-    private void handleContentBlockStop(
-            ContentBlockStopEvent e,
+    private void finalizeTextBlock(
+            int blockIdx,
+            int contentIdx,
+            BedrockStreamState state,
             Model model,
-            List<ContentBlock> contentBlocks,
-            long[] usage,
-            Map<Integer, StringBuilder> textAccumulators,
-            Map<Integer, StringBuilder> thinkingAccumulators,
-            Map<Integer, ToolCallAccumulator> toolAccumulators,
-            Map<Integer, Integer> blockIndexToContentIndex,
-            Map<Integer, String> blockTypes,
             AssistantMessageEventStream eventStream) {
+        var sb = state.textAccumulators.get(blockIdx);
+        String text = sb != null ? sb.toString() : "";
+        state.contentBlocks.set(contentIdx, new TextContent(text, null));
+        eventStream.push(new AssistantMessageEvent.TextEndEvent(contentIdx, text, partialFrom(state, model, null)));
+    }
 
-        int blockIdx = e.contentBlockIndex();
-        Integer contentIdx = blockIndexToContentIndex.get(blockIdx);
-        if (contentIdx == null) {
-            return;
-        }
-        String type = blockTypes.get(blockIdx);
-        if (type == null) {
-            return;
-        }
+    private void finalizeThinkingBlock(
+            int blockIdx,
+            int contentIdx,
+            BedrockStreamState state,
+            Model model,
+            AssistantMessageEventStream eventStream) {
+        var sb = state.thinkingAccumulators.get(blockIdx);
+        String thinking = sb != null ? sb.toString() : "";
+        state.contentBlocks.set(contentIdx, new ThinkingContent(thinking, null, false));
+        eventStream.push(
+                new AssistantMessageEvent.ThinkingEndEvent(contentIdx, thinking, partialFrom(state, model, null)));
+    }
 
-        switch (type) {
-            case "text" -> {
-                String text = textAccumulators.containsKey(blockIdx)
-                        ? textAccumulators.get(blockIdx).toString()
-                        : "";
-                contentBlocks.set(contentIdx, new TextContent(text, null));
-                eventStream.push(new AssistantMessageEvent.TextEndEvent(
-                        contentIdx, text, buildPartialMessage(model, null, contentBlocks, usage, null)));
-            }
-            case "thinking" -> {
-                String thinking = thinkingAccumulators.containsKey(blockIdx)
-                        ? thinkingAccumulators.get(blockIdx).toString()
-                        : "";
-                contentBlocks.set(contentIdx, new ThinkingContent(thinking, null, false));
-                eventStream.push(new AssistantMessageEvent.ThinkingEndEvent(
-                        contentIdx, thinking, buildPartialMessage(model, null, contentBlocks, usage, null)));
-            }
-            case "tool" -> {
-                var acc = toolAccumulators.get(blockIdx);
-                Map<String, Object> args = acc != null ? parseToolArguments(acc.arguments.toString()) : Map.of();
-                String id = acc != null && acc.id != null ? acc.id : "";
-                String name = acc != null && acc.name != null ? acc.name : "";
-                var toolCall = new ToolCall(id, name, args, null);
-                contentBlocks.set(contentIdx, toolCall);
-                eventStream.push(new AssistantMessageEvent.ToolCallEndEvent(
-                        contentIdx, toolCall, buildPartialMessage(model, null, contentBlocks, usage, null)));
-            }
-        }
+    private void finalizeToolBlock(
+            int blockIdx,
+            int contentIdx,
+            BedrockStreamState state,
+            Model model,
+            AssistantMessageEventStream eventStream) {
+        var acc = state.toolAccumulators.get(blockIdx);
+        Map<String, Object> args = acc != null ? parseToolArguments(acc.arguments.toString()) : Map.of();
+        String id = acc != null && acc.id != null ? acc.id : "";
+        String name = acc != null && acc.name != null ? acc.name : "";
+        var toolCall = new ToolCall(id, name, args, null);
+        state.contentBlocks.set(contentIdx, toolCall);
+        eventStream.push(
+                new AssistantMessageEvent.ToolCallEndEvent(contentIdx, toolCall, partialFrom(state, model, null)));
+    }
+
+    private AssistantMessage partialFrom(BedrockStreamState state, Model model, @Nullable StopReason stopReason) {
+        return buildPartialMessage(model, null, state.contentBlocks, state.accumulatedUsage, stopReason);
     }
 
     // -- Message conversion --

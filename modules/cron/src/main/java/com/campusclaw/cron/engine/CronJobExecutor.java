@@ -64,74 +64,38 @@ public class CronJobExecutor {
     public CronRunRecord execute(CronJob job) {
         String runId = UUID.randomUUID().toString().substring(0, 8);
         long startedAt = System.currentTimeMillis();
-
-        var startRecord =
-                new CronRunRecord(runId, job.id(), startedAt, 0, CronRunRecord.RunStatus.RUNNING, null, null, 0);
-        runLog.appendRun(startRecord);
-
+        runLog.appendRun(
+                new CronRunRecord(runId, job.id(), startedAt, 0, CronRunRecord.RunStatus.RUNNING, null, null, 0));
         try {
             var payload = (CronPayload.AgentPrompt) job.payload();
-
-            // Create isolated agent
-            Agent agent = new Agent(aiService);
-
-            // Resolve model — required for Agent to execute
-            Model model = resolveModel(payload.modelId());
-            if (model == null) {
-                throw new IllegalStateException("No model available for cron job execution");
-            }
-            agent.setModel(model);
-
-            // Set system prompt
-            if (payload.systemPrompt() != null) {
-                agent.setSystemPrompt(payload.systemPrompt());
-            } else {
-                agent.setSystemPrompt("You are a cron task executor. Complete the task efficiently and concisely.");
-            }
-
-            // Filter tools
-            List<AgentTool> tools = filterTools(payload.allowedTools());
-            agent.setTools(tools);
-
-            // Execute with timeout — await the prompt future directly
-            // (waitForIdle() won't surface errors if prompt() itself fails)
-            int timeout = DEFAULT_TIMEOUT_SECONDS;
+            Agent agent = buildAgentForPayload(payload);
             try {
-                agent.prompt(payload.prompt()).get(timeout, TimeUnit.SECONDS);
+                agent.prompt(payload.prompt()).get(DEFAULT_TIMEOUT_SECONDS, TimeUnit.SECONDS);
             } catch (TimeoutException e) {
                 agent.abort();
-                log.warn("Cron job {} timed out after {}s", job.name(), timeout);
-                var record = new CronRunRecord(
+                log.warn("Cron job {} timed out after {}s", job.name(), DEFAULT_TIMEOUT_SECONDS);
+                return appendAndReturn(new CronRunRecord(
                         runId,
                         job.id(),
                         startedAt,
                         System.currentTimeMillis(),
                         CronRunRecord.RunStatus.FAILED,
-                        "Timeout after " + timeout + "s",
+                        "Timeout after " + DEFAULT_TIMEOUT_SECONDS + "s",
                         null,
-                        0);
-                runLog.appendRun(record);
-                return record;
+                        0));
             }
-
-            // Extract assistant response text
-            String output = extractOutput(agent);
-
-            var record = new CronRunRecord(
+            return appendAndReturn(new CronRunRecord(
                     runId,
                     job.id(),
                     startedAt,
                     System.currentTimeMillis(),
                     CronRunRecord.RunStatus.SUCCESS,
                     null,
-                    output,
-                    0);
-            runLog.appendRun(record);
-            return record;
-
+                    extractOutput(agent),
+                    0));
         } catch (Exception e) {
             log.error("Cron job {} failed: {}", job.name(), e.getMessage(), e);
-            var record = new CronRunRecord(
+            return appendAndReturn(new CronRunRecord(
                     runId,
                     job.id(),
                     startedAt,
@@ -139,10 +103,28 @@ public class CronJobExecutor {
                     CronRunRecord.RunStatus.FAILED,
                     e.getMessage(),
                     null,
-                    0);
-            runLog.appendRun(record);
-            return record;
+                    0));
         }
+    }
+
+    private Agent buildAgentForPayload(CronPayload.AgentPrompt payload) {
+        Agent agent = new Agent(aiService);
+        Model model = resolveModel(payload.modelId());
+        if (model == null) {
+            throw new IllegalStateException("No model available for cron job execution");
+        }
+        agent.setModel(model);
+        agent.setSystemPrompt(
+                payload.systemPrompt() != null
+                        ? payload.systemPrompt()
+                        : "You are a cron task executor. Complete the task efficiently and concisely.");
+        agent.setTools(filterTools(payload.allowedTools()));
+        return agent;
+    }
+
+    private CronRunRecord appendAndReturn(CronRunRecord record) {
+        runLog.appendRun(record);
+        return record;
     }
 
     private String extractOutput(Agent agent) {

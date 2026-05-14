@@ -215,84 +215,79 @@ public class CronEngine {
     }
 
     private CronRunRecord executeJob(CronJob job) {
-        // Mark as running
-        store.updateJob(job.withState(new CronJobState(
-                job.state().nextRunAtMs(), System.currentTimeMillis(),
-                job.state().lastRunAtMs(), job.state().lastRunStatus(),
-                job.state().consecutiveErrors(), job.state().totalRuns())));
-
-        String runId = null;
+        markJobRunning(job);
         emit(new CronEvent.JobStarted(job.id(), job.name(), ""));
-
         try {
             CronRunRecord result = executor.execute(job);
-            runId = result.runId();
-
-            // Update state based on result
-            boolean success = result.status() == CronRunRecord.RunStatus.SUCCESS;
-            int errors = success ? 0 : job.state().consecutiveErrors() + 1;
-            boolean shouldDisable = errors >= MAX_CONSECUTIVE_ERRORS;
-
-            var newState = new CronJobState(
-                    0,
-                    0,
-                    System.currentTimeMillis(),
-                    success ? "success" : "failed",
-                    errors,
-                    job.state().totalRuns() + 1);
-
-            var updatedJob = job.withState(newState);
-            if (shouldDisable) {
-                updatedJob = updatedJob.withEnabled(false);
-                log.warn("Job {} auto-disabled after {} consecutive errors", job.name(), errors);
-            }
-
-            // Handle deleteAfterRun for one-shot At schedules
-            if (job.deleteAfterRun() && success) {
-                store.removeJob(job.id());
-                unscheduleJob(job.id());
-            } else {
-                store.updateJob(updatedJob);
-            }
-
-            if (success) {
-                emit(new CronEvent.JobCompleted(job.id(), job.name(), runId, result.output()));
-            } else {
-                emit(new CronEvent.JobFailed(
-                        job.id(), job.name(), runId, result.error() != null ? result.error() : "Unknown error"));
-            }
-
+            recordJobOutcome(job, result);
             return result;
-
         } catch (Exception e) {
             log.error("Unexpected error executing job {}", job.name(), e);
-
-            int errors = job.state().consecutiveErrors() + 1;
-            var newState = new CronJobState(
-                    0,
-                    0,
-                    System.currentTimeMillis(),
-                    "failed",
-                    errors,
-                    job.state().totalRuns() + 1);
-            var updatedJob = job.withState(newState);
-            if (errors >= MAX_CONSECUTIVE_ERRORS) {
-                updatedJob = updatedJob.withEnabled(false);
-            }
-            store.updateJob(updatedJob);
-
-            emit(new CronEvent.JobFailed(job.id(), job.name(), runId != null ? runId : "", e.getMessage()));
-
-            return new CronRunRecord(
-                    runId != null ? runId : "",
-                    job.id(),
-                    System.currentTimeMillis(),
-                    System.currentTimeMillis(),
-                    CronRunRecord.RunStatus.FAILED,
-                    e.getMessage(),
-                    null,
-                    0);
+            return recordJobException(job, e);
         }
+    }
+
+    private void markJobRunning(CronJob job) {
+        store.updateJob(job.withState(new CronJobState(
+                job.state().nextRunAtMs(),
+                System.currentTimeMillis(),
+                job.state().lastRunAtMs(),
+                job.state().lastRunStatus(),
+                job.state().consecutiveErrors(),
+                job.state().totalRuns())));
+    }
+
+    private void recordJobOutcome(CronJob job, CronRunRecord result) {
+        boolean success = result.status() == CronRunRecord.RunStatus.SUCCESS;
+        int errors = success ? 0 : job.state().consecutiveErrors() + 1;
+        boolean shouldDisable = errors >= MAX_CONSECUTIVE_ERRORS;
+        var newState = new CronJobState(
+                0,
+                0,
+                System.currentTimeMillis(),
+                success ? "success" : "failed",
+                errors,
+                job.state().totalRuns() + 1);
+        var updatedJob = job.withState(newState);
+        if (shouldDisable) {
+            updatedJob = updatedJob.withEnabled(false);
+            log.warn("Job {} auto-disabled after {} consecutive errors", job.name(), errors);
+        }
+
+        // Handle deleteAfterRun for one-shot At schedules.
+        if (job.deleteAfterRun() && success) {
+            store.removeJob(job.id());
+            unscheduleJob(job.id());
+        } else {
+            store.updateJob(updatedJob);
+        }
+        if (success) {
+            emit(new CronEvent.JobCompleted(job.id(), job.name(), result.runId(), result.output()));
+        } else {
+            emit(new CronEvent.JobFailed(
+                    job.id(), job.name(), result.runId(), result.error() != null ? result.error() : "Unknown error"));
+        }
+    }
+
+    private CronRunRecord recordJobException(CronJob job, Exception e) {
+        int errors = job.state().consecutiveErrors() + 1;
+        var newState = new CronJobState(
+                0, 0, System.currentTimeMillis(), "failed", errors, job.state().totalRuns() + 1);
+        var updatedJob = job.withState(newState);
+        if (errors >= MAX_CONSECUTIVE_ERRORS) {
+            updatedJob = updatedJob.withEnabled(false);
+        }
+        store.updateJob(updatedJob);
+        emit(new CronEvent.JobFailed(job.id(), job.name(), "", e.getMessage()));
+        return new CronRunRecord(
+                "",
+                job.id(),
+                System.currentTimeMillis(),
+                System.currentTimeMillis(),
+                CronRunRecord.RunStatus.FAILED,
+                e.getMessage(),
+                null,
+                0);
     }
 
     /**

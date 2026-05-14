@@ -101,114 +101,95 @@ public class MarkdownComponent implements Component {
     private static final Pattern BLOCKQUOTE_PATTERN = Pattern.compile("^>\\s?(.*)$");
     private static final Pattern TABLE_SEPARATOR_PATTERN = Pattern.compile("^\\|?[\\s-:|]+\\|?$");
 
-    @SuppressWarnings("checkstyle:huge_cyclomatic_complexity")
     private List<String> renderMarkdown(String markdown, int width) {
         String[] rawLines = markdown.split("\n", -1);
         List<String> output = new ArrayList<>();
         int i = 0;
-
         while (i < rawLines.length) {
             String line = rawLines[i];
-
-            // --- Code block ---
             Matcher codeFence = CODE_FENCE_PATTERN.matcher(line);
             if (codeFence.matches()) {
-                String lang = codeFence.group(1).trim();
-                i++;
-                List<String> codeLines = new ArrayList<>();
-                while (i < rawLines.length && !rawLines[i].startsWith("```")) {
-                    codeLines.add(rawLines[i]);
-                    i++;
-                }
-                if (i < rawLines.length) {
-                    i++;
-                } // skip closing ```
-
-                renderCodeBlock(codeLines, lang, width, output);
+                i = consumeCodeBlock(rawLines, i, codeFence.group(1).trim(), width, output);
                 continue;
             }
-
-            // --- Heading ---
             Matcher heading = HEADING_PATTERN.matcher(line);
             if (heading.matches()) {
-                int level = heading.group(1).length();
-                String text = heading.group(2);
-                renderHeading(level, text, width, output);
+                renderHeading(heading.group(1).length(), heading.group(2), width, output);
                 i++;
                 continue;
             }
-
-            // --- Horizontal rule ---
             if (HR_PATTERN.matcher(line).matches()) {
                 renderHorizontalRule(width, output);
                 i++;
                 continue;
             }
-
-            // --- Blockquote ---
-            Matcher bq = BLOCKQUOTE_PATTERN.matcher(line);
-            if (bq.matches()) {
+            if (BLOCKQUOTE_PATTERN.matcher(line).matches()) {
                 i = renderBlockquote(rawLines, i, width, output);
                 continue;
             }
-
-            // --- Table (detect: line with |, followed by separator line) ---
-            if (line.contains("|")
-                    && i + 1 < rawLines.length
-                    && TABLE_SEPARATOR_PATTERN.matcher(rawLines[i + 1]).matches()) {
+            if (isTableStart(rawLines, i)) {
                 i = renderTable(rawLines, i, width, output);
                 continue;
             }
-
-            // --- Unordered list ---
-            Matcher ul = UNORDERED_LIST_PATTERN.matcher(line);
-            if (ul.matches()) {
+            if (UNORDERED_LIST_PATTERN.matcher(line).matches()
+                    || ORDERED_LIST_PATTERN.matcher(line).matches()) {
                 i = renderList(rawLines, i, width, output);
                 continue;
             }
-
-            // --- Ordered list ---
-            Matcher ol = ORDERED_LIST_PATTERN.matcher(line);
-            if (ol.matches()) {
-                i = renderList(rawLines, i, width, output);
-                continue;
-            }
-
-            // --- Empty line ---
             if (line.isEmpty()) {
                 output.add("");
                 i++;
                 continue;
             }
-
-            // --- Paragraph (collect consecutive non-special lines) ---
-            StringBuilder para = new StringBuilder();
-            while (i < rawLines.length) {
-                String pLine = rawLines[i];
-                if (pLine.isEmpty()
-                        || HEADING_PATTERN.matcher(pLine).matches()
-                        || HR_PATTERN.matcher(pLine).matches()
-                        || CODE_FENCE_PATTERN.matcher(pLine).matches()
-                        || UNORDERED_LIST_PATTERN.matcher(pLine).matches()
-                        || ORDERED_LIST_PATTERN.matcher(pLine).matches()
-                        || BLOCKQUOTE_PATTERN.matcher(pLine).matches()
-                        || (pLine.contains("|")
-                                && i + 1 < rawLines.length
-                                && TABLE_SEPARATOR_PATTERN
-                                        .matcher(rawLines[i + 1])
-                                        .matches())) {
-                    break;
-                }
-                if (para.length() > 0) {
-                    para.append(' ');
-                }
-                para.append(pLine);
-                i++;
-            }
-            renderParagraph(para.toString(), width, output);
+            i = consumeParagraph(rawLines, i, width, output);
         }
-
         return output;
+    }
+
+    private int consumeCodeBlock(String[] rawLines, int fenceIdx, String lang, int width, List<String> out) {
+        int i = fenceIdx + 1;
+        List<String> codeLines = new ArrayList<>();
+        while (i < rawLines.length && !rawLines[i].startsWith("```")) {
+            codeLines.add(rawLines[i]);
+            i++;
+        }
+        if (i < rawLines.length) {
+            i++;
+        }
+        renderCodeBlock(codeLines, lang, width, out);
+        return i;
+    }
+
+    private boolean isTableStart(String[] rawLines, int i) {
+        return rawLines[i].contains("|")
+                && i + 1 < rawLines.length
+                && TABLE_SEPARATOR_PATTERN.matcher(rawLines[i + 1]).matches();
+    }
+
+    private boolean isBlockBoundary(String[] rawLines, int i) {
+        String line = rawLines[i];
+        return line.isEmpty()
+                || HEADING_PATTERN.matcher(line).matches()
+                || HR_PATTERN.matcher(line).matches()
+                || CODE_FENCE_PATTERN.matcher(line).matches()
+                || UNORDERED_LIST_PATTERN.matcher(line).matches()
+                || ORDERED_LIST_PATTERN.matcher(line).matches()
+                || BLOCKQUOTE_PATTERN.matcher(line).matches()
+                || isTableStart(rawLines, i);
+    }
+
+    private int consumeParagraph(String[] rawLines, int startIdx, int width, List<String> out) {
+        StringBuilder para = new StringBuilder();
+        int i = startIdx;
+        while (i < rawLines.length && !isBlockBoundary(rawLines, i)) {
+            if (para.length() > 0) {
+                para.append(' ');
+            }
+            para.append(rawLines[i]);
+            i++;
+        }
+        renderParagraph(para.toString(), width, out);
+        return i;
     }
 
     // -------------------------------------------------------------------
@@ -364,33 +345,51 @@ public class MarkdownComponent implements Component {
      * @param out collector for rendered output lines
      * @return the index after the last consumed line
      */
-    @SuppressWarnings("checkstyle:huge_cyclomatic_complexity")
     private int renderTable(String[] rawLines, int startIdx, int width, List<String> out) {
-        int i = startIdx;
-
-        // Parse header
-        String headerLine = rawLines[i++];
-        List<String> headers = parseTableRow(headerLine);
+        List<String> headers = parseTableRow(rawLines[startIdx]);
         int numCols = headers.size();
         if (numCols == 0) {
-            return i;
+            return startIdx + 1;
         }
-
-        // Skip separator line
+        int i = startIdx + 1;
         if (i < rawLines.length && TABLE_SEPARATOR_PATTERN.matcher(rawLines[i]).matches()) {
             i++;
         }
-
-        // Parse data rows
         var rows = new ArrayList<List<String>>();
+        i = parseTableDataRows(rawLines, i, numCols, rows);
+
+        // Border overhead: "│ " + (n-1) * " │ " + " │" = 3n + 1
+        int borderOverhead = 3 * numCols + 1;
+        int[] colWidths = computeColumnWidths(headers, rows, width - borderOverhead);
+        if (colWidths == null) {
+            for (int j = startIdx; j < i; j++) {
+                out.addAll(AnsiUtils.wrapTextWithAnsi(rawLines[j], width));
+            }
+            return i;
+        }
+
+        out.add(renderHorizontalBorder(colWidths, "┌", "┬", "┐"));
+        renderTableRow(headers, colWidths, numCols, true, out);
+        String separator = renderHorizontalBorder(colWidths, "├", "┼", "┤");
+        out.add(separator);
+        for (int r = 0; r < rows.size(); r++) {
+            renderTableRow(rows.get(r), colWidths, numCols, false, out);
+            if (r < rows.size() - 1) {
+                out.add(separator);
+            }
+        }
+        out.add(renderHorizontalBorder(colWidths, "└", "┴", "┘"));
+        return i;
+    }
+
+    private int parseTableDataRows(String[] rawLines, int startIdx, int numCols, List<List<String>> rows) {
+        int i = startIdx;
         while (i < rawLines.length) {
             String line = rawLines[i];
             if (!line.contains("|") || line.isBlank()) {
                 break;
             }
             List<String> row = parseTableRow(line);
-
-            // Pad or truncate to match header column count
             while (row.size() < numCols) {
                 row.add("");
             }
@@ -400,90 +399,50 @@ public class MarkdownComponent implements Component {
             rows.add(row);
             i++;
         }
+        return i;
+    }
 
-        // Calculate border overhead: "│ " + (n-1) * " │ " + " │" = 3n + 1
-        int borderOverhead = 3 * numCols + 1;
-        int availableForCells = width - borderOverhead;
+    private int[] computeColumnWidths(List<String> headers, List<List<String>> rows, int availableForCells) {
+        int numCols = headers.size();
         if (availableForCells < numCols) {
-            // Too narrow — fall back to raw text
-            for (int j = startIdx; j < i; j++) {
-                out.addAll(AnsiUtils.wrapTextWithAnsi(rawLines[j], width));
-            }
-            return i;
+            return null;
         }
-
-        // Calculate column widths
-        int[] naturalWidths = new int[numCols];
+        int[] natural = new int[numCols];
         for (int c = 0; c < numCols; c++) {
-            naturalWidths[c] = AnsiUtils.visibleWidth(renderInline(headers.get(c)));
+            natural[c] = AnsiUtils.visibleWidth(renderInline(headers.get(c)));
         }
         for (var row : rows) {
             for (int c = 0; c < numCols; c++) {
-                naturalWidths[c] = Math.max(naturalWidths[c], AnsiUtils.visibleWidth(renderInline(row.get(c))));
+                natural[c] = Math.max(natural[c], AnsiUtils.visibleWidth(renderInline(row.get(c))));
             }
         }
-
         int totalNatural = 0;
-        for (int w : naturalWidths) {
+        for (int w : natural) {
             totalNatural += w;
         }
-
-        int[] colWidths;
-        if (totalNatural + borderOverhead <= width) {
-            colWidths = naturalWidths;
-        } else {
-            // Distribute available space proportionally
-            colWidths = new int[numCols];
-            for (int c = 0; c < numCols; c++) {
-                colWidths[c] = Math.max(1, (int) ((double) naturalWidths[c] / totalNatural * availableForCells));
-            }
-
-            // Distribute leftover
-            int allocated = 0;
-            for (int w : colWidths) {
-                allocated += w;
-            }
-            int leftover = availableForCells - allocated;
-            for (int c = 0; leftover > 0 && c < numCols; c++) {
-                colWidths[c]++;
-                leftover--;
-            }
+        if (totalNatural <= availableForCells) {
+            return natural;
         }
 
-        // Render top border
-        var topParts = new ArrayList<String>();
+        // Proportional shrink + leftover redistribution
+        int[] colWidths = new int[numCols];
+        int allocated = 0;
         for (int c = 0; c < numCols; c++) {
-            topParts.add("─".repeat(colWidths[c]));
+            colWidths[c] = Math.max(1, (int) ((double) natural[c] / totalNatural * availableForCells));
+            allocated += colWidths[c];
         }
-        out.add("┌─" + String.join("─┬─", topParts) + "─┐");
-
-        // Render header row (bold)
-        renderTableRow(headers, colWidths, numCols, true, out);
-
-        // Render separator
-        var sepParts = new ArrayList<String>();
-        for (int c = 0; c < numCols; c++) {
-            sepParts.add("─".repeat(colWidths[c]));
+        for (int c = 0, leftover = availableForCells - allocated; leftover > 0 && c < numCols; c++, leftover--) {
+            colWidths[c]++;
         }
-        String separator = "├─" + String.join("─┼─", sepParts) + "─┤";
-        out.add(separator);
+        return colWidths;
+    }
 
-        // Render data rows
-        for (int r = 0; r < rows.size(); r++) {
-            renderTableRow(rows.get(r), colWidths, numCols, false, out);
-            if (r < rows.size() - 1) {
-                out.add(separator);
-            }
+    private static String renderHorizontalBorder(int[] colWidths, String left, String mid, String right) {
+        var parts = new ArrayList<String>();
+        for (int w : colWidths) {
+            parts.add("─".repeat(w));
         }
-
-        // Render bottom border
-        var bottomParts = new ArrayList<String>();
-        for (int c = 0; c < numCols; c++) {
-            bottomParts.add("─".repeat(colWidths[c]));
-        }
-        out.add("└─" + String.join("─┴─", bottomParts) + "─┘");
-
-        return i;
+        return left + "─" + String.join("─" + mid + "─", parts) + "─" + right;
     }
 
     private void renderTableRow(List<String> cells, int[] colWidths, int numCols, boolean bold, List<String> out) {
@@ -552,114 +511,41 @@ public class MarkdownComponent implements Component {
 
     /**
      * Applies inline Markdown formatting (bold, italic, code, links) to text.
-     * Processes in a specific order to handle nesting correctly.
+     * Processes in a specific order to handle nesting correctly:
+     * code / link / strikethrough are stashed into placeholders to prevent
+     * further marker matching inside them; bold/italic render in place.
      *
      * @param text raw inline text containing markdown markers
      * @return text with ANSI styling substituted for markdown markers
      */
     String renderInline(String text) {
-        // Process in order: code (which should not have further formatting),
-        // then links, bold, italic
-
-        // We use a placeholder approach: replace processed segments with placeholders,
-        // then process remaining patterns, then restore.
         List<String> placeholders = new ArrayList<>();
-
-        // 1. Inline code — no further formatting inside
-        text = replaceAll(
-                text,
-                INLINE_CODE,
-                m -> {
-                    String placeholder = "\0PH" + placeholders.size() + "\0";
-                    placeholders.add(theme.code(m.group(1)));
-                    return placeholder;
-                },
-                placeholders);
-
-        // 2. Links
+        text = replaceAll(text, INLINE_CODE, m -> stash(placeholders, theme.code(m.group(1))));
         text = replaceAll(
                 text,
                 LINK,
-                m -> {
-                    String placeholder = "\0PH" + placeholders.size() + "\0";
-                    placeholders.add(theme.link(m.group(1)) + " " + theme.linkUrl("(" + m.group(2) + ")"));
-                    return placeholder;
-                },
-                placeholders);
+                m -> stash(placeholders, theme.link(m.group(1)) + " " + theme.linkUrl("(" + m.group(2) + ")")));
+        text = replaceAll(text, STRIKETHROUGH, m -> stash(placeholders, theme.strikethrough(m.group(1))));
 
-        // 3. Strikethrough
-        text = replaceAll(
-                text,
-                STRIKETHROUGH,
-                m -> {
-                    String placeholder = "\0PH" + placeholders.size() + "\0";
-                    placeholders.add(theme.strikethrough(m.group(1)));
-                    return placeholder;
-                },
-                placeholders);
-
-        // 4. Bold (before italic to avoid ** matching as two *)
-        text = replaceAll(
-                text,
-                BOLD,
-                m -> {
-                    String inner = m.group(1);
-                    return theme.bold(inner);
-                },
-                placeholders);
-
-        // 4b. Bold with underscores (__text__)
-        text = replaceAll(
-                text,
-                BOLD_UNDERSCORE,
-                m -> {
-                    String inner = m.group(1);
-                    return theme.bold(inner);
-                },
-                placeholders);
-
-        // 5. Italic
-        text = replaceAll(
-                text,
-                ITALIC,
-                m -> {
-                    String inner = m.group(1);
-                    return theme.italic(inner);
-                },
-                placeholders);
-
-        // 5b. Italic with underscores (_text_)
-        text = replaceAll(
-                text,
-                ITALIC_UNDERSCORE,
-                m -> {
-                    String inner = m.group(1);
-                    return theme.italic(inner);
-                },
-                placeholders);
-
-        // Restore placeholders
+        // Bold first so ** isn't consumed as two * by ITALIC.
+        text = replaceAll(text, BOLD, m -> theme.bold(m.group(1)));
+        text = replaceAll(text, BOLD_UNDERSCORE, m -> theme.bold(m.group(1)));
+        text = replaceAll(text, ITALIC, m -> theme.italic(m.group(1)));
+        text = replaceAll(text, ITALIC_UNDERSCORE, m -> theme.italic(m.group(1)));
         for (int i = 0; i < placeholders.size(); i++) {
             text = text.replace("\0PH" + i + "\0", placeholders.get(i));
         }
-
         return text;
     }
 
-    /**
-     * Replaces all occurrences of a pattern, using a function to produce replacements.
-     *
-     * @param text input text
-     * @param pattern pattern to match
-     * @param replacer function producing the replacement for each match
-     * @param placeholders shared placeholder list (used by callers to stash processed segments)
-     * @return text with all matches replaced
-     */
+    private static String stash(List<String> placeholders, String value) {
+        String placeholder = "\0PH" + placeholders.size() + "\0";
+        placeholders.add(value);
+        return placeholder;
+    }
+
     private static String replaceAll(
-            String text,
-            Pattern pattern,
-            java.util.function.Function<Matcher, String> replacer,
-            List<String> placeholders) {
+            String text, Pattern pattern, java.util.function.Function<Matcher, String> replacer) {
         Matcher m = pattern.matcher(text);
         StringBuilder sb = new StringBuilder();
         while (m.find()) {

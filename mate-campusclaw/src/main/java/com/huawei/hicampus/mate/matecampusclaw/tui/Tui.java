@@ -128,6 +128,9 @@ public class Tui {
         terminal.exitRawMode();
     }
 
+    /** Range of lines that changed between previous and new frame; {@code null} when nothing changed. */
+    private record ChangeRange(int first, int last, boolean appendStart) {}
+
     /**
      * Synchronously render the component tree to the terminal using a
      * differential strategy: only lines that changed are rewritten, using
@@ -135,45 +138,39 @@ public class Tui {
      * a single burst of {@code \r\n} at the bottom lets the terminal scroll
      * old content into scrollback (preserving history for the user).
      */
-    @SuppressWarnings("checkstyle:huge_cyclomatic_complexity")
     public synchronized void render() {
         if (!running || root == null) {
             return;
         }
-
         TerminalSize size = terminal.getSize();
         int width = size.width();
         int height = size.height();
         if (width <= 0 || height <= 0) {
             return;
         }
-
         List<String> newLines = root.render(width);
-
         boolean widthChanged = previousWidth != 0 && previousWidth != width;
         boolean heightChanged = previousHeight != 0 && previousHeight != height;
-
-        // First frame — output directly; start() already cleared the screen.
         if (previousLines.isEmpty() && !widthChanged && !heightChanged) {
             fullRender(newLines, width, height, false);
             return;
         }
-
-        // Width change invalidates line wrapping; height change invalidates the
-        // viewport alignment. Both require a full clear + redraw.
-        if (widthChanged || heightChanged) {
+        if (widthChanged || heightChanged || newLines.size() < maxLinesRendered) {
             fullRender(newLines, width, height, true);
             return;
         }
-
-        // Content shrunk below the high-water mark: old rows would linger as
-        // orphans, so do a full clear + redraw.
-        if (newLines.size() < maxLinesRendered) {
+        ChangeRange range = computeChangeRange(newLines);
+        if (range == null) {
+            return;
+        }
+        if (range.first() < previousViewportTop) {
             fullRender(newLines, width, height, true);
             return;
         }
+        emitDiffFrame(range, newLines, width, height);
+    }
 
-        // Find first and last changed lines.
+    private ChangeRange computeChangeRange(List<String> newLines) {
         int firstChanged = -1;
         int lastChanged = -1;
         int maxLen = Math.max(newLines.size(), previousLines.size());
@@ -194,32 +191,25 @@ public class Tui {
             }
             lastChanged = newLines.size() - 1;
         }
-        boolean appendStart = appendedLines && firstChanged == previousLines.size() && firstChanged > 0;
-
-        // Nothing changed.
         if (firstChanged == -1) {
-            return;
+            return null;
         }
+        boolean appendStart = appendedLines && firstChanged == previousLines.size() && firstChanged > 0;
+        return new ChangeRange(firstChanged, lastChanged, appendStart);
+    }
 
-        // Change is above the current viewport (scrolled out of reach): we
-        // can't reach it with relative movement, so full redraw.
-        if (firstChanged < previousViewportTop) {
-            fullRender(newLines, width, height, true);
-            return;
-        }
-
+    private void emitDiffFrame(ChangeRange range, List<String> newLines, int width, int height) {
         int viewportTop = previousViewportTop;
         int hwCursor = hardwareCursorRow;
         StringBuilder sb = new StringBuilder();
         if (syncOutputSupported) {
             sb.append(SYNC_START);
         }
+        int moveTargetRow = range.appendStart() ? range.first() - 1 : range.first();
 
-        // If the first line we need to rewrite sits below the current viewport,
-        // scroll the terminal down — this is the ONLY place where lines get
-        // pushed into the terminal's scrollback.
+        // Scroll terminal down if change is below current viewport — this is the
+        // only place lines get pushed into the terminal's scrollback.
         int prevViewportBottom = viewportTop + height - 1;
-        int moveTargetRow = appendStart ? firstChanged - 1 : firstChanged;
         if (moveTargetRow > prevViewportBottom) {
             int currentScreenRow = Math.max(0, Math.min(height - 1, hwCursor - viewportTop));
             int moveToBottom = height - 1 - currentScreenRow;
@@ -231,34 +221,16 @@ public class Tui {
             viewportTop += scroll;
             hwCursor = moveTargetRow;
         }
-
-        // Relative cursor move to the first line we need to rewrite.
-        int targetScreenRow = moveTargetRow - viewportTop;
-        int currentScreenRow = hwCursor - viewportTop;
-        int lineDiff = targetScreenRow - currentScreenRow;
+        int lineDiff = (moveTargetRow - viewportTop) - (hwCursor - viewportTop);
         if (lineDiff > 0) {
             sb.append("\033[").append(lineDiff).append('B');
         } else if (lineDiff < 0) {
             sb.append("\033[").append(-lineDiff).append('A');
         }
+        sb.append(range.appendStart() ? "\r\n" : "\r");
 
-        // Column 0. For an append-at-end case we also step down one row.
-        sb.append(appendStart ? "\r\n" : "\r");
-
-        // Rewrite only the changed range [firstChanged .. lastChanged].
-        int renderEnd = Math.min(lastChanged, newLines.size() - 1);
-        for (int i = firstChanged; i <= renderEnd; i++) {
-            if (i > firstChanged) {
-                sb.append("\r\n");
-            }
-            sb.append(CLEAR_LINE);
-            String line = newLines.get(i);
-            if (AnsiUtils.visibleWidth(line) > width) {
-                line = AnsiUtils.sliceByColumn(line, 0, width);
-            }
-            sb.append(line);
-        }
-
+        int renderEnd = Math.min(range.last(), newLines.size() - 1);
+        appendChangedLines(sb, range.first(), renderEnd, newLines, width);
         if (syncOutputSupported) {
             sb.append(SYNC_END);
         }
@@ -270,6 +242,21 @@ public class Tui {
         previousHeight = height;
         previousViewportTop = Math.max(viewportTop, renderEnd - height + 1);
         maxLinesRendered = Math.max(maxLinesRendered, newLines.size());
+    }
+
+    private static void appendChangedLines(
+            StringBuilder sb, int firstChanged, int renderEnd, List<String> newLines, int width) {
+        for (int i = firstChanged; i <= renderEnd; i++) {
+            if (i > firstChanged) {
+                sb.append("\r\n");
+            }
+            sb.append(CLEAR_LINE);
+            String line = newLines.get(i);
+            if (AnsiUtils.visibleWidth(line) > width) {
+                line = AnsiUtils.sliceByColumn(line, 0, width);
+            }
+            sb.append(line);
+        }
     }
 
     /**

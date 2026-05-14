@@ -191,11 +191,26 @@
 
         <!-- huge_cyclomatic_complexity: 圈复杂度超阈值即拒。
              switchBlockAsSingleDecisionPoint=true: 整段 switch 算 1 个决策点
-             而非每 case 一个，避免合理的查表式 switch 被误判为「复杂」。 -->
+             而非每 case 一个，避免合理的查表式 switch 被误判为「复杂」。
+             阈值 20：让大多数协议解析 / mode dispatch 类「单一职责但分支多」的方法
+             不必拆得过碎；真正超过 20 的方法基本都该拆。 -->
         <module name="CyclomaticComplexity">
             <property name="id" value="huge_cyclomatic_complexity"/>
-            <property name="max" value="15"/>
+            <property name="max" value="20"/>
             <property name="switchBlockAsSingleDecisionPoint" value="true"/>
+        </module>
+
+        <!-- huge_method: 方法的非空非（行）注释行数不得超过 50。
+             countEmpty=false: 跳过空行；Checkstyle 同时跳过仅含 `//` 单行注释的行。
+             仍计入：方法签名行、`}`、含代码的行尾注释、块注释 `/* ... */` 内部行。
+             50 行是经验线：超过这条线的方法几乎都在做多件事，拆出子方法可读性
+             明显更好；想保留就用 @SuppressWarnings("checkstyle:huge_method")
+             并在 PR description 里写明保留理由。 -->
+        <module name="MethodLength">
+            <property name="id" value="huge_method"/>
+            <property name="max" value="50"/>
+            <property name="countEmpty" value="false"/>
+            <property name="tokens" value="METHOD_DEF, CTOR_DEF, COMPACT_CTOR_DEF"/>
         </module>
 
         <!-- TopClassComment: public 类必须有 Javadoc 描述功能，且包含 @version 标签

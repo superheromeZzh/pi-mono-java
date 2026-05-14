@@ -92,7 +92,17 @@ public class MistralProvider implements ApiProvider {
         return eventStream;
     }
 
-    @SuppressWarnings("checkstyle:huge_cyclomatic_complexity")
+    /** Mutable state shared across the Mistral SSE chunk handlers. */
+    private static final class MistralStreamState {
+        final List<ContentBlock> accumulatedBlocks = new ArrayList<>();
+        final StringBuilder currentText = new StringBuilder();
+        final StringBuilder currentThinking = new StringBuilder();
+        final Map<Integer, ToolCallAccumulator> toolCallAccs = new HashMap<>();
+        Usage usage = Usage.empty();
+        StopReason stop = StopReason.STOP;
+        boolean thinkingStarted;
+    }
+
     private void executeStream(
             Model model,
             Context context,
@@ -106,221 +116,195 @@ public class MistralProvider implements ApiProvider {
                             "Mistral API key not found. Set MISTRAL_API_KEY, configure provider.mistral.apiKey in settings.json, or run /auth login."));
             return;
         }
-
         String overrideBaseUrl = providerConfig.resolveBaseUrl(model);
         String baseUrl = overrideBaseUrl != null ? overrideBaseUrl : DEFAULT_BASE_URL;
-        String url = baseUrl + "/chat/completions";
-
         ObjectNode requestBody = buildRequestBody(model, context, options);
-
         try {
-            var client = HttpClient.newBuilder()
-                    .connectTimeout(java.time.Duration.ofSeconds(15))
-                    .build();
-            var request = HttpRequest.newBuilder()
-                    .uri(URI.create(url))
-                    .header("Content-Type", "application/json")
-                    .header("Authorization", "Bearer " + apiKey)
-                    .POST(HttpRequest.BodyPublishers.ofString(requestBody.toString()))
-                    .build();
-
-            var response = client.send(request, HttpResponse.BodyHandlers.ofInputStream());
-
-            List<ContentBlock> accumulatedBlocks = new ArrayList<>();
-            StringBuilder currentText = new StringBuilder();
-            StringBuilder currentThinking = new StringBuilder();
-            Map<Integer, ToolCallAccumulator> toolCallAccs = new HashMap<>();
-            Usage[] usage = {Usage.empty()};
-            StopReason[] stop = {StopReason.STOP};
-            int textIndex = 0;
-            boolean[] thinkingStarted = {false};
-
+            var response = sendStreamRequest(baseUrl + "/chat/completions", apiKey, requestBody);
+            var state = new MistralStreamState();
             try (var reader = new BufferedReader(new InputStreamReader(response.body(), StandardCharsets.UTF_8))) {
                 String line;
                 while ((line = reader.readLine()) != null) {
-                    if (line.isBlank() || !line.startsWith("data: ")) {
-                        continue;
-                    }
-                    String data = line.substring(6).trim();
-                    if (data.equals("[DONE]")) {
+                    if (consumeSseLine(line, state, model, eventStream)) {
                         break;
-                    }
-
-                    JsonNode chunk = MAPPER.readTree(data);
-                    var choices = chunk.path("choices");
-                    if (!choices.isArray() || choices.isEmpty()) {
-                        continue;
-                    }
-
-                    var choice = choices.get(0);
-                    var delta = choice.path("delta");
-
-                    // Content — can be a string or an array of typed items
-                    if (delta.has("content") && !delta.get("content").isNull()) {
-                        var contentNode = delta.get("content");
-                        if (contentNode.isTextual()) {
-                            // Simple string content
-                            String text = contentNode.asText();
-                            if (!text.isEmpty()) {
-                                currentText.append(text);
-                                var partial = buildPartial(
-                                        model,
-                                        accumulatedBlocks,
-                                        currentText.toString(),
-                                        currentThinking.toString(),
-                                        toolCallAccs,
-                                        stop[0],
-                                        usage[0]);
-                                eventStream.pushTextDelta(textIndex, text, partial);
-                            }
-                        } else if (contentNode.isArray()) {
-                            // Array of typed items (thinking, text, etc.)
-                            for (var item : contentNode) {
-                                String itemType = item.path("type").asText("");
-                                if ("thinking".equals(itemType)) {
-                                    // Extract thinking text from nested array
-                                    var thinkingArr = item.path("thinking");
-                                    var sb = new StringBuilder();
-                                    if (thinkingArr.isArray()) {
-                                        for (var part : thinkingArr) {
-                                            if ("text".equals(part.path("type").asText(""))) {
-                                                sb.append(part.path("text").asText(""));
-                                            }
-                                        }
-                                    }
-                                    String thinkText = sb.toString();
-                                    if (!thinkText.isEmpty()) {
-                                        if (!thinkingStarted[0]) {
-                                            thinkingStarted[0] = true;
-                                            accumulatedBlocks.add(new ThinkingContent("", null, false));
-                                            int idx = accumulatedBlocks.size() - 1;
-                                            eventStream.push(
-                                                    new com.huawei.hicampus.mate.matecampusclaw.ai.stream.AssistantMessageEvent
-                                                            .ThinkingStartEvent(
-                                                            idx,
-                                                            buildPartial(
-                                                                    model,
-                                                                    accumulatedBlocks,
-                                                                    currentText.toString(),
-                                                                    currentThinking.toString(),
-                                                                    toolCallAccs,
-                                                                    stop[0],
-                                                                    usage[0])));
-                                        }
-                                        currentThinking.append(thinkText);
-                                        int idx = accumulatedBlocks.size() - 1;
-                                        accumulatedBlocks.set(
-                                                idx, new ThinkingContent(currentThinking.toString(), null, false));
-                                        eventStream.push(
-                                                new com.huawei.hicampus.mate.matecampusclaw.ai.stream.AssistantMessageEvent.ThinkingDeltaEvent(
-                                                        idx,
-                                                        thinkText,
-                                                        buildPartial(
-                                                                model,
-                                                                accumulatedBlocks,
-                                                                currentText.toString(),
-                                                                currentThinking.toString(),
-                                                                toolCallAccs,
-                                                                stop[0],
-                                                                usage[0])));
-                                    }
-                                } else if ("text".equals(itemType)) {
-                                    String text = item.path("text").asText("");
-                                    if (!text.isEmpty()) {
-                                        currentText.append(text);
-                                        var partial = buildPartial(
-                                                model,
-                                                accumulatedBlocks,
-                                                currentText.toString(),
-                                                currentThinking.toString(),
-                                                toolCallAccs,
-                                                stop[0],
-                                                usage[0]);
-                                        eventStream.pushTextDelta(textIndex, text, partial);
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                    // Tool calls
-                    if (delta.has("tool_calls") && delta.get("tool_calls").isArray()) {
-                        for (var tc : delta.get("tool_calls")) {
-                            int idx = tc.path("index").asInt(0);
-                            var acc = toolCallAccs.computeIfAbsent(idx, k -> new ToolCallAccumulator());
-                            if (tc.has("id")) {
-                                acc.id = tc.get("id").asText();
-                            }
-                            var fn = tc.path("function");
-                            if (fn.has("name")) {
-                                acc.name = fn.get("name").asText();
-                            }
-                            if (fn.has("arguments")) {
-                                acc.arguments.append(fn.get("arguments").asText());
-                            }
-                        }
-                    }
-
-                    // Finish reason
-                    if (choice.has("finish_reason")
-                            && !choice.get("finish_reason").isNull()) {
-                        stop[0] = mapFinishReason(choice.get("finish_reason").asText());
-                    }
-
-                    // Usage
-                    if (chunk.has("usage") && !chunk.get("usage").isNull()) {
-                        var u = chunk.get("usage");
-                        int input = u.path("prompt_tokens").asInt(0);
-                        int output = u.path("completion_tokens").asInt(0);
-                        usage[0] = new Usage(input, output, 0, 0, input + output, Cost.empty());
                     }
                 }
             }
-
-            // Close open thinking block
-            if (thinkingStarted[0] && !currentThinking.isEmpty()) {
-                int thinkIdx = accumulatedBlocks.size() - 1;
-                accumulatedBlocks.set(thinkIdx, new ThinkingContent(currentThinking.toString(), null, false));
-                eventStream.push(new com.huawei.hicampus.mate.matecampusclaw.ai.stream.AssistantMessageEvent.ThinkingEndEvent(
-                        thinkIdx,
-                        currentThinking.toString(),
-                        buildPartial(
-                                model,
-                                accumulatedBlocks,
-                                currentText.toString(),
-                                currentThinking.toString(),
-                                toolCallAccs,
-                                stop[0],
-                                usage[0])));
-            }
-
-            // Build final message
-            var finalBlocks = new ArrayList<ContentBlock>(accumulatedBlocks);
-            if (!currentText.isEmpty()) {
-                finalBlocks.add(new TextContent(currentText.toString()));
-            }
-            for (var acc : toolCallAccs.values()) {
-                finalBlocks.add(acc.toToolCall());
-            }
-
-            var cost = computeCost(model, usage[0]);
-            var finalUsage =
-                    new Usage(usage[0].input(), usage[0].output(), 0, 0, usage[0].input() + usage[0].output(), cost);
-            var finalMessage = new AssistantMessage(
-                    List.copyOf(finalBlocks),
-                    Api.MISTRAL_CONVERSATIONS.value(),
-                    model.provider().value(),
-                    model.id(),
-                    null,
-                    finalUsage,
-                    stop[0],
-                    null,
-                    System.currentTimeMillis());
-            eventStream.pushDone(stop[0], finalMessage);
-
+            finishMistralStream(state, model, eventStream);
         } catch (Exception e) {
             eventStream.error(e);
         }
+    }
+
+    private static HttpResponse<java.io.InputStream> sendStreamRequest(String url, String apiKey, ObjectNode body)
+            throws Exception {
+        var client = HttpClient.newBuilder()
+                .connectTimeout(java.time.Duration.ofSeconds(15))
+                .build();
+        var request = HttpRequest.newBuilder()
+                .uri(URI.create(url))
+                .header("Content-Type", "application/json")
+                .header("Authorization", "Bearer " + apiKey)
+                .POST(HttpRequest.BodyPublishers.ofString(body.toString()))
+                .build();
+        return client.send(request, HttpResponse.BodyHandlers.ofInputStream());
+    }
+
+    // Returns true when the stream's terminator [DONE] is seen.
+    private boolean consumeSseLine(
+            String line, MistralStreamState state, Model model, AssistantMessageEventStream eventStream)
+            throws Exception {
+        if (line.isBlank() || !line.startsWith("data: ")) {
+            return false;
+        }
+        String data = line.substring(6).trim();
+        if (data.equals("[DONE]")) {
+            return true;
+        }
+        JsonNode chunk = MAPPER.readTree(data);
+        var choices = chunk.path("choices");
+        if (!choices.isArray() || choices.isEmpty()) {
+            return false;
+        }
+        var choice = choices.get(0);
+        var delta = choice.path("delta");
+        if (delta.has("content") && !delta.get("content").isNull()) {
+            handleContentDelta(delta.get("content"), state, model, eventStream);
+        }
+        if (delta.has("tool_calls") && delta.get("tool_calls").isArray()) {
+            accumulateToolCallDelta(delta.get("tool_calls"), state);
+        }
+        if (choice.has("finish_reason") && !choice.get("finish_reason").isNull()) {
+            state.stop = mapFinishReason(choice.get("finish_reason").asText());
+        }
+        if (chunk.has("usage") && !chunk.get("usage").isNull()) {
+            var u = chunk.get("usage");
+            int input = u.path("prompt_tokens").asInt(0);
+            int output = u.path("completion_tokens").asInt(0);
+            state.usage = new Usage(input, output, 0, 0, input + output, Cost.empty());
+        }
+        return false;
+    }
+
+    // Mistral content can be a plain string or an array of typed items (thinking/text/...).
+    private void handleContentDelta(
+            JsonNode contentNode, MistralStreamState state, Model model, AssistantMessageEventStream eventStream) {
+        if (contentNode.isTextual()) {
+            String text = contentNode.asText();
+            if (!text.isEmpty()) {
+                emitTextDelta(text, state, model, eventStream);
+            }
+            return;
+        }
+        if (!contentNode.isArray()) {
+            return;
+        }
+        for (var item : contentNode) {
+            String itemType = item.path("type").asText("");
+            if ("thinking".equals(itemType)) {
+                String thinkText = extractThinkingText(item.path("thinking"));
+                if (!thinkText.isEmpty()) {
+                    emitThinkingDelta(thinkText, state, model, eventStream);
+                }
+            } else if ("text".equals(itemType)) {
+                String text = item.path("text").asText("");
+                if (!text.isEmpty()) {
+                    emitTextDelta(text, state, model, eventStream);
+                }
+            }
+        }
+    }
+
+    private static String extractThinkingText(JsonNode thinkingArr) {
+        var sb = new StringBuilder();
+        if (thinkingArr.isArray()) {
+            for (var part : thinkingArr) {
+                if ("text".equals(part.path("type").asText(""))) {
+                    sb.append(part.path("text").asText(""));
+                }
+            }
+        }
+        return sb.toString();
+    }
+
+    private void emitTextDelta(
+            String text, MistralStreamState state, Model model, AssistantMessageEventStream eventStream) {
+        state.currentText.append(text);
+        eventStream.pushTextDelta(0, text, partialFrom(state, model));
+    }
+
+    private void emitThinkingDelta(
+            String thinkText, MistralStreamState state, Model model, AssistantMessageEventStream eventStream) {
+        if (!state.thinkingStarted) {
+            state.thinkingStarted = true;
+            state.accumulatedBlocks.add(new ThinkingContent("", null, false));
+            int idx = state.accumulatedBlocks.size() - 1;
+            eventStream.push(new com.huawei.hicampus.mate.matecampusclaw.ai.stream.AssistantMessageEvent.ThinkingStartEvent(
+                    idx, partialFrom(state, model)));
+        }
+        state.currentThinking.append(thinkText);
+        int idx = state.accumulatedBlocks.size() - 1;
+        state.accumulatedBlocks.set(idx, new ThinkingContent(state.currentThinking.toString(), null, false));
+        eventStream.push(new com.huawei.hicampus.mate.matecampusclaw.ai.stream.AssistantMessageEvent.ThinkingDeltaEvent(
+                idx, thinkText, partialFrom(state, model)));
+    }
+
+    private static void accumulateToolCallDelta(JsonNode toolCalls, MistralStreamState state) {
+        for (var tc : toolCalls) {
+            int idx = tc.path("index").asInt(0);
+            var acc = state.toolCallAccs.computeIfAbsent(idx, k -> new ToolCallAccumulator());
+            if (tc.has("id")) {
+                acc.id = tc.get("id").asText();
+            }
+            var fn = tc.path("function");
+            if (fn.has("name")) {
+                acc.name = fn.get("name").asText();
+            }
+            if (fn.has("arguments")) {
+                acc.arguments.append(fn.get("arguments").asText());
+            }
+        }
+    }
+
+    private void finishMistralStream(MistralStreamState state, Model model, AssistantMessageEventStream eventStream) {
+        if (state.thinkingStarted && !state.currentThinking.isEmpty()) {
+            int thinkIdx = state.accumulatedBlocks.size() - 1;
+            state.accumulatedBlocks.set(thinkIdx, new ThinkingContent(state.currentThinking.toString(), null, false));
+            eventStream.push(new com.huawei.hicampus.mate.matecampusclaw.ai.stream.AssistantMessageEvent.ThinkingEndEvent(
+                    thinkIdx, state.currentThinking.toString(), partialFrom(state, model)));
+        }
+        var finalBlocks = new ArrayList<>(state.accumulatedBlocks);
+        if (!state.currentText.isEmpty()) {
+            finalBlocks.add(new TextContent(state.currentText.toString()));
+        }
+        for (var acc : state.toolCallAccs.values()) {
+            finalBlocks.add(acc.toToolCall());
+        }
+        var cost = computeCost(model, state.usage);
+        var finalUsage = new Usage(
+                state.usage.input(), state.usage.output(), 0, 0, state.usage.input() + state.usage.output(), cost);
+        var finalMessage = new AssistantMessage(
+                List.copyOf(finalBlocks),
+                Api.MISTRAL_CONVERSATIONS.value(),
+                model.provider().value(),
+                model.id(),
+                null,
+                finalUsage,
+                state.stop,
+                null,
+                System.currentTimeMillis());
+        eventStream.pushDone(state.stop, finalMessage);
+    }
+
+    private AssistantMessage partialFrom(MistralStreamState state, Model model) {
+        return buildPartial(
+                model,
+                state.accumulatedBlocks,
+                state.currentText.toString(),
+                state.currentThinking.toString(),
+                state.toolCallAccs,
+                state.stop,
+                state.usage);
     }
 
     private AssistantMessage buildPartial(
@@ -352,129 +336,131 @@ public class MistralProvider implements ApiProvider {
                 System.currentTimeMillis());
     }
 
-    @SuppressWarnings("checkstyle:huge_cyclomatic_complexity")
     private ObjectNode buildRequestBody(Model model, Context context, @Nullable SimpleStreamOptions options) {
         var body = MAPPER.createObjectNode();
         body.put("model", model.id());
         body.put("stream", true);
         body.set("stream_options", MAPPER.createObjectNode().put("include_usage", true));
-
-        var messages = MAPPER.createArrayNode();
-
-        if (context.systemPrompt() != null && !context.systemPrompt().isBlank()) {
-            var sys = MAPPER.createObjectNode();
-            sys.put("role", "system");
-            sys.put("content", context.systemPrompt());
-            messages.add(sys);
+        body.set("messages", buildMessagesArray(context));
+        if (context.tools() != null && !context.tools().isEmpty()) {
+            body.set("tools", buildToolsArray(context));
         }
+        applySamplingOptions(body, model, options);
+        return body;
+    }
 
+    private com.fasterxml.jackson.databind.node.ArrayNode buildMessagesArray(Context context) {
+        var messages = MAPPER.createArrayNode();
+        if (context.systemPrompt() != null && !context.systemPrompt().isBlank()) {
+            messages.add(MAPPER.createObjectNode().put("role", "system").put("content", context.systemPrompt()));
+        }
         for (var msg : context.messages()) {
             switch (msg) {
-                case UserMessage um -> {
-                    var m = MAPPER.createObjectNode();
-                    m.put("role", "user");
-                    m.put("content", extractText(um.content()));
-                    messages.add(m);
+                case UserMessage um ->
+                    messages.add(
+                            MAPPER.createObjectNode().put("role", "user").put("content", extractText(um.content())));
+                case AssistantMessage am -> messages.add(buildAssistantMessageNode(am));
+                case ToolResultMessage trm ->
+                    messages.add(MAPPER.createObjectNode()
+                            .put("role", "tool")
+                            .put("tool_call_id", trm.toolCallId())
+                            .put("content", extractText(trm.content())));
+                default -> {
+                    // ignored
                 }
-                case AssistantMessage am -> {
-                    var m = MAPPER.createObjectNode();
-                    m.put("role", "assistant");
-                    StringBuilder text = new StringBuilder();
-                    var toolCalls = MAPPER.createArrayNode();
-                    var contentArray = MAPPER.createArrayNode();
-                    boolean hasThinking = false;
-                    for (var block : am.content()) {
-                        if (block instanceof ThinkingContent tc) {
-                            if (tc.thinking() != null && !tc.thinking().isBlank()) {
-                                hasThinking = true;
-                                var thinkingItem = MAPPER.createObjectNode();
-                                thinkingItem.put("type", "thinking");
-                                var thinkingParts = MAPPER.createArrayNode();
-                                thinkingParts.add(MAPPER.createObjectNode()
-                                        .put("type", "text")
-                                        .put("text", tc.thinking()));
-                                thinkingItem.set("thinking", thinkingParts);
-                                contentArray.add(thinkingItem);
-                            }
-                        } else if (block instanceof TextContent tc) {
-                            text.append(tc.text());
-                        } else if (block instanceof ToolCall tc) {
-                            var tcNode = MAPPER.createObjectNode();
-                            tcNode.put("id", tc.id());
-                            tcNode.put("type", "function");
-                            var fn = MAPPER.createObjectNode();
-                            fn.put("name", tc.name());
-                            try {
-                                fn.put("arguments", MAPPER.writeValueAsString(tc.arguments()));
-                            } catch (Exception e) {
-                                fn.put("arguments", "{}");
-                            }
-                            tcNode.set("function", fn);
-                            toolCalls.add(tcNode);
-                        }
-                    }
-                    if (hasThinking) {
-                        // Use array content format when thinking is present
-                        if (!text.isEmpty()) {
-                            contentArray.add(MAPPER.createObjectNode()
-                                    .put("type", "text")
-                                    .put("text", text.toString()));
-                        }
-                        m.set("content", contentArray);
-                    } else if (!text.isEmpty()) {
-                        m.put("content", text.toString());
-                    }
-                    if (!toolCalls.isEmpty()) {
-                        m.set("tool_calls", toolCalls);
-                    }
-                    messages.add(m);
-                }
-                case ToolResultMessage trm -> {
-                    var m = MAPPER.createObjectNode();
-                    m.put("role", "tool");
-                    m.put("tool_call_id", trm.toolCallId());
-                    m.put("content", extractText(trm.content()));
-                    messages.add(m);
-                }
-                default -> {}
             }
         }
-        body.set("messages", messages);
+        return messages;
+    }
 
-        if (context.tools() != null && !context.tools().isEmpty()) {
-            var tools = MAPPER.createArrayNode();
-            for (var tool : context.tools()) {
-                var t = MAPPER.createObjectNode();
-                t.put("type", "function");
-                var fn = MAPPER.createObjectNode();
-                fn.put("name", tool.name());
-                fn.put("description", tool.description());
-                if (tool.parameters() != null) {
-                    fn.set("parameters", MAPPER.valueToTree(tool.parameters()));
-                }
-                t.set("function", fn);
-                tools.add(t);
+    private ObjectNode buildAssistantMessageNode(AssistantMessage am) {
+        var m = MAPPER.createObjectNode();
+        m.put("role", "assistant");
+        StringBuilder text = new StringBuilder();
+        var toolCalls = MAPPER.createArrayNode();
+        var contentArray = MAPPER.createArrayNode();
+        boolean hasThinking = false;
+        for (var block : am.content()) {
+            if (block instanceof ThinkingContent tc
+                    && tc.thinking() != null
+                    && !tc.thinking().isBlank()) {
+                hasThinking = true;
+                contentArray.add(buildThinkingNode(tc.thinking()));
+            } else if (block instanceof TextContent tc) {
+                text.append(tc.text());
+            } else if (block instanceof ToolCall tc) {
+                toolCalls.add(buildToolCallNode(tc));
             }
-            body.set("tools", tools);
         }
+        if (hasThinking) {
+            if (!text.isEmpty()) {
+                contentArray.add(MAPPER.createObjectNode().put("type", "text").put("text", text.toString()));
+            }
+            m.set("content", contentArray);
+        } else if (!text.isEmpty()) {
+            m.put("content", text.toString());
+        }
+        if (!toolCalls.isEmpty()) {
+            m.set("tool_calls", toolCalls);
+        }
+        return m;
+    }
 
-        if (options != null) {
-            if (options.maxTokens() != null) {
-                body.put("max_tokens", options.maxTokens());
-            }
-            if (options.temperature() != null) {
-                body.put("temperature", options.temperature());
-            }
+    private ObjectNode buildThinkingNode(String thinking) {
+        var item = MAPPER.createObjectNode();
+        item.put("type", "thinking");
+        var parts = MAPPER.createArrayNode();
+        parts.add(MAPPER.createObjectNode().put("type", "text").put("text", thinking));
+        item.set("thinking", parts);
+        return item;
+    }
 
-            // Reasoning / thinking mode
-            if (options.reasoning() != null && options.reasoning() != ThinkingLevel.OFF && model.reasoning()) {
-                body.put("promptMode", "reasoning");
+    private ObjectNode buildToolCallNode(ToolCall tc) {
+        var node = MAPPER.createObjectNode();
+        node.put("id", tc.id());
+        node.put("type", "function");
+        var fn = MAPPER.createObjectNode();
+        fn.put("name", tc.name());
+        try {
+            fn.put("arguments", MAPPER.writeValueAsString(tc.arguments()));
+        } catch (Exception e) {
+            fn.put("arguments", "{}");
+        }
+        node.set("function", fn);
+        return node;
+    }
+
+    private com.fasterxml.jackson.databind.node.ArrayNode buildToolsArray(Context context) {
+        var tools = MAPPER.createArrayNode();
+        for (var tool : context.tools()) {
+            var t = MAPPER.createObjectNode();
+            t.put("type", "function");
+            var fn = MAPPER.createObjectNode();
+            fn.put("name", tool.name());
+            fn.put("description", tool.description());
+            if (tool.parameters() != null) {
+                fn.set("parameters", MAPPER.valueToTree(tool.parameters()));
             }
-        } else {
+            t.set("function", fn);
+            tools.add(t);
+        }
+        return tools;
+    }
+
+    private static void applySamplingOptions(ObjectNode body, Model model, @Nullable SimpleStreamOptions options) {
+        if (options == null) {
             body.put("max_tokens", model.maxTokens());
+            return;
         }
-
-        return body;
+        if (options.maxTokens() != null) {
+            body.put("max_tokens", options.maxTokens());
+        }
+        if (options.temperature() != null) {
+            body.put("temperature", options.temperature());
+        }
+        if (options.reasoning() != null && options.reasoning() != ThinkingLevel.OFF && model.reasoning()) {
+            body.put("promptMode", "reasoning");
+        }
     }
 
     private String resolveApiKey(

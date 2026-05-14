@@ -256,46 +256,39 @@ class ChatWebSocketHandlerTest {
         assertEquals("error", frames.get(doneIdx).path("stopReason").asText());
     }
 
+    // Stand up a fresh ModelRegistry seeded with two test models so we exercise
+    // the actual filtering logic rather than mocking the catalogue.
+    private com.campusclaw.ai.model.ModelRegistry buildSeededTestModelRegistry() {
+        var modelRegistry = new com.campusclaw.ai.model.ModelRegistry();
+        modelRegistry.register(testModel("test-a", "Test A", false, new com.campusclaw.ai.types.ModelCost(1, 2, 0, 0)));
+        modelRegistry.register(testModel("test-b", "Test B", true, new com.campusclaw.ai.types.ModelCost(0, 0, 0, 0)));
+        return modelRegistry;
+    }
+
+    private static com.campusclaw.ai.types.Model testModel(
+            String id, String name, boolean reasoning, com.campusclaw.ai.types.ModelCost cost) {
+        return new com.campusclaw.ai.types.Model(
+                id,
+                name,
+                com.campusclaw.ai.types.Api.OPENAI_COMPLETIONS,
+                com.campusclaw.ai.types.Provider.OPENAI,
+                "https://example.com",
+                reasoning,
+                List.of(com.campusclaw.ai.types.InputModality.TEXT),
+                cost,
+                128000,
+                4096,
+                null,
+                null,
+                null);
+    }
+
     @Test
     void listModelsReturnsAvailableModelsWithCurrent() throws Exception {
-        // Stand up a fresh server wired with a real ModelCatalogService so we
-        // exercise the actual filtering logic, not a mock.
-        var modelRegistry = new com.campusclaw.ai.model.ModelRegistry();
-
-        // The registry's @PostConstruct doesn't run outside Spring, so seed it manually.
-        modelRegistry.register(new com.campusclaw.ai.types.Model(
-                "test-a",
-                "Test A",
-                com.campusclaw.ai.types.Api.OPENAI_COMPLETIONS,
-                com.campusclaw.ai.types.Provider.OPENAI,
-                "https://example.com",
-                false,
-                List.of(com.campusclaw.ai.types.InputModality.TEXT),
-                new com.campusclaw.ai.types.ModelCost(1, 2, 0, 0),
-                128000,
-                4096,
-                null,
-                null,
-                null));
-        modelRegistry.register(new com.campusclaw.ai.types.Model(
-                "test-b",
-                "Test B",
-                com.campusclaw.ai.types.Api.OPENAI_COMPLETIONS,
-                com.campusclaw.ai.types.Provider.OPENAI,
-                "https://example.com",
-                true,
-                List.of(com.campusclaw.ai.types.InputModality.TEXT),
-                new com.campusclaw.ai.types.ModelCost(0, 0, 0, 0),
-                128000,
-                4096,
-                null,
-                null,
-                null));
-
+        var modelRegistry = buildSeededTestModelRegistry();
         var settingsManager = mock(com.campusclaw.codingagent.settings.SettingsManager.class);
         when(settingsManager.load()).thenReturn(com.campusclaw.codingagent.settings.Settings.empty());
         var catalog = new com.campusclaw.codingagent.model.ModelCatalogService(modelRegistry, settingsManager);
-
         when(session.getModelId()).thenReturn("test-a");
         ChatWebSocketHandler handler = new ChatWebSocketHandler(pool, catalog);
 
@@ -311,7 +304,6 @@ class ChatWebSocketHandlerTest {
                 .bindNow();
 
         JsonNode response = runRequestResponse("{\"type\":\"list_models\",\"id\":\"lm1\"}", "lm1");
-
         assertEquals("response", response.path("type").asText());
         assertTrue(response.path("success").asBoolean(), "list_models should succeed");
         JsonNode data = response.path("data");

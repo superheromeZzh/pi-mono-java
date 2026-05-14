@@ -64,7 +64,17 @@ public class CronTool implements AgentTool {
     @Override
     public JsonNode parameters() {
         var props = MAPPER.createObjectNode();
+        addActionField(props);
+        addCreateFields(props);
+        addScheduleFields(props);
+        addLookupFields(props);
+        return MAPPER.createObjectNode()
+                .put("type", "object")
+                .<ObjectNode>set("properties", props)
+                .set("required", MAPPER.createArrayNode().add("action"));
+    }
 
+    private static void addActionField(ObjectNode props) {
         props.set(
                 "action",
                 MAPPER.createObjectNode()
@@ -79,15 +89,39 @@ public class CronTool implements AgentTool {
                                         .add("trigger")
                                         .add("status")
                                         .add("runs")));
+    }
 
+    private static void addCreateFields(ObjectNode props) {
         props.set("name", MAPPER.createObjectNode().put("type", "string").put("description", "Job name (for create)"));
-
         props.set(
                 "description",
                 MAPPER.createObjectNode()
                         .put("type", "string")
                         .put("description", "Job description (for create, optional)"));
+        props.set(
+                "prompt",
+                MAPPER.createObjectNode()
+                        .put("type", "string")
+                        .put("description", "The prompt to send to the agent (for create)"));
+        props.set(
+                "model",
+                MAPPER.createObjectNode()
+                        .put("type", "string")
+                        .put("description", "Model ID to use (for create, optional)"));
+        props.set(
+                "system_prompt",
+                MAPPER.createObjectNode()
+                        .put("type", "string")
+                        .put("description", "Custom system prompt (for create, optional)"));
+        props.set(
+                "tools",
+                MAPPER.createObjectNode()
+                        .put("type", "array")
+                        .put("description", "Allowed tool names (for create, optional, all tools if omitted)")
+                        .set("items", MAPPER.createObjectNode().put("type", "string")));
+    }
 
+    private static void addScheduleFields(ObjectNode props) {
         props.set(
                 "schedule_type",
                 MAPPER.createObjectNode()
@@ -96,7 +130,6 @@ public class CronTool implements AgentTool {
                         .set(
                                 "enum",
                                 MAPPER.createArrayNode().add("at").add("every").add("cron")));
-
         props.set(
                 "schedule_value",
                 MAPPER.createObjectNode()
@@ -104,54 +137,24 @@ public class CronTool implements AgentTool {
                         .put(
                                 "description",
                                 "Schedule value: ISO timestamp for 'at', milliseconds for 'every', cron expression for 'cron'"));
-
         props.set(
                 "timezone",
                 MAPPER.createObjectNode()
                         .put("type", "string")
                         .put("description", "Timezone for cron expressions (optional, e.g. Asia/Shanghai)"));
+    }
 
-        props.set(
-                "prompt",
-                MAPPER.createObjectNode()
-                        .put("type", "string")
-                        .put("description", "The prompt to send to the agent (for create)"));
-
-        props.set(
-                "model",
-                MAPPER.createObjectNode()
-                        .put("type", "string")
-                        .put("description", "Model ID to use (for create, optional)"));
-
-        props.set(
-                "system_prompt",
-                MAPPER.createObjectNode()
-                        .put("type", "string")
-                        .put("description", "Custom system prompt (for create, optional)"));
-
-        props.set(
-                "tools",
-                MAPPER.createObjectNode()
-                        .put("type", "array")
-                        .put("description", "Allowed tool names (for create, optional, all tools if omitted)")
-                        .set("items", MAPPER.createObjectNode().put("type", "string")));
-
+    private static void addLookupFields(ObjectNode props) {
         props.set(
                 "job_id",
                 MAPPER.createObjectNode()
                         .put("type", "string")
                         .put("description", "Job ID (for delete, trigger, status, runs)"));
-
         props.set(
                 "limit",
                 MAPPER.createObjectNode()
                         .put("type", "integer")
                         .put("description", "Max number of run records to return (for runs, default 10)"));
-
-        return MAPPER.createObjectNode()
-                .put("type", "object")
-                .<ObjectNode>set("properties", props)
-                .set("required", MAPPER.createArrayNode().add("action"));
     }
 
     @Override

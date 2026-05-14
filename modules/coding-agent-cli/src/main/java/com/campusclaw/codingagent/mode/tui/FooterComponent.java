@@ -144,63 +144,58 @@ public class FooterComponent implements Component {
 
     private String buildLeft() {
         var sb = new StringBuilder();
-        if (inputTokens > 0) {
-            sb.append("↑").append(formatTokens(inputTokens));
-        }
-        if (outputTokens > 0) {
-            if (sb.length() > 0) {
-                sb.append(" ");
-            }
-            sb.append("↓").append(formatTokens(outputTokens));
-        }
-        if (cacheRead > 0) {
-            if (sb.length() > 0) {
-                sb.append(" ");
-            }
-            sb.append("R").append(formatTokens(cacheRead));
-        }
-        if (cacheWrite > 0) {
-            if (sb.length() > 0) {
-                sb.append(" ");
-            }
-            sb.append("W").append(formatTokens(cacheWrite));
-        }
+        appendTokenIfPositive(sb, "↑", inputTokens);
+        appendTokenIfPositive(sb, "↓", outputTokens);
+        appendTokenIfPositive(sb, "R", cacheRead);
+        appendTokenIfPositive(sb, "W", cacheWrite);
         if (totalCost > 0) {
-            if (sb.length() > 0) {
-                sb.append(" ");
-            }
+            appendSeparator(sb);
             sb.append("$").append(String.format(Locale.ROOT, "%.3f", totalCost));
         }
         if (contextWindow > 0) {
-            int totalIn = inputTokens + cacheRead;
-            double pct = totalIn * 100.0 / contextWindow;
-
-            // Color-code context percentage
-            String pctStr = String.format(Locale.ROOT, "%.1f%%", pct);
-            if (sb.length() > 0) {
-                sb.append(" ");
-            }
-            if (pct > 90) {
-                sb.append(ANSI_RESET)
-                        .append(ANSI_RED)
-                        .append(pctStr)
-                        .append(ANSI_RESET)
-                        .append(ANSI_DIM);
-            } else if (pct > 70) {
-                sb.append(ANSI_RESET)
-                        .append(ANSI_YELLOW)
-                        .append(pctStr)
-                        .append(ANSI_RESET)
-                        .append(ANSI_DIM);
-            } else {
-                sb.append(pctStr);
-            }
-            sb.append("/").append(formatTokens(contextWindow));
-            if (autoCompactEnabled) {
-                sb.append(" (auto)");
-            }
+            appendContextUsage(sb);
         }
         return sb.toString();
+    }
+
+    private void appendTokenIfPositive(StringBuilder sb, String prefix, int value) {
+        if (value <= 0) {
+            return;
+        }
+        appendSeparator(sb);
+        sb.append(prefix).append(formatTokens(value));
+    }
+
+    private static void appendSeparator(StringBuilder sb) {
+        if (sb.length() > 0) {
+            sb.append(" ");
+        }
+    }
+
+    private void appendContextUsage(StringBuilder sb) {
+        int totalIn = inputTokens + cacheRead;
+        double pct = totalIn * 100.0 / contextWindow;
+        String pctStr = String.format(Locale.ROOT, "%.1f%%", pct);
+        appendSeparator(sb);
+        if (pct > 90) {
+            sb.append(ANSI_RESET)
+                    .append(ANSI_RED)
+                    .append(pctStr)
+                    .append(ANSI_RESET)
+                    .append(ANSI_DIM);
+        } else if (pct > 70) {
+            sb.append(ANSI_RESET)
+                    .append(ANSI_YELLOW)
+                    .append(pctStr)
+                    .append(ANSI_RESET)
+                    .append(ANSI_DIM);
+        } else {
+            sb.append(pctStr);
+        }
+        sb.append("/").append(formatTokens(contextWindow));
+        if (autoCompactEnabled) {
+            sb.append(" (auto)");
+        }
     }
 
     private String buildRight() {

@@ -285,9 +285,37 @@ public class ModelRegistry {
      *
      * @return the compiled-in default model catalog
      */
+    /**
+     * Returns the list of built-in models to pre-register.
+     * Pieced together from per-provider helpers so each list of models can
+     * evolve and be reviewed independently.
+     *
+     * @return the compiled-in default model catalog
+     */
     static List<Model> builtInModels() {
+        List<Model> all = new ArrayList<>();
+        all.addAll(anthropicModels());
+        all.addAll(openaiModels());
+        all.addAll(zaiModels());
+        all.addAll(kimiCodingModels());
+        all.addAll(minimaxModels());
+        all.addAll(minimaxCnModels());
+        all.addAll(googleGenerativeAiModels());
+        all.addAll(googleVertexAiModels());
+        all.addAll(mistralModels());
+        all.addAll(azureOpenaiModels());
+        all.addAll(xaiModels());
+        all.addAll(groqModels());
+        all.addAll(openrouterModels());
+        all.addAll(openaiCodexModels());
+        all.addAll(githubCopilotModels());
+        all.addAll(cerebrasModels());
+        all.addAll(huggingfaceModels());
+        return List.copyOf(all);
+    }
+
+    private static List<Model> anthropicModels() {
         return List.of(
-                // --- Anthropic ---
                 new Model(
                         "claude-sonnet-4-20250514",
                         "Claude Sonnet 4",
@@ -329,208 +357,80 @@ public class ModelRegistry {
                         8192,
                         null,
                         null,
-                        null),
+                        null));
+    }
 
-                // --- OpenAI ---
-                new Model(
-                        "gpt-4o",
-                        "GPT-4o",
-                        Api.OPENAI_RESPONSES,
-                        Provider.OPENAI,
-                        "https://api.openai.com",
-                        false,
-                        List.of(InputModality.TEXT, InputModality.IMAGE),
-                        new ModelCost(2.5, 10.0, 1.25, 2.5),
-                        128000,
-                        16384,
-                        null,
-                        null,
-                        null),
-                new Model(
-                        "gpt-4o-mini",
-                        "GPT-4o Mini",
-                        Api.OPENAI_RESPONSES,
-                        Provider.OPENAI,
-                        "https://api.openai.com",
-                        false,
-                        List.of(InputModality.TEXT, InputModality.IMAGE),
-                        new ModelCost(0.15, 0.6, 0.075, 0.15),
-                        128000,
-                        16384,
-                        null,
-                        null,
-                        null),
-                new Model(
-                        "o3",
-                        "o3",
-                        Api.OPENAI_RESPONSES,
-                        Provider.OPENAI,
-                        "https://api.openai.com",
-                        true,
-                        List.of(InputModality.TEXT, InputModality.IMAGE),
-                        new ModelCost(10.0, 40.0, 2.5, 10.0),
-                        200000,
-                        100000,
-                        null,
-                        null,
-                        null),
-                new Model(
-                        "o4-mini",
-                        "o4-mini",
-                        Api.OPENAI_RESPONSES,
-                        Provider.OPENAI,
-                        "https://api.openai.com",
-                        true,
-                        List.of(InputModality.TEXT, InputModality.IMAGE),
-                        new ModelCost(1.1, 4.4, 0.275, 1.1),
-                        200000,
-                        100000,
-                        null,
-                        null,
-                        null),
+    // Builds an OpenAI Model with provider/api/baseUrl/modalities pre-filled.
+    private static Model openaiModel(
+            String id, String name, boolean reasoning, ModelCost cost, int contextWindow, int maxTokens) {
+        return new Model(
+                id,
+                name,
+                Api.OPENAI_RESPONSES,
+                Provider.OPENAI,
+                "https://api.openai.com",
+                reasoning,
+                List.of(InputModality.TEXT, InputModality.IMAGE),
+                cost,
+                contextWindow,
+                maxTokens,
+                null,
+                null,
+                null);
+    }
 
-                // --- ZAI ---
-                new Model(
-                        "glm-4.5",
-                        "GLM-4.5",
-                        Api.OPENAI_COMPLETIONS,
-                        Provider.ZAI,
-                        "https://api.z.ai/api/coding/paas/v4",
-                        true,
-                        List.of(InputModality.TEXT),
-                        new ModelCost(0.6, 2.2, 0.11, 0),
-                        131072,
-                        98304,
-                        null,
-                        "zai",
-                        null),
-                new Model(
-                        "glm-4.5-air",
-                        "GLM-4.5-Air",
-                        Api.OPENAI_COMPLETIONS,
-                        Provider.ZAI,
-                        "https://api.z.ai/api/coding/paas/v4",
-                        true,
-                        List.of(InputModality.TEXT),
-                        new ModelCost(0.2, 1.1, 0.03, 0),
-                        131072,
-                        98304,
-                        null,
-                        "zai",
-                        null),
-                new Model(
-                        "glm-4.5-flash",
-                        "GLM-4.5-Flash",
-                        Api.OPENAI_COMPLETIONS,
-                        Provider.ZAI,
-                        "https://api.z.ai/api/coding/paas/v4",
-                        true,
-                        List.of(InputModality.TEXT),
-                        new ModelCost(0, 0, 0, 0),
-                        131072,
-                        98304,
-                        null,
-                        "zai",
-                        null),
-                new Model(
-                        "glm-4.5v",
-                        "GLM-4.5V",
-                        Api.OPENAI_COMPLETIONS,
-                        Provider.ZAI,
-                        "https://api.z.ai/api/coding/paas/v4",
-                        true,
-                        List.of(InputModality.TEXT, InputModality.IMAGE),
-                        new ModelCost(0.6, 1.8, 0, 0),
-                        64000,
-                        16384,
-                        null,
-                        "zai",
-                        null),
-                new Model(
-                        "glm-4.6",
-                        "GLM-4.6",
-                        Api.OPENAI_COMPLETIONS,
-                        Provider.ZAI,
-                        "https://api.z.ai/api/coding/paas/v4",
-                        true,
-                        List.of(InputModality.TEXT),
-                        new ModelCost(0.6, 2.2, 0.11, 0),
-                        204800,
-                        131072,
-                        null,
-                        "zai",
-                        null),
-                new Model(
-                        "glm-4.6v",
-                        "GLM-4.6V",
-                        Api.OPENAI_COMPLETIONS,
-                        Provider.ZAI,
-                        "https://api.z.ai/api/coding/paas/v4",
-                        true,
-                        List.of(InputModality.TEXT, InputModality.IMAGE),
-                        new ModelCost(0.3, 0.9, 0, 0),
-                        128000,
-                        32768,
-                        null,
-                        "zai",
-                        null),
-                new Model(
-                        "glm-4.7",
-                        "GLM-4.7",
-                        Api.OPENAI_COMPLETIONS,
-                        Provider.ZAI,
-                        "https://api.z.ai/api/coding/paas/v4",
-                        true,
-                        List.of(InputModality.TEXT),
-                        new ModelCost(0.6, 2.2, 0.11, 0),
-                        204800,
-                        131072,
-                        null,
-                        "zai",
-                        null),
-                new Model(
-                        "glm-4.7-flash",
-                        "GLM-4.7-Flash",
-                        Api.OPENAI_COMPLETIONS,
-                        Provider.ZAI,
-                        "https://api.z.ai/api/coding/paas/v4",
-                        true,
-                        List.of(InputModality.TEXT),
-                        new ModelCost(0, 0, 0, 0),
-                        200000,
-                        131072,
-                        null,
-                        "zai",
-                        null),
-                new Model(
-                        "glm-5",
-                        "GLM-5",
-                        Api.OPENAI_COMPLETIONS,
-                        Provider.ZAI,
-                        "https://api.z.ai/api/coding/paas/v4",
-                        true,
-                        List.of(InputModality.TEXT),
-                        new ModelCost(1.0, 3.2, 0.2, 0),
-                        204800,
-                        131072,
-                        null,
-                        "zai",
-                        null),
-                new Model(
-                        "glm-5-turbo",
-                        "GLM-5-Turbo",
-                        Api.OPENAI_COMPLETIONS,
-                        Provider.ZAI,
-                        "https://api.z.ai/api/coding/paas/v4",
-                        true,
-                        List.of(InputModality.TEXT),
-                        new ModelCost(1.2, 4.0, 0.24, 0),
-                        200000,
-                        131072,
-                        null,
-                        "zai",
-                        null),
+    private static List<Model> openaiModels() {
+        return List.of(
+                openaiModel("gpt-4o", "GPT-4o", false, new ModelCost(2.5, 10.0, 1.25, 2.5), 128000, 16384),
+                openaiModel("gpt-4o-mini", "GPT-4o Mini", false, new ModelCost(0.15, 0.6, 0.075, 0.15), 128000, 16384),
+                openaiModel("o3", "o3", true, new ModelCost(10.0, 40.0, 2.5, 10.0), 200000, 100000),
+                openaiModel("o4-mini", "o4-mini", true, new ModelCost(1.1, 4.4, 0.275, 1.1), 200000, 100000));
+    }
 
+    // Builds a ZAI text-only Model (provider/api/baseUrl/reasoning=true/thinkingFormat pre-filled).
+    private static Model zaiTextModel(String id, String name, ModelCost cost, int contextWindow, int maxTokens) {
+        return zaiModel(id, name, List.of(InputModality.TEXT), cost, contextWindow, maxTokens);
+    }
+
+    // Builds a ZAI vision-capable Model.
+    private static Model zaiVisionModel(String id, String name, ModelCost cost, int contextWindow, int maxTokens) {
+        return zaiModel(id, name, List.of(InputModality.TEXT, InputModality.IMAGE), cost, contextWindow, maxTokens);
+    }
+
+    private static Model zaiModel(
+            String id, String name, List<InputModality> modalities, ModelCost cost, int contextWindow, int maxTokens) {
+        return new Model(
+                id,
+                name,
+                Api.OPENAI_COMPLETIONS,
+                Provider.ZAI,
+                "https://api.z.ai/api/coding/paas/v4",
+                true,
+                modalities,
+                cost,
+                contextWindow,
+                maxTokens,
+                null,
+                "zai",
+                null);
+    }
+
+    private static List<Model> zaiModels() {
+        return List.of(
+                zaiTextModel("glm-4.5", "GLM-4.5", new ModelCost(0.6, 2.2, 0.11, 0), 131072, 98304),
+                zaiTextModel("glm-4.5-air", "GLM-4.5-Air", new ModelCost(0.2, 1.1, 0.03, 0), 131072, 98304),
+                zaiTextModel("glm-4.5-flash", "GLM-4.5-Flash", new ModelCost(0, 0, 0, 0), 131072, 98304),
+                zaiVisionModel("glm-4.5v", "GLM-4.5V", new ModelCost(0.6, 1.8, 0, 0), 64000, 16384),
+                zaiTextModel("glm-4.6", "GLM-4.6", new ModelCost(0.6, 2.2, 0.11, 0), 204800, 131072),
+                zaiVisionModel("glm-4.6v", "GLM-4.6V", new ModelCost(0.3, 0.9, 0, 0), 128000, 32768),
+                zaiTextModel("glm-4.7", "GLM-4.7", new ModelCost(0.6, 2.2, 0.11, 0), 204800, 131072),
+                zaiTextModel("glm-4.7-flash", "GLM-4.7-Flash", new ModelCost(0, 0, 0, 0), 200000, 131072),
+                zaiTextModel("glm-5", "GLM-5", new ModelCost(1.0, 3.2, 0.2, 0), 204800, 131072),
+                zaiTextModel("glm-5-turbo", "GLM-5-Turbo", new ModelCost(1.2, 4.0, 0.24, 0), 200000, 131072));
+    }
+
+    private static List<Model> kimiCodingModels() {
+        return List.of(
                 // --- Kimi Coding ---
                 new Model(
                         "k2p5",
@@ -559,8 +459,11 @@ public class ModelRegistry {
                         32768,
                         null,
                         null,
-                        null),
+                        null));
+    }
 
+    private static List<Model> minimaxModels() {
+        return List.of(
                 // --- MiniMax ---
                 new Model(
                         "MiniMax-M2.7",
@@ -589,8 +492,11 @@ public class ModelRegistry {
                         131072,
                         null,
                         null,
-                        null),
+                        null));
+    }
 
+    private static List<Model> minimaxCnModels() {
+        return List.of(
                 // --- MiniMax CN ---
                 new Model(
                         "MiniMax-M2.7",
@@ -619,8 +525,11 @@ public class ModelRegistry {
                         131072,
                         null,
                         null,
-                        null),
+                        null));
+    }
 
+    private static List<Model> googleGenerativeAiModels() {
+        return List.of(
                 // --- Google Generative AI ---
                 new Model(
                         "gemini-2.5-pro",
@@ -663,8 +572,11 @@ public class ModelRegistry {
                         8192,
                         null,
                         null,
-                        null),
+                        null));
+    }
 
+    private static List<Model> googleVertexAiModels() {
+        return List.of(
                 // --- Google Vertex AI ---
                 new Model(
                         "gemini-2.5-pro",
@@ -693,66 +605,68 @@ public class ModelRegistry {
                         65536,
                         null,
                         null,
-                        null),
+                        null));
+    }
 
-                // --- Mistral ---
-                new Model(
+    private static Model mistralModel(
+            String id,
+            String name,
+            boolean reasoning,
+            List<InputModality> modalities,
+            ModelCost cost,
+            int contextWindow) {
+        return new Model(
+                id,
+                name,
+                Api.MISTRAL_CONVERSATIONS,
+                Provider.MISTRAL,
+                "https://api.mistral.ai/v1",
+                reasoning,
+                modalities,
+                cost,
+                contextWindow,
+                8192,
+                null,
+                null,
+                null);
+    }
+
+    private static List<Model> mistralModels() {
+        var textOnly = List.of(InputModality.TEXT);
+        var textImage = List.of(InputModality.TEXT, InputModality.IMAGE);
+        return List.of(
+                mistralModel(
                         "mistral-large-latest",
                         "Mistral Large",
-                        Api.MISTRAL_CONVERSATIONS,
-                        Provider.MISTRAL,
-                        "https://api.mistral.ai/v1",
                         true,
-                        List.of(InputModality.TEXT, InputModality.IMAGE),
+                        textImage,
                         new ModelCost(2.0, 6.0, 0.5, 1.5),
-                        131072,
-                        8192,
-                        null,
-                        null,
-                        null),
-                new Model(
+                        131072),
+                mistralModel(
                         "mistral-medium-latest",
                         "Mistral Medium",
-                        Api.MISTRAL_CONVERSATIONS,
-                        Provider.MISTRAL,
-                        "https://api.mistral.ai/v1",
                         false,
-                        List.of(InputModality.TEXT),
+                        textOnly,
                         new ModelCost(0.4, 2.0, 0.1, 0.5),
-                        131072,
-                        8192,
-                        null,
-                        null,
-                        null),
-                new Model(
+                        131072),
+                mistralModel(
                         "mistral-small-latest",
                         "Mistral Small",
-                        Api.MISTRAL_CONVERSATIONS,
-                        Provider.MISTRAL,
-                        "https://api.mistral.ai/v1",
                         false,
-                        List.of(InputModality.TEXT),
+                        textOnly,
                         new ModelCost(0.1, 0.3, 0.025, 0.075),
-                        131072,
-                        8192,
-                        null,
-                        null,
-                        null),
-                new Model(
+                        131072),
+                mistralModel(
                         "codestral-latest",
                         "Codestral",
-                        Api.MISTRAL_CONVERSATIONS,
-                        Provider.MISTRAL,
-                        "https://api.mistral.ai/v1",
                         false,
-                        List.of(InputModality.TEXT),
+                        textOnly,
                         new ModelCost(0.3, 0.9, 0.075, 0.225),
-                        262144,
-                        8192,
-                        null,
-                        null,
-                        null),
+                        262144));
+    }
 
+    private static List<Model> azureOpenaiModels() {
+        return List.of(
                 // --- Azure OpenAI ---
                 new Model(
                         "gpt-4o",
@@ -795,8 +709,11 @@ public class ModelRegistry {
                         100000,
                         null,
                         null,
-                        null),
+                        null));
+    }
 
+    private static List<Model> xaiModels() {
+        return List.of(
                 // --- xAI ---
                 new Model(
                         "grok-3",
@@ -839,8 +756,11 @@ public class ModelRegistry {
                         131072,
                         null,
                         null,
-                        null),
+                        null));
+    }
 
+    private static List<Model> groqModels() {
+        return List.of(
                 // --- Groq ---
                 new Model(
                         "llama-3.3-70b-versatile",
@@ -883,8 +803,11 @@ public class ModelRegistry {
                         16384,
                         null,
                         null,
-                        null),
+                        null));
+    }
 
+    private static List<Model> openrouterModels() {
+        return List.of(
                 // --- OpenRouter ---
                 new Model(
                         "anthropic/claude-sonnet-4",
@@ -927,8 +850,11 @@ public class ModelRegistry {
                         65536,
                         null,
                         null,
-                        null),
+                        null));
+    }
 
+    private static List<Model> openaiCodexModels() {
+        return List.of(
                 // --- OpenAI Codex ---
                 new Model(
                         "codex-mini-latest",
@@ -943,8 +869,11 @@ public class ModelRegistry {
                         100000,
                         null,
                         null,
-                        null),
+                        null));
+    }
 
+    private static List<Model> githubCopilotModels() {
+        return List.of(
                 // --- GitHub Copilot ---
                 new Model(
                         "claude-sonnet-4",
@@ -973,8 +902,11 @@ public class ModelRegistry {
                         16384,
                         null,
                         null,
-                        null),
+                        null));
+    }
 
+    private static List<Model> cerebrasModels() {
+        return List.of(
                 // --- Cerebras ---
                 new Model(
                         "llama-4-scout-17b-16e-instruct",
@@ -1003,8 +935,11 @@ public class ModelRegistry {
                         16384,
                         null,
                         null,
-                        null),
+                        null));
+    }
 
+    private static List<Model> huggingfaceModels() {
+        return List.of(
                 // --- HuggingFace ---
                 new Model(
                         "Qwen/Qwen3-235B-A22B",

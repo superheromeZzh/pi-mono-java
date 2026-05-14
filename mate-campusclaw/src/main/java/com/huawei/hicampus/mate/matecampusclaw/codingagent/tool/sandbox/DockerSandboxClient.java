@@ -294,75 +294,63 @@ public class DockerSandboxClient {
     private SandboxResult executeWithEphemeralContainer(List<String> command, ResourceLimits limits) {
         long startTime = System.currentTimeMillis();
         String containerName = "campusclaw-temp-" + UUID.randomUUID().toString().substring(0, 8);
-
         try {
-            String workspace = properties.getSandboxWorkspacePath();
-            String currentDir = System.getProperty("user.dir");
-
-            // Check if command requires bash
-            boolean requiresBash = command.size() >= 2 && "bash".equals(command.get(0));
-            String actualShell = requiresBash ? "bash" : command.get(0);
-            String shellPath = "/usr/bin/env " + actualShell;
-
-            // 构建 docker run 命令
-            List<String> runCmd = new java.util.ArrayList<>();
-            runCmd.add("run");
-            runCmd.add("--rm");
-            runCmd.add("--name");
-            runCmd.add(containerName);
-
-            // Note: Network is needed to install bash in ephemeral containers
-            runCmd.add("-v");
-            runCmd.add(currentDir + ":" + workspace);
-            runCmd.add("-w");
-            runCmd.add(workspace);
-
-            // 资源限制
-            if (!properties.getSandboxWorkerMemory().isEmpty()) {
-                runCmd.add("--memory");
-                runCmd.add(properties.getSandboxWorkerMemory());
-            }
-            if (properties.getSandboxWorkerCpu() > 0) {
-                runCmd.add("--cpus");
-                runCmd.add(String.valueOf(properties.getSandboxWorkerCpu()));
-            }
-
-            runCmd.add(properties.getSandboxWorkerImage());
-
-            // Install bash first, then execute the command
-            // This ensures bash is available for command execution in alpine
-            if (requiresBash) {
-                String cmdString = command.get(2); // The actual command after "bash", "-c"
-                String setupAndRun = "apk add --no-cache bash 2>/dev/null; " + shellPath + " -c '"
-                        + cmdString.replace("'", "'\"'\"'") + "'";
-                runCmd.addAll(List.of("sh", "-c", setupAndRun));
-            } else {
-                runCmd.addAll(command);
-            }
-
+            List<String> runCmd = buildEphemeralRunCommand(command, containerName);
             ProcessResult result = executeDockerCommand(runCmd, limits.getTimeoutSeconds());
             long executionTime = System.currentTimeMillis() - startTime;
-
             if (result.timedOut) {
-                // 清理超时的容器
                 executeDockerCommand(List.of("rm", "-f", containerName));
                 return SandboxResult.timeout(limits.getTimeoutSeconds());
             }
-
             return SandboxResult.builder()
                     .stdout(result.stdout)
                     .stderr(result.stderr)
                     .exitCode(result.exitCode)
                     .executionTimeMs(executionTime)
                     .build();
-
         } catch (Exception e) {
             log.error("Failed to execute command in ephemeral container", e);
-
-            // 尝试清理
             executeDockerCommand(List.of("rm", "-f", containerName));
             return SandboxResult.error("Execution failed: " + e.getMessage(), "");
         }
+    }
+
+    private List<String> buildEphemeralRunCommand(List<String> command, String containerName) {
+        String workspace = properties.getSandboxWorkspacePath();
+        String currentDir = System.getProperty("user.dir");
+        boolean requiresBash = command.size() >= 2 && "bash".equals(command.get(0));
+
+        List<String> runCmd = new java.util.ArrayList<>();
+        runCmd.add("run");
+        runCmd.add("--rm");
+        runCmd.add("--name");
+        runCmd.add(containerName);
+
+        // Note: network is needed to install bash in ephemeral containers.
+        runCmd.add("-v");
+        runCmd.add(currentDir + ":" + workspace);
+        runCmd.add("-w");
+        runCmd.add(workspace);
+        if (!properties.getSandboxWorkerMemory().isEmpty()) {
+            runCmd.add("--memory");
+            runCmd.add(properties.getSandboxWorkerMemory());
+        }
+        if (properties.getSandboxWorkerCpu() > 0) {
+            runCmd.add("--cpus");
+            runCmd.add(String.valueOf(properties.getSandboxWorkerCpu()));
+        }
+        runCmd.add(properties.getSandboxWorkerImage());
+
+        // For bash commands on alpine, install bash first then exec via /usr/bin/env bash.
+        if (requiresBash) {
+            String cmdString = command.get(2);
+            String setupAndRun = "apk add --no-cache bash 2>/dev/null; /usr/bin/env bash -c '"
+                    + cmdString.replace("'", "'\"'\"'") + "'";
+            runCmd.addAll(List.of("sh", "-c", setupAndRun));
+        } else {
+            runCmd.addAll(command);
+        }
+        return runCmd;
     }
 
     /**
@@ -376,74 +364,29 @@ public class DockerSandboxClient {
     }
 
     private ProcessResult executeDockerCommand(List<String> args, int timeoutSeconds) {
-        List<String> fullCmd = new java.util.ArrayList<>();
-        fullCmd.add("docker");
-
-        // 添加 -H 参数如果配置了远程主机
-        String dockerHost = properties.getDockerHost();
-        if (dockerHost != null && !dockerHost.isEmpty() && !dockerHost.equals("unix:///var/run/docker.sock")) {
-            fullCmd.add("-H");
-            fullCmd.add(dockerHost);
-        }
-
-        fullCmd.addAll(args);
-
+        List<String> fullCmd = buildDockerCommandLine(args);
         ProcessBuilder pb = new ProcessBuilder(fullCmd);
         pb.redirectErrorStream(false);
-
         StringBuilder stdout = new StringBuilder();
         StringBuilder stderr = new StringBuilder();
         boolean timedOut = false;
         int exitCode = -1;
-
         try {
             Process process = pb.start();
-
-            // 读取输出
-            Thread stdoutReader = new Thread(() -> {
-                try (BufferedReader reader =
-                        new BufferedReader(new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8))) {
-                    String line;
-                    while ((line = reader.readLine()) != null) {
-                        stdout.append(line).append("\n");
-                    }
-                } catch (IOException e) {
-                    log.debug("Error reading stdout", e);
-                }
-            });
-
-            Thread stderrReader = new Thread(() -> {
-                try (BufferedReader reader =
-                        new BufferedReader(new InputStreamReader(process.getErrorStream(), StandardCharsets.UTF_8))) {
-                    String line;
-                    while ((line = reader.readLine()) != null) {
-                        stderr.append(line).append("\n");
-                    }
-                } catch (IOException e) {
-                    log.debug("Error reading stderr", e);
-                }
-            });
-
-            stdoutReader.setUncaughtExceptionHandler(LoggingUncaughtExceptionHandler.INSTANCE);
-            stderrReader.setUncaughtExceptionHandler(LoggingUncaughtExceptionHandler.INSTANCE);
-            stdoutReader.start();
-            stderrReader.start();
-
+            Thread stdoutReader = startStreamReader(process.getInputStream(), stdout, "stdout");
+            Thread stderrReader = startStreamReader(process.getErrorStream(), stderr, "stderr");
             boolean finished = process.waitFor(timeoutSeconds, TimeUnit.SECONDS);
             if (!finished) {
                 process.destroyForcibly();
                 timedOut = true;
                 process.waitFor(5, TimeUnit.SECONDS);
             }
-
             exitCode = process.exitValue();
-
             stdoutReader.join(5000);
             stderrReader.join(5000);
-
         } catch (IOException | InterruptedException e) {
-            // IOException usually means Docker is not installed or not in PATH
-            // Log at debug level to avoid noise on systems without Docker
+            // IOException usually means Docker is not installed or not in PATH.
+            // Log at debug level to avoid noise on systems without Docker.
             if (e instanceof IOException) {
                 log.debug("Docker command failed (Docker may not be installed): {}", e.getMessage());
             } else {
@@ -452,8 +395,35 @@ public class DockerSandboxClient {
             }
             return new ProcessResult(-1, "", e.getMessage(), false);
         }
-
         return new ProcessResult(exitCode, stdout.toString(), stderr.toString(), timedOut);
+    }
+
+    private List<String> buildDockerCommandLine(List<String> args) {
+        List<String> fullCmd = new java.util.ArrayList<>();
+        fullCmd.add("docker");
+        String dockerHost = properties.getDockerHost();
+        if (dockerHost != null && !dockerHost.isEmpty() && !dockerHost.equals("unix:///var/run/docker.sock")) {
+            fullCmd.add("-H");
+            fullCmd.add(dockerHost);
+        }
+        fullCmd.addAll(args);
+        return fullCmd;
+    }
+
+    private static Thread startStreamReader(java.io.InputStream input, StringBuilder sink, String streamName) {
+        Thread t = new Thread(() -> {
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(input, StandardCharsets.UTF_8))) {
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    sink.append(line).append("\n");
+                }
+            } catch (IOException e) {
+                log.debug("Error reading {}", streamName, e);
+            }
+        });
+        t.setUncaughtExceptionHandler(LoggingUncaughtExceptionHandler.INSTANCE);
+        t.start();
+        return t;
     }
 
     /**

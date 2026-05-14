@@ -5,7 +5,6 @@
 package com.huawei.hicampus.mate.matecampusclaw.codingagent.tool.glob;
 
 import java.io.IOException;
-import java.nio.file.FileSystem;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -120,70 +119,26 @@ public class GlobTool implements AgentTool {
         if (pattern == null || pattern.isEmpty()) {
             return errorResult("Error: pattern is required");
         }
-
-        String pathInput = (String) params.get("path");
         Path searchRoot;
-        if (pathInput != null && !pathInput.isBlank()) {
-            try {
-                searchRoot = PathUtils.resolveToCwd(pathInput, cwd);
-            } catch (SecurityException e) {
-                return errorResult("Error: " + e.getMessage());
-            }
-        } else {
-            searchRoot = cwd;
-        }
-
-        if (!Files.isDirectory(searchRoot)) {
-            return errorResult("Error: not a directory: " + pathInput);
-        }
-
-        FileSystem fs = searchRoot.getFileSystem();
-        PathMatcher matcher = fs.getPathMatcher("glob:" + pattern);
-
-        List<MatchedFile> matches = new ArrayList<>();
-
         try {
-            Files.walkFileTree(searchRoot, new SimpleFileVisitor<>() {
-                @Override
-                public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) {
-                    if (!dir.equals(searchRoot)) {
-                        String dirName = dir.getFileName().toString();
-                        if (EXCLUDED_DIRS.contains(dirName) || dirName.startsWith(".")) {
-                            return FileVisitResult.SKIP_SUBTREE;
-                        }
-                    }
-                    return matches.size() >= MAX_RESULTS ? FileVisitResult.TERMINATE : FileVisitResult.CONTINUE;
-                }
-
-                @Override
-                public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) {
-                    if (matches.size() >= MAX_RESULTS) {
-                        return FileVisitResult.TERMINATE;
-                    }
-                    Path relative = searchRoot.relativize(file);
-                    if (matcher.matches(relative)) {
-                        matches.add(new MatchedFile(
-                                relative, attrs.lastModifiedTime().toMillis()));
-                    }
-                    return FileVisitResult.CONTINUE;
-                }
-
-                @Override
-                public FileVisitResult visitFileFailed(Path file, IOException exc) {
-                    return FileVisitResult.CONTINUE;
-                }
-            });
+            searchRoot = resolveSearchRoot((String) params.get("path"));
+        } catch (SecurityException e) {
+            return errorResult("Error: " + e.getMessage());
+        }
+        if (!Files.isDirectory(searchRoot)) {
+            return errorResult("Error: not a directory: " + params.get("path"));
+        }
+        PathMatcher matcher = searchRoot.getFileSystem().getPathMatcher("glob:" + pattern);
+        List<MatchedFile> matches;
+        try {
+            matches = walkAndMatch(searchRoot, matcher);
         } catch (IOException e) {
             return errorResult("Error walking directory: " + e.getMessage());
         }
-
         if (matches.isEmpty()) {
             return textResult("No files matched.");
         }
-
-        // Sort by modification time, most recent first
         matches.sort(Comparator.comparingLong(MatchedFile::modifiedMillis).reversed());
-
         var sb = new StringBuilder();
         for (int i = 0; i < matches.size(); i++) {
             if (i > 0) {
@@ -191,8 +146,49 @@ public class GlobTool implements AgentTool {
             }
             sb.append(matches.get(i).relativePath());
         }
-
         return textResult(sb.toString());
+    }
+
+    private Path resolveSearchRoot(String pathInput) {
+        if (pathInput == null || pathInput.isBlank()) {
+            return cwd;
+        }
+        return PathUtils.resolveToCwd(pathInput, cwd);
+    }
+
+    private static List<MatchedFile> walkAndMatch(Path searchRoot, PathMatcher matcher) throws IOException {
+        List<MatchedFile> matches = new ArrayList<>();
+        Files.walkFileTree(searchRoot, new SimpleFileVisitor<>() {
+            @Override
+            public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) {
+                if (!dir.equals(searchRoot)) {
+                    String dirName = dir.getFileName().toString();
+                    if (EXCLUDED_DIRS.contains(dirName) || dirName.startsWith(".")) {
+                        return FileVisitResult.SKIP_SUBTREE;
+                    }
+                }
+                return matches.size() >= MAX_RESULTS ? FileVisitResult.TERMINATE : FileVisitResult.CONTINUE;
+            }
+
+            @Override
+            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) {
+                if (matches.size() >= MAX_RESULTS) {
+                    return FileVisitResult.TERMINATE;
+                }
+                Path relative = searchRoot.relativize(file);
+                if (matcher.matches(relative)) {
+                    matches.add(
+                            new MatchedFile(relative, attrs.lastModifiedTime().toMillis()));
+                }
+                return FileVisitResult.CONTINUE;
+            }
+
+            @Override
+            public FileVisitResult visitFileFailed(Path file, IOException exc) {
+                return FileVisitResult.CONTINUE;
+            }
+        });
+        return matches;
     }
 
     private record MatchedFile(Path relativePath, long modifiedMillis) {}

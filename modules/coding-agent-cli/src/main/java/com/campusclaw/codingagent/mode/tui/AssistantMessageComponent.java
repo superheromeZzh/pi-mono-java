@@ -84,7 +84,6 @@ public class AssistantMessageComponent implements Component {
         cachedWidth = -1;
     }
 
-    @SuppressWarnings("checkstyle:huge_cyclomatic_complexity")
     @Override
     public List<String> render(int width) {
         String thinking = thinkingContent.toString();
