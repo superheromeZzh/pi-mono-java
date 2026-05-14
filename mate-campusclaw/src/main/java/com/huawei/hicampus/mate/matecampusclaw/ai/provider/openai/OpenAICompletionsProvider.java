@@ -241,183 +241,169 @@ public class OpenAICompletionsProvider implements ApiProvider {
         return builder.build();
     }
 
-    @SuppressWarnings("checkstyle:huge_cyclomatic_complexity")
+    /**
+     * Mutable state bundle for the {@link #processStream} chunk handler — lets us
+     * extract sub-handlers without juggling many out-parameter arrays.
+     */
+    private static final class StreamState {
+        final ArrayList<ContentBlock> contentBlocks = new ArrayList<>();
+        final long[] accumulatedUsage = {0, 0, 0, 0}; // input, output, cacheRead, cacheWrite
+        final StringBuilder textAccumulator = new StringBuilder();
+        final StringBuilder thinkingAccumulator = new StringBuilder();
+        final HashMap<Integer, ToolCallAccumulator> toolAccumulators = new HashMap<>();
+        String responseId;
+        StopReason stopReason;
+        boolean textBlockStarted;
+        boolean thinkingBlockStarted;
+    }
+
     private void processStream(
             OpenAIClient client,
             ChatCompletionCreateParams params,
             Model model,
             AssistantMessageEventStream eventStream) {
-
-        var contentBlocks = new ArrayList<ContentBlock>();
-        var accumulatedUsage = new long[] {0, 0, 0, 0}; // input, output, cacheRead, cacheWrite
-        String[] responseId = {null};
-        StopReason[] stopReason = {null};
-
-        // Accumulators for streaming text and tool call arguments
-        var textAccumulator = new StringBuilder();
-        var thinkingAccumulator = new StringBuilder();
-        var toolAccumulators = new HashMap<Integer, ToolCallAccumulator>();
-        boolean[] textBlockStarted = {false};
-        boolean[] thinkingBlockStarted = {false};
-
+        var state = new StreamState();
         try (StreamResponse<ChatCompletionChunk> response =
                 client.chat().completions().createStreaming(params)) {
-
-            response.stream().forEach(chunk -> {
-                responseId[0] = chunk.id();
-
-                // Extract usage from the final chunk
-                chunk.usage().ifPresent(usage -> parseUsage(usage, accumulatedUsage));
-
-                if (chunk.choices().isEmpty()) {
-                    return;
-                }
-
-                var choice = chunk.choices().get(0);
-
-                // Check finish reason
-                choice.finishReason().ifPresent(fr -> stopReason[0] = mapFinishReason(fr.asString()));
-
-                var delta = choice.delta();
-
-                // Handle text content
-                delta.content().ifPresent(text -> {
-                    if (!text.isEmpty()) {
-                        if (!textBlockStarted[0]) {
-                            textBlockStarted[0] = true;
-                            contentBlocks.add(new TextContent("", null));
-                            int idx = contentBlocks.size() - 1;
-                            eventStream.push(new AssistantMessageEvent.TextStartEvent(
-                                    idx,
-                                    buildPartialMessage(model, responseId[0], contentBlocks, accumulatedUsage, null)));
-                        }
-                        textAccumulator.append(text);
-                        int idx = contentBlocks.size() - 1;
-                        contentBlocks.set(idx, new TextContent(textAccumulator.toString(), null));
-                        eventStream.push(new AssistantMessageEvent.TextDeltaEvent(
-                                idx,
-                                text,
-                                buildPartialMessage(model, responseId[0], contentBlocks, accumulatedUsage, null)));
-                    }
-                });
-
-                // Handle reasoning/thinking content from additional properties
-                // Various providers use different fields: reasoning_content, reasoning, reasoning_text
-                String reasoningDelta = extractReasoningDelta(delta);
-                if (reasoningDelta != null && !reasoningDelta.isEmpty()) {
-                    if (!thinkingBlockStarted[0]) {
-                        thinkingBlockStarted[0] = true;
-                        contentBlocks.add(new ThinkingContent("", null, false));
-                        int idx = contentBlocks.size() - 1;
-                        eventStream.push(new AssistantMessageEvent.ThinkingStartEvent(
-                                idx, buildPartialMessage(model, responseId[0], contentBlocks, accumulatedUsage, null)));
-                    }
-                    thinkingAccumulator.append(reasoningDelta);
-                    int idx = contentBlocks.size() - 1;
-                    contentBlocks.set(idx, new ThinkingContent(thinkingAccumulator.toString(), null, false));
-                    eventStream.push(new AssistantMessageEvent.ThinkingDeltaEvent(
-                            idx,
-                            reasoningDelta,
-                            buildPartialMessage(model, responseId[0], contentBlocks, accumulatedUsage, null)));
-                }
-
-                // Handle tool calls
-                delta.toolCalls().ifPresent(toolCalls -> {
-                    for (var tc : toolCalls) {
-                        int toolIndex = (int) tc.index();
-                        var acc = toolAccumulators.computeIfAbsent(toolIndex, k -> new ToolCallAccumulator());
-
-                        // Capture id and name from the first chunk
-                        tc.id().ifPresent(id -> acc.id = id);
-                        tc.function().ifPresent(fn -> fn.name().ifPresent(name -> acc.name = name));
-
-                        // Extract arguments delta before appending
-                        String[] argsDelta = {null};
-                        tc.function().ifPresent(fn -> fn.arguments().ifPresent(a -> {
-                            if (!a.isEmpty()) {
-                                argsDelta[0] = a;
-                                acc.arguments.append(a);
-                            }
-                        }));
-
-                        // If this is the first time we see this tool index, start a block
-                        if (!acc.started) {
-                            acc.started = true;
-
-                            // Finish any open text block first
-                            if (textBlockStarted[0]) {
-                                int textIdx = findTextBlockIndex(contentBlocks);
-                                if (textIdx >= 0) {
-                                    eventStream.push(new AssistantMessageEvent.TextEndEvent(
-                                            textIdx,
-                                            textAccumulator.toString(),
-                                            buildPartialMessage(
-                                                    model, responseId[0], contentBlocks, accumulatedUsage, null)));
-                                }
-                                textBlockStarted[0] = false;
-                            }
-                            contentBlocks.add(new ToolCall(
-                                    acc.id != null ? acc.id : "", acc.name != null ? acc.name : "", Map.of(), null));
-                            acc.contentIndex = contentBlocks.size() - 1;
-                            eventStream.push(new AssistantMessageEvent.ToolCallStartEvent(
-                                    acc.contentIndex,
-                                    buildPartialMessage(model, responseId[0], contentBlocks, accumulatedUsage, null)));
-                        }
-
-                        // Emit argument delta (for both first and subsequent chunks)
-                        if (argsDelta[0] != null) {
-                            eventStream.push(new AssistantMessageEvent.ToolCallDeltaEvent(
-                                    acc.contentIndex,
-                                    argsDelta[0],
-                                    buildPartialMessage(model, responseId[0], contentBlocks, accumulatedUsage, null)));
-                        }
-                    }
-                });
-            });
+            response.stream().forEach(chunk -> handleChunk(chunk, state, model, eventStream));
         }
+        finishOpenBlocks(state, model, eventStream);
+        emitDone(state, model, eventStream);
+    }
 
-        // Finish open thinking block
-        if (thinkingBlockStarted[0]) {
-            int thinkIdx = findBlockIndex(contentBlocks, ThinkingContent.class);
-            if (thinkIdx >= 0) {
-                contentBlocks.set(thinkIdx, new ThinkingContent(thinkingAccumulator.toString(), null, false));
-                eventStream.push(new AssistantMessageEvent.ThinkingEndEvent(
-                        thinkIdx,
-                        thinkingAccumulator.toString(),
-                        buildPartialMessage(model, responseId[0], contentBlocks, accumulatedUsage, null)));
+    private void handleChunk(
+            ChatCompletionChunk chunk, StreamState state, Model model, AssistantMessageEventStream eventStream) {
+        state.responseId = chunk.id();
+        chunk.usage().ifPresent(usage -> parseUsage(usage, state.accumulatedUsage));
+        if (chunk.choices().isEmpty()) {
+            return;
+        }
+        var choice = chunk.choices().get(0);
+        choice.finishReason().ifPresent(fr -> state.stopReason = mapFinishReason(fr.asString()));
+        var delta = choice.delta();
+        delta.content().ifPresent(text -> handleTextDelta(text, state, model, eventStream));
+        String reasoningDelta = extractReasoningDelta(delta);
+        if (reasoningDelta != null && !reasoningDelta.isEmpty()) {
+            handleReasoningDelta(reasoningDelta, state, model, eventStream);
+        }
+        delta.toolCalls().ifPresent(tcs -> handleToolCallsDelta(tcs, state, model, eventStream));
+    }
+
+    private void handleTextDelta(String text, StreamState state, Model model, AssistantMessageEventStream eventStream) {
+        if (text.isEmpty()) {
+            return;
+        }
+        if (!state.textBlockStarted) {
+            state.textBlockStarted = true;
+            state.contentBlocks.add(new TextContent("", null));
+            int idx = state.contentBlocks.size() - 1;
+            eventStream.push(new AssistantMessageEvent.TextStartEvent(idx, partialFrom(state, model, null)));
+        }
+        state.textAccumulator.append(text);
+        int idx = state.contentBlocks.size() - 1;
+        state.contentBlocks.set(idx, new TextContent(state.textAccumulator.toString(), null));
+        eventStream.push(new AssistantMessageEvent.TextDeltaEvent(idx, text, partialFrom(state, model, null)));
+    }
+
+    private void handleReasoningDelta(
+            String reasoningDelta, StreamState state, Model model, AssistantMessageEventStream eventStream) {
+        if (!state.thinkingBlockStarted) {
+            state.thinkingBlockStarted = true;
+            state.contentBlocks.add(new ThinkingContent("", null, false));
+            int idx = state.contentBlocks.size() - 1;
+            eventStream.push(new AssistantMessageEvent.ThinkingStartEvent(idx, partialFrom(state, model, null)));
+        }
+        state.thinkingAccumulator.append(reasoningDelta);
+        int idx = state.contentBlocks.size() - 1;
+        state.contentBlocks.set(idx, new ThinkingContent(state.thinkingAccumulator.toString(), null, false));
+        eventStream.push(
+                new AssistantMessageEvent.ThinkingDeltaEvent(idx, reasoningDelta, partialFrom(state, model, null)));
+    }
+
+    private void handleToolCallsDelta(
+            Iterable<? extends ChatCompletionChunk.Choice.Delta.ToolCall> toolCalls,
+            StreamState state,
+            Model model,
+            AssistantMessageEventStream eventStream) {
+        for (var tc : toolCalls) {
+            int toolIndex = (int) tc.index();
+            var acc = state.toolAccumulators.computeIfAbsent(toolIndex, k -> new ToolCallAccumulator());
+            tc.id().ifPresent(id -> acc.id = id);
+            tc.function().ifPresent(fn -> fn.name().ifPresent(name -> acc.name = name));
+            String[] argsDelta = {null};
+            tc.function().ifPresent(fn -> fn.arguments().ifPresent(a -> {
+                if (!a.isEmpty()) {
+                    argsDelta[0] = a;
+                    acc.arguments.append(a);
+                }
+            }));
+            if (!acc.started) {
+                startToolCallBlock(acc, state, model, eventStream);
+            }
+            if (argsDelta[0] != null) {
+                eventStream.push(new AssistantMessageEvent.ToolCallDeltaEvent(
+                        acc.contentIndex, argsDelta[0], partialFrom(state, model, null)));
             }
         }
+    }
 
-        // Finish open text block
-        if (textBlockStarted[0]) {
-            int textIdx = findTextBlockIndex(contentBlocks);
+    private void startToolCallBlock(
+            ToolCallAccumulator acc, StreamState state, Model model, AssistantMessageEventStream eventStream) {
+        acc.started = true;
+
+        // Finish any open text block first — once a tool call appears, the text run is done.
+        if (state.textBlockStarted) {
+            int textIdx = findTextBlockIndex(state.contentBlocks);
             if (textIdx >= 0) {
-                contentBlocks.set(textIdx, new TextContent(textAccumulator.toString(), null));
                 eventStream.push(new AssistantMessageEvent.TextEndEvent(
-                        textIdx,
-                        textAccumulator.toString(),
-                        buildPartialMessage(model, responseId[0], contentBlocks, accumulatedUsage, null)));
+                        textIdx, state.textAccumulator.toString(), partialFrom(state, model, null)));
+            }
+            state.textBlockStarted = false;
+        }
+        state.contentBlocks.add(
+                new ToolCall(acc.id != null ? acc.id : "", acc.name != null ? acc.name : "", Map.of(), null));
+        acc.contentIndex = state.contentBlocks.size() - 1;
+        eventStream.push(
+                new AssistantMessageEvent.ToolCallStartEvent(acc.contentIndex, partialFrom(state, model, null)));
+    }
+
+    private void finishOpenBlocks(StreamState state, Model model, AssistantMessageEventStream eventStream) {
+        if (state.thinkingBlockStarted) {
+            int thinkIdx = findBlockIndex(state.contentBlocks, ThinkingContent.class);
+            if (thinkIdx >= 0) {
+                state.contentBlocks.set(
+                        thinkIdx, new ThinkingContent(state.thinkingAccumulator.toString(), null, false));
+                eventStream.push(new AssistantMessageEvent.ThinkingEndEvent(
+                        thinkIdx, state.thinkingAccumulator.toString(), partialFrom(state, model, null)));
             }
         }
-
-        // Finish open tool call blocks
-        for (var entry : toolAccumulators.entrySet()) {
+        if (state.textBlockStarted) {
+            int textIdx = findTextBlockIndex(state.contentBlocks);
+            if (textIdx >= 0) {
+                state.contentBlocks.set(textIdx, new TextContent(state.textAccumulator.toString(), null));
+                eventStream.push(new AssistantMessageEvent.TextEndEvent(
+                        textIdx, state.textAccumulator.toString(), partialFrom(state, model, null)));
+            }
+        }
+        for (var entry : state.toolAccumulators.entrySet()) {
             var acc = entry.getValue();
-            if (acc.started && acc.contentIndex >= 0 && acc.contentIndex < contentBlocks.size()) {
+            if (acc.started && acc.contentIndex >= 0 && acc.contentIndex < state.contentBlocks.size()) {
                 Map<String, Object> args = parseToolArguments(acc.arguments.toString());
                 var toolCall = new ToolCall(acc.id != null ? acc.id : "", acc.name != null ? acc.name : "", args, null);
-                contentBlocks.set(acc.contentIndex, toolCall);
+                state.contentBlocks.set(acc.contentIndex, toolCall);
                 eventStream.push(new AssistantMessageEvent.ToolCallEndEvent(
-                        acc.contentIndex,
-                        toolCall,
-                        buildPartialMessage(model, responseId[0], contentBlocks, accumulatedUsage, null)));
+                        acc.contentIndex, toolCall, partialFrom(state, model, null)));
             }
         }
+    }
 
-        // Emit final done event
-        var finalStopReason = stopReason[0] != null ? stopReason[0] : StopReason.STOP;
-        var finalMessage = buildPartialMessage(model, responseId[0], contentBlocks, accumulatedUsage, finalStopReason);
-        eventStream.pushDone(finalStopReason, finalMessage);
+    private void emitDone(StreamState state, Model model, AssistantMessageEventStream eventStream) {
+        var finalStopReason = state.stopReason != null ? state.stopReason : StopReason.STOP;
+        eventStream.pushDone(finalStopReason, partialFrom(state, model, finalStopReason));
+    }
+
+    private AssistantMessage partialFrom(StreamState state, Model model, @Nullable StopReason stopReason) {
+        return buildPartialMessage(model, state.responseId, state.contentBlocks, state.accumulatedUsage, stopReason);
     }
 
     // -- Message conversion --

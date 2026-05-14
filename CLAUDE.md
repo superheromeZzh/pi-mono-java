@@ -294,8 +294,13 @@ int toolCount = 0;
 
 **结构空行**：版权头 / package / imports / 类之间必须空行分隔，由 `EmptyLineSeparator` 强制（覆盖 PACKAGE_DEF / IMPORT / STATIC_IMPORT 三个 token，避免误伤方法内的 local record/class）。
 
-### 圈复杂度（CC ≤ 15）
-方法的 cyclomatic complexity 不得超过 15（`switchBlockAsSingleDecisionPoint=true`，整段 switch 算 1 个决策点）。超阈值的方法必须拆分提取，**不要新增 `@SuppressWarnings("checkstyle:huge_cyclomatic_complexity")`**——存量带此注解的是历史欠债，等待重构，不是范例。
+### 圈复杂度（CC ≤ 20）
+方法的 cyclomatic complexity 不得超过 20（`switchBlockAsSingleDecisionPoint=true`，整段 switch 算 1 个决策点）。超阈值的方法必须拆分提取，**不要新增 `@SuppressWarnings("checkstyle:huge_cyclomatic_complexity")`**——存量带此注解的是历史欠债，等待重构，不是范例。
+
+### 方法长度（NBNC ≤ 50 行）
+单个方法的「非空非（行）注释」行数不得超过 50（`huge_method` 规则，Checkstyle `MethodLength` + `countEmpty=false`）。计入：方法签名行、`}`、含代码的行尾注释、块注释 `/* ... */` 内部行；跳过：空行、纯 `//` 单行注释。
+
+超阈值的方法**优先拆分**：抽出明确职责的私有方法、用 record/sealed type 把分支表代码化、把数据初始化（如查表）改成静态常量或工厂。只有在拆解会损害可读性（如协议 stream 解析、Unicode 范围表）才用 `@SuppressWarnings("checkstyle:huge_method")` 保留，并在 PR description 里写明理由。**不要新增**与历史保留方法对齐的批量豁免——存量带此注解的是历史欠债，等待重构。
 
 ### 后台线程必须装 UncaughtExceptionHandler（软约束，全员遵守）
 

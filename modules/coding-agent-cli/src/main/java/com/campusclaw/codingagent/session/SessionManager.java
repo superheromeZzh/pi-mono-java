@@ -161,7 +161,21 @@ public class SessionManager {
         if (!Files.exists(file)) {
             return List.of();
         }
+        List<Map<String, Object>> entries = readJsonlEntries(file);
+        if (entries.isEmpty()) {
+            return List.of();
+        }
+        var header = entries.get(0);
+        if (!"session".equals(header.get("type"))) {
+            return List.of();
+        }
+        this.sessionFile = file;
+        this.sessionId = (String) header.get("id");
+        this.lastEntryId = null;
+        return extractMessages(entries);
+    }
 
+    private List<Map<String, Object>> readJsonlEntries(Path file) {
         List<Map<String, Object>> entries = new ArrayList<>();
         try (var reader = Files.newBufferedReader(file, StandardCharsets.UTF_8)) {
             String line;
@@ -174,29 +188,19 @@ public class SessionManager {
                     var entry = mapper.readValue(line, LinkedHashMap.class);
                     entries.add(entry);
                 } catch (JsonProcessingException e) {
-                    // Skip malformed lines
+                    // Skip malformed lines — session files can be partially written on crash.
                 }
             }
         } catch (IOException e) {
             log.warn("Failed to read session file: {}", file, e);
             return List.of();
         }
+        return entries;
+    }
 
-        if (entries.isEmpty()) {
-            return List.of();
-        }
-
-        // Parse header
-        var header = entries.get(0);
-        if (!"session".equals(header.get("type"))) {
-            return List.of();
-        }
-
-        this.sessionFile = file;
-        this.sessionId = (String) header.get("id");
-        this.lastEntryId = null;
-
-        // Walk entries, collect messages from the linear path (last branch)
+    // Walk entries past the header and collect messages from the linear path (last branch),
+    // updating {@code lastEntryId} as we go for subsequent appendMessage chaining.
+    private List<Message> extractMessages(List<Map<String, Object>> entries) {
         List<Message> messages = new ArrayList<>();
         for (int i = 1; i < entries.size(); i++) {
             var entry = entries.get(i);
@@ -204,24 +208,22 @@ public class SessionManager {
             if (entryId != null) {
                 lastEntryId = entryId;
             }
-
-            if ("message".equals(entry.get("type")) && entry.containsKey("message")) {
-                Object raw = entry.get("message");
-                if (raw instanceof Map<?, ?> m) {
-                    @SuppressWarnings("unchecked")
-                    Map<String, Object> mutable = (Map<String, Object>) m;
-                    backfillRoleIfMissing(mutable);
-                }
-                try {
-                    String msgJson = mapper.writeValueAsString(entry.get("message"));
-                    Message msg = mapper.readValue(msgJson, Message.class);
-                    messages.add(msg);
-                } catch (JsonProcessingException e) {
-                    log.warn("Failed to parse message entry", e);
-                }
+            if (!"message".equals(entry.get("type")) || !entry.containsKey("message")) {
+                continue;
+            }
+            Object raw = entry.get("message");
+            if (raw instanceof Map<?, ?> m) {
+                @SuppressWarnings("unchecked")
+                Map<String, Object> mutable = (Map<String, Object>) m;
+                backfillRoleIfMissing(mutable);
+            }
+            try {
+                String msgJson = mapper.writeValueAsString(entry.get("message"));
+                messages.add(mapper.readValue(msgJson, Message.class));
+            } catch (JsonProcessingException e) {
+                log.warn("Failed to parse message entry", e);
             }
         }
-
         return messages;
     }
 

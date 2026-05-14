@@ -256,46 +256,39 @@ class ChatWebSocketHandlerTest {
         assertEquals("error", frames.get(doneIdx).path("stopReason").asText());
     }
 
+    // Stand up a fresh ModelRegistry seeded with two test models so we exercise
+    // the actual filtering logic rather than mocking the catalogue.
+    private com.huawei.hicampus.mate.matecampusclaw.ai.model.ModelRegistry buildSeededTestModelRegistry() {
+        var modelRegistry = new com.huawei.hicampus.mate.matecampusclaw.ai.model.ModelRegistry();
+        modelRegistry.register(testModel("test-a", "Test A", false, new com.huawei.hicampus.mate.matecampusclaw.ai.types.ModelCost(1, 2, 0, 0)));
+        modelRegistry.register(testModel("test-b", "Test B", true, new com.huawei.hicampus.mate.matecampusclaw.ai.types.ModelCost(0, 0, 0, 0)));
+        return modelRegistry;
+    }
+
+    private static com.huawei.hicampus.mate.matecampusclaw.ai.types.Model testModel(
+            String id, String name, boolean reasoning, com.huawei.hicampus.mate.matecampusclaw.ai.types.ModelCost cost) {
+        return new com.huawei.hicampus.mate.matecampusclaw.ai.types.Model(
+                id,
+                name,
+                com.huawei.hicampus.mate.matecampusclaw.ai.types.Api.OPENAI_COMPLETIONS,
+                com.huawei.hicampus.mate.matecampusclaw.ai.types.Provider.OPENAI,
+                "https://example.com",
+                reasoning,
+                List.of(com.huawei.hicampus.mate.matecampusclaw.ai.types.InputModality.TEXT),
+                cost,
+                128000,
+                4096,
+                null,
+                null,
+                null);
+    }
+
     @Test
     void listModelsReturnsAvailableModelsWithCurrent() throws Exception {
-        // Stand up a fresh server wired with a real ModelCatalogService so we
-        // exercise the actual filtering logic, not a mock.
-        var modelRegistry = new com.huawei.hicampus.mate.matecampusclaw.ai.model.ModelRegistry();
-
-        // The registry's @PostConstruct doesn't run outside Spring, so seed it manually.
-        modelRegistry.register(new com.huawei.hicampus.mate.matecampusclaw.ai.types.Model(
-                "test-a",
-                "Test A",
-                com.huawei.hicampus.mate.matecampusclaw.ai.types.Api.OPENAI_COMPLETIONS,
-                com.huawei.hicampus.mate.matecampusclaw.ai.types.Provider.OPENAI,
-                "https://example.com",
-                false,
-                List.of(com.huawei.hicampus.mate.matecampusclaw.ai.types.InputModality.TEXT),
-                new com.huawei.hicampus.mate.matecampusclaw.ai.types.ModelCost(1, 2, 0, 0),
-                128000,
-                4096,
-                null,
-                null,
-                null));
-        modelRegistry.register(new com.huawei.hicampus.mate.matecampusclaw.ai.types.Model(
-                "test-b",
-                "Test B",
-                com.huawei.hicampus.mate.matecampusclaw.ai.types.Api.OPENAI_COMPLETIONS,
-                com.huawei.hicampus.mate.matecampusclaw.ai.types.Provider.OPENAI,
-                "https://example.com",
-                true,
-                List.of(com.huawei.hicampus.mate.matecampusclaw.ai.types.InputModality.TEXT),
-                new com.huawei.hicampus.mate.matecampusclaw.ai.types.ModelCost(0, 0, 0, 0),
-                128000,
-                4096,
-                null,
-                null,
-                null));
-
+        var modelRegistry = buildSeededTestModelRegistry();
         var settingsManager = mock(com.huawei.hicampus.mate.matecampusclaw.codingagent.settings.SettingsManager.class);
         when(settingsManager.load()).thenReturn(com.huawei.hicampus.mate.matecampusclaw.codingagent.settings.Settings.empty());
         var catalog = new com.huawei.hicampus.mate.matecampusclaw.codingagent.model.ModelCatalogService(modelRegistry, settingsManager);
-
         when(session.getModelId()).thenReturn("test-a");
         ChatWebSocketHandler handler = new ChatWebSocketHandler(pool, catalog);
 
@@ -311,7 +304,6 @@ class ChatWebSocketHandlerTest {
                 .bindNow();
 
         JsonNode response = runRequestResponse("{\"type\":\"list_models\",\"id\":\"lm1\"}", "lm1");
-
         assertEquals("response", response.path("type").asText());
         assertTrue(response.path("success").asBoolean(), "list_models should succeed");
         JsonNode data = response.path("data");

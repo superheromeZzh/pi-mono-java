@@ -276,187 +276,35 @@ public class CampusClawCommand implements Callable<Integer> {
             arity = "0..*")
     List<String> promptArgs;
 
-    @SuppressWarnings("checkstyle:huge_cyclomatic_complexity")
     @Override
     public Integer call() {
-        // --proxy: explicit proxy overrides auto-detection from main()
-        if (proxy != null && !proxy.isBlank()) {
-            ProxyConfig proxyConfig = ProxyConfig.fromUrl(proxy);
-            if (proxyConfig.isConfigured()) {
-                proxyConfig.installAsDefault();
-            } else {
-                err().println("Warning: invalid proxy URL: " + proxy);
-            }
-        }
-
-        // --cron-tick: execute due cron jobs and exit (for launchd/crontab)
+        applyProxyOverride();
         if (cronTick) {
             return executeCronTick();
         }
-
-        // Handle subcommands: skill, install, remove, uninstall, update, list, config
-        if (promptArgs != null && !promptArgs.isEmpty()) {
-            String first = promptArgs.get(0);
-            if ("skill".equals(first)) {
-                return handleSkillCommand(promptArgs.subList(1, promptArgs.size()));
-            }
-            if ("install".equals(first)
-                    || "remove".equals(first)
-                    || "uninstall".equals(first)
-                    || "update".equals(first)
-                    || "list".equals(first)
-                    || "config".equals(first)) {
-                return handlePackageCommand(first, promptArgs.subList(1, promptArgs.size()));
-            }
+        Integer subRc = dispatchSubcommand();
+        if (subRc != null) {
+            return subRc;
         }
-
-        String effectivePrompt = resolvePrompt();
-
-        // Read piped stdin if not a TTY (skip for modes that don't need a prompt)
-        if (effectivePrompt == null
-                && System.console() == null
-                && !"server".equals(mode)
-                && !"rpc".equals(mode)
-                && !"print".equals(mode)) {
-            try {
-                String piped = new String(System.in.readAllBytes(), StandardCharsets.UTF_8).trim();
-                if (!piped.isEmpty()) {
-                    effectivePrompt = piped;
-                }
-            } catch (IOException e) {
-                // Ignore — stdin not available
-            }
-        }
-
+        String effectivePrompt = resolveEffectivePrompt();
         Path effectiveCwd = cwd != null ? cwd : Path.of(System.getProperty("user.dir"));
-
-        // Ensure user-level config directories exist
         com.huawei.hicampus.mate.matecampusclaw.codingagent.config.AppPaths.ensureUserDirs();
 
-        // Load settings and apply defaults for model and thinking level
         Settings settings = settingsManager != null ? settingsManager.load() : Settings.empty();
-        String effectiveModel = model;
-        if (effectiveModel == null && settings.resolvedDefaultModel() != null) {
-            effectiveModel = settings.resolvedDefaultModel();
-        }
-        String effectiveThinking = thinking;
-        if (effectiveThinking == null && settings.defaultThinkingLevel() != null) {
-            effectiveThinking = settings.defaultThinkingLevel();
-        }
+        String effectiveModel = (model != null) ? model : settings.resolvedDefaultModel();
+        String effectiveThinking = (thinking != null) ? thinking : settings.defaultThinkingLevel();
+        registerCustomModels(settings);
 
-        // Register custom models from settings
-        if (settings.customModels() != null) {
-            for (Settings.CustomModelConfig cm : settings.customModels()) {
-                if (cm.id() == null || cm.api() == null || cm.baseUrl() == null || cm.apiKey() == null) {
-                    err().println(
-                                    "Warning: Skipping custom model with missing required fields (id, api, baseUrl, apiKey)");
-                    continue;
-                }
-                List<InputModality> modalities = List.of(InputModality.TEXT);
-                if (cm.inputModalities() != null) {
-                    modalities = cm.inputModalities().stream()
-                            .map(InputModality::fromValue)
-                            .collect(Collectors.toList());
-                }
-                String resolvedApiKey = ConfigValueResolver.resolve(cm.apiKey());
-                String resolvedBaseUrl = ConfigValueResolver.resolve(cm.baseUrl());
-                Model customModel = new Model(
-                        cm.id(),
-                        cm.name() != null ? cm.name() : cm.id(),
-                        Api.fromValue(cm.api()),
-                        Provider.CUSTOM,
-                        resolvedBaseUrl,
-                        cm.reasoning() != null && cm.reasoning(),
-                        modalities,
-                        new ModelCost(0, 0, 0, 0),
-                        cm.contextWindow() != null ? cm.contextWindow() : 128000,
-                        cm.maxTokens() != null ? cm.maxTokens() : 8192,
-                        null,
-                        cm.thinkingFormat(),
-                        resolvedApiKey);
-                modelRegistry.register(customModel);
-            }
-        }
-
-        // --export: export session file to HTML and exit
         if (exportArgs != null && !exportArgs.isEmpty()) {
-            Path inputFile = Path.of(exportArgs.get(0));
-            if (!Files.exists(inputFile)) {
-                err().println("Session file not found: " + inputFile);
-                return 1;
-            }
-
-            // Determine output path
-            Path outputFile;
-            if (exportArgs.size() > 1) {
-                outputFile = Path.of(exportArgs.get(1));
-            } else {
-                String name = inputFile.getFileName().toString().replaceAll("\\.jsonl$", ".html");
-                outputFile = inputFile.resolveSibling(name);
-            }
-
-            var sm = new SessionManager();
-            var messages = sm.loadSession(inputFile);
-            if (messages.isEmpty()) {
-                err().println("No messages found in session file.");
-                return 1;
-            }
-
-            String html = com.huawei.hicampus.mate.matecampusclaw.codingagent.export.HtmlExporter.export(
-                    messages, "CampusClaw Session", sm.getSessionId());
-            try {
-                Files.writeString(outputFile, html);
-                out().println("Exported " + messages.size() + " messages to " + outputFile);
-            } catch (IOException e) {
-                log.error("Failed to write HTML export to {}", outputFile, e);
-                err().println("Failed to write HTML: " + e.getMessage());
-                return 1;
-            }
-            return 0;
+            return runExportMode();
         }
-
-        // --list-models: print available models and exit
         if (listModels != null) {
-            String search = listModels.isBlank() ? null : listModels;
-            var allModels = modelRegistry.getAllModels();
-            allModels.sort(
-                    Comparator.comparing((Model m) -> m.provider().value()).thenComparing(Model::id));
-            for (var m : allModels) {
-                if (search != null
-                        && !m.id().toLowerCase(Locale.ROOT).contains(search.toLowerCase(Locale.ROOT))
-                        && !m.name().toLowerCase(Locale.ROOT).contains(search.toLowerCase(Locale.ROOT))) {
-                    continue;
-                }
-                out().printf("  %-15s %-40s %s%n", m.provider().value(), m.id(), m.name());
-            }
-            return 0;
+            return runListModelsMode();
         }
-
-        // Validate conflicting session flags (matching campusclaw)
-        int sessionFlagCount = 0;
-        var conflicting = new ArrayList<String>();
-        if (sessionPath != null) {
-            sessionFlagCount++;
-            conflicting.add("--session");
+        Integer validateRc = validateSessionFlags();
+        if (validateRc != null) {
+            return validateRc;
         }
-        if (continueSession) {
-            sessionFlagCount++;
-            conflicting.add("--continue");
-        }
-        if (resumeSession) {
-            sessionFlagCount++;
-            conflicting.add("--resume");
-        }
-        if (noSession) {
-            sessionFlagCount++;
-            conflicting.add("--no-session");
-        }
-        if (sessionFlagCount > 1) {
-            err().println("Error: conflicting flags: " + String.join(", ", conflicting));
-            return 1;
-        }
-
-        // --print/-p flag makes this non-interactive (like campusclaw -p)
         if (printMode) {
             if (effectivePrompt == null) {
                 err().println("Error: --print requires a prompt (positional args or piped stdin)");
@@ -464,50 +312,189 @@ public class CampusClawCommand implements Callable<Integer> {
             }
             mode = "one-shot";
         }
-
         if ("print".equals(mode)) {
-            out().println("Model: " + effectiveModel);
-            out().println("Mode: " + mode);
-            out().println("CWD: " + effectiveCwd);
-            out().println("Prompt: " + effectivePrompt);
-            if (effectiveThinking != null) {
-                out().println("Thinking: " + effectiveThinking);
-            }
-            if (toolsFilter != null) {
-                out().println("Tools: " + toolsFilter);
-            }
-            return 0;
+            return runPrintMode(effectiveModel, effectiveCwd, effectivePrompt, effectiveThinking);
         }
-
         if ("one-shot".equals(mode) && effectivePrompt == null) {
             err().println("Error: --mode one-shot requires a prompt (-p or positional args)");
             return 1;
         }
+        return runAgentMode(effectivePrompt, effectiveCwd, effectiveModel, effectiveThinking);
+    }
 
-        // Build session
-        String effectiveSystemPrompt = systemPrompt;
-        if (appendSystemPrompt != null && !appendSystemPrompt.isBlank()) {
-            if (effectiveSystemPrompt == null) {
-                effectiveSystemPrompt = appendSystemPrompt;
-            } else {
-                effectiveSystemPrompt = effectiveSystemPrompt + "\n\n" + appendSystemPrompt;
-            }
+    private void applyProxyOverride() {
+        if (proxy == null || proxy.isBlank()) {
+            return;
         }
-
-        // Filter tools
-        List<AgentTool> effectiveTools;
-        if (noTools) {
-            effectiveTools = List.of();
-        } else if (toolsFilter != null && !toolsFilter.isBlank()) {
-            var allowed = List.of(toolsFilter.split(","));
-            effectiveTools =
-                    tools.stream().filter(t -> allowed.contains(t.name())).collect(Collectors.toList());
+        ProxyConfig proxyConfig = ProxyConfig.fromUrl(proxy);
+        if (proxyConfig.isConfigured()) {
+            proxyConfig.installAsDefault();
         } else {
-            effectiveTools = tools;
+            err().println("Warning: invalid proxy URL: " + proxy);
         }
+    }
 
-        // 检查是否启用沙箱 skill 解析
+    // Returns null when no subcommand applies; otherwise the subcommand's exit code.
+    private Integer dispatchSubcommand() {
+        if (promptArgs == null || promptArgs.isEmpty()) {
+            return null;
+        }
+        String first = promptArgs.get(0);
+        if ("skill".equals(first)) {
+            return handleSkillCommand(promptArgs.subList(1, promptArgs.size()));
+        }
+        if ("install".equals(first)
+                || "remove".equals(first)
+                || "uninstall".equals(first)
+                || "update".equals(first)
+                || "list".equals(first)
+                || "config".equals(first)) {
+            return handlePackageCommand(first, promptArgs.subList(1, promptArgs.size()));
+        }
+        return null;
+    }
+
+    private String resolveEffectivePrompt() {
+        String effectivePrompt = resolvePrompt();
+        if (effectivePrompt != null
+                || System.console() != null
+                || "server".equals(mode)
+                || "rpc".equals(mode)
+                || "print".equals(mode)) {
+            return effectivePrompt;
+        }
+        try {
+            String piped = new String(System.in.readAllBytes(), StandardCharsets.UTF_8).trim();
+            if (!piped.isEmpty()) {
+                return piped;
+            }
+        } catch (IOException e) {
+            // stdin not available — fall through with null
+        }
+        return null;
+    }
+
+    private void registerCustomModels(Settings settings) {
+        if (settings.customModels() == null) {
+            return;
+        }
+        for (Settings.CustomModelConfig cm : settings.customModels()) {
+            if (cm.id() == null || cm.api() == null || cm.baseUrl() == null || cm.apiKey() == null) {
+                err().println("Warning: Skipping custom model with missing required fields (id, api, baseUrl, apiKey)");
+                continue;
+            }
+            List<InputModality> modalities = (cm.inputModalities() == null)
+                    ? List.of(InputModality.TEXT)
+                    : cm.inputModalities().stream()
+                            .map(InputModality::fromValue)
+                            .collect(Collectors.toList());
+            modelRegistry.register(new Model(
+                    cm.id(),
+                    cm.name() != null ? cm.name() : cm.id(),
+                    Api.fromValue(cm.api()),
+                    Provider.CUSTOM,
+                    ConfigValueResolver.resolve(cm.baseUrl()),
+                    cm.reasoning() != null && cm.reasoning(),
+                    modalities,
+                    new ModelCost(0, 0, 0, 0),
+                    cm.contextWindow() != null ? cm.contextWindow() : 128000,
+                    cm.maxTokens() != null ? cm.maxTokens() : 8192,
+                    null,
+                    cm.thinkingFormat(),
+                    ConfigValueResolver.resolve(cm.apiKey())));
+        }
+    }
+
+    private Integer runExportMode() {
+        Path inputFile = Path.of(exportArgs.get(0));
+        if (!Files.exists(inputFile)) {
+            err().println("Session file not found: " + inputFile);
+            return 1;
+        }
+        Path outputFile;
+        if (exportArgs.size() > 1) {
+            outputFile = Path.of(exportArgs.get(1));
+        } else {
+            String name = inputFile.getFileName().toString().replaceAll("\\.jsonl$", ".html");
+            outputFile = inputFile.resolveSibling(name);
+        }
+        var sm = new SessionManager();
+        var messages = sm.loadSession(inputFile);
+        if (messages.isEmpty()) {
+            err().println("No messages found in session file.");
+            return 1;
+        }
+        String html = com.huawei.hicampus.mate.matecampusclaw.codingagent.export.HtmlExporter.export(
+                messages, "CampusClaw Session", sm.getSessionId());
+        try {
+            Files.writeString(outputFile, html);
+            out().println("Exported " + messages.size() + " messages to " + outputFile);
+            return 0;
+        } catch (IOException e) {
+            log.error("Failed to write HTML export to {}", outputFile, e);
+            err().println("Failed to write HTML: " + e.getMessage());
+            return 1;
+        }
+    }
+
+    private Integer runListModelsMode() {
+        String search = listModels.isBlank() ? null : listModels;
+        var allModels = modelRegistry.getAllModels();
+        allModels.sort(Comparator.comparing((Model m) -> m.provider().value()).thenComparing(Model::id));
+        for (var m : allModels) {
+            if (search != null
+                    && !m.id().toLowerCase(Locale.ROOT).contains(search.toLowerCase(Locale.ROOT))
+                    && !m.name().toLowerCase(Locale.ROOT).contains(search.toLowerCase(Locale.ROOT))) {
+                continue;
+            }
+            out().printf("  %-15s %-40s %s%n", m.provider().value(), m.id(), m.name());
+        }
+        return 0;
+    }
+
+    // Returns 1 when conflicting session flags are present, null otherwise.
+    private Integer validateSessionFlags() {
+        var conflicting = new ArrayList<String>();
+        if (sessionPath != null) {
+            conflicting.add("--session");
+        }
+        if (continueSession) {
+            conflicting.add("--continue");
+        }
+        if (resumeSession) {
+            conflicting.add("--resume");
+        }
+        if (noSession) {
+            conflicting.add("--no-session");
+        }
+        if (conflicting.size() > 1) {
+            err().println("Error: conflicting flags: " + String.join(", ", conflicting));
+            return 1;
+        }
+        return null;
+    }
+
+    private Integer runPrintMode(
+            String effectiveModel, Path effectiveCwd, String effectivePrompt, String effectiveThinking) {
+        out().println("Model: " + effectiveModel);
+        out().println("Mode: " + mode);
+        out().println("CWD: " + effectiveCwd);
+        out().println("Prompt: " + effectivePrompt);
+        if (effectiveThinking != null) {
+            out().println("Thinking: " + effectiveThinking);
+        }
+        if (toolsFilter != null) {
+            out().println("Tools: " + toolsFilter);
+        }
+        return 0;
+    }
+
+    private Integer runAgentMode(
+            String effectivePrompt, Path effectiveCwd, String effectiveModel, String effectiveThinking) {
+        String effectiveSystemPrompt = mergeSystemPrompts();
+        List<AgentTool> effectiveTools = resolveEffectiveTools();
         boolean useSandbox = Boolean.parseBoolean(System.getenv("SKILL_SANDBOX_PARSING"));
+
         AgentSession session = new AgentSession(
                 piAiService,
                 modelRegistry,
@@ -516,104 +503,24 @@ public class CampusClawCommand implements Callable<Integer> {
                 new SkillExpander(sandboxSkillParser, useSandbox),
                 effectiveTools);
         session.setSubAgentRegistry(subAgentRegistry);
-
-        // Session persistence (skip if --no-session)
         SessionManager sessionManager = noSession ? null : new SessionManager();
         if (sessionManager != null) {
             session.setSessionManager(sessionManager);
         }
-
         SessionConfig config = new SessionConfig(effectiveModel, effectiveCwd, effectiveSystemPrompt, mode);
         session.initialize(config);
-
-        // Handle session flags: --session, --fork, --continue, --resume
         if (sessionManager != null) {
-            if (sessionPath != null) {
-                // --session: load specific session file
-                var messages = sessionManager.loadSession(sessionPath);
-                if (!messages.isEmpty()) {
-                    for (var msg : messages) {
-                        session.getAgent().getState().appendMessage(msg);
-                    }
-                    err().println("Loaded session " + sessionManager.getSessionId() + " (" + messages.size()
-                            + " messages)");
-                } else {
-                    err().println("Warning: session file empty or invalid: " + sessionPath);
-                    sessionManager.createSession(effectiveCwd.toString());
-                }
-            } else if (forkPath != null) {
-                // --fork: load session, then create new file (fork)
-                var messages = sessionManager.loadSession(forkPath);
-                String originalId = sessionManager.getSessionId();
-                sessionManager.createSession(effectiveCwd.toString());
-                if (!messages.isEmpty()) {
-                    for (var msg : messages) {
-                        session.getAgent().getState().appendMessage(msg);
-                        sessionManager.appendMessage(msg);
-                    }
-                    err().println("Forked session " + originalId + " → " + sessionManager.getSessionId() + " ("
-                            + messages.size() + " messages)");
-                }
-            } else if (continueSession) {
-                // --continue: resume latest session (prefer ChatMemory, fallback to JSONL)
-                List<com.huawei.hicampus.mate.matecampusclaw.ai.types.Message> messages = List.of();
-
-                // Try ChatMemory (GaussDB) first
-                if (applicationContext != null) {
-                    try {
-                        var store = applicationContext.getBean(com.huawei.hicampus.mate.matecampusclaw.assistant.memory.ChatMemoryStore.class);
-                        var dbMessages = store.load(sessionManager.getSessionId());
-                        if (!dbMessages.isEmpty()) {
-                            messages = dbMessages;
-                        }
-                    } catch (Exception ignored) {
-                        // ChatMemory not available, fall through
-                    }
-                }
-
-                // Fallback to JSONL session file
-                if (messages.isEmpty()) {
-                    messages = sessionManager.resumeLatestSession(effectiveCwd.toString());
-                }
-
-                if (!messages.isEmpty()) {
-                    for (var msg : messages) {
-                        session.getAgent().getState().appendMessage(msg);
-                    }
-                    err().println("Resumed session " + sessionManager.getSessionId() + " (" + messages.size()
-                            + " messages)");
-                } else {
-                    sessionManager.createSession(effectiveCwd.toString());
-                }
-            } else if (resumeSession) {
-                // --resume: show list and let user pick (in non-interactive context, just list)
-                err().println("Use /resume command in interactive mode to select a session.");
-                sessionManager.createSession(effectiveCwd.toString());
-            } else {
-                sessionManager.createSession(effectiveCwd.toString());
-            }
+            applySessionLoading(sessionManager, session, effectiveCwd);
         }
-
-        // Apply thinking level from CLI flag or settings default
-        if (effectiveThinking != null) {
-            try {
-                ThinkingLevel level = ThinkingLevel.fromValue(effectiveThinking);
-                session.getAgent().setThinkingLevel(level);
-            } catch (IllegalArgumentException e) {
-                err().println("Warning: Unknown thinking level '" + effectiveThinking
-                        + "'. Valid: off, minimal, low, medium, high, xhigh");
-            }
-        }
+        applyThinkingLevel(session, effectiveThinking);
 
         if ("one-shot".equals(mode)) {
             return new OneShotMode().run(session, effectivePrompt);
         }
-
         if ("rpc".equals(mode)) {
             new RpcMode(session).run();
             return 0;
         }
-
         if ("server".equals(mode)) {
             new ServerMode(
                             piAiService,
@@ -630,8 +537,111 @@ public class CampusClawCommand implements Callable<Integer> {
                     .run();
             return 0;
         }
+        return runInteractiveMode(session, sessionManager, effectivePrompt);
+    }
 
-        // Interactive mode (default)
+    private String mergeSystemPrompts() {
+        String effective = systemPrompt;
+        if (appendSystemPrompt != null && !appendSystemPrompt.isBlank()) {
+            effective = (effective == null) ? appendSystemPrompt : effective + "\n\n" + appendSystemPrompt;
+        }
+        return effective;
+    }
+
+    private List<AgentTool> resolveEffectiveTools() {
+        if (noTools) {
+            return List.of();
+        }
+        if (toolsFilter != null && !toolsFilter.isBlank()) {
+            var allowed = List.of(toolsFilter.split(","));
+            return tools.stream().filter(t -> allowed.contains(t.name())).collect(Collectors.toList());
+        }
+        return tools;
+    }
+
+    private void applySessionLoading(SessionManager sessionManager, AgentSession session, Path effectiveCwd) {
+        if (sessionPath != null) {
+            loadExplicitSession(sessionManager, session, effectiveCwd);
+        } else if (forkPath != null) {
+            forkExistingSession(sessionManager, session, effectiveCwd);
+        } else if (continueSession) {
+            continueLatestSession(sessionManager, session, effectiveCwd);
+        } else if (resumeSession) {
+            err().println("Use /resume command in interactive mode to select a session.");
+            sessionManager.createSession(effectiveCwd.toString());
+        } else {
+            sessionManager.createSession(effectiveCwd.toString());
+        }
+    }
+
+    private void loadExplicitSession(SessionManager sessionManager, AgentSession session, Path effectiveCwd) {
+        var messages = sessionManager.loadSession(sessionPath);
+        if (messages.isEmpty()) {
+            err().println("Warning: session file empty or invalid: " + sessionPath);
+            sessionManager.createSession(effectiveCwd.toString());
+            return;
+        }
+        for (var msg : messages) {
+            session.getAgent().getState().appendMessage(msg);
+        }
+        err().println("Loaded session " + sessionManager.getSessionId() + " (" + messages.size() + " messages)");
+    }
+
+    private void forkExistingSession(SessionManager sessionManager, AgentSession session, Path effectiveCwd) {
+        var messages = sessionManager.loadSession(forkPath);
+        String originalId = sessionManager.getSessionId();
+        sessionManager.createSession(effectiveCwd.toString());
+        if (messages.isEmpty()) {
+            return;
+        }
+        for (var msg : messages) {
+            session.getAgent().getState().appendMessage(msg);
+            sessionManager.appendMessage(msg);
+        }
+        err().println("Forked session " + originalId + " → " + sessionManager.getSessionId() + " (" + messages.size()
+                + " messages)");
+    }
+
+    private void continueLatestSession(SessionManager sessionManager, AgentSession session, Path effectiveCwd) {
+        List<com.huawei.hicampus.mate.matecampusclaw.ai.types.Message> messages = loadMessagesFromChatMemory(sessionManager);
+        if (messages.isEmpty()) {
+            messages = sessionManager.resumeLatestSession(effectiveCwd.toString());
+        }
+        if (messages.isEmpty()) {
+            sessionManager.createSession(effectiveCwd.toString());
+            return;
+        }
+        for (var msg : messages) {
+            session.getAgent().getState().appendMessage(msg);
+        }
+        err().println("Resumed session " + sessionManager.getSessionId() + " (" + messages.size() + " messages)");
+    }
+
+    private List<com.huawei.hicampus.mate.matecampusclaw.ai.types.Message> loadMessagesFromChatMemory(SessionManager sessionManager) {
+        if (applicationContext == null) {
+            return List.of();
+        }
+        try {
+            var store = applicationContext.getBean(com.huawei.hicampus.mate.matecampusclaw.assistant.memory.ChatMemoryStore.class);
+            return store.load(sessionManager.getSessionId());
+        } catch (Exception ignored) {
+            return List.of();
+        }
+    }
+
+    private void applyThinkingLevel(AgentSession session, String effectiveThinking) {
+        if (effectiveThinking == null) {
+            return;
+        }
+        try {
+            session.getAgent().setThinkingLevel(ThinkingLevel.fromValue(effectiveThinking));
+        } catch (IllegalArgumentException e) {
+            err().println("Warning: Unknown thinking level '" + effectiveThinking
+                    + "'. Valid: off, minimal, low, medium, high, xhigh");
+        }
+    }
+
+    private Integer runInteractiveMode(AgentSession session, SessionManager sessionManager, String effectivePrompt) {
         Terminal terminal = new JLineTerminal();
         try {
             var interactiveMode = new InteractiveMode(
@@ -645,52 +655,46 @@ public class CampusClawCommand implements Callable<Integer> {
                     cronService,
                     loopManager,
                     applicationContext);
-
-            // Resolve --models scoped models for Ctrl+P cycling.
-            // Precedence: --models flag overrides settings.enabledModels.
-            if (modelsFilter != null && !modelsFilter.isBlank()) {
-                var scoped = new ArrayList<Model>();
-                var allRegistered = modelRegistry.getAllModels();
-                for (String pattern : modelsFilter.split(",")) {
-                    String p = pattern.trim().toLowerCase(Locale.ROOT);
-                    if (p.isEmpty()) {
-                        continue;
-                    }
-                    for (var m : allRegistered) {
-                        if (com.huawei.hicampus.mate.matecampusclaw.codingagent.model.ModelCatalogService.matchesPattern(p, m)
-                                && scoped.stream().noneMatch(s -> ModelRegistry.modelsAreEqual(s, m))) {
-                            scoped.add(m);
-                        }
-                    }
-                }
-                if (!scoped.isEmpty()) {
-                    interactiveMode.setScopedModels(scoped);
-                }
-            } else if (modelCatalogService != null && modelCatalogService.isFiltered()) {
-                // settings.enabledModels: same filtered list the WS list_models returns.
-                var scoped = modelCatalogService.getAvailableModels();
-                if (!scoped.isEmpty()) {
-                    interactiveMode.setScopedModels(scoped);
-                }
-            }
-
-            // Pass initial prompt to interactive mode if provided
+            applyScopedModels(interactiveMode);
             if (effectivePrompt != null) {
                 interactiveMode.setInitialPrompt(effectivePrompt);
             }
-
             interactiveMode.run(session, terminal);
         } finally {
-            // Note: Do NOT call terminal.close() here.
-            // System terminal should not be explicitly closed by the application;
-
-            // it will be automatically cleaned up by the OS when the process exits.
-            // Explicitly closing it can cause the parent terminal window to exit.
+            // Note: do NOT call terminal.close() — the system terminal is owned
+            // by the OS and closing it can exit the parent terminal window.
             if (sessionManager != null) {
                 sessionManager.close();
             }
         }
         return 0;
+    }
+
+    private void applyScopedModels(InteractiveMode interactiveMode) {
+        if (modelsFilter != null && !modelsFilter.isBlank()) {
+            var scoped = new ArrayList<Model>();
+            var allRegistered = modelRegistry.getAllModels();
+            for (String pattern : modelsFilter.split(",")) {
+                String p = pattern.trim().toLowerCase(Locale.ROOT);
+                if (p.isEmpty()) {
+                    continue;
+                }
+                for (var m : allRegistered) {
+                    if (com.huawei.hicampus.mate.matecampusclaw.codingagent.model.ModelCatalogService.matchesPattern(p, m)
+                            && scoped.stream().noneMatch(s -> ModelRegistry.modelsAreEqual(s, m))) {
+                        scoped.add(m);
+                    }
+                }
+            }
+            if (!scoped.isEmpty()) {
+                interactiveMode.setScopedModels(scoped);
+            }
+        } else if (modelCatalogService != null && modelCatalogService.isFiltered()) {
+            var scoped = modelCatalogService.getAvailableModels();
+            if (!scoped.isEmpty()) {
+                interactiveMode.setScopedModels(scoped);
+            }
+        }
     }
 
     /**
@@ -744,80 +748,80 @@ public class CampusClawCommand implements Callable<Integer> {
      *
      * @return the result
      */
-    @SuppressWarnings("checkstyle:huge_cyclomatic_complexity")
     private Integer handlePackageCommand(String command, List<String> args) {
         com.huawei.hicampus.mate.matecampusclaw.codingagent.config.AppPaths.ensureUserDirs();
-
-        // Normalize "uninstall" → "remove"
-        if ("uninstall".equals(command)) {
-            command = "remove";
+        String normalized = "uninstall".equals(command) ? "remove" : command;
+        if (args.contains("--help")) {
+            printPackageCommandHelp(normalized);
+            return 0;
         }
-
         boolean local = args.contains("-l") || args.contains("--local");
         var filteredArgs = args.stream()
                 .filter(a -> !"-l".equals(a) && !"--local".equals(a) && !"--help".equals(a))
                 .toList();
+        return switch (normalized) {
+            case "install" -> packageInstall(filteredArgs, local);
+            case "remove" -> packageRemove(filteredArgs);
+            case "update" -> packageUpdate(filteredArgs);
+            case "list" -> packageList();
+            case "config" -> packageConfig();
+            default -> {
+                err().println("Unknown package command: " + normalized);
+                yield 1;
+            }
+        };
+    }
 
-        if (args.contains("--help")) {
-            printPackageCommandHelp(command);
+    private Integer packageInstall(List<String> filteredArgs, boolean local) {
+        if (filteredArgs.isEmpty()) {
+            err().println("Usage: pi install <source> [-l]");
+            return 1;
+        }
+        String source = filteredArgs.get(0);
+        out().println("Installing package: " + source + (local ? " (local)" : " (global)"));
+        out().println("Package installation is not yet fully implemented.");
+        out().println("Add the source to your settings.json packages array manually:");
+        out().println("  \"packages\": [\"" + source + "\"]");
+        return 0;
+    }
+
+    private Integer packageRemove(List<String> filteredArgs) {
+        if (filteredArgs.isEmpty()) {
+            err().println("Usage: pi remove <source> [-l]");
+            return 1;
+        }
+        out().println("Removing package: " + filteredArgs.get(0));
+        out().println("Remove the source from your settings.json packages array manually.");
+        return 0;
+    }
+
+    private Integer packageUpdate(List<String> filteredArgs) {
+        if (filteredArgs.isEmpty()) {
+            out().println("Updating all packages...");
+        } else {
+            out().println("Updating package: " + filteredArgs.get(0));
+        }
+        out().println("Package update is not yet fully implemented.");
+        return 0;
+    }
+
+    private Integer packageList() {
+        out().println("Installed packages:");
+        Settings settings = settingsManager != null ? settingsManager.load() : Settings.empty();
+        if (settings.packages() == null || settings.packages().isEmpty()) {
+            out().println("  (none)");
             return 0;
         }
-
-        switch (command) {
-            case "install" -> {
-                if (filteredArgs.isEmpty()) {
-                    err().println("Usage: pi install <source> [-l]");
-                    return 1;
-                }
-                String source = filteredArgs.get(0);
-                out().println("Installing package: " + source + (local ? " (local)" : " (global)"));
-                out().println("Package installation is not yet fully implemented.");
-                out().println("Add the source to your settings.json packages array manually:");
-                out().println("  \"packages\": [\"" + source + "\"]");
-                return 0;
-            }
-            case "remove" -> {
-                if (filteredArgs.isEmpty()) {
-                    err().println("Usage: pi remove <source> [-l]");
-                    return 1;
-                }
-                String source = filteredArgs.get(0);
-                out().println("Removing package: " + source);
-                out().println("Remove the source from your settings.json packages array manually.");
-                return 0;
-            }
-            case "update" -> {
-                String source = filteredArgs.isEmpty() ? null : filteredArgs.get(0);
-                if (source != null) {
-                    out().println("Updating package: " + source);
-                } else {
-                    out().println("Updating all packages...");
-                }
-                out().println("Package update is not yet fully implemented.");
-                return 0;
-            }
-            case "list" -> {
-                out().println("Installed packages:");
-                Settings settings = settingsManager != null ? settingsManager.load() : Settings.empty();
-                if (settings.packages() != null && !settings.packages().isEmpty()) {
-                    for (String pkg : settings.packages()) {
-                        out().println("  " + pkg);
-                    }
-                } else {
-                    out().println("  (none)");
-                }
-                return 0;
-            }
-            case "config" -> {
-                out().println("Package config TUI is not yet implemented.");
-                out().println("Edit settings.json manually to configure packages.");
-                return 0;
-            }
-            default -> {
-                err().println("Unknown package command: " + command);
-                return 1;
-            }
+        for (String pkg : settings.packages()) {
+            out().println("  " + pkg);
         }
+        return 0;
+    }
+
+    private Integer packageConfig() {
+        out().println("Package config TUI is not yet implemented.");
+        out().println("Edit settings.json manually to configure packages.");
+        return 0;
     }
 
     /**
@@ -827,238 +831,250 @@ public class CampusClawCommand implements Callable<Integer> {
      *
      * @return the result
      */
-    @SuppressWarnings("checkstyle:huge_cyclomatic_complexity")
     private Integer handleSkillCommand(List<String> args) {
         com.huawei.hicampus.mate.matecampusclaw.codingagent.config.AppPaths.ensureUserDirs();
-
         if (args.isEmpty() || "--help".equals(args.get(0)) || "-h".equals(args.get(0))) {
             printSkillHelp(null);
             return 0;
         }
-
         String action = args.get(0);
         var actionArgs = args.subList(1, args.size());
-
         if (actionArgs.contains("--help") || actionArgs.contains("-h")) {
             printSkillHelp(action);
             return 0;
         }
-
-        // 检查是否启用沙箱 skill 解析（通过环境变量或配置）
         boolean useSandbox = Boolean.parseBoolean(System.getenv("SKILL_SANDBOX_PARSING"));
         var manager = new SkillManager(
                 com.huawei.hicampus.mate.matecampusclaw.codingagent.config.AppPaths.USER_SKILLS_DIR, sandboxSkillParser, useSandbox);
-
-        switch (action) {
-            case "install" -> {
-                if (actionArgs.isEmpty()) {
-                    err().println("Usage: campusclaw skill install <git-url>");
-                    return 1;
-                }
-                String gitUrl = actionArgs.get(0);
-                try {
-                    out().println("Installing skill from: " + gitUrl);
-                    String name = manager.install(gitUrl);
-                    out().println("Skill installed: " + name);
-
-                    // Show what was installed (使用支持沙箱的 SkillLoader)
-                    var skillLoader = new SkillLoader(sandboxSkillParser, useSandbox);
-                    var skills = skillLoader.loadFromDirectory(
-                            com.huawei.hicampus.mate.matecampusclaw.codingagent.config.AppPaths.USER_SKILLS_DIR.resolve(name), "user");
-                    for (var skill : skills) {
-                        out().println("  - " + skill.name() + ": " + skill.description());
-                    }
-                    return 0;
-                } catch (SkillInstallException e) {
-                    err().println("Error: " + e.getMessage());
-                    return 1;
-                }
-            }
-            case "list", "ls" -> {
-                var infos = manager.list();
-                if (infos.isEmpty()) {
-                    out().println("No skills installed.");
-                    out().println("Install skills with: campusclaw skill install <git-url>");
-                    return 0;
-                }
-
-                // Calculate column widths
-                int maxName = Math.max(
-                        4, infos.stream().mapToInt(i -> i.name().length()).max().orElse(4));
-                int maxType = Math.max(
-                        6,
-                        infos.stream()
-                                .mapToInt(i -> i.sourceType().length())
-                                .max()
-                                .orElse(6));
-                String fmt = "  %-" + maxName + "s  %-" + maxType + "s  %s%n";
-                out().printf(fmt, "NAME", "SOURCE", "DESCRIPTION");
-                out().printf(fmt, "-".repeat(maxName), "-".repeat(maxType), "-".repeat(30));
-                for (var info : infos) {
-                    out().printf(fmt, info.name(), info.sourceType(), info.description());
-                }
-                return 0;
-            }
-            case "remove", "rm", "uninstall" -> {
-                if (actionArgs.isEmpty()) {
-                    err().println("Usage: campusclaw skill remove <name>");
-                    return 1;
-                }
-                String name = actionArgs.get(0);
-                try {
-                    manager.remove(name);
-                    out().println("Removed skill: " + name);
-                    return 0;
-                } catch (SkillInstallException e) {
-                    err().println("Error: " + e.getMessage());
-                    return 1;
-                }
-            }
-            case "link" -> {
-                if (actionArgs.isEmpty()) {
-                    err().println("Usage: campusclaw skill link <path>");
-                    return 1;
-                }
-                Path localPath = Path.of(actionArgs.get(0));
-                try {
-                    String name = manager.link(localPath);
-                    out().println("Linked skill: " + name + " → "
-                            + localPath.toAbsolutePath().normalize());
-                    return 0;
-                } catch (SkillInstallException e) {
-                    err().println("Error: " + e.getMessage());
-                    return 1;
-                }
-            }
-            case "import" -> {
-                if (actionArgs.isEmpty()) {
-                    err().println("Usage: campusclaw skill import <archive-path>");
-                    return 1;
-                }
-                Path archivePath = Path.of(actionArgs.get(0));
-                try {
-                    out().println("Importing skill from: " + archivePath);
-                    String name = manager.importArchive(archivePath);
-                    out().println("Skill imported: " + name);
-                    var skills = new SkillLoader()
-                            .loadFromDirectory(
-                                    com.huawei.hicampus.mate.matecampusclaw.codingagent.config.AppPaths.USER_SKILLS_DIR.resolve(name), "user");
-                    for (var skill : skills) {
-                        out().println("  - " + skill.name() + ": " + skill.description());
-                    }
-                    return 0;
-                } catch (SkillInstallException e) {
-                    err().println("Error: " + e.getMessage());
-                    return 1;
-                }
-            }
-            case "update" -> {
-                if (actionArgs.isEmpty()) {
-                    err().println("Usage: campusclaw skill update <name>");
-                    return 1;
-                }
-                String name = actionArgs.get(0);
-                try {
-                    out().println("Updating skill: " + name);
-                    manager.update(name);
-                    out().println("Updated: " + name);
-                    return 0;
-                } catch (SkillInstallException e) {
-                    err().println("Error: " + e.getMessage());
-                    return 1;
-                }
-            }
+        return switch (action) {
+            case "install" -> skillInstall(manager, useSandbox, actionArgs);
+            case "list", "ls" -> skillList(manager);
+            case "remove", "rm", "uninstall" -> skillRemove(manager, actionArgs);
+            case "link" -> skillLink(manager, actionArgs);
+            case "import" -> skillImport(manager, actionArgs);
+            case "update" -> skillUpdate(manager, actionArgs);
             default -> {
                 err().println("Unknown skill command: " + action);
                 printSkillHelp(null);
-                return 1;
+                yield 1;
             }
+        };
+    }
+
+    private Integer skillInstall(SkillManager manager, boolean useSandbox, List<String> actionArgs) {
+        if (actionArgs.isEmpty()) {
+            err().println("Usage: campusclaw skill install <git-url>");
+            return 1;
+        }
+        String gitUrl = actionArgs.get(0);
+        try {
+            out().println("Installing skill from: " + gitUrl);
+            String name = manager.install(gitUrl);
+            out().println("Skill installed: " + name);
+            var skillLoader = new SkillLoader(sandboxSkillParser, useSandbox);
+            var skills = skillLoader.loadFromDirectory(
+                    com.huawei.hicampus.mate.matecampusclaw.codingagent.config.AppPaths.USER_SKILLS_DIR.resolve(name), "user");
+            for (var skill : skills) {
+                out().println("  - " + skill.name() + ": " + skill.description());
+            }
+            return 0;
+        } catch (SkillInstallException e) {
+            err().println("Error: " + e.getMessage());
+            return 1;
         }
     }
 
+    private Integer skillList(SkillManager manager) {
+        var infos = manager.list();
+        if (infos.isEmpty()) {
+            out().println("No skills installed.");
+            out().println("Install skills with: campusclaw skill install <git-url>");
+            return 0;
+        }
+        int maxName = Math.max(
+                4, infos.stream().mapToInt(i -> i.name().length()).max().orElse(4));
+        int maxType = Math.max(
+                6, infos.stream().mapToInt(i -> i.sourceType().length()).max().orElse(6));
+        String fmt = "  %-" + maxName + "s  %-" + maxType + "s  %s%n";
+        out().printf(fmt, "NAME", "SOURCE", "DESCRIPTION");
+        out().printf(fmt, "-".repeat(maxName), "-".repeat(maxType), "-".repeat(30));
+        for (var info : infos) {
+            out().printf(fmt, info.name(), info.sourceType(), info.description());
+        }
+        return 0;
+    }
+
+    private Integer skillRemove(SkillManager manager, List<String> actionArgs) {
+        if (actionArgs.isEmpty()) {
+            err().println("Usage: campusclaw skill remove <name>");
+            return 1;
+        }
+        String name = actionArgs.get(0);
+        try {
+            manager.remove(name);
+            out().println("Removed skill: " + name);
+            return 0;
+        } catch (SkillInstallException e) {
+            err().println("Error: " + e.getMessage());
+            return 1;
+        }
+    }
+
+    private Integer skillLink(SkillManager manager, List<String> actionArgs) {
+        if (actionArgs.isEmpty()) {
+            err().println("Usage: campusclaw skill link <path>");
+            return 1;
+        }
+        Path localPath = Path.of(actionArgs.get(0));
+        try {
+            String name = manager.link(localPath);
+            out().println("Linked skill: " + name + " → "
+                    + localPath.toAbsolutePath().normalize());
+            return 0;
+        } catch (SkillInstallException e) {
+            err().println("Error: " + e.getMessage());
+            return 1;
+        }
+    }
+
+    private Integer skillImport(SkillManager manager, List<String> actionArgs) {
+        if (actionArgs.isEmpty()) {
+            err().println("Usage: campusclaw skill import <archive-path>");
+            return 1;
+        }
+        Path archivePath = Path.of(actionArgs.get(0));
+        try {
+            out().println("Importing skill from: " + archivePath);
+            String name = manager.importArchive(archivePath);
+            out().println("Skill imported: " + name);
+            var skills = new SkillLoader()
+                    .loadFromDirectory(
+                            com.huawei.hicampus.mate.matecampusclaw.codingagent.config.AppPaths.USER_SKILLS_DIR.resolve(name), "user");
+            for (var skill : skills) {
+                out().println("  - " + skill.name() + ": " + skill.description());
+            }
+            return 0;
+        } catch (SkillInstallException e) {
+            err().println("Error: " + e.getMessage());
+            return 1;
+        }
+    }
+
+    private Integer skillUpdate(SkillManager manager, List<String> actionArgs) {
+        if (actionArgs.isEmpty()) {
+            err().println("Usage: campusclaw skill update <name>");
+            return 1;
+        }
+        String name = actionArgs.get(0);
+        try {
+            out().println("Updating skill: " + name);
+            manager.update(name);
+            out().println("Updated: " + name);
+            return 0;
+        } catch (SkillInstallException e) {
+            err().println("Error: " + e.getMessage());
+            return 1;
+        }
+    }
+
+    private static final String SKILL_HELP_OVERVIEW =
+            """
+            Usage: campusclaw skill <command> [args]
+
+            Commands:
+                install <git-url>    Install a skill from a git repository
+                import <archive>     Import a skill from a .zip or .tar.gz archive
+                list                 List installed skills
+                remove <name>        Remove an installed skill
+                link <path>          Symlink a local skill directory (for development)
+                update <name>        Update a git-installed skill (git pull)
+
+            Examples:
+                campusclaw skill install https://github.com/user/my-skill
+                campusclaw skill import ./my-skill.zip
+                campusclaw skill import ~/Downloads/skill-pack.tar.gz
+                campusclaw skill link ./my-local-skill
+                campusclaw skill list
+                campusclaw skill remove my-skill
+                campusclaw skill update my-skill""";
+
+    private static final java.util.Map<String, String> SKILL_HELP_PER_ACTION = java.util.Map.ofEntries(
+            java.util.Map.entry(
+                    "install",
+                    """
+                    Usage: campusclaw skill install <git-url>
+
+                    Clone a git repository into ~/.campusclaw/agent/skills/.
+                    The repository must contain at least one SKILL.md file.
+
+                    Examples:
+                        campusclaw skill install https://github.com/user/my-skill
+                        campusclaw skill install git@github.com:user/skill-collection.git"""),
+            java.util.Map.entry(
+                    "import",
+                    """
+                    Usage: campusclaw skill import <archive-path>
+
+                    Extract a .zip or .tar.gz archive into ~/.campusclaw/agent/skills/.
+                    The archive must contain at least one SKILL.md file.
+                    If the archive contains a single top-level directory, it will be unwrapped.
+
+                    Supported formats: .zip, .tar.gz, .tgz
+
+                    Examples:
+                        campusclaw skill import ./my-skill.zip
+                        campusclaw skill import ~/Downloads/skill-collection.tar.gz"""),
+            java.util.Map.entry(
+                    "list",
+                    """
+                    Usage: campusclaw skill list
+
+                    List all skills in ~/.campusclaw/agent/skills/ with their source and description."""),
+            java.util.Map.entry(
+                    "remove",
+                    """
+                    Usage: campusclaw skill remove <name>
+
+                    Remove an installed skill by its directory name.
+                    For git-installed skills, deletes the cloned directory.
+                    For linked skills, removes the symlink (does not delete the original)."""),
+            java.util.Map.entry(
+                    "link",
+                    """
+                    Usage: campusclaw skill link <path>
+
+                    Create a symbolic link in ~/.campusclaw/agent/skills/ pointing to a local directory.
+                    Useful for developing and testing skills without copying files.
+
+                    Example:
+                        campusclaw skill link ./my-skill-in-progress"""),
+            java.util.Map.entry(
+                    "update",
+                    """
+                    Usage: campusclaw skill update <name>
+
+                    Run 'git pull --ff-only' in the skill directory.
+                    Only works for git-installed skills."""));
+
     private void printSkillHelp(String action) {
         if (action == null) {
-            out().println(
-                            """
-        Usage: campusclaw skill <command> [args]
-
-        Commands:
-            install <git-url>    Install a skill from a git repository
-            import <archive>     Import a skill from a .zip or .tar.gz archive
-            list                 List installed skills
-            remove <name>        Remove an installed skill
-            link <path>          Symlink a local skill directory (for development)
-            update <name>        Update a git-installed skill (git pull)
-
-        Examples:
-            campusclaw skill install https://github.com/user/my-skill
-            campusclaw skill import ./my-skill.zip
-            campusclaw skill import ~/Downloads/skill-pack.tar.gz
-            campusclaw skill link ./my-local-skill
-            campusclaw skill list
-            campusclaw skill remove my-skill
-            campusclaw skill update my-skill""");
+            out().println(SKILL_HELP_OVERVIEW);
             return;
         }
-        switch (action) {
-            case "install" ->
-                out().println(
-                                """
-        Usage: campusclaw skill install <git-url>
 
-        Clone a git repository into ~/.campusclaw/agent/skills/.
-        The repository must contain at least one SKILL.md file.
-
-        Examples:
-            campusclaw skill install https://github.com/user/my-skill
-            campusclaw skill install git@github.com:user/skill-collection.git""");
-            case "import" ->
-                out().println(
-                                """
-        Usage: campusclaw skill import <archive-path>
-
-        Extract a .zip or .tar.gz archive into ~/.campusclaw/agent/skills/.
-        The archive must contain at least one SKILL.md file.
-        If the archive contains a single top-level directory, it will be unwrapped.
-
-        Supported formats: .zip, .tar.gz, .tgz
-
-        Examples:
-            campusclaw skill import ./my-skill.zip
-            campusclaw skill import ~/Downloads/skill-collection.tar.gz""");
-            case "list", "ls" ->
-                out().println(
-                                """
-        Usage: campusclaw skill list
-
-        List all skills in ~/.campusclaw/agent/skills/ with their source and description.""");
-            case "remove", "rm", "uninstall" ->
-                out().println(
-                                """
-        Usage: campusclaw skill remove <name>
-
-        Remove an installed skill by its directory name.
-        For git-installed skills, deletes the cloned directory.
-        For linked skills, removes the symlink (does not delete the original).""");
-            case "link" ->
-                out().println(
-                                """
-        Usage: campusclaw skill link <path>
-
-        Create a symbolic link in ~/.campusclaw/agent/skills/ pointing to a local directory.
-        Useful for developing and testing skills without copying files.
-
-        Example:
-            campusclaw skill link ./my-skill-in-progress""");
-            case "update" ->
-                out().println(
-                                """
-        Usage: campusclaw skill update <name>
-
-        Run 'git pull --ff-only' in the skill directory.
-        Only works for git-installed skills.""");
-            default -> printSkillHelp(null);
+        // Normalize alias forms ("ls" → "list", "rm"/"uninstall" → "remove") to the canonical key.
+        String key =
+                switch (action) {
+                    case "ls" -> "list";
+                    case "rm", "uninstall" -> "remove";
+                    default -> action;
+                };
+        String text = SKILL_HELP_PER_ACTION.get(key);
+        if (text == null) {
+            printSkillHelp(null);
+            return;
         }
+        out().println(text);
     }
 
     private void printPackageCommandHelp(String command) {

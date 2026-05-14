@@ -231,26 +231,37 @@ public class SkillManager {
      *
      * @throws SkillInstallException if the operation fails
      */
-    @SuppressWarnings("checkstyle:huge_cyclomatic_complexity")
     public String importArchive(Path archivePath, String originalName) throws SkillInstallException {
         Path resolved = archivePath.toAbsolutePath().normalize();
-
         if (!Files.isRegularFile(resolved)) {
             throw new SkillInstallException("File not found: " + resolved);
         }
-
         String fileName = (originalName != null && !originalName.isBlank())
                 ? originalName.toLowerCase(Locale.ROOT)
                 : resolved.getFileName().toString().toLowerCase(Locale.ROOT);
         boolean isZip = fileName.endsWith(".zip");
         boolean isTarGz = fileName.endsWith(".tar.gz") || fileName.endsWith(".tgz");
-
         if (!isZip && !isTarGz) {
             throw new SkillInstallException(
                     "Unsupported archive format: " + fileName + "\nSupported formats: .zip, .tar.gz, .tgz");
         }
+        String skillName = deriveSkillName(fileName);
+        Path targetDir = skillsDir.resolve(skillName);
+        if (Files.exists(targetDir)) {
+            throw new SkillInstallException("Directory already exists: " + targetDir + "\nUse 'campusclaw skill remove "
+                    + skillName + "' first.");
+        }
+        extractAndMove(resolved, isZip, targetDir);
+        addToManifest(new InstalledSkillRecord(
+                skillName,
+                InstalledSkillRecord.SOURCE_ARCHIVE,
+                null,
+                resolved.toString(),
+                Instant.now().toString()));
+        return skillName;
+    }
 
-        // Derive skill name from archive filename (strip extension)
+    private static String deriveSkillName(String fileName) throws SkillInstallException {
         String baseName = fileName;
         if (fileName.endsWith(".tar.gz")) {
             baseName = fileName.substring(0, fileName.length() - 7);
@@ -261,50 +272,36 @@ public class SkillManager {
         }
         String skillName =
                 baseName.replaceAll("[^a-z0-9-]", "-").replaceAll("-+", "-").replaceAll("^-|-$", "");
-
         if (skillName.isEmpty()) {
             throw new SkillInstallException("Cannot derive a valid skill name from: " + fileName);
         }
+        return skillName;
+    }
 
-        Path targetDir = skillsDir.resolve(skillName);
-        if (Files.exists(targetDir)) {
-            throw new SkillInstallException("Directory already exists: " + targetDir + "\nUse 'campusclaw skill remove "
-                    + skillName + "' first.");
-        }
-
-        // Extract to a temp directory first, then move
+    private void extractAndMove(Path resolved, boolean isZip, Path targetDir) throws SkillInstallException {
         Path tempDir;
         try {
             tempDir = Files.createTempDirectory("campusclaw-skill-import-");
         } catch (IOException e) {
             throw new SkillInstallException("Failed to create temp directory: " + e.getMessage(), e);
         }
-
         try {
             if (isZip) {
                 extractZip(resolved, tempDir);
             } else {
                 extractTarGz(resolved, tempDir);
             }
-
-            // If the archive has a single top-level directory, use its contents
             Path extractRoot = unwrapSingleRoot(tempDir);
-
-            // Validate that it contains at least one SKILL.md
             List<Skill> skills = skillLoader.loadFromDirectory(extractRoot, "user");
             Path rootSkill = extractRoot.resolve(SkillLoader.SKILL_FILENAME);
             if (skills.isEmpty() && !Files.isRegularFile(rootSkill)) {
                 throw new SkillInstallException("No SKILL.md found in archive: " + resolved
                         + "\nThe archive must contain at least one SKILL.md file.");
             }
-
-            // Check for skill name conflicts against already-installed skills
             List<SkillConflictException.Conflict> conflicts = findConflicts(skills);
             if (!conflicts.isEmpty()) {
                 throw new SkillConflictException(conflicts);
             }
-
-            // Move to skills directory
             Files.createDirectories(skillsDir);
             Files.move(extractRoot, targetDir);
         } catch (IOException e) {
@@ -313,17 +310,6 @@ public class SkillManager {
         } finally {
             deleteRecursively(tempDir);
         }
-
-        // Record in manifest
-        var record = new InstalledSkillRecord(
-                skillName,
-                InstalledSkillRecord.SOURCE_ARCHIVE,
-                null,
-                resolved.toString(),
-                Instant.now().toString());
-        addToManifest(record);
-
-        return skillName;
     }
 
     private void extractZip(Path zipFile, Path destDir) throws IOException {

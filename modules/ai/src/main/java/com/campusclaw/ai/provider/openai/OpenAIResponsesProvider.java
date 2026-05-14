@@ -231,137 +231,152 @@ public class OpenAIResponsesProvider implements ApiProvider {
         };
     }
 
+    /**
+     * Mutable state bundle for the Responses-API stream. The {@code outputIndex}
+     * maps a server-side item to our local {@code contentBlocks} index; each
+     * output item carries its own accumulator (text / thinking / tool args).
+     */
+    private static final class ResponsesStreamState {
+        final ArrayList<ContentBlock> contentBlocks = new ArrayList<>();
+        final long[] accumulatedUsage = {0, 0, 0, 0}; // input, output, cacheRead, cacheWrite
+        final HashMap<Integer, StringBuilder> textAccumulators = new HashMap<>();
+        final HashMap<Integer, StringBuilder> thinkingAccumulators = new HashMap<>();
+        final HashMap<Integer, ToolCallAccumulator> toolAccumulators = new HashMap<>();
+        final HashMap<Integer, Integer> outputIndexToContentIndex = new HashMap<>();
+        String responseId;
+        StopReason stopReason;
+    }
+
     private void processStream(
             OpenAIClient client, ResponseCreateParams params, Model model, AssistantMessageEventStream eventStream) {
-
-        var contentBlocks = new ArrayList<ContentBlock>();
-        var accumulatedUsage = new long[] {0, 0, 0, 0}; // input, output, cacheRead, cacheWrite
-        String[] responseId = {null};
-        StopReason[] stopReason = {null};
-
-        // Track output items by their outputIndex
-        var textAccumulators = new HashMap<Integer, StringBuilder>(); // outputIndex → text
-        var thinkingAccumulators = new HashMap<Integer, StringBuilder>(); // outputIndex → thinking
-        var toolAccumulators = new HashMap<Integer, ToolCallAccumulator>(); // outputIndex → tool
-        var outputIndexToContentIndex = new HashMap<Integer, Integer>(); // outputIndex → contentIndex
-
+        var state = new ResponsesStreamState();
         try (StreamResponse<ResponseStreamEvent> response = client.responses().createStreaming(params)) {
-
-            response.stream().forEach(event -> {
-
-                // response.created — capture response ID
-                event.created().ifPresent(e -> responseId[0] = e.response().id());
-
-                // response.output_item.added — start new content block
-                event.outputItemAdded()
-                        .ifPresent(e -> handleOutputItemAdded(
-                                e,
-                                model,
-                                responseId[0],
-                                contentBlocks,
-                                accumulatedUsage,
-                                textAccumulators,
-                                thinkingAccumulators,
-                                toolAccumulators,
-                                outputIndexToContentIndex,
-                                eventStream));
-
-                // response.output_text.delta — text streaming
-                event.outputTextDelta().ifPresent(e -> {
-                    int outputIdx = (int) e.outputIndex();
-                    Integer contentIdx = outputIndexToContentIndex.get(outputIdx);
-                    if (contentIdx == null) {
-                        return;
-                    }
-                    var acc = textAccumulators.get(outputIdx);
-                    if (acc != null) {
-                        acc.append(e.delta());
-                        contentBlocks.set(contentIdx, new TextContent(acc.toString(), null));
-                    }
-                    eventStream.push(new AssistantMessageEvent.TextDeltaEvent(
-                            contentIdx,
-                            e.delta(),
-                            buildPartialMessage(model, responseId[0], contentBlocks, accumulatedUsage, null)));
-                });
-
-                // response.reasoning_summary_text.delta — thinking streaming
-                event.reasoningSummaryTextDelta().ifPresent(e -> {
-                    int outputIdx = (int) e.outputIndex();
-                    Integer contentIdx = outputIndexToContentIndex.get(outputIdx);
-                    if (contentIdx == null) {
-                        return;
-                    }
-                    var acc = thinkingAccumulators.get(outputIdx);
-                    if (acc != null) {
-                        acc.append(e.delta());
-                        contentBlocks.set(contentIdx, new ThinkingContent(acc.toString(), null, false));
-                    }
-                    eventStream.push(new AssistantMessageEvent.ThinkingDeltaEvent(
-                            contentIdx,
-                            e.delta(),
-                            buildPartialMessage(model, responseId[0], contentBlocks, accumulatedUsage, null)));
-                });
-
-                // response.function_call_arguments.delta — tool arg streaming
-                event.functionCallArgumentsDelta().ifPresent(e -> {
-                    int outputIdx = (int) e.outputIndex();
-                    Integer contentIdx = outputIndexToContentIndex.get(outputIdx);
-                    if (contentIdx == null) {
-                        return;
-                    }
-                    var acc = toolAccumulators.get(outputIdx);
-                    if (acc != null) {
-                        acc.arguments.append(e.delta());
-                    }
-                    eventStream.push(new AssistantMessageEvent.ToolCallDeltaEvent(
-                            contentIdx,
-                            e.delta(),
-                            buildPartialMessage(model, responseId[0], contentBlocks, accumulatedUsage, null)));
-                });
-
-                // response.output_item.done — finalize content block
-                event.outputItemDone()
-                        .ifPresent(e -> handleOutputItemDone(
-                                e,
-                                model,
-                                responseId[0],
-                                contentBlocks,
-                                accumulatedUsage,
-                                textAccumulators,
-                                thinkingAccumulators,
-                                toolAccumulators,
-                                outputIndexToContentIndex,
-                                eventStream));
-
-                // response.completed — finalize usage and emit done
-                event.completed().ifPresent(e -> {
-                    var resp = e.response();
-                    responseId[0] = resp.id();
-                    resp.usage().ifPresent(u -> parseUsage(u, accumulatedUsage));
-                    resp.status().ifPresent(s -> stopReason[0] = mapResponseStatus(s, contentBlocks));
-                });
-
-                // response.failed — emit error
-                event.failed().ifPresent(e -> {
-                    stopReason[0] = StopReason.ERROR;
-                });
-
-                // response.incomplete — length stop
-                event.incomplete().ifPresent(e -> {
-                    stopReason[0] = StopReason.LENGTH;
-                });
-
-                // response.error — direct error
-                event.error().ifPresent(e -> {
-                    stopReason[0] = StopReason.ERROR;
-                });
-            });
+            response.stream().forEach(event -> handleResponseEvent(event, state, model, eventStream));
         }
-
-        // Emit final done event
-        var finalStopReason = stopReason[0] != null ? stopReason[0] : StopReason.STOP;
-        var finalMessage = buildPartialMessage(model, responseId[0], contentBlocks, accumulatedUsage, finalStopReason);
+        var finalStopReason = state.stopReason != null ? state.stopReason : StopReason.STOP;
+        var finalMessage = buildPartialMessage(
+                model, state.responseId, state.contentBlocks, state.accumulatedUsage, finalStopReason);
         eventStream.pushDone(finalStopReason, finalMessage);
+    }
+
+    private void handleResponseEvent(
+            ResponseStreamEvent event,
+            ResponsesStreamState state,
+            Model model,
+            AssistantMessageEventStream eventStream) {
+        event.created().ifPresent(e -> state.responseId = e.response().id());
+        event.outputItemAdded().ifPresent(e -> handleOutputItemAddedEvent(e, state, model, eventStream));
+        event.outputTextDelta().ifPresent(e -> applyTextDelta(e, state, model, eventStream));
+        event.reasoningSummaryTextDelta().ifPresent(e -> applyThinkingDelta(e, state, model, eventStream));
+        event.functionCallArgumentsDelta().ifPresent(e -> applyToolArgsDelta(e, state, model, eventStream));
+        event.outputItemDone().ifPresent(e -> handleOutputItemDoneEvent(e, state, model, eventStream));
+        event.completed().ifPresent(e -> handleCompleted(e, state));
+        event.failed().ifPresent(e -> state.stopReason = StopReason.ERROR);
+        event.incomplete().ifPresent(e -> state.stopReason = StopReason.LENGTH);
+        event.error().ifPresent(e -> state.stopReason = StopReason.ERROR);
+    }
+
+    private void handleOutputItemAddedEvent(
+            ResponseOutputItemAddedEvent e,
+            ResponsesStreamState state,
+            Model model,
+            AssistantMessageEventStream eventStream) {
+        handleOutputItemAdded(
+                e,
+                model,
+                state.responseId,
+                state.contentBlocks,
+                state.accumulatedUsage,
+                state.textAccumulators,
+                state.thinkingAccumulators,
+                state.toolAccumulators,
+                state.outputIndexToContentIndex,
+                eventStream);
+    }
+
+    private void handleOutputItemDoneEvent(
+            com.openai.models.responses.ResponseOutputItemDoneEvent e,
+            ResponsesStreamState state,
+            Model model,
+            AssistantMessageEventStream eventStream) {
+        handleOutputItemDone(
+                e,
+                model,
+                state.responseId,
+                state.contentBlocks,
+                state.accumulatedUsage,
+                state.textAccumulators,
+                state.thinkingAccumulators,
+                state.toolAccumulators,
+                state.outputIndexToContentIndex,
+                eventStream);
+    }
+
+    private void applyTextDelta(
+            com.openai.models.responses.ResponseTextDeltaEvent e,
+            ResponsesStreamState state,
+            Model model,
+            AssistantMessageEventStream eventStream) {
+        int outputIdx = (int) e.outputIndex();
+        Integer contentIdx = state.outputIndexToContentIndex.get(outputIdx);
+        if (contentIdx == null) {
+            return;
+        }
+        var acc = state.textAccumulators.get(outputIdx);
+        if (acc != null) {
+            acc.append(e.delta());
+            state.contentBlocks.set(contentIdx, new TextContent(acc.toString(), null));
+        }
+        eventStream.push(
+                new AssistantMessageEvent.TextDeltaEvent(contentIdx, e.delta(), partialFrom(state, model, null)));
+    }
+
+    private void applyThinkingDelta(
+            com.openai.models.responses.ResponseReasoningSummaryTextDeltaEvent e,
+            ResponsesStreamState state,
+            Model model,
+            AssistantMessageEventStream eventStream) {
+        int outputIdx = (int) e.outputIndex();
+        Integer contentIdx = state.outputIndexToContentIndex.get(outputIdx);
+        if (contentIdx == null) {
+            return;
+        }
+        var acc = state.thinkingAccumulators.get(outputIdx);
+        if (acc != null) {
+            acc.append(e.delta());
+            state.contentBlocks.set(contentIdx, new ThinkingContent(acc.toString(), null, false));
+        }
+        eventStream.push(
+                new AssistantMessageEvent.ThinkingDeltaEvent(contentIdx, e.delta(), partialFrom(state, model, null)));
+    }
+
+    private void applyToolArgsDelta(
+            com.openai.models.responses.ResponseFunctionCallArgumentsDeltaEvent e,
+            ResponsesStreamState state,
+            Model model,
+            AssistantMessageEventStream eventStream) {
+        int outputIdx = (int) e.outputIndex();
+        Integer contentIdx = state.outputIndexToContentIndex.get(outputIdx);
+        if (contentIdx == null) {
+            return;
+        }
+        var acc = state.toolAccumulators.get(outputIdx);
+        if (acc != null) {
+            acc.arguments.append(e.delta());
+        }
+        eventStream.push(
+                new AssistantMessageEvent.ToolCallDeltaEvent(contentIdx, e.delta(), partialFrom(state, model, null)));
+    }
+
+    private void handleCompleted(com.openai.models.responses.ResponseCompletedEvent e, ResponsesStreamState state) {
+        var resp = e.response();
+        state.responseId = resp.id();
+        resp.usage().ifPresent(u -> parseUsage(u, state.accumulatedUsage));
+        resp.status().ifPresent(s -> state.stopReason = mapResponseStatus(s, state.contentBlocks));
+    }
+
+    private AssistantMessage partialFrom(ResponsesStreamState state, Model model, @Nullable StopReason stopReason) {
+        return buildPartialMessage(model, state.responseId, state.contentBlocks, state.accumulatedUsage, stopReason);
     }
 
     private void handleOutputItemAdded(

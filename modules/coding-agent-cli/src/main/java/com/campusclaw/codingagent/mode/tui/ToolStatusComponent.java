@@ -106,86 +106,75 @@ public class ToolStatusComponent implements Component {
     @Override
     public List<String> render(int width) {
         var lines = new ArrayList<String>();
-
         String bg = !complete ? BG_PENDING : error ? BG_ERROR : BG_SUCCESS;
         int contentWidth = Math.max(1, width - 2);
-
-        // Top padding line
         lines.add(bgLine("", width, bg));
-
-        // Title line
-        String titleContent = buildTitle();
-        lines.add(bgLine(" " + titleContent, width, bg));
-
-        // Content
+        lines.add(bgLine(" " + buildTitle(), width, bg));
         String content = getDisplayContent();
         if (content != null && !content.isEmpty()) {
-            lines.add(bgLine("", width, bg)); // spacer after title
-            String[] contentLines = content.split("\n");
-            int previewLimit = getPreviewLimit();
-            boolean isTailTruncated = isTailTruncatedTool();
-
-            if (expanded) {
-                // Show all lines
-                for (String line : contentLines) {
-                    lines.add(bgLine(" " + truncateText(line, contentWidth), width, bg));
-                }
-
-                // Collapse hint (only if there would be truncation)
-                if (contentLines.length > previewLimit) {
-                    String hint = ANSI_TOOL_OUTPUT + "("
-                            + ANSI_DIM_KEY + "ctrl+o" + ANSI_TOOL_OUTPUT + " to collapse)"
-                            + ANSI_RESET;
-                    lines.add(bgLine(" " + hint, width, bg));
-                }
-            } else if (contentLines.length <= previewLimit) {
-                // Fits within preview — show all
-                for (String line : contentLines) {
-                    lines.add(bgLine(" " + truncateText(line, contentWidth), width, bg));
-                }
-            } else if (isTailTruncated) {
-                // Bash: show LAST N lines, hint at top (matching campusclaw)
-                int hidden = contentLines.length - previewLimit;
-                String hint = ANSI_TOOL_OUTPUT + "... (" + hidden + " earlier lines, "
-                        + ANSI_DIM_KEY + "ctrl+o" + ANSI_TOOL_OUTPUT + " to expand)"
-                        + ANSI_RESET;
-                lines.add(bgLine(" " + hint, width, bg));
-                int startIdx = contentLines.length - previewLimit;
-                for (int i = startIdx; i < contentLines.length; i++) {
-                    lines.add(bgLine(" " + truncateText(contentLines[i], contentWidth), width, bg));
-                }
-            } else {
-                // Other tools: show FIRST N lines, hint at bottom (matching campusclaw)
-                for (int i = 0; i < previewLimit; i++) {
-                    lines.add(bgLine(" " + truncateText(contentLines[i], contentWidth), width, bg));
-                }
-                int hidden = contentLines.length - previewLimit;
-                String hint = ANSI_TOOL_OUTPUT + "... (" + hidden + " more lines, "
-                        + ANSI_DIM_KEY + "ctrl+o" + ANSI_TOOL_OUTPUT + " to expand)"
-                        + ANSI_RESET;
-                lines.add(bgLine(" " + hint, width, bg));
-            }
+            lines.add(bgLine("", width, bg));
+            appendContentLines(lines, content, width, contentWidth, bg);
         }
-
-        // "Took X.Xs" line when complete (matching campusclaw)
         if (complete) {
             double elapsed = (endTimeMs - startTimeMs) / 1000.0;
             String took = ANSI_TOOL_OUTPUT + "Took " + String.format(Locale.ROOT, "%.1fs", elapsed) + ANSI_RESET;
-            lines.add(bgLine("", width, bg)); // spacer before Took
+            lines.add(bgLine("", width, bg));
             lines.add(bgLine(" " + took, width, bg));
         }
-
-        // Bottom padding line
         lines.add(bgLine("", width, bg));
-
-        // Blank spacer after tool box (gap between consecutive tool calls)
         lines.add("");
-
         return lines;
     }
 
     @Override
     public void invalidate() {}
+
+    private void appendContentLines(List<String> lines, String content, int width, int contentWidth, String bg) {
+        String[] contentLines = content.split("\n");
+        int previewLimit = getPreviewLimit();
+        if (expanded) {
+            for (String line : contentLines) {
+                lines.add(bgLine(" " + truncateText(line, contentWidth), width, bg));
+            }
+
+            // Only emit a "collapse" hint when expansion actually unhid something.
+            if (contentLines.length > previewLimit) {
+                String hint = ANSI_TOOL_OUTPUT + "("
+                        + ANSI_DIM_KEY + "ctrl+o" + ANSI_TOOL_OUTPUT + " to collapse)"
+                        + ANSI_RESET;
+                lines.add(bgLine(" " + hint, width, bg));
+            }
+            return;
+        }
+        if (contentLines.length <= previewLimit) {
+            for (String line : contentLines) {
+                lines.add(bgLine(" " + truncateText(line, contentWidth), width, bg));
+            }
+            return;
+        }
+        int hidden = contentLines.length - previewLimit;
+        if (isTailTruncatedTool()) {
+            // Bash: show LAST N lines, hint at top (matching campusclaw).
+            String hint = ANSI_TOOL_OUTPUT + "... (" + hidden + " earlier lines, "
+                    + ANSI_DIM_KEY + "ctrl+o" + ANSI_TOOL_OUTPUT + " to expand)"
+                    + ANSI_RESET;
+            lines.add(bgLine(" " + hint, width, bg));
+            int startIdx = contentLines.length - previewLimit;
+            for (int i = startIdx; i < contentLines.length; i++) {
+                lines.add(bgLine(" " + truncateText(contentLines[i], contentWidth), width, bg));
+            }
+            return;
+        }
+
+        // Other tools: show FIRST N lines, hint at bottom (matching campusclaw).
+        for (int i = 0; i < previewLimit; i++) {
+            lines.add(bgLine(" " + truncateText(contentLines[i], contentWidth), width, bg));
+        }
+        String hint = ANSI_TOOL_OUTPUT + "... (" + hidden + " more lines, "
+                + ANSI_DIM_KEY + "ctrl+o" + ANSI_TOOL_OUTPUT + " to expand)"
+                + ANSI_RESET;
+        lines.add(bgLine(" " + hint, width, bg));
+    }
 
     private String buildTitle() {
         // Bash: show "$ command" in bold white (matching campusclaw — command IS the title)

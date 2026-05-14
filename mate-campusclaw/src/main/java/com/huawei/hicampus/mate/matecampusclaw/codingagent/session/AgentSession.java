@@ -437,7 +437,6 @@ public class AgentSession {
      * @return the resolved {@link Model}
      * @throws IllegalArgumentException when no model matches the given pattern
      */
-    @SuppressWarnings("checkstyle:huge_cyclomatic_complexity")
     Model resolveModel(String modelId) {
         // Strip thinking level suffix (e.g., "sonnet:high" → "sonnet")
         int colonIdx = modelId.indexOf(':');

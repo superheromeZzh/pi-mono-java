@@ -272,45 +272,48 @@ class OpenAIResponsesProviderIntegrationTest {
     @Nested
     class ThinkingStreaming {
 
-        @Test
-        void streamsReasoningResponse() throws Exception {
-            String sseBody = sseEvent(
+        // SSE body fixture for streamsReasoningResponse() — reasoning item then message item then completed.
+        private String reasoningThenAnswerSseBody() {
+            return sseEvent(
                             "response.created",
                             """
-                    {"type":"response.created","response":{"id":"resp_think","object":"response","status":"in_progress","output":[],"usage":null}}""")
+                            {"type":"response.created","response":{"id":"resp_think","object":"response","status":"in_progress","output":[],"usage":null}}""")
                     + sseEvent(
                             "response.output_item.added",
                             """
-                    {"type":"response.output_item.added","output_index":0,"item":{"type":"reasoning","id":"rs_1","summary":[]}}""")
+                            {"type":"response.output_item.added","output_index":0,"item":{"type":"reasoning","id":"rs_1","summary":[]}}""")
                     + sseEvent(
                             "response.reasoning_summary_text.delta",
                             """
-                    {"type":"response.reasoning_summary_text.delta","output_index":0,"summary_index":0,"delta":"Let me think"}""")
+                            {"type":"response.reasoning_summary_text.delta","output_index":0,"summary_index":0,"delta":"Let me think"}""")
                     + sseEvent(
                             "response.output_item.done",
                             """
-                    {"type":"response.output_item.done","output_index":0,"item":{"type":"reasoning","id":"rs_1","summary":[{"type":"summary_text","text":"Let me think"}]}}""")
+                            {"type":"response.output_item.done","output_index":0,"item":{"type":"reasoning","id":"rs_1","summary":[{"type":"summary_text","text":"Let me think"}]}}""")
                     + sseEvent(
                             "response.output_item.added",
                             """
-                    {"type":"response.output_item.added","output_index":1,"item":{"type":"message","id":"msg_out3","role":"assistant","content":[],"status":"in_progress"}}""")
+                            {"type":"response.output_item.added","output_index":1,"item":{"type":"message","id":"msg_out3","role":"assistant","content":[],"status":"in_progress"}}""")
                     + sseEvent(
                             "response.output_text.delta",
                             """
-                    {"type":"response.output_text.delta","output_index":1,"content_index":0,"delta":"Answer"}""")
+                            {"type":"response.output_text.delta","output_index":1,"content_index":0,"delta":"Answer"}""")
                     + sseEvent(
                             "response.output_item.done",
                             """
-                    {"type":"response.output_item.done","output_index":1,"item":{"type":"message","id":"msg_out3","role":"assistant","content":[{"type":"output_text","text":"Answer"}],"status":"completed"}}""")
+                            {"type":"response.output_item.done","output_index":1,"item":{"type":"message","id":"msg_out3","role":"assistant","content":[{"type":"output_text","text":"Answer"}],"status":"completed"}}""")
                     + sseEvent(
                             "response.completed",
                             """
-                    {"type":"response.completed","response":{"id":"resp_think","object":"response","status":"completed","output":[],"usage":{"input_tokens":10,"output_tokens":20,"input_tokens_details":{"cached_tokens":0},"output_tokens_details":{"reasoning_tokens":10}}}}""");
+                            {"type":"response.completed","response":{"id":"resp_think","object":"response","status":"completed","output":[],"usage":{"input_tokens":10,"output_tokens":20,"input_tokens_details":{"cached_tokens":0},"output_tokens_details":{"reasoning_tokens":10}}}}""");
+        }
 
+        @Test
+        void streamsReasoningResponse() throws Exception {
             server.enqueue(new MockResponse()
                     .setResponseCode(200)
                     .setHeader("Content-Type", "text/event-stream")
-                    .setBody(sseBody)
+                    .setBody(reasoningThenAnswerSseBody())
                     .setSocketPolicy(SocketPolicy.DISCONNECT_AT_END));
 
             String baseUrl = server.url("/").toString();

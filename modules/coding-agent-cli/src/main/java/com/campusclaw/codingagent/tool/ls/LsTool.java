@@ -97,39 +97,34 @@ public class LsTool implements AgentTool {
         if (pathInput == null || pathInput.isBlank()) {
             return errorResult("Error: path is required");
         }
-
         Path resolvedPath;
         try {
             resolvedPath = PathUtils.resolveReadPath(pathInput, cwd);
         } catch (SecurityException e) {
             return errorResult("Error: " + e.getMessage());
         }
-
         if (!Files.isDirectory(resolvedPath)) {
             return errorResult("Error: not a directory: " + pathInput);
         }
-
         List<LsEntry> entries;
         try {
             entries = lsOperations.list(resolvedPath);
         } catch (IOException e) {
             return errorResult("Error listing directory: " + e.getMessage());
         }
-
         if (entries.isEmpty()) {
             return textResult("(empty directory)");
         }
-
-        // Sort: directories first, then alphabetical by name within each group
         entries.sort(Comparator.comparing((LsEntry e) -> !"directory".equals(e.type()))
                 .thenComparing(LsEntry::name, String.CASE_INSENSITIVE_ORDER));
-
-        // Limit results
         boolean truncated = entries.size() > MAX_ENTRIES;
         if (truncated) {
             entries = entries.subList(0, MAX_ENTRIES);
         }
+        return textResult(formatEntries(entries, truncated));
+    }
 
+    private static String formatEntries(List<LsEntry> entries, boolean truncated) {
         var sb = new StringBuilder();
         for (int i = 0; i < entries.size(); i++) {
             if (i > 0) {
@@ -142,19 +137,14 @@ public class LsTool implements AgentTool {
                         case "symlink" -> "lrw-";
                         default -> "-rw-";
                     };
-            String name = entry.name();
-            if ("directory".equals(entry.type())) {
-                name = name + "/";
-            }
+            String name = "directory".equals(entry.type()) ? entry.name() + "/" : entry.name();
             sb.append(String.format(
                     "%s %5d  %s  %s", typeFlag, entry.size(), DATE_FORMAT.format(entry.lastModified()), name));
         }
-
         if (truncated) {
             sb.append("\n... (truncated to ").append(MAX_ENTRIES).append(" entries)");
         }
-
-        return textResult(sb.toString());
+        return sb.toString();
     }
 
     private static AgentToolResult textResult(String text) {

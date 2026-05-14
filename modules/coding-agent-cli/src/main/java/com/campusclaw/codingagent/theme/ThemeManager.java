@@ -115,7 +115,13 @@ public class ThemeManager {
     }
 
     private void registerBuiltins() {
-        register(new Theme(
+        register(buildDefaultTheme());
+        register(buildDarkTheme());
+        register(buildLightTheme());
+    }
+
+    private static Theme buildDefaultTheme() {
+        return new Theme(
                 "default",
                 Map.ofEntries(
                         Map.entry(Theme.PRIMARY, "cyan"),
@@ -148,9 +154,11 @@ public class ThemeManager {
                         Map.entry(Theme.SPINNER, "cyan"),
                         Map.entry(Theme.SELECTION, "blue"),
                         Map.entry(Theme.CURSOR, "white")),
-                "Default theme"));
+                "Default theme");
+    }
 
-        register(new Theme(
+    private static Theme buildDarkTheme() {
+        return new Theme(
                 "dark",
                 Map.ofEntries(
                         Map.entry(Theme.PRIMARY, "#61AFEF"),
@@ -183,9 +191,11 @@ public class ThemeManager {
                         Map.entry(Theme.SPINNER, "#61AFEF"),
                         Map.entry(Theme.SELECTION, "#3E4452"),
                         Map.entry(Theme.CURSOR, "#528BFF")),
-                "One Dark inspired theme"));
+                "One Dark inspired theme");
+    }
 
-        register(new Theme(
+    private static Theme buildLightTheme() {
+        return new Theme(
                 "light",
                 Map.ofEntries(
                         Map.entry(Theme.PRIMARY, "#4078F2"),
@@ -218,6 +228,6 @@ public class ThemeManager {
                         Map.entry(Theme.SPINNER, "#4078F2"),
                         Map.entry(Theme.SELECTION, "#BFCEFF"),
                         Map.entry(Theme.CURSOR, "#526FFF")),
-                "Light theme"));
+                "Light theme");
     }
 }

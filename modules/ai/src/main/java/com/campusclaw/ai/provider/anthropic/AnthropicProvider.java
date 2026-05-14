@@ -250,92 +250,130 @@ public class AnthropicProvider implements ApiProvider {
         return builder.build();
     }
 
+    /**
+     * Mutable state for the Anthropic stream's content-block accumulators —
+     * one bag of fields instead of a dozen out-parameter arrays, so each
+     * event handler reads as ordinary code.
+     */
+    private static final class AnthropicStreamState {
+        final ArrayList<ContentBlock> contentBlocks = new ArrayList<>();
+        final long[] accumulatedUsage = {0, 0, 0, 0}; // input, output, cacheRead, cacheWrite
+        final HashMap<Integer, StringBuilder> textAccumulator = new HashMap<>();
+        final HashMap<Integer, StringBuilder> thinkingAccumulator = new HashMap<>();
+        final HashMap<Integer, StringBuilder> toolJsonAccumulator = new HashMap<>();
+        final HashMap<Integer, String> blockTypes = new HashMap<>();
+        final HashMap<Integer, String[]> toolMeta = new HashMap<>(); // [id, name]
+        final HashMap<Integer, StringBuilder> signatureAcc = new HashMap<>();
+        String responseId;
+        StopReason stopReason;
+    }
+
     private void processStream(
             AnthropicClient client, MessageCreateParams params, Model model, AssistantMessageEventStream eventStream) {
-
-        // Mutable state for tracking partial message
-        var contentBlocks = new ArrayList<ContentBlock>();
-        var accumulatedUsage = new long[] {0, 0, 0, 0}; // input, output, cacheRead, cacheWrite
-        String[] responseId = {null};
-        var textAccumulator = new HashMap<Integer, StringBuilder>();
-        var thinkingAccumulator = new HashMap<Integer, StringBuilder>();
-        var toolJsonAccumulator = new HashMap<Integer, StringBuilder>();
-        var blockTypes = new HashMap<Integer, String>();
-        var toolMeta = new HashMap<Integer, String[]>(); // [id, name]
-        var signatureAcc = new HashMap<Integer, StringBuilder>();
-        StopReason[] stopReason = {null};
-
+        var state = new AnthropicStreamState();
         try (StreamResponse<RawMessageStreamEvent> response = client.messages().createStreaming(params)) {
-            response.stream().forEach(event -> {
-                if (event.isMessageStart()) {
-                    var msg = event.asMessageStart().message();
-                    responseId[0] = msg.id();
-                    var usage = msg.usage();
-                    accumulatedUsage[0] = usage.inputTokens();
-                    accumulatedUsage[1] = usage.outputTokens();
-                    accumulatedUsage[2] = usage.cacheReadInputTokens().orElse(0L);
-                    accumulatedUsage[3] = usage.cacheCreationInputTokens().orElse(0L);
-
-                    var partial = buildPartialMessage(model, responseId[0], contentBlocks, accumulatedUsage, null);
-                    eventStream.push(new AssistantMessageEvent.StartEvent(partial));
-
-                } else if (event.isContentBlockStart()) {
-                    handleContentBlockStart(
-                            event.asContentBlockStart(),
-                            model,
-                            responseId[0],
-                            contentBlocks,
-                            accumulatedUsage,
-                            blockTypes,
-                            textAccumulator,
-                            thinkingAccumulator,
-                            toolJsonAccumulator,
-                            toolMeta,
-                            eventStream);
-
-                } else if (event.isContentBlockDelta()) {
-                    handleContentBlockDelta(
-                            event.asContentBlockDelta(),
-                            model,
-                            responseId[0],
-                            contentBlocks,
-                            accumulatedUsage,
-                            blockTypes,
-                            textAccumulator,
-                            thinkingAccumulator,
-                            toolJsonAccumulator,
-                            signatureAcc,
-                            eventStream);
-
-                } else if (event.isContentBlockStop()) {
-                    int idx = (int) event.asContentBlockStop().index();
-                    handleContentBlockStop(
-                            idx,
-                            model,
-                            responseId[0],
-                            contentBlocks,
-                            accumulatedUsage,
-                            blockTypes,
-                            textAccumulator,
-                            thinkingAccumulator,
-                            toolJsonAccumulator,
-                            toolMeta,
-                            signatureAcc,
-                            eventStream);
-
-                } else if (event.isMessageDelta()) {
-                    var e = event.asMessageDelta();
-                    accumulatedUsage[1] = e.usage().outputTokens();
-                    e.delta().stopReason().ifPresent(sr -> stopReason[0] = mapStopReason(sr));
-
-                } else if (event.isMessageStop()) {
-                    var finalStopReason = stopReason[0] != null ? stopReason[0] : StopReason.STOP;
-                    var finalMessage =
-                            buildPartialMessage(model, responseId[0], contentBlocks, accumulatedUsage, finalStopReason);
-                    eventStream.pushDone(finalStopReason, finalMessage);
-                }
-            });
+            response.stream().forEach(event -> dispatchEvent(event, state, model, eventStream));
         }
+    }
+
+    private void dispatchEvent(
+            RawMessageStreamEvent event,
+            AnthropicStreamState state,
+            Model model,
+            AssistantMessageEventStream eventStream) {
+        if (event.isMessageStart()) {
+            handleMessageStart(event, state, model, eventStream);
+        } else if (event.isContentBlockStart()) {
+            handleContentBlockStartEvent(event.asContentBlockStart(), state, model, eventStream);
+        } else if (event.isContentBlockDelta()) {
+            handleContentBlockDeltaEvent(event.asContentBlockDelta(), state, model, eventStream);
+        } else if (event.isContentBlockStop()) {
+            handleContentBlockStopEvent((int) event.asContentBlockStop().index(), state, model, eventStream);
+        } else if (event.isMessageDelta()) {
+            var e = event.asMessageDelta();
+            state.accumulatedUsage[1] = e.usage().outputTokens();
+            e.delta().stopReason().ifPresent(sr -> state.stopReason = mapStopReason(sr));
+        } else if (event.isMessageStop()) {
+            handleMessageStop(state, model, eventStream);
+        }
+    }
+
+    private void handleContentBlockStartEvent(
+            RawContentBlockStartEvent e,
+            AnthropicStreamState state,
+            Model model,
+            AssistantMessageEventStream eventStream) {
+        handleContentBlockStart(
+                e,
+                model,
+                state.responseId,
+                state.contentBlocks,
+                state.accumulatedUsage,
+                state.blockTypes,
+                state.textAccumulator,
+                state.thinkingAccumulator,
+                state.toolJsonAccumulator,
+                state.toolMeta,
+                eventStream);
+    }
+
+    private void handleContentBlockDeltaEvent(
+            RawContentBlockDeltaEvent e,
+            AnthropicStreamState state,
+            Model model,
+            AssistantMessageEventStream eventStream) {
+        handleContentBlockDelta(
+                e,
+                model,
+                state.responseId,
+                state.contentBlocks,
+                state.accumulatedUsage,
+                state.blockTypes,
+                state.textAccumulator,
+                state.thinkingAccumulator,
+                state.toolJsonAccumulator,
+                state.signatureAcc,
+                eventStream);
+    }
+
+    private void handleContentBlockStopEvent(
+            int idx, AnthropicStreamState state, Model model, AssistantMessageEventStream eventStream) {
+        handleContentBlockStop(
+                idx,
+                model,
+                state.responseId,
+                state.contentBlocks,
+                state.accumulatedUsage,
+                state.blockTypes,
+                state.textAccumulator,
+                state.thinkingAccumulator,
+                state.toolJsonAccumulator,
+                state.toolMeta,
+                state.signatureAcc,
+                eventStream);
+    }
+
+    private void handleMessageStop(AnthropicStreamState state, Model model, AssistantMessageEventStream eventStream) {
+        var finalStopReason = state.stopReason != null ? state.stopReason : StopReason.STOP;
+        var finalMessage = buildPartialMessage(
+                model, state.responseId, state.contentBlocks, state.accumulatedUsage, finalStopReason);
+        eventStream.pushDone(finalStopReason, finalMessage);
+    }
+
+    private void handleMessageStart(
+            RawMessageStreamEvent event,
+            AnthropicStreamState state,
+            Model model,
+            AssistantMessageEventStream eventStream) {
+        var msg = event.asMessageStart().message();
+        state.responseId = msg.id();
+        var usage = msg.usage();
+        state.accumulatedUsage[0] = usage.inputTokens();
+        state.accumulatedUsage[1] = usage.outputTokens();
+        state.accumulatedUsage[2] = usage.cacheReadInputTokens().orElse(0L);
+        state.accumulatedUsage[3] = usage.cacheCreationInputTokens().orElse(0L);
+        var partial = buildPartialMessage(model, state.responseId, state.contentBlocks, state.accumulatedUsage, null);
+        eventStream.push(new AssistantMessageEvent.StartEvent(partial));
     }
 
     private void handleContentBlockStart(

@@ -57,58 +57,77 @@ public class ToolExecutionPipeline {
         Objects.requireNonNull(validatedArgs, "validatedArgs");
         Objects.requireNonNull(context, "context");
         Objects.requireNonNull(signal, "signal");
-
         AgentEventListener eventListener = listener != null ? listener : event -> {};
         var toolName = toolCall.name();
+        ToolResultMessage blocked = applyBeforeHook(tool, toolCall, validatedArgs, context, toolName);
+        if (blocked != null) {
+            return blocked;
+        }
+        eventListener.onEvent(new ToolExecutionStartEvent(toolCall.id(), toolName, validatedArgs));
+        var outcome = invokeTool(tool, toolCall, validatedArgs, signal, eventListener);
+        outcome = applyAfterHook(toolCall, validatedArgs, context, outcome);
+        eventListener.onEvent(new ToolExecutionEndEvent(toolCall.id(), toolName, outcome.result(), outcome.isError()));
+        return toToolResultMessage(toolCall, toolName, outcome.result(), outcome.isError());
+    }
 
+    /** Composite of an {@link AgentToolResult} and its error flag — internal handoff between phases. */
+    private record Outcome(AgentToolResult result, boolean isError) {}
+
+    // Returns the synthesized blocking ToolResultMessage if the beforeToolCall hook rejected
+    // the call (or threw); null when the call should proceed.
+    private ToolResultMessage applyBeforeHook(
+            AgentTool tool,
+            ToolCall toolCall,
+            Map<String, Object> validatedArgs,
+            AgentContext context,
+            String toolName) {
         try {
             var beforeResult = runBeforeHook(toolCall, validatedArgs, context);
             if (beforeResult != null && beforeResult.block()) {
-                return toToolResultMessage(
-                        toolCall,
-                        toolName,
-                        errorResult(
-                                beforeResult.reason() != null
-                                        ? beforeResult.reason()
-                                        : "Tool call blocked by beforeToolCall handler"),
-                        true);
+                String reason = beforeResult.reason() != null
+                        ? beforeResult.reason()
+                        : "Tool call blocked by beforeToolCall handler";
+                return toToolResultMessage(toolCall, toolName, errorResult(reason), true);
             }
+            return null;
         } catch (Exception e) {
             return toToolResultMessage(toolCall, toolName, errorResult(messageForException(e)), true);
         }
+    }
 
-        eventListener.onEvent(new ToolExecutionStartEvent(toolCall.id(), toolName, validatedArgs));
-
-        AgentToolResult result;
-        var isError = false;
+    private Outcome invokeTool(
+            AgentTool tool,
+            ToolCall toolCall,
+            Map<String, Object> validatedArgs,
+            CancellationToken signal,
+            AgentEventListener eventListener) {
         try {
             validateArguments(tool, validatedArgs);
-            result = normalizeResult(tool.execute(
+            var result = normalizeResult(tool.execute(
                     toolCall.id(),
                     validatedArgs,
                     signal,
-                    partialResult -> eventListener.onEvent(
-                            new ToolExecutionUpdateEvent(toolCall.id(), toolName, validatedArgs, partialResult))));
+                    partialResult -> eventListener.onEvent(new ToolExecutionUpdateEvent(
+                            toolCall.id(), toolCall.name(), validatedArgs, partialResult))));
+            return new Outcome(result, false);
         } catch (Exception e) {
-            result = errorResult(messageForException(e));
-            isError = true;
+            return new Outcome(errorResult(messageForException(e)), true);
         }
+    }
 
+    private Outcome applyAfterHook(
+            ToolCall toolCall, Map<String, Object> validatedArgs, AgentContext context, Outcome outcome) {
         try {
-            var afterResult = runAfterHook(toolCall, validatedArgs, context, result, isError);
-            if (afterResult != null) {
-                result = applyAfterResult(result, afterResult);
-                if (afterResult.isError() != null) {
-                    isError = afterResult.isError();
-                }
+            var afterResult = runAfterHook(toolCall, validatedArgs, context, outcome.result(), outcome.isError());
+            if (afterResult == null) {
+                return outcome;
             }
+            var newResult = applyAfterResult(outcome.result(), afterResult);
+            boolean newIsError = afterResult.isError() != null ? afterResult.isError() : outcome.isError();
+            return new Outcome(newResult, newIsError);
         } catch (Exception e) {
-            result = errorResult(messageForException(e));
-            isError = true;
+            return new Outcome(errorResult(messageForException(e)), true);
         }
-
-        eventListener.onEvent(new ToolExecutionEndEvent(toolCall.id(), toolName, result, isError));
-        return toToolResultMessage(toolCall, toolName, result, isError);
     }
 
     public List<ToolResultMessage> executeAll(

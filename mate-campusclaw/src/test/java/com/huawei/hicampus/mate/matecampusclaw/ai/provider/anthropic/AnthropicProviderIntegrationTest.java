@@ -91,37 +91,42 @@ class AnthropicProviderIntegrationTest {
     @Nested
     class TextStreaming {
 
-        @Test
-        void streamsTextResponse() throws Exception {
-            String sseBody = sseEvent(
+        // SSE body fixture for streamsTextResponse() — message_start through message_stop emitting "Hello world".
+        private String helloWorldSseBody() {
+            return sseEvent(
                             "message_start",
                             """
-                    {"type":"message_start","message":{"id":"msg_123","type":"message","role":"assistant","model":"claude-sonnet-4-20250514","content":[],"stop_reason":null,"stop_sequence":null,"usage":{"input_tokens":10,"output_tokens":0,"cache_creation_input_tokens":0,"cache_read_input_tokens":0}}}""")
+                            {"type":"message_start","message":{"id":"msg_123","type":"message","role":"assistant","model":"claude-sonnet-4-20250514","content":[],"stop_reason":null,"stop_sequence":null,"usage":{"input_tokens":10,"output_tokens":0,"cache_creation_input_tokens":0,"cache_read_input_tokens":0}}}""")
                     + sseEvent(
                             "content_block_start",
                             """
-                    {"type":"content_block_start","index":0,"content_block":{"type":"text","text":""}}""")
+                            {"type":"content_block_start","index":0,"content_block":{"type":"text","text":""}}""")
                     + sseEvent(
                             "content_block_delta",
                             """
-                    {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"Hello"}}""")
+                            {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"Hello"}}""")
                     + sseEvent(
                             "content_block_delta",
                             """
-                    {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":" world"}}""")
-                    + sseEvent("content_block_stop", """
-                    {"type":"content_block_stop","index":0}""")
+                            {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":" world"}}""")
+                    + sseEvent(
+                            "content_block_stop",
+                            """
+                            {"type":"content_block_stop","index":0}""")
                     + sseEvent(
                             "message_delta",
                             """
-                    {"type":"message_delta","delta":{"stop_reason":"end_turn","stop_sequence":null},"usage":{"output_tokens":5}}""")
+                            {"type":"message_delta","delta":{"stop_reason":"end_turn","stop_sequence":null},"usage":{"output_tokens":5}}""")
                     + sseEvent("message_stop", """
-                    {"type":"message_stop"}""");
+                            {"type":"message_stop"}""");
+        }
 
+        @Test
+        void streamsTextResponse() throws Exception {
             server.enqueue(new MockResponse()
                     .setResponseCode(200)
                     .setHeader("Content-Type", "text/event-stream")
-                    .setBody(sseBody)
+                    .setBody(helloWorldSseBody())
                     .setSocketPolicy(SocketPolicy.DISCONNECT_AT_END));
 
             String baseUrl = server.url("/").toString();
@@ -275,43 +280,50 @@ class AnthropicProviderIntegrationTest {
     @Nested
     class ThinkingStreaming {
 
-        @Test
-        void streamsThinkingResponse() throws Exception {
-            String sseBody = sseEvent(
+        // SSE body fixture for streamsThinkingResponse() — thinking block then text block then stop.
+        private String thinkingThenAnswerSseBody() {
+            return sseEvent(
                             "message_start",
                             """
-                    {"type":"message_start","message":{"id":"msg_think","type":"message","role":"assistant","model":"claude-sonnet-4-20250514","content":[],"stop_reason":null,"stop_sequence":null,"usage":{"input_tokens":10,"output_tokens":0,"cache_creation_input_tokens":0,"cache_read_input_tokens":0}}}""")
+                            {"type":"message_start","message":{"id":"msg_think","type":"message","role":"assistant","model":"claude-sonnet-4-20250514","content":[],"stop_reason":null,"stop_sequence":null,"usage":{"input_tokens":10,"output_tokens":0,"cache_creation_input_tokens":0,"cache_read_input_tokens":0}}}""")
                     + sseEvent(
                             "content_block_start",
                             """
-                    {"type":"content_block_start","index":0,"content_block":{"type":"thinking","thinking":""}}""")
+                            {"type":"content_block_start","index":0,"content_block":{"type":"thinking","thinking":""}}""")
                     + sseEvent(
                             "content_block_delta",
                             """
-                    {"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":"Let me think"}}""")
-                    + sseEvent("content_block_stop", """
-                    {"type":"content_block_stop","index":0}""")
+                            {"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":"Let me think"}}""")
+                    + sseEvent(
+                            "content_block_stop",
+                            """
+                            {"type":"content_block_stop","index":0}""")
                     + sseEvent(
                             "content_block_start",
                             """
-                    {"type":"content_block_start","index":1,"content_block":{"type":"text","text":""}}""")
+                            {"type":"content_block_start","index":1,"content_block":{"type":"text","text":""}}""")
                     + sseEvent(
                             "content_block_delta",
                             """
-                    {"type":"content_block_delta","index":1,"delta":{"type":"text_delta","text":"Answer"}}""")
-                    + sseEvent("content_block_stop", """
-                    {"type":"content_block_stop","index":1}""")
+                            {"type":"content_block_delta","index":1,"delta":{"type":"text_delta","text":"Answer"}}""")
+                    + sseEvent(
+                            "content_block_stop",
+                            """
+                            {"type":"content_block_stop","index":1}""")
                     + sseEvent(
                             "message_delta",
                             """
-                    {"type":"message_delta","delta":{"stop_reason":"end_turn","stop_sequence":null},"usage":{"output_tokens":20}}""")
+                            {"type":"message_delta","delta":{"stop_reason":"end_turn","stop_sequence":null},"usage":{"output_tokens":20}}""")
                     + sseEvent("message_stop", """
-                    {"type":"message_stop"}""");
+                            {"type":"message_stop"}""");
+        }
 
+        @Test
+        void streamsThinkingResponse() throws Exception {
             server.enqueue(new MockResponse()
                     .setResponseCode(200)
                     .setHeader("Content-Type", "text/event-stream")
-                    .setBody(sseBody)
+                    .setBody(thinkingThenAnswerSseBody())
                     .setSocketPolicy(SocketPolicy.DISCONNECT_AT_END));
 
             String baseUrl = server.url("/").toString();

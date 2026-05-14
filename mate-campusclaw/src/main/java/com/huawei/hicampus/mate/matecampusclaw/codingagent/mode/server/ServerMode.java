@@ -143,13 +143,25 @@ public class ServerMode {
                 sessionPersistenceEnabled);
         var chatHandler = new ChatHandler(sessionPool);
         var wsHandler = new ChatWebSocketHandler(sessionPool, modelCatalog);
-        var conversationLister = new com.huawei.hicampus.mate.matecampusclaw.codingagent.session.ConversationLister();
-
         var skillHandler = new SkillHandler(
                 new SkillManager(AppPaths.USER_SKILLS_DIR, sandboxParser, useSandbox),
                 new SkillLoader(sandboxParser, useSandbox));
+        RouterFunction<ServerResponse> routes = buildRoutes(chatHandler, skillHandler, sessionPool);
+        var adapter = new ReactorHttpHandlerAdapter(RouterFunctions.toHttpHandler(routes));
+        var server = HttpServer.create()
+                .host(host)
+                .port(port)
+                .route(r -> wireServerRoutes(r, wsHandler, adapter))
+                .bindNow();
+        logStartupBanner();
+        server.onDispose().block();
+        sessionPool.shutdown();
+    }
 
-        RouterFunction<ServerResponse> routes = RouterFunctions.route()
+    private RouterFunction<ServerResponse> buildRoutes(
+            ChatHandler chatHandler, SkillHandler skillHandler, SessionPool sessionPool) {
+        var conversationLister = new com.huawei.hicampus.mate.matecampusclaw.codingagent.session.ConversationLister();
+        return RouterFunctions.route()
                 .GET("/api/health", req -> ServerResponse.ok().bodyValue(Map.of("status", "ok")))
                 .POST("/api/chat", chatHandler::chat)
                 .GET("/api/conversations", req -> ServerResponse.ok()
@@ -171,34 +183,34 @@ public class ServerMode {
                 .POST("/api/skills/{name}/enable", skillHandler::enable)
                 .POST("/api/skills/{name}/disable", skillHandler::disable)
                 .build();
+    }
 
-        var httpHandler = RouterFunctions.toHttpHandler(routes);
-        var adapter = new ReactorHttpHandlerAdapter(httpHandler);
+    private static void wireServerRoutes(
+            reactor.netty.http.server.HttpServerRoutes routes,
+            ChatWebSocketHandler wsHandler,
+            ReactorHttpHandlerAdapter adapter) {
+        // CORS preflight — `fetch()` from the Vite dev server (a different
+        // origin than the API) sends OPTIONS for any non-simple request.
+        // Reply 204 with the allow headers; browsers cache for 1h.
+        routes.options("/api/**", (req, res) -> {
+            applyCorsHeaders(res);
+            return res.status(204).send();
+        });
+        routes.get("/api/ws/chat", (req, res) -> {
+            String convId = extractQueryParam(req.uri(), "conversation_id");
+            return res.sendWebsocket((in, out) -> wsHandler.handle(in, out, convId));
+        });
 
-        var server = HttpServer.create()
-                .host(host)
-                .port(port)
-                .route(r -> r
-                        // CORS preflight — `fetch()` from the Vite dev server (a different
-                        // origin than the API) sends OPTIONS for any non-simple request.
-                        // Reply 204 with the allow headers; browsers cache for 1h.
-                        .options("/api/**", (req, res) -> {
-                            applyCorsHeaders(res);
-                            return res.status(204).send();
-                        })
-                        .get("/api/ws/chat", (req, res) -> {
-                            String convId = extractQueryParam(req.uri(), "conversation_id");
-                            return res.sendWebsocket((in, out) -> wsHandler.handle(in, out, convId));
-                        })
-                        // All other routes (the WebFlux RouterFunctions adapter) go
-                        // through here. We pre-stamp CORS headers on the response so
-                        // even simple GETs from the browser pass the same-origin check.
-                        .route(req -> true, (req, res) -> {
-                            applyCorsHeaders(res);
-                            return adapter.apply(req, res);
-                        }))
-                .bindNow();
+        // All other routes (the WebFlux RouterFunctions adapter) go through
+        // here. We pre-stamp CORS headers on the response so even simple GETs
+        // from the browser pass the same-origin check.
+        routes.route(req -> true, (req, res) -> {
+            applyCorsHeaders(res);
+            return adapter.apply(req, res);
+        });
+    }
 
+    private void logStartupBanner() {
         log.info("CampusClaw API server started on {}:{}", host, port);
         banner.info("CampusClaw API server started on http://{}:{}", host, port);
         banner.info("Endpoints:");
@@ -211,9 +223,6 @@ public class ServerMode {
         banner.info("  POST   /api/skills/{name}/enable");
         banner.info("  POST   /api/skills/{name}/disable");
         banner.info("  WS     /api/ws/chat");
-
-        server.onDispose().block();
-        sessionPool.shutdown();
     }
 
     /**

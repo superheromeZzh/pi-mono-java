@@ -33,7 +33,6 @@ public class SettingsCommand implements SlashCommand {
         return "Print current settings";
     }
 
-    @SuppressWarnings("checkstyle:huge_cyclomatic_complexity")
     @Override
     public void execute(SlashCommandContext context, String arguments) {
         var state = context.session().getAgent().getState();
