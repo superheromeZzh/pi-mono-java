@@ -16,6 +16,7 @@ import com.campusclaw.agent.subagent.SubAgentEvent;
 import com.campusclaw.agent.subagent.SubAgentException;
 import com.campusclaw.agent.subagent.SubAgentRegistry;
 import com.campusclaw.agent.subagent.SubAgentSession;
+import com.campusclaw.agent.subagent.acp.AcpTransport;
 import com.campusclaw.agent.tool.AgentTool;
 import com.campusclaw.agent.tool.AgentToolResult;
 import com.campusclaw.agent.tool.AgentToolUpdateCallback;
@@ -235,17 +236,25 @@ public class SpawnAgentTool implements AgentTool {
             AtomicReference<SubAgentEvent.StopReason> stopReason,
             AtomicReference<SubAgentEvent.Error> errorRef,
             AgentToolUpdateCallback onUpdate) {
+        AcpTransport.note("SpawnAgentTool.recv " + event.getClass().getSimpleName());
         if (event instanceof SubAgentEvent.TextDelta delta) {
             if (delta.stream() == SubAgentEvent.Stream.OUTPUT) {
                 transcript.append(delta.text());
+                AcpTransport.note("SpawnAgentTool.transcript len=" + transcript.length() + " (+"
+                        + delta.text().length() + " OUTPUT)");
                 onUpdate.onUpdate(new AgentToolResult(List.of(new TextContent(transcript.toString())), null));
             } else if (delta.stream() == SubAgentEvent.Stream.THOUGHT) {
                 thoughtFallback.append(delta.text());
+                AcpTransport.note("SpawnAgentTool.thoughtFallback len=" + thoughtFallback.length() + " (+"
+                        + delta.text().length() + " THOUGHT)");
             }
         } else if (event instanceof SubAgentEvent.Done d) {
             stopReason.set(d.stopReason());
+            AcpTransport.note("SpawnAgentTool.done stopReason=" + d.stopReason() + " transcriptLen="
+                    + transcript.length() + " thoughtLen=" + thoughtFallback.length());
         } else if (event instanceof SubAgentEvent.Error err) {
             errorRef.compareAndSet(null, err);
+            AcpTransport.note("SpawnAgentTool.error code=" + err.code() + " msg=" + err.message());
         }
     }
 

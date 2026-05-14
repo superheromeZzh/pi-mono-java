@@ -215,18 +215,27 @@ public class AcpClient implements AutoCloseable {
         }
         try {
             var update = mapper.convertValue(envelope.params(), AcpProtocol.UpdateNotification.class);
+            JsonNode raw = update.update();
+            String tag = raw != null && raw.has("sessionUpdate")
+                    ? raw.get("sessionUpdate").asText("")
+                    : "<missing>";
             if (log.isDebugEnabled()) {
-                JsonNode raw = update.update();
-                String tag = raw != null && raw.has("sessionUpdate")
-                        ? raw.get("sessionUpdate").asText("")
-                        : "<missing>";
                 log.debug("session/update tag={} payload={}", tag, raw);
             }
             SubAgentEvent event = AcpEventMapper.toSubAgentEvent(update.update(), mapper);
-            if (event != null) {
-                events.emitNext(event, RETRY_NON_SERIALIZED);
+            if (event == null) {
+                AcpTransport.note("AcpClient.mapper returned null for tag=" + tag);
+                return;
             }
+            String summary = event.getClass().getSimpleName();
+            if (event instanceof SubAgentEvent.TextDelta td) {
+                summary += "(stream=" + td.stream() + ",len=" + td.text().length() + ")";
+            }
+            AcpTransport.note("AcpClient.emit " + summary);
+            events.emitNext(event, RETRY_NON_SERIALIZED);
+            AcpTransport.note("AcpClient.emit-done " + summary);
         } catch (RuntimeException ex) {
+            AcpTransport.note("AcpClient.handleNotification threw: " + ex);
             log.warn("failed to decode session/update: {}", ex.toString());
         }
     }
