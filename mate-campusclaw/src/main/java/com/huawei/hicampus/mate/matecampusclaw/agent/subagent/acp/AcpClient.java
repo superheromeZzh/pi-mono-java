@@ -206,7 +206,9 @@ public class AcpClient implements AutoCloseable {
             var update = mapper.convertValue(envelope.params(), AcpProtocol.UpdateNotification.class);
             if (log.isDebugEnabled()) {
                 JsonNode raw = update.update();
-                String tag = raw != null && raw.has("sessionUpdate") ? raw.get("sessionUpdate").asText("") : "<missing>";
+                String tag = raw != null && raw.has("sessionUpdate")
+                        ? raw.get("sessionUpdate").asText("")
+                        : "<missing>";
                 log.debug("session/update tag={} payload={}", tag, raw);
             }
             SubAgentEvent event = AcpEventMapper.toSubAgentEvent(update.update(), mapper);
