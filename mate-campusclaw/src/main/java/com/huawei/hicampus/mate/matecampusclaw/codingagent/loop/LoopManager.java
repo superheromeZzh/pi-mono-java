@@ -68,11 +68,9 @@ public class LoopManager implements MessageSubmitter {
      * Start a new loop that submits the given prompt at fixed intervals.
      * Skips iterations when the agent is busy (skip-if-running).
      *
-     * @return the loop ID
-     *
-     * @param prompt the prompt
-     * @param intervalMs the intervalMs
-     *
+     * @param prompt the prompt to submit at each tick
+     * @param intervalMs the interval between submissions, in milliseconds
+     * @return the loop ID, used later to stop the loop
      * @throws IllegalStateException if the operation fails
      */
     public String start(String prompt, long intervalMs) {

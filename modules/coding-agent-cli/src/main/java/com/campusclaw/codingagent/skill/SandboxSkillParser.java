@@ -231,13 +231,6 @@ public class SandboxSkillParser {
     }
 
     /**
-     * 在沙箱中加载 SKILL.md 的 body 内容（去掉 frontmatter 后的 Markdown 部分）
-     *
-     * @param skillMdPath SKILL.md 文件路径（宿主机路径）
-     * @return body 内容
-     * @throws SkillLoadException 加载失败
-     */
-    /**
      * POSIX sh script that strips frontmatter and emits the SKILL.md body.
      */
     private static final String EXTRACT_BODY_SCRIPT_TEMPLATE =
@@ -277,6 +270,13 @@ public class SandboxSkillParser {
             strip_frontmatter "$CONTENT"
             """;
 
+    /**
+     * Loads the body of a SKILL.md file inside the sandbox (Markdown content with frontmatter stripped).
+     *
+     * @param skillMdPath path to SKILL.md on the host
+     * @return the SKILL.md body
+     * @throws SkillLoadException if loading fails
+     */
     public String loadBodyInSandbox(Path skillMdPath) {
         if (!isAvailable()) {
             throw new SkillLoadException("Sandbox not available for loading skill body: " + skillMdPath);

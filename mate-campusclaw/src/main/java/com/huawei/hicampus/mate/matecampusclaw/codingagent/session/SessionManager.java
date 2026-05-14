@@ -115,9 +115,8 @@ public class SessionManager {
     /**
      * Resumes the most recent session for the given cwd.
      *
+     * @param cwd the working directory whose latest session should be resumed
      * @return list of messages from the session, or empty if no session found
-     *
-     * @param cwd the cwd
      */
     public List<Message> resumeLatestSession(String cwd) {
         String safePath = "--" + cwd.replaceFirst("^[/\\\\]", "").replaceAll("[/\\\\:]", "-") + "--";

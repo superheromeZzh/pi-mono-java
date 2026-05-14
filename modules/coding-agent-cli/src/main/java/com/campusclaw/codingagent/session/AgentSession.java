@@ -255,9 +255,8 @@ public class AgentSession {
     /**
      * Returns the current model ID, or {@code "unknown"} if no model is set.
      *
+     * @return the current model identifier, or {@code "unknown"} when unset
      * @throws IllegalStateException if the session is not initialized
-     *
-     * @return the result
      */
     public String getModelId() {
         requireInitialized();
@@ -268,9 +267,8 @@ public class AgentSession {
     /**
      * Returns whether the agent is currently streaming a response.
      *
+     * @return {@code true} if a streaming response is in progress
      * @throws IllegalStateException if the session is not initialized
-     *
-     * @return the result
      */
     public boolean isStreaming() {
         requireInitialized();

@@ -284,11 +284,6 @@ public class ModelRegistry {
 
     /**
      * Returns the list of built-in models to pre-register.
-     *
-     * @return the compiled-in default model catalog
-     */
-    /**
-     * Returns the list of built-in models to pre-register.
      * Pieced together from per-provider helpers so each list of models can
      * evolve and be reviewed independently.
      *

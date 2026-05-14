@@ -13,10 +13,12 @@ import com.huawei.hicampus.mate.matecampusclaw.codingagent.loop.LoopManager;
 /**
  * Slash command for managing in-session recurring prompts.
  *
+ * <pre>
  * Usage:
- *   /loop [interval] <prompt>   — start a loop (default interval: 10m)
+ *   /loop [interval] &lt;prompt&gt;   — start a loop (default interval: 10m)
  *   /loop stop [id]             — stop one or all loops
  *   /loop list                  — list active loops
+ * </pre>
  *
  * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
  * @since [br_eCampusCore 25.1.0_Next]
