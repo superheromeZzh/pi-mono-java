@@ -698,17 +698,10 @@ public class CampusClawCommand implements Callable<Integer> {
     }
 
     /**
-     * Matches a model against a pattern. Supports:
-     * - Exact match: "glm-5"
-     * - Glob-style: "glm-*", "*sonnet*"
-     * - Provider prefix: "zai/*"
-     * - Fuzzy substring: "sonnet" matches "claude-sonnet-4-20250514"
-     */
-    /**
      * Execute due cron jobs synchronously and exit.
      * Called by OS scheduler (launchd/crontab) via --cron-tick flag.
      *
-     * @return the result
+     * @return process exit code: 0 on success, 1 when cron service is unavailable
      */
     private Integer executeCronTick() {
         if (cronService == null) {
@@ -1117,6 +1110,19 @@ public class CampusClawCommand implements Callable<Integer> {
         }
     }
 
+    /**
+     * Matches a model against a pattern. Supports:
+     * <ul>
+     *   <li>Exact match: {@code "glm-5"}</li>
+     *   <li>Glob-style: {@code "glm-*"}, {@code "*sonnet*"}</li>
+     *   <li>Provider prefix: {@code "zai/*"}</li>
+     *   <li>Fuzzy substring: {@code "sonnet"} matches {@code "claude-sonnet-4-20250514"}</li>
+     * </ul>
+     *
+     * @param pattern the pattern to match against
+     * @param model the candidate model
+     * @return {@code true} if the model matches the pattern
+     */
     static boolean matchesModelPattern(String pattern, Model model) {
         String id = model.id().toLowerCase(Locale.ROOT);
         String name = model.name().toLowerCase(Locale.ROOT);

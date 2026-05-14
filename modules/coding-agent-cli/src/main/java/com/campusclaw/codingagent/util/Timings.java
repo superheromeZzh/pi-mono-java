@@ -136,10 +136,10 @@ public class Timings {
     /**
      * Measure a block of code and return the result.
      *
-     * @param <T> the <T>
-     * @param name the name
-     * @param block the block
-     * @return the result
+     * @param <T> the value type returned by {@code block}
+     * @param name the span name
+     * @param block the work to time
+     * @return the value returned by {@code block}
      */
     public <T> T measure(String name, java.util.function.Supplier<T> block) {
         start(name);

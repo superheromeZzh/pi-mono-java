@@ -25,10 +25,9 @@ final class FuzzyMatch {
      * 1. Exact match
      * 2. Whitespace-normalized match (collapse runs of whitespace to single space)
      *
+     * @param haystack the text to search within
+     * @param needle the substring to find
      * @return the match position, or null if no match found
-     *
-     * @param haystack the haystack
-     * @param needle the needle
      */
     static Match fuzzyFindText(String haystack, String needle) {
         if (haystack == null || needle == null || needle.isEmpty()) {

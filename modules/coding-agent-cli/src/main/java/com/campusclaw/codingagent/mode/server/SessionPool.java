@@ -119,9 +119,8 @@ public class SessionPool {
      * JSONL file on disk, the session is restored from disk before being returned.
      * If conversationId is null, a new session is created with a generated ID.
      *
+     * @param conversationId the conversation ID to look up; {@code null} or blank to generate a new one
      * @return the resolved session reference
-     *
-     * @param conversationId the conversationId
      */
     public SessionRef getOrCreate(String conversationId) {
         if (conversationId != null && !conversationId.isBlank()) {
@@ -144,9 +143,8 @@ public class SessionPool {
     /**
      * Removes a conversation and its session.
      *
+     * @param conversationId the conversation ID to remove
      * @return true if the conversation existed and was removed
-     *
-     * @param conversationId the conversationId
      */
     public boolean remove(String conversationId) {
         var removed = sessions.remove(conversationId);

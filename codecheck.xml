@@ -39,6 +39,17 @@
         <property name="message" value="独占一行的 // 注释紧跟在 ; 或 } 之后时，请在注释行上方空一行。"/>
     </module>
 
+    <!-- no_back_to_back_javadoc: 两段 Javadoc `*/` 后紧跟 `/**` 视为非法。
+         成因通常是：方法被移动 / 重命名后旧 Javadoc 滞留，或者重复生成；
+         此时只有第二段会绑定到下一个声明，第一段悬空（Javadoc 工具忽略，但读者会困惑）。
+         发现违规时应当：保留更准确的一段 / 把 Javadoc 移到目标声明正上方。 -->
+    <module name="RegexpMultiline">
+        <property name="id" value="no_back_to_back_javadoc"/>
+        <property name="format" value="\*/[ \t]*\r?\n[ \t]*/\*\*"/>
+        <property name="fileExtensions" value="java"/>
+        <property name="message" value="检测到相邻的两段 Javadoc 块——上一段已悬空。请删除冗余的一段，或把 Javadoc 移到目标声明正上方。"/>
+    </module>
+
     <module name="TreeWalker">
         <module name="SuppressWarningsHolder"/>
 
@@ -320,6 +331,16 @@
             <property name="allowMissingReturnTag" value="false"/>
             <property name="validateThrows" value="true"/>
             <property name="allowedAnnotations" value="Override,Generated,GeneratedBy,Bean"/>
+        </module>
+
+        <!-- AtclauseOrder: Javadoc 块标签必须按 @param → @return → @throws → @see → @since
+             → @serial → @deprecated 顺序排列。理由：标准约定（JLS、Google Java Style、Oracle）
+             一致要求这一顺序，IDE / Javadoc 工具按此渲染，与签名读取顺序一致（先读入参再读出参）。
+             历史上出现过 `@return` 写在 `@param` 之前的批量生成代码，违反阅读直觉。 -->
+        <module name="AtclauseOrder">
+            <property name="id" value="javadoc_clause_order"/>
+            <property name="tagOrder" value="@param, @return, @throws, @exception, @see, @since, @serial, @serialField, @serialData, @deprecated"/>
+            <property name="target" value="CLASS_DEF, INTERFACE_DEF, ENUM_DEF, METHOD_DEF, CTOR_DEF, VARIABLE_DEF"/>
         </module>
     </module>
 </module>

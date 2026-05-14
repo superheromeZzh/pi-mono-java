@@ -297,16 +297,16 @@ public class Autocomplete implements Component, Focusable {
     }
 
     /**
+     * Parsed result of splitting a partial path into directory and filename prefix.
+     */
+    private record DirPrefix(Path dir, String prefix) {}
+
+    /**
      * Computes file path suggestions for the given partial path.
      *
      * @param partial the partial path the user has typed
      * @return matching path completions in display order
      */
-    /**
-     * Parsed result of splitting a partial path into directory and filename prefix.
-     */
-    private record DirPrefix(Path dir, String prefix) {}
-
     static List<String> computeFileSuggestions(String partial) {
         DirPrefix dp = parseDirPrefix(partial);
         if (!Files.isDirectory(dp.dir())) {
