@@ -9,6 +9,7 @@ import java.nio.file.Paths;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -163,9 +164,7 @@ public class ProcessAcpBackend implements SubAgentBackend {
     }
 
     private Process startProcess(OpenRequest request) {
-        List<String> argv = new ArrayList<>();
-        argv.add(config.command());
-        argv.addAll(config.args());
+        List<String> argv = buildArgv();
         ProcessBuilder pb = new ProcessBuilder(argv);
         if (request.cwd() != null && !request.cwd().isBlank()) {
             pb.directory(Paths.get(request.cwd()).toFile());
@@ -177,8 +176,36 @@ public class ProcessAcpBackend implements SubAgentBackend {
         try {
             return pb.start();
         } catch (IOException ex) {
-            throw new SubAgentException("ACP_SPAWN_FAILED", "failed to launch " + config.command(), ex);
+            throw new SubAgentException(
+                    "ACP_SPAWN_FAILED", "failed to launch " + config.command() + " (argv=" + argv + ")", ex);
         }
+    }
+
+    private List<String> buildArgv() {
+        List<String> argv = new ArrayList<>();
+
+        // On Windows, npm-installed tools (claude-code-acp, etc.) are .cmd shims.
+        // ProcessBuilder doesn't honor PATHEXT for bare names with arguments, so route
+        // anything that isn't an explicit .exe / .com through cmd.exe /c.
+        if (isWindows() && needsCmdWrapper(config.command())) {
+            argv.add("cmd.exe");
+            argv.add("/c");
+        }
+        argv.add(config.command());
+        argv.addAll(config.args());
+        return argv;
+    }
+
+    private static boolean isWindows() {
+        return System.getProperty("os.name", "").toLowerCase(Locale.ROOT).startsWith("windows");
+    }
+
+    private static boolean needsCmdWrapper(String command) {
+        if (command == null || command.isBlank()) {
+            return false;
+        }
+        String lower = command.toLowerCase(Locale.ROOT);
+        return !lower.endsWith(".exe") && !lower.endsWith(".com");
     }
 
     private RuntimeHandle requireHandle(SubAgentSession session) {
