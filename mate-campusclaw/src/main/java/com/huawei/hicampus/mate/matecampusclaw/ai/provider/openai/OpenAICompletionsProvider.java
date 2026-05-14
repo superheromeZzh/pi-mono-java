@@ -683,6 +683,7 @@ public class OpenAICompletionsProvider implements ApiProvider {
                         return str;
                     }
                 } catch (Exception ignored) {
+                    // best-effort string extraction — null return below signals "no usable text"
                 }
             }
         }

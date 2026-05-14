@@ -513,6 +513,7 @@ public class MistralProvider implements ApiProvider {
                 try {
                     args = MAPPER.readValue(arguments.toString(), new TypeReference<>() {});
                 } catch (Exception ignored) {
+                    // malformed tool-call JSON from upstream — fall back to empty args
                 }
             }
             return new ToolCall(id != null ? id : UUID.randomUUID().toString(), name != null ? name : "", args);

@@ -428,6 +428,7 @@ class ChatWebSocketHandlerTest {
                                         latch.countDown();
                                     }
                                 } catch (Exception ignored) {
+                                    // non-matching/non-JSON frame — keep waiting for the response
                                 }
                             })
                             .takeUntil(frame -> {

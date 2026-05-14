@@ -81,6 +81,7 @@ public class CustomModelLoader {
                 try {
                     modalities.add(InputModality.valueOf(m.toUpperCase(Locale.ROOT)));
                 } catch (IllegalArgumentException ignored) {
+                    // skip unknown modality string from settings.json — falls back to TEXT below
                 }
             }
         }
