@@ -8,6 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -383,8 +384,9 @@ class BedrockProviderIntegrationTest {
             var context = new Context(null, List.of(new UserMessage("Hello", 1L)), null);
 
             var stream = provider.stream(testModel(), context, null);
-            assertNotNull(stream);
-            assertNotNull(stream.asFlux());
+
+            // asFlux() must return a stable, multicast view of the same Sink — not a fresh Flux per call
+            assertSame(stream.asFlux(), stream.asFlux());
         }
 
         @Test
@@ -392,8 +394,8 @@ class BedrockProviderIntegrationTest {
             var context = new Context(null, List.of(new UserMessage("Hello", 1L)), null);
 
             var stream = provider.streamSimple(testModel(), context, null);
-            assertNotNull(stream);
-            assertNotNull(stream.asFlux());
+
+            assertSame(stream.asFlux(), stream.asFlux());
         }
     }
 

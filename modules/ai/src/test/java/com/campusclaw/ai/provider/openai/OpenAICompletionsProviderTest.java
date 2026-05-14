@@ -5,7 +5,7 @@
 package com.campusclaw.ai.provider.openai;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -334,7 +334,11 @@ class OpenAICompletionsProviderTest {
 
             var params = provider.buildParams(testModel(), context, null, null, null);
 
-            assertNotNull(params);
+            // Without overrides: model id propagates, maxCompletionTokens defaults to min(model.maxTokens, 32000)
+            assertEquals("gpt-4o", params.model().asString());
+            assertEquals(16384L, params.maxCompletionTokens().orElseThrow());
+            assertTrue(params.temperature().isEmpty());
+            assertTrue(params.tools().isEmpty());
         }
 
         @Test
@@ -343,16 +347,17 @@ class OpenAICompletionsProviderTest {
 
             var params = provider.buildParams(testModel(), context, 4096, null, null);
 
-            assertNotNull(params);
+            assertEquals(4096L, params.maxCompletionTokens().orElseThrow());
         }
 
         @Test
         void capsMaxTokensAt32000() {
-            // Model has maxTokens=16384 which is < 32000, so use model's value
+            // Model has maxTokens=16384 which is < 32000, so use model's value (no cap engaged)
             var context = new Context(null, List.of(new UserMessage("Hello", 1L)), null);
 
             var params = provider.buildParams(testModel(), context, null, null, null);
-            assertNotNull(params);
+
+            assertEquals(16384L, params.maxCompletionTokens().orElseThrow());
         }
 
         @Test
@@ -361,7 +366,7 @@ class OpenAICompletionsProviderTest {
 
             var params = provider.buildParams(testModel(), context, null, 0.7, null);
 
-            assertNotNull(params);
+            assertEquals(0.7, params.temperature().orElseThrow(), 0.0001);
         }
 
         @Test
@@ -372,7 +377,7 @@ class OpenAICompletionsProviderTest {
 
             var params = provider.buildParams(testModel(), context, null, null, null);
 
-            assertNotNull(params);
+            assertEquals(1, params.tools().orElseThrow().size());
         }
     }
 
@@ -408,10 +413,11 @@ class OpenAICompletionsProviderTest {
             var context = new Context(null, List.of(new UserMessage("Hello", 1L)), null);
             var options = StreamOptions.builder().apiKey("test-key").build();
 
-            // This will fail to connect but should return a stream
+            // Provider hands back a constructed stream synchronously; actual HTTP fires on subscription.
+            // asFlux() returns a stable, multicast view of the same Sink.
             var stream = provider.stream(testModel(), context, options);
-            assertNotNull(stream);
-            assertNotNull(stream.asFlux());
+
+            assertSame(stream.asFlux(), stream.asFlux());
         }
 
         @Test
@@ -420,8 +426,8 @@ class OpenAICompletionsProviderTest {
             var options = SimpleStreamOptions.builder().apiKey("test-key").build();
 
             var stream = provider.streamSimple(testModel(), context, options);
-            assertNotNull(stream);
-            assertNotNull(stream.asFlux());
+
+            assertSame(stream.asFlux(), stream.asFlux());
         }
     }
 }

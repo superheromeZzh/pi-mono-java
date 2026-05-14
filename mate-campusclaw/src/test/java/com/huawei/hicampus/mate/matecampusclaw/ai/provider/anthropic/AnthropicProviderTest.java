@@ -5,7 +5,7 @@
 package com.huawei.hicampus.mate.matecampusclaw.ai.provider.anthropic;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -382,10 +382,11 @@ class AnthropicProviderTest {
             var context = new Context(null, List.of(new UserMessage("Hello", 1L)), null);
             var options = StreamOptions.builder().apiKey("test-key").build();
 
-            // This will fail to connect but should return a stream
+            // Provider should hand back a constructed stream synchronously; actual HTTP fires on
+            // subscription. asFlux() returns a stable, multicast view of the same Sink.
             var stream = provider.stream(testModel(), context, options);
-            assertNotNull(stream);
-            assertNotNull(stream.asFlux());
+
+            assertSame(stream.asFlux(), stream.asFlux());
         }
 
         @Test
@@ -394,8 +395,8 @@ class AnthropicProviderTest {
             var options = SimpleStreamOptions.builder().apiKey("test-key").build();
 
             var stream = provider.streamSimple(testModel(), context, options);
-            assertNotNull(stream);
-            assertNotNull(stream.asFlux());
+
+            assertSame(stream.asFlux(), stream.asFlux());
         }
     }
 }

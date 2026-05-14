@@ -4,6 +4,7 @@
 
 package com.campusclaw.codingagent.skill;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -285,14 +286,12 @@ class SkillManagerTest {
 
         @Test
         void handlesNonExistentPath() {
-            // Should not throw
-            SkillManager.deleteRecursively(tempDir.resolve("does-not-exist"));
+            assertDoesNotThrow(() -> SkillManager.deleteRecursively(tempDir.resolve("does-not-exist")));
         }
 
         @Test
         void handlesNull() {
-            // Should not throw
-            SkillManager.deleteRecursively(null);
+            assertDoesNotThrow(() -> SkillManager.deleteRecursively(null));
         }
     }
 

@@ -7,7 +7,6 @@ package com.huawei.hicampus.mate.matecampusclaw.agent.event;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -76,9 +75,7 @@ class AgentEventTest {
 
         @Test
         void agentStartEventHasNoPayload() {
-            var event = new AgentStartEvent();
-
-            assertNotNull(event);
+            assertEquals(0, AgentStartEvent.class.getRecordComponents().length);
         }
 
         @Test
@@ -379,22 +376,33 @@ class AgentEventTest {
                 new ToolExecutionUpdateEvent("call-1", "search", Map.of("q", "java"), Map.of("progress", 50)),
                 new ToolExecutionEndEvent("call-1", "search", Map.of("items", 3), false));
 
-        for (var event : events) {
-            var type =
-                    switch (event) {
-                        case AgentStartEvent e -> "agent_start";
-                        case AgentEndEvent e -> "agent_end";
-                        case TurnStartEvent e -> "turn_start";
-                        case TurnEndEvent e -> "turn_end";
-                        case MessageStartEvent e -> "message_start";
-                        case MessageUpdateEvent e -> "message_update";
-                        case MessageEndEvent e -> "message_end";
-                        case ToolExecutionStartEvent e -> "tool_execution_start";
-                        case ToolExecutionUpdateEvent e -> "tool_execution_update";
-                        case ToolExecutionEndEvent e -> "tool_execution_end";
-                    };
+        List<String> types = events.stream()
+                .map(event -> switch (event) {
+                    case AgentStartEvent e -> "agent_start";
+                    case AgentEndEvent e -> "agent_end";
+                    case TurnStartEvent e -> "turn_start";
+                    case TurnEndEvent e -> "turn_end";
+                    case MessageStartEvent e -> "message_start";
+                    case MessageUpdateEvent e -> "message_update";
+                    case MessageEndEvent e -> "message_end";
+                    case ToolExecutionStartEvent e -> "tool_execution_start";
+                    case ToolExecutionUpdateEvent e -> "tool_execution_update";
+                    case ToolExecutionEndEvent e -> "tool_execution_end";
+                })
+                .toList();
 
-            assertNotNull(type);
-        }
+        assertEquals(
+                List.of(
+                        "agent_start",
+                        "agent_end",
+                        "turn_start",
+                        "turn_end",
+                        "message_start",
+                        "message_update",
+                        "message_end",
+                        "tool_execution_start",
+                        "tool_execution_update",
+                        "tool_execution_end"),
+                types);
     }
 }

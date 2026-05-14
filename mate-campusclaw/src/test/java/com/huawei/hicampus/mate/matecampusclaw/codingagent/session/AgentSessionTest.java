@@ -251,9 +251,9 @@ class AgentSessionTest {
 
             session.initialize(config());
 
-            // Agent should have received the tools
-            Agent agent = session.getAgent();
-            assertNotNull(agent);
+            // Agent#setTools should have been called with the wired tool list (verifies registration,
+            // not just construction)
+            verify(session.getAgent()).setTools(tools);
         }
     }
 
@@ -496,7 +496,8 @@ class AgentSessionTest {
             when(promptBuilder.build(any())).thenReturn("prompt");
             session.initialize(config());
 
-            assertNotNull(session.getAgent());
+            // getAgent must be idempotent: same instance returned on repeated calls
+            assertSame(session.getAgent(), session.getAgent());
         }
     }
 

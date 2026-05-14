@@ -7,7 +7,6 @@ package com.huawei.hicampus.mate.matecampusclaw.ai.types;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -255,16 +254,17 @@ class ContentBlockTest {
         ContentBlock thinking = new ThinkingContent("b");
         ContentBlock tool = new ToolCall("id", "name", Map.of());
 
-        // Pattern matching switch (Java 21) - verifies sealed permits
-        for (var block : List.of(text, image, thinking, tool)) {
-            var label =
-                    switch (block) {
-                        case TextContent t -> "text";
-                        case ImageContent i -> "image";
-                        case ThinkingContent th -> "thinking";
-                        case ToolCall tc -> "toolCall";
-                    };
-            assertNotNull(label);
-        }
+        // Pattern matching switch (Java 21) — verifies sealed permits cover every variant by
+        // returning the expected discriminator for each.
+        List<String> labels = List.of(text, image, thinking, tool).stream()
+                .map(block -> switch (block) {
+                    case TextContent t -> "text";
+                    case ImageContent i -> "image";
+                    case ThinkingContent th -> "thinking";
+                    case ToolCall tc -> "toolCall";
+                })
+                .toList();
+
+        assertEquals(List.of("text", "image", "thinking", "toolCall"), labels);
     }
 }

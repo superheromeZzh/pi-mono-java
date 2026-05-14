@@ -206,6 +206,39 @@ System.out.println("DEBUG: state = " + state);                      // 改 log.d
 
 **理由**：空 catch 是可观测性的最大单点漏洞——比 `printStackTrace`、比 `System.err.println` 都糟，因为后两者至少在 stderr 留下痕迹，空 catch 连这个都没有。即便确认异常无害，强制写注释也是廉价的"signed acknowledgement"，让六个月后维护此代码的人不必怀疑"这是不是 bug"。本仓 PR review 应当拒绝任何形如 `} catch (...) { }` 的新增——存量在引入规则时已清零，规则上锁防止回潮。
 
+### 测试代码必须存在真实断言，禁止虚假断言
+
+**规则**：测试方法里出现的 `assert*` / `assertThat(...)` 调用必须实际验证被测代码产生的值。语义上恒成立、不引用任何被测变量的「虚假断言」一律拒绝——它在 CI 上永远绿，看似有覆盖率实则什么都没测，是单测里最隐蔽的「无效资产」。
+
+**硬约束**（Checkstyle，build-failing；存量 0，规则上锁防止回潮）：
+
+| 规则 id | 命中 |
+|---|---|
+| `no_fake_assertion_constant` | `assertTrue(true)` / `assertFalse(false)` / `assertNull(null)`（含 2-arg 带 message 形式） |
+| `no_fake_assertion_self_compare` | `assert{Equals,Same,NotEquals,NotSame}(x, x)`——两侧字面完全相同（正则用 `\1` 反向引用严格匹配） |
+| `no_fake_assertion_assertj_literal` | `assertThat(true|false|null).is{True,False,Null,NotNull}` |
+
+| ✅ 正例 | ❌ 反例 |
+|---|---|
+| `assertEquals(expected, service.compute(input))` | `assertEquals(1, 1)` |
+| `assertTrue(result.isPresent())` | `assertTrue(true)` |
+| `assertThat(parsed.tokens()).hasSize(3)` | `assertThat(true).isTrue()` |
+| `assertNull(cache.get(missingKey))` | `assertNull(null)` |
+| `assertNotEquals(originalHash, mutatedHash)` | `assertNotEquals("a", "a")` |
+
+**覆盖范围**：`src/main` 与 `src/test/java` 都生效——生产代码里 `assertTrue(true)` 同样是 dead code（多半是误删条件后的残余）。`ignoreComments=true` 让 javadoc 举反例不被误判。
+
+**规则不覆盖**（靠 PR review + 覆盖率把关，不是放任）：
+- **`@Test` 方法整体没有任何断言**——Checkstyle 的正则难以稳健地跨越方法体大括号，但这是更严重的虚假测试。盘点命令：
+  ```bash
+  grep -rL 'assert\|verify\|fail(' modules/**/src/test/java --include='*.java'
+  ```
+  以及 review 时对每个新增 `@Test` 方法人工核实：是否对被测行为做了真实断言。
+- **语义弱断言**：`assertNotNull(new Foo())`、`verify(mock)` 未设期望——存在但无意义，review 时拒。
+- **断言用了被测代码自身的副产物**：`assertEquals(service.compute(x), service.compute(x))` 两次调用结果自比——绕过反向引用检测，但语义同样空洞，review 时拒。
+
+**理由**：虚假断言比缺单测更糟。缺单测时大家心里有数、覆盖率指标也会报警；虚假断言把覆盖率刷上去，给团队和审计者一个"已被测试"的假信号，问题真的发生时反而失去最关键的"测试早就该发现"那一层防御。AI 生成的测试代码尤其容易出 `assertTrue(true)` 这种占位——规则上锁是为了让这类提交在 build 阶段就被拦下，不进入 review 噪音。
+
 ### 日志消息禁用中文（含标点）
 
 **规则**：所有 SLF4J 日志调用——`log.trace/debug/info/warn/error`、`logger.log(...)`——的**消息模板字面量**不得包含中文字符或中文标点（`：，。、；！？""''（）【】《》`）。运行时拼进 `{}` 占位符的**变量值**（用户输入、文件内容、上游响应等）不在此规则范围——这些值本身不可控，规则只管模板。

@@ -124,8 +124,8 @@ class ReadToolTest {
 
             String text = extractText(result);
 
-            // Empty file still has one "line"
-            assertNotNull(text);
+            // Empty file still gets formatted as a single empty numbered line
+            assertEquals("     1\t", text);
         }
 
         @Test

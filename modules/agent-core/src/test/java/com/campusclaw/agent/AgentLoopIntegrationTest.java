@@ -7,7 +7,6 @@ package com.campusclaw.agent;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.ArrayList;
@@ -439,8 +438,9 @@ class AgentLoopIntegrationTest {
             // The future should complete (possibly exceptionally)
             future.handle((v, t) -> null).join();
 
-            // Agent should be in a clean state
-            assertNotNull(agent.getState());
+            // Agent should be in a clean state: streaming finished, no pending tool calls left over
+            assertFalse(agent.getState().isStreaming());
+            assertTrue(agent.getState().getPendingToolCalls().isEmpty());
         }
     }
 

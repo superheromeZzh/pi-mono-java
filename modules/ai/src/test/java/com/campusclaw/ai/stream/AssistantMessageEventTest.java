@@ -6,7 +6,6 @@ package com.campusclaw.ai.stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -401,23 +400,37 @@ class AssistantMessageEventTest {
                 new DoneEvent(StopReason.STOP, partial),
                 new ErrorEvent("error", partial));
 
-        for (var event : events) {
-            var label =
-                    switch (event) {
-                        case StartEvent e -> "start";
-                        case TextStartEvent e -> "text_start";
-                        case TextDeltaEvent e -> "text_delta";
-                        case TextEndEvent e -> "text_end";
-                        case ThinkingStartEvent e -> "thinking_start";
-                        case ThinkingDeltaEvent e -> "thinking_delta";
-                        case ThinkingEndEvent e -> "thinking_end";
-                        case ToolCallStartEvent e -> "toolcall_start";
-                        case ToolCallDeltaEvent e -> "toolcall_delta";
-                        case ToolCallEndEvent e -> "toolcall_end";
-                        case DoneEvent e -> "done";
-                        case ErrorEvent e -> "error";
-                    };
-            assertNotNull(label);
-        }
+        List<String> labels = events.stream()
+                .map(event -> switch (event) {
+                    case StartEvent e -> "start";
+                    case TextStartEvent e -> "text_start";
+                    case TextDeltaEvent e -> "text_delta";
+                    case TextEndEvent e -> "text_end";
+                    case ThinkingStartEvent e -> "thinking_start";
+                    case ThinkingDeltaEvent e -> "thinking_delta";
+                    case ThinkingEndEvent e -> "thinking_end";
+                    case ToolCallStartEvent e -> "toolcall_start";
+                    case ToolCallDeltaEvent e -> "toolcall_delta";
+                    case ToolCallEndEvent e -> "toolcall_end";
+                    case DoneEvent e -> "done";
+                    case ErrorEvent e -> "error";
+                })
+                .toList();
+
+        assertEquals(
+                List.of(
+                        "start",
+                        "text_start",
+                        "text_delta",
+                        "text_end",
+                        "thinking_start",
+                        "thinking_delta",
+                        "thinking_end",
+                        "toolcall_start",
+                        "toolcall_delta",
+                        "toolcall_end",
+                        "done",
+                        "error"),
+                labels);
     }
 }

@@ -4,6 +4,7 @@
 
 package com.huawei.hicampus.mate.matecampusclaw.tui;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -33,8 +34,7 @@ class ComponentTest {
         void handleInputDefaultDoesNothing() {
             Component component = new SimpleComponent("test");
 
-            // Should not throw
-            component.handleInput("a");
+            assertDoesNotThrow(() -> component.handleInput("a"));
         }
 
         @Test
