@@ -20,6 +20,7 @@ import com.huawei.hicampus.mate.matecampusclaw.agent.event.MessageUpdateEvent;
 import com.huawei.hicampus.mate.matecampusclaw.agent.event.TurnEndEvent;
 import com.huawei.hicampus.mate.matecampusclaw.agent.event.TurnStartEvent;
 import com.huawei.hicampus.mate.matecampusclaw.agent.queue.MessageQueue;
+import com.huawei.hicampus.mate.matecampusclaw.agent.subagent.acp.AcpTransport;
 import com.huawei.hicampus.mate.matecampusclaw.agent.tool.AgentContext;
 import com.huawei.hicampus.mate.matecampusclaw.agent.tool.AgentTool;
 import com.huawei.hicampus.mate.matecampusclaw.agent.tool.CancellationToken;
@@ -183,7 +184,26 @@ public class AgentLoop {
         if (assistantMessage == null) {
             throw new IllegalStateException("LLM stream completed without producing an assistant message");
         }
+        noteAssistant(assistantMessage, context.messages().size());
         return assistantMessage;
+    }
+
+    private static void noteAssistant(AssistantMessage msg, int messageCount) {
+        int textChars = 0;
+        int toolUses = 0;
+        int otherBlocks = 0;
+        for (var block : msg.content()) {
+            if (block instanceof TextContent tc) {
+                textChars += tc.text() == null ? 0 : tc.text().length();
+            } else if (block.getClass().getSimpleName().contains("ToolUse")) {
+                toolUses++;
+            } else {
+                otherBlocks++;
+            }
+        }
+        AcpTransport.note("AgentLoop.invokeModel returned: textChars=" + textChars
+                + " toolUses=" + toolUses + " otherBlocks=" + otherBlocks
+                + " stopReason=" + msg.stopReason() + " msgCountInCtx=" + messageCount);
     }
 
     private StreamConsumeResult consumeStream(

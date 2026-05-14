@@ -20,6 +20,7 @@ import com.campusclaw.agent.event.MessageUpdateEvent;
 import com.campusclaw.agent.event.TurnEndEvent;
 import com.campusclaw.agent.event.TurnStartEvent;
 import com.campusclaw.agent.queue.MessageQueue;
+import com.campusclaw.agent.subagent.acp.AcpTransport;
 import com.campusclaw.agent.tool.AgentContext;
 import com.campusclaw.agent.tool.AgentTool;
 import com.campusclaw.agent.tool.CancellationToken;
@@ -183,7 +184,26 @@ public class AgentLoop {
         if (assistantMessage == null) {
             throw new IllegalStateException("LLM stream completed without producing an assistant message");
         }
+        noteAssistant(assistantMessage, context.messages().size());
         return assistantMessage;
+    }
+
+    private static void noteAssistant(AssistantMessage msg, int messageCount) {
+        int textChars = 0;
+        int toolUses = 0;
+        int otherBlocks = 0;
+        for (var block : msg.content()) {
+            if (block instanceof TextContent tc) {
+                textChars += tc.text() == null ? 0 : tc.text().length();
+            } else if (block.getClass().getSimpleName().contains("ToolUse")) {
+                toolUses++;
+            } else {
+                otherBlocks++;
+            }
+        }
+        AcpTransport.note("AgentLoop.invokeModel returned: textChars=" + textChars
+                + " toolUses=" + toolUses + " otherBlocks=" + otherBlocks
+                + " stopReason=" + msg.stopReason() + " msgCountInCtx=" + messageCount);
     }
 
     private StreamConsumeResult consumeStream(
