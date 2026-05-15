@@ -11,10 +11,17 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
+import java.security.GeneralSecurityException;
+import java.security.cert.X509Certificate;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
+
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLParameters;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
 
 import com.huawei.hicampus.mate.matecampusclaw.agent.subagent.SubAgentBackend;
 import com.huawei.hicampus.mate.matecampusclaw.agent.subagent.SubAgentEvent;
@@ -70,10 +77,28 @@ public class A2aAgentBackend implements SubAgentBackend {
     }
 
     private static HttpClient defaultClient(A2aAgentConfig config) {
-        return HttpClient.newBuilder()
-                .connectTimeout(config.connectTimeout())
-                .version(HttpClient.Version.HTTP_1_1)
-                .build();
+        HttpClient.Builder builder =
+                HttpClient.newBuilder().connectTimeout(config.connectTimeout()).version(HttpClient.Version.HTTP_1_1);
+        if (config.insecureSkipVerify()) {
+            log.warn(
+                    "a2a backend '{}' has insecureSkipVerify=true; TLS verification disabled — DO NOT use in production",
+                    config.id());
+            applyInsecureSsl(builder);
+        }
+        return builder.build();
+    }
+
+    private static void applyInsecureSsl(HttpClient.Builder builder) {
+        try {
+            SSLContext context = SSLContext.getInstance("TLS");
+            context.init(null, new TrustManager[] {new TrustAllManager()}, new java.security.SecureRandom());
+            builder.sslContext(context);
+            SSLParameters params = new SSLParameters();
+            params.setEndpointIdentificationAlgorithm(null);
+            builder.sslParameters(params);
+        } catch (GeneralSecurityException ex) {
+            throw new IllegalStateException("failed to install insecure SSL context for a2a backend", ex);
+        }
     }
 
     @Override
@@ -153,13 +178,26 @@ public class A2aAgentBackend implements SubAgentBackend {
             A2aProtocol.parseAndEmit(response.body(), mapper, sink);
         } catch (IOException ex) {
             log.debug("a2a request failed for {}", session.keyString(), ex);
-            sink.tryEmitNext(new SubAgentEvent.Error("A2A_IO", ex.getMessage(), true));
+            sink.tryEmitNext(new SubAgentEvent.Error("A2A_IO", describe(ex), true));
             sink.tryEmitComplete();
         } catch (InterruptedException ex) {
             Thread.currentThread().interrupt();
-            sink.tryEmitNext(new SubAgentEvent.Error("A2A_INTERRUPTED", ex.getMessage(), false));
+            sink.tryEmitNext(new SubAgentEvent.Error("A2A_INTERRUPTED", describe(ex), false));
             sink.tryEmitComplete();
         }
+    }
+
+    private static String describe(Throwable ex) {
+        String msg = ex.getMessage();
+        if (msg != null && !msg.isBlank()) {
+            return ex.getClass().getSimpleName() + ": " + msg;
+        }
+        Throwable cause = ex.getCause();
+        if (cause != null && cause.getMessage() != null && !cause.getMessage().isBlank()) {
+            return ex.getClass().getSimpleName() + " caused by "
+                    + cause.getClass().getSimpleName() + ": " + cause.getMessage();
+        }
+        return ex.getClass().getSimpleName() + " (no message)";
     }
 
     private HttpRequest buildRequest(String text, Handle handle, Sinks.Many<SubAgentEvent> sink) {
@@ -199,4 +237,21 @@ public class A2aAgentBackend implements SubAgentBackend {
     }
 
     private record Handle(String model) {}
+
+    private static final class TrustAllManager implements X509TrustManager {
+        @Override
+        public void checkClientTrusted(X509Certificate[] chain, String authType) {
+            // intentional no-op: insecureSkipVerify trusts every client cert
+        }
+
+        @Override
+        public void checkServerTrusted(X509Certificate[] chain, String authType) {
+            // intentional no-op: insecureSkipVerify trusts every server cert
+        }
+
+        @Override
+        public X509Certificate[] getAcceptedIssuers() {
+            return new X509Certificate[0];
+        }
+    }
 }

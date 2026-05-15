@@ -225,6 +225,18 @@ class A2aAgentBackendTest {
                 .isEqualTo("override-model");
     }
 
+    @Test
+    void insecureSkipVerifyBuildsClientWithoutThrowing() {
+        // We can't easily set up a self-signed TLS server in unit test scope, so we just verify the
+        // construction path with insecureSkipVerify=true doesn't throw and the backend is usable
+        // against the plain-HTTP mock server (since the insecure SSL context only affects HTTPS).
+        URI base = URI.create("http://127.0.0.1:" + server.getAddress().getPort() + "/v1/a2a/request");
+        A2aAgentConfig config = new A2aAgentConfig(
+                "test-a2a-insecure", base, "X", "h", "k", null, Duration.ofSeconds(2L), Duration.ofSeconds(5L), true);
+        var backend = new A2aAgentBackend(config, mapper);
+        assertThat(backend.id()).isEqualTo("test-a2a-insecure");
+    }
+
     private A2aAgentBackend newBackend(String agentName, String hwId, String hwAppKey, String defaultModel) {
         URI base = URI.create("http://127.0.0.1:" + server.getAddress().getPort() + "/v1/a2a/request");
         A2aAgentConfig config = new A2aAgentConfig(
@@ -235,7 +247,8 @@ class A2aAgentBackendTest {
                 hwAppKey,
                 defaultModel,
                 Duration.ofSeconds(2L),
-                Duration.ofSeconds(5L));
+                Duration.ofSeconds(5L),
+                false);
         return new A2aAgentBackend(config, mapper);
     }
 

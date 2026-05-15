@@ -161,7 +161,8 @@ public class SubAgentAutoConfiguration {
                 spec.getHwAppKey(),
                 spec.getModel(),
                 spec.getConnectTimeout(),
-                spec.getRequestTimeout());
+                spec.getRequestTimeout(),
+                spec.isInsecureSkipVerify());
         return new A2aAgentBackend(config, mapper);
     }
 }

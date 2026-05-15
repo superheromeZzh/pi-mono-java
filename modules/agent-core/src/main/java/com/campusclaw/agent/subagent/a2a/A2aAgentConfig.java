@@ -25,6 +25,11 @@ import java.time.Duration;
  *     from {@code OpenRequest.model()} take precedence when present
  * @param connectTimeout TCP/TLS connect timeout
  * @param requestTimeout per-call request timeout
+ * @param insecureSkipVerify when {@code true} the HTTPS client trusts every certificate and skips
+ *     hostname verification — intended for PoC against internal endpoints whose CA is not yet in
+ *     the JDK truststore. NEVER enable in production; prefer installing the corporate CA into
+ *     {@code $JAVA_HOME/lib/security/cacerts} or pointing {@code javax.net.ssl.trustStore} at a
+ *     dedicated keystore
  *
  * @version [br_eCampusCore 25.1.0_Next, 2026/05/15]
  * @since [br_eCampusCore 25.1.0_Next]
@@ -37,7 +42,8 @@ public record A2aAgentConfig(
         String hwAppKey,
         String defaultModel,
         Duration connectTimeout,
-        Duration requestTimeout) {
+        Duration requestTimeout,
+        boolean insecureSkipVerify) {
 
     public A2aAgentConfig {
         if (id == null || id.isBlank()) {
