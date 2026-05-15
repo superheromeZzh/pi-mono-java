@@ -371,3 +371,93 @@ mvnw.cmd verify
 ./campusclaw.sh --rebuild -m glm-5      # macOS / Linux
 campusclaw.bat --rebuild -m glm-5       # Windows
 ```
+
+## 工程经验沉淀：跨平台子进程 + 流式 IO 调试
+
+> 这一章记录 2026-05 月 spawn_agent 工具在 Windows 上"子 agent 有输出、主 agent 不出答案"的完整定位过程沉淀下来的工程经验，按"症状 → 误判 → 根因 → 修复"四段写。每条经验后面挂的是它对应的 PR / commit，方便回溯当时改了什么。**不只针对 spawn_agent**——任何在 JVM 里管子进程 + stdio pipe + Reactor 流的代码都可能踩同样的坑。
+
+### 经验 1：Windows 上 `process.destroy()` 不杀子进程树
+
+**症状**：JVM 调 `process.destroy()` 后子进程"死了"，但被它派生的孙子进程仍然活着，继续持有 stdin/stdout pipe handle。
+
+**为什么**：`ProcessBuilder` 在 Windows 上启动 npm 安装的 CLI（如 `claude-code-acp`）时实际启动的是 `cmd.exe /c <name>.cmd ...`——cmd.exe 是 wrapper，`.cmd` shim 内部又派生出真正干活的 node.js。Windows 没有 POSIX 那样的"进程组级 SIGTERM"，`process.destroy()` 只发 `TerminateProcess`，**只杀 cmd.exe 这一个进程**。cmd.exe 一死，OS 层的 parent-child 关系断裂，node.js 成为孤儿（被 init/system 接管），继续持有从 cmd.exe 继承来的 pipe handle。
+
+**误判**：先调 `process.descendants().forEach(destroyForcibly)` 兜底——结果：cmd.exe 死了之后 `descendants()` 返回**空**。
+
+**修复**：**snapshot `descendants()` 必须在 destroy parent 之前做**，然后一次性 `destroyForcibly` 整树，再 `waitFor` + `ProcessHandle.onExit().get(timeout)` 等所有进程真正退完。
+
+参考实现：`modules/agent-core/.../ProcessAcpBackend.java#destroyTree`。引入于 PR #74（commit `2e3ac9e0`）。
+
+### 经验 2：Windows JDK `PipeInputStream.close()` 与 `BufferedReader.readLine()` 死锁
+
+**症状**：在另一个线程上对正被 `readLine()` 阻塞读取的 pipe 调用 `close()`，**调用方挂死**——但只在 Windows 上挂死，macOS / Linux 立即返回。
+
+**为什么**：POSIX `close(fd)` 让所有同时在 read 的线程立刻拿到 `IOException / EBADF`。Windows JDK 的 `PipeInputStream.close()` 实现选了相反的语义：**等 pending read 完成才返回**。reader 等不到数据 / EOF，close 等不到 read 完成——经典互锁。
+
+**关键的"为什么"在 POSIX 上没事**：Linux/macOS 上 close 是单向解锁；Windows JDK 这条路径选了和 NIO Channel 等组件不同的语义，且没有公开的 timeout 旋钮可调。
+
+**修复有两层**，配合使用：
+
+1. **治本顺序**：在 close 流之前先杀进程树（见经验 1）让 pipe write-end 在 OS 层关闭、reader 的 `readLine` 拿到 EOF 自然退出，**然后**调 `client.close → transport.close → input.close`——此时没有 pending read，close 立即返回。引入于 PR #73（`c52c60a9`）+ PR #74（`2e3ac9e0`）。
+2. **防御性兜底**：`AcpTransport.close()` 把 `input.close()` / `output.close()` 移到守护虚拟线程上跑，调用者立即返回。万一未来 shim 派生模式变化漏掉某个孙子进程，agent loop 也不会被 close 冻住。引入于 PR #74。
+
+参考实现：`modules/agent-core/.../AcpTransport.java#close`。
+
+### 经验 3：Reactor `Sinks.Many.multicast()` 的跨线程 emit 不保证顺序
+
+**症状**：reader 线程持续 emit `TextDelta` 流式片段，prompt 线程在 RPC 响应回来后 emit `Done` 收尾。下游用 `.takeUntil(Done)` 截断 Flux——**偶发**最后一段 `TextDelta` 被截掉（在 Mac 上几乎不复现，Windows 上稳定复现）。
+
+**为什么**：`multicast().onBackpressureBuffer` 不是 serialized sink——两个线程同时 `tryEmitNext` 会有一个 `FAIL_NON_SERIALIZED`，默认行为是**静默丢事件**。即便用 `busyLooping` retry handler 解决了"丢事件"，仍然解决不了"乱序"：prompt 线程的 emit 完全可能比 reader 线程**最后一个** TextDelta 先到下游。`takeUntil(Done)` 看到 Done 就关流，已经在 reader 线程 buffer 里、还没到下游的 TextDelta 就被丢了。
+
+**误判一**：以为 busy-loop retry 已经修好（commit `e00bf4c9`）——retry 只解决并发**emit 失败**，不解决**到达顺序**。
+
+**误判二**：以为 Windows 不丢事件就行——其实 Mac 上同样存在竞态，只是调度宽松没暴露。
+
+**修复**：把 `Done` 的合成与 emit 从 prompt 线程**搬到 reader 线程**——在 `AcpClient.handleResponse()` 收到 `session/prompt` 响应时，**同一线程**顺序地 emit 完所有 TextDelta、紧接着 emit Done。物理消除竞态，而不是靠 retry 打补丁。引入于 PR #71（`2b51c9e6`）。
+
+参考实现：`modules/agent-core/.../AcpClient.java#handleResponse`。
+
+**普适教训**：跨线程共享 Reactor `Sinks.Many` 时，要么严格"单 producer 线程"，要么用 `Sinks.unsafe().many()` + 显式 lock，要么改 `Sinks.one().asMono()` 那种天然单值语义的 sink。**multicast sink 不替你处理 producer 间的顺序**。
+
+### 经验 4：流式异步链路的可观测性——日志吃不到的时候怎么排查
+
+**症状**：bug 只在 Windows 上复现，TUI 界面又把 logback console 输出吞掉，env var 在 Windows shell 之间传递也不可靠，远程协作时拿不到任何诊断信息。`log.debug` / `log.info` 的开关根本没机会生效。
+
+**解决方案**（演进过的，按顺序）：
+
+1. **绕开 logback，写专用 trace 文件**——`AcpTransport` 在静态初始化时打开 `~/.campusclaw/acp-trace.jsonl`，每次 JVM 启动 TRUNCATE 重写。默认开启，关掉用 `CAMPUSCLAW_ACP_TRACE=0` 或 `-Dcampusclaw.acp.trace=0`。文件存在本身证明 JVM 跑了。引入于 `9a5b06fc`、`876d07e9`、`5a0bc9d8`。
+2. **结构化 trace + 自由文本 marker 并存**——`>`/`<` 前缀记原始 JSON-RPC envelope，`#` 前缀的 `AcpTransport.note()` 静态方法供 `AcpClient` / `SpawnAgentTool` / `AgentLoop` / `ProcessAcpBackend` 在关键路径上插**人类可读的 checkpoint**。`grep '^#'` 直接拉出全链路里程碑。
+3. **在每个跨线程 / 跨进程 / 跨阶段边界都埋一个 note**——一次定位失败之后**补 trace 而不是补 log**。Windows 上拉个 jstack 是大工程；拉一份 jsonl 是 Ctrl+C。本仓常用埋点位置：`AcpClient.emit/emit-done`、`SpawnAgentTool.recv/done`、`AgentLoop.turn=N start/runToolPhase/invokeModel returned`、`ProcessAcpBackend.close/destroyTree`、`AcpTransport.close streams closed`。引入于 PR #72（`2d4ac8b1`）+ commit `343eaf81`、`85cd54fd`、`ed6018fc`。
+4. **每条 note 自带"我是谁"**——`SpawnAgentTool.done stopReason=END_TURN transcriptLen=776 thoughtLen=2989` 这种**带量级**的标记一次性告诉读者数据走到哪一步、还有多少。一行胜过五行通用日志。
+
+参考实现：`modules/agent-core/.../AcpTransport.java#openTrace`、`#note`。
+
+### 经验 5：bug 定位方法论——按"trace 最后一行"反推
+
+这一次定位经历了四次方向修正：
+
+| 阶段 | trace 末尾的关键标记 | 当时判断 | 实际情况 |
+|---|---|---|---|
+| 1 | `AcpClient.emit-done Done` 之后没 `SpawnAgentTool.recv Done` | Reactor sink 丢事件 | ✓ 确认（PR #71 修） |
+| 2 | trace 跑到了 `SpawnAgentTool.done transcriptLen=776`，但**没有** `invokeModel returned` | 主 LLM 沉默 | ✗ 误判——实际是 AgentLoop 没进入下一轮 |
+| 3 | 末尾停在 `AcpClient.close events.emitComplete done` | `input.close` 死锁（PR #73 调换 close 顺序） | 部分正确，但 PR #73 不够 |
+| 4 | 同一行 + 用户在 Windows 没看到 `process.destroy pid=` | cmd.exe wrapper 留孤儿（PR #74 修） | ✓ 真根因 |
+
+**通用做法**：
+
+- **每一轮根据 trace 末尾最后一条 note 反推 hang 点**，对照源码看下一条预期 note 应该出现在哪儿、为什么没出现。
+- **每次定位失败先补 trace 再继续**——别在原假设上反复加猜测。每次"为什么我以为该出现的标记没出现"都是一次方向修正的信号。
+- **不要执着于一次性修对**——四次迭代里前两次的修复方向都不完整，但每次都把不确定范围缩小一半，最后定位到 OS 级的 pipe / process 语义就不再有歧义了。
+
+### 经验 6：每条规则背后都要写下"为什么不能简化"
+
+修这类 bug 时容易产生"为什么不能直接……？"的诱惑。把每个被验证过的反例记下来，下次同事或自己再问的时候有据可查：
+
+| 想偷的懒 | 为什么不行 |
+|---|---|
+| "直接同步 `input.close()` 不就行了" | Windows JDK PipeInputStream.close 等 pending read 完成，会死锁（经验 2） |
+| "在 `process.destroy()` 后再调 `process.descendants()` 不就拿到子进程列表了吗" | parent 死后 OS 层 parent-child link 断了，返回空（经验 1） |
+| "Reactor sink 加个 `RETRY_NON_SERIALIZED` 不就稳了" | 解决丢事件不解决乱序（经验 3） |
+| "用 `log.debug` 排查 Windows 上的问题" | TUI 吃日志、env 传递不稳定、`-Dlog.level` 经常忘配（经验 4） |
+| "用 `cmd.exe` 包一层兼容 .cmd shim 不就好了" | 引入 wrapper 进程，destroy 杀不彻底——孤儿子进程是后面所有问题的源头（经验 1） |
+| "spawn_agent 工具不再卡死就行" | 同根因下任何**进程 + pipe + 多线程**组合都会触发，不是 spawn_agent 专属——经验要按通用原则沉淀（本章存在的原因） |
