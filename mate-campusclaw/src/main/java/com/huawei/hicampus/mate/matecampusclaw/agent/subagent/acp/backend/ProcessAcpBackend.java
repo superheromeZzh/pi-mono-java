@@ -113,8 +113,16 @@ public class ProcessAcpBackend implements SubAgentBackend {
             handles.put(key.asString(), new RuntimeHandle(process, client, stderr));
             return new SubAgentSession(key, runtimeSessionId, this);
         } catch (RuntimeException ex) {
-            client.close();
+            // Same Windows-pipe ordering rule as close(SubAgentSession,…): kill the child first so
+            // the reader thread's readLine sees EOF, then close the client so input.close doesn't
+            // deadlock on a pending read.
             process.destroyForcibly();
+            try {
+                process.waitFor(2L, java.util.concurrent.TimeUnit.SECONDS);
+            } catch (InterruptedException ie) {
+                Thread.currentThread().interrupt();
+            }
+            client.close();
             throw enrich(ex, process, stderr);
         }
     }
@@ -192,6 +200,37 @@ public class ProcessAcpBackend implements SubAgentBackend {
             AcpTransport.note("ProcessAcpBackend.close handle=null, return");
             return;
         }
+
+        // ORDER MATTERS ON WINDOWS:
+        // 1) destroy the child process FIRST so its stdout/stderr pipe write-end is closed by the
+        //    OS — JVM-side PipeInputStream then sees EOF, BufferedReader.readLine() in the ACP
+        //    reader thread returns null and the reader exits naturally.
+        // 2) THEN call AcpClient.close() (which calls AcpTransport.close → input.close).
+        //    With the reader no longer blocked on readLine, input.close has no pending read to
+        //    wait on and returns immediately.
+        // Previously the order was client.close → process.destroy. On Windows JDK,
+        // PipeInputStream.close() waits for any pending read to complete; the pending readLine
+        // can only complete after the pipe sees EOF — which only happens after the child dies.
+        // Result: deadlock inside AcpTransport.close, the tool thread never returns, AgentLoop
+        // never progresses to the next invokeModel.
+        Process process = handle.process;
+        AcpTransport.note(
+                "ProcessAcpBackend.close process.destroy pid=" + process.pid() + " alive=" + process.isAlive());
+        process.destroy();
+        try {
+            boolean exited = process.waitFor(2L, java.util.concurrent.TimeUnit.SECONDS);
+            AcpTransport.note("ProcessAcpBackend.close waitFor(destroy) exited=" + exited);
+            if (!exited) {
+                AcpTransport.note("ProcessAcpBackend.close destroyForcibly descendants");
+                process.descendants().forEach(ProcessHandle::destroyForcibly);
+                process.destroyForcibly();
+                boolean forced = process.waitFor(2L, java.util.concurrent.TimeUnit.SECONDS);
+                AcpTransport.note("ProcessAcpBackend.close waitFor(destroyForcibly) exited=" + forced);
+            }
+        } catch (InterruptedException ex) {
+            Thread.currentThread().interrupt();
+            process.destroyForcibly();
+        }
         try {
             AcpTransport.note("ProcessAcpBackend.close calling AcpClient.close");
             handle.client.close();
@@ -199,23 +238,6 @@ public class ProcessAcpBackend implements SubAgentBackend {
         } catch (RuntimeException ex) {
             AcpTransport.note("ProcessAcpBackend.close AcpClient.close threw: " + ex);
             log.debug("client close failed: {}", ex.toString());
-        }
-        Process process = handle.process;
-        AcpTransport.note(
-                "ProcessAcpBackend.close process.destroy pid=" + process.pid() + " alive=" + process.isAlive());
-        process.destroy();
-        try {
-            boolean exited = process.waitFor(5L, java.util.concurrent.TimeUnit.SECONDS);
-            AcpTransport.note("ProcessAcpBackend.close waitFor returned exited=" + exited);
-            if (!exited) {
-                AcpTransport.note("ProcessAcpBackend.close destroyForcibly descendants");
-                process.descendants().forEach(ProcessHandle::destroyForcibly);
-                process.destroyForcibly();
-                AcpTransport.note("ProcessAcpBackend.close destroyForcibly done");
-            }
-        } catch (InterruptedException ex) {
-            Thread.currentThread().interrupt();
-            process.destroyForcibly();
         }
         AcpTransport.note("ProcessAcpBackend.close exit");
     }
