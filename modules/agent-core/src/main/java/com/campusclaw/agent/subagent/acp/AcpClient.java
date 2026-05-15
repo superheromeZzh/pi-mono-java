@@ -145,11 +145,15 @@ public class AcpClient implements AutoCloseable {
 
     @Override
     public void close() {
+        AcpTransport.note("AcpClient.close enter pendingCount=" + pending.size());
         events.emitComplete(RETRY_NON_SERIALIZED);
+        AcpTransport.note("AcpClient.close events.emitComplete done");
         transport.close();
+        AcpTransport.note("AcpClient.close transport.close done");
         pending.values().forEach(p -> p.future()
                 .completeExceptionally(new SubAgentException("ACP_CLOSED", "transport closed")));
         pending.clear();
+        AcpTransport.note("AcpClient.close exit");
     }
 
     private AcpProtocol.Envelope call(String method, Object params, Duration timeout) {
