@@ -41,10 +41,11 @@ import reactor.core.publisher.Sinks;
  * }
  * }</pre>
  *
- * <p>Response result text is extracted from the first available of:
- * {@code result.parts[].text} → {@code result.status.message.parts[].text} →
- * {@code result.artifacts[].parts[].text}, so the parser tolerates either a bare
- * {@code Message} or a {@code Task} envelope.
+ * <p>Response result text is extracted by treating {@code result} as either a bare {@code Message}
+ * (with a top-level {@code parts}) or as a {@code Task} candidate. Two Task locations are probed:
+ * {@code result} itself (standard A2A) and {@code result.task} (Huawei mate-service nests the Task
+ * under an extra {@code task} field). For each Task candidate, {@code status.message.parts[].text}
+ * is tried first, then {@code artifacts[].parts[].text}.
  *
  * @version [br_eCampusCore 25.1.0_Next, 2026/05/15]
  * @since [br_eCampusCore 25.1.0_Next]
@@ -170,19 +171,32 @@ public final class A2aProtocol {
     private static List<String> extractTexts(JsonNode result) {
         List<String> out = new ArrayList<>();
         collectPartTexts(result.get("parts"), out);
-        if (out.isEmpty()) {
-            JsonNode statusMessage = result.path("status").path("message");
-            collectPartTexts(statusMessage.get("parts"), out);
+        if (!out.isEmpty()) {
+            return out;
         }
-        if (out.isEmpty()) {
-            JsonNode artifacts = result.get("artifacts");
-            if (artifacts != null && artifacts.isArray()) {
-                for (JsonNode artifact : artifacts) {
-                    collectPartTexts(artifact.get("parts"), out);
-                }
+        tryExtractTaskTexts(result, out);
+        if (!out.isEmpty()) {
+            return out;
+        }
+        tryExtractTaskTexts(result.get("task"), out);
+        return out;
+    }
+
+    private static void tryExtractTaskTexts(JsonNode taskNode, List<String> out) {
+        if (taskNode == null || taskNode.isNull() || !taskNode.isObject()) {
+            return;
+        }
+        JsonNode statusMessage = taskNode.path("status").path("message");
+        collectPartTexts(statusMessage.get("parts"), out);
+        if (!out.isEmpty()) {
+            return;
+        }
+        JsonNode artifacts = taskNode.get("artifacts");
+        if (artifacts != null && artifacts.isArray()) {
+            for (JsonNode artifact : artifacts) {
+                collectPartTexts(artifact.get("parts"), out);
             }
         }
-        return out;
     }
 
     private static void collectPartTexts(JsonNode parts, List<String> out) {

@@ -109,6 +109,42 @@ class A2aAgentBackendTest {
     }
 
     @Test
+    void extractsTextFromMateServiceTaskWrapper() throws Exception {
+        // mate-service nests the standard A2A Task under result.task instead of using result
+        // directly. Verify we drill into that extra layer.
+        responder.set((exchange, body) -> respondJson(
+                exchange,
+                200,
+                Map.of(
+                        "jsonrpc", "2.0",
+                        "id", body.path("id").asText(),
+                        "result",
+                                Map.of(
+                                        "task",
+                                        Map.of(
+                                                "status",
+                                                Map.of("state", "completed"),
+                                                "artifacts",
+                                                List.of(Map.of(
+                                                        "parts",
+                                                        List.of(Map.of("text", "answer from mate-service")))))))));
+
+        var backend = newBackend("X", "h", "k", null);
+        SubAgentSession session = backend.open(
+                new SubAgentBackend.OpenRequest("main", null, null, null, Map.of(), Duration.ofSeconds(30L)));
+
+        List<SubAgentEvent> events = new ArrayList<>();
+        CountDownLatch done = new CountDownLatch(1);
+        backend.prompt(session, "q", new CancellationToken())
+                .subscribe(events::add, err -> done.countDown(), done::countDown);
+
+        assertThat(done.await(5L, TimeUnit.SECONDS)).isTrue();
+        assertThat(events)
+                .anyMatch(e ->
+                        e instanceof SubAgentEvent.TextDelta td && td.text().equals("answer from mate-service"));
+    }
+
+    @Test
     void extractsTextFromTaskArtifactsWhenResultHasNoDirectParts() throws Exception {
         responder.set((exchange, body) -> respondJson(
                 exchange,
