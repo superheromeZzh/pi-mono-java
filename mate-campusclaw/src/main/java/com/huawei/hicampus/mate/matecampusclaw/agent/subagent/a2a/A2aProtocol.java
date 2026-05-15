@@ -41,11 +41,11 @@ import reactor.core.publisher.Sinks;
  * }
  * }</pre>
  *
- * <p>Response result text is extracted by treating {@code result} as either a bare {@code Message}
- * (with a top-level {@code parts}) or as a {@code Task} candidate. Two Task locations are probed:
- * {@code result} itself (standard A2A) and {@code result.task} (Huawei mate-service nests the Task
- * under an extra {@code task} field). For each Task candidate, {@code status.message.parts[].text}
- * is tried first, then {@code artifacts[].parts[].text}.
+ * <p>Response result extraction follows the A2A {@code SendMessageResponse} oneof:
+ * {@code result.task} (Task payload) or {@code result.message} (Message payload). Within Task,
+ * text is pulled from artifacts → status.message → top-level parts in that order. As a
+ * permissive fallback the same paths are also tried directly off {@code result} for
+ * implementations that omit the oneof discriminator.
  *
  * @version [br_eCampusCore 25.1.0_Next, 2026/05/15]
  * @since [br_eCampusCore 25.1.0_Next]
@@ -146,7 +146,7 @@ public final class A2aProtocol {
             String fallback = renderFallback(result, mapper);
             log.warn(
                     "a2a response did not match any known text-extraction path "
-                            + "(tried result.parts / result.status.message.parts / result.artifacts[].parts); "
+                            + "(tried result.task.*, result.message.parts, and bare result.* shapes); "
                             + "raw result: {}",
                     fallback);
             sink.tryEmitNext(new SubAgentEvent.TextDelta(SubAgentEvent.Stream.OUTPUT, fallback));
@@ -170,32 +170,34 @@ public final class A2aProtocol {
 
     private static List<String> extractTexts(JsonNode result) {
         List<String> out = new ArrayList<>();
-        collectPartTexts(result.get("parts"), out);
-        if (!out.isEmpty()) {
-            return out;
+        JsonNode taskNode = result.get("task");
+        if (taskNode != null && !taskNode.isNull()) {
+            collectFromTask(taskNode, out);
         }
-        tryExtractTaskTexts(result, out);
-        if (!out.isEmpty()) {
-            return out;
+        if (out.isEmpty()) {
+            JsonNode messageNode = result.get("message");
+            if (messageNode != null && !messageNode.isNull()) {
+                collectPartTexts(messageNode.get("parts"), out);
+            }
         }
-        tryExtractTaskTexts(result.get("task"), out);
+        if (out.isEmpty()) {
+            collectFromTask(result, out);
+        }
         return out;
     }
 
-    private static void tryExtractTaskTexts(JsonNode taskNode, List<String> out) {
-        if (taskNode == null || taskNode.isNull() || !taskNode.isObject()) {
-            return;
-        }
-        JsonNode statusMessage = taskNode.path("status").path("message");
-        collectPartTexts(statusMessage.get("parts"), out);
-        if (!out.isEmpty()) {
-            return;
-        }
-        JsonNode artifacts = taskNode.get("artifacts");
+    private static void collectFromTask(JsonNode task, List<String> out) {
+        JsonNode artifacts = task.get("artifacts");
         if (artifacts != null && artifacts.isArray()) {
             for (JsonNode artifact : artifacts) {
                 collectPartTexts(artifact.get("parts"), out);
             }
+        }
+        if (out.isEmpty()) {
+            collectPartTexts(task.path("status").path("message").get("parts"), out);
+        }
+        if (out.isEmpty()) {
+            collectPartTexts(task.get("parts"), out);
         }
     }
 

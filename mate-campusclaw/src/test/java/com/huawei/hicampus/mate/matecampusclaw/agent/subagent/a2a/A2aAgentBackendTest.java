@@ -109,9 +109,8 @@ class A2aAgentBackendTest {
     }
 
     @Test
-    void extractsTextFromMateServiceTaskWrapper() throws Exception {
-        // mate-service nests the standard A2A Task under result.task instead of using result
-        // directly. Verify we drill into that extra layer.
+    void extractsTextFromTaskArtifactsCanonicalShape() throws Exception {
+        // Canonical A2A spec shape: result.task.artifacts[].parts[].text (mate-service uses this).
         responder.set((exchange, body) -> respondJson(
                 exchange,
                 200,
@@ -125,39 +124,7 @@ class A2aAgentBackendTest {
                                                 "status",
                                                 Map.of("state", "completed"),
                                                 "artifacts",
-                                                List.of(Map.of(
-                                                        "parts",
-                                                        List.of(Map.of("text", "answer from mate-service")))))))));
-
-        var backend = newBackend("X", "h", "k", null);
-        SubAgentSession session = backend.open(
-                new SubAgentBackend.OpenRequest("main", null, null, null, Map.of(), Duration.ofSeconds(30L)));
-
-        List<SubAgentEvent> events = new ArrayList<>();
-        CountDownLatch done = new CountDownLatch(1);
-        backend.prompt(session, "q", new CancellationToken())
-                .subscribe(events::add, err -> done.countDown(), done::countDown);
-
-        assertThat(done.await(5L, TimeUnit.SECONDS)).isTrue();
-        assertThat(events)
-                .anyMatch(e ->
-                        e instanceof SubAgentEvent.TextDelta td && td.text().equals("answer from mate-service"));
-    }
-
-    @Test
-    void extractsTextFromTaskArtifactsWhenResultHasNoDirectParts() throws Exception {
-        responder.set((exchange, body) -> respondJson(
-                exchange,
-                200,
-                Map.of(
-                        "jsonrpc", "2.0",
-                        "id", body.path("id").asText(),
-                        "result",
-                                Map.of(
-                                        "status",
-                                        Map.of("state", "completed"),
-                                        "artifacts",
-                                        List.of(Map.of("parts", List.of(Map.of("text", "from artifact"))))))));
+                                                List.of(Map.of("parts", List.of(Map.of("text", "from artifact")))))))));
 
         var backend = newBackend("X", "h", "k", null);
         SubAgentSession session = backend.open(
@@ -172,6 +139,32 @@ class A2aAgentBackendTest {
         assertThat(events)
                 .anyMatch(e ->
                         e instanceof SubAgentEvent.TextDelta td && td.text().equals("from artifact"));
+    }
+
+    @Test
+    void extractsTextFromResultMessageShape() throws Exception {
+        // A2A spec Message payload variant: result.message.parts[].text.
+        responder.set((exchange, body) -> respondJson(
+                exchange,
+                200,
+                Map.of(
+                        "jsonrpc", "2.0",
+                        "id", body.path("id").asText(),
+                        "result", Map.of("message", Map.of("parts", List.of(Map.of("text", "direct msg")))))));
+
+        var backend = newBackend("X", "h", "k", null);
+        SubAgentSession session = backend.open(
+                new SubAgentBackend.OpenRequest("main", null, null, null, Map.of(), Duration.ofSeconds(30L)));
+
+        List<SubAgentEvent> events = new ArrayList<>();
+        CountDownLatch done = new CountDownLatch(1);
+        backend.prompt(session, "q", new CancellationToken())
+                .subscribe(events::add, err -> done.countDown(), done::countDown);
+
+        assertThat(done.await(5L, TimeUnit.SECONDS)).isTrue();
+        assertThat(events)
+                .anyMatch(e ->
+                        e instanceof SubAgentEvent.TextDelta td && td.text().equals("direct msg"));
     }
 
     @Test
