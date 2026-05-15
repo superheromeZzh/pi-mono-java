@@ -79,6 +79,7 @@ public class SubAgentProperties {
         private String hwId;
         private String hwAppKey;
         private String model;
+        private boolean insecureSkipVerify;
 
         public String getType() {
             return type;
@@ -222,6 +223,14 @@ public class SubAgentProperties {
 
         public void setModel(String model) {
             this.model = model;
+        }
+
+        public boolean isInsecureSkipVerify() {
+            return insecureSkipVerify;
+        }
+
+        public void setInsecureSkipVerify(boolean insecureSkipVerify) {
+            this.insecureSkipVerify = insecureSkipVerify;
         }
     }
 }

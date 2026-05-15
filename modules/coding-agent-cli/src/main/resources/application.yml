@@ -89,6 +89,7 @@ tool:
 # 主 agent 通过 spawn_agent 工具调用其它 coding agent；下方每个 entry 是一种后端。
 # type=acp: 走 ACP 协议 + stdio (Claude Code, Codex/Gemini 等)
 # type=http: 走自有 HTTP/ndJSON 协议 (URL + 鉴权)
+# type=a2a: 走华为 mate-service 包装的 A2A JSON-RPC (X-HW-ID + X-HW-APPKEY 双 header)
 # disabled=true 可临时关闭某条而不删整段
 subagent:
   enabled: true
@@ -124,3 +125,18 @@ subagent:
       connect-timeout: PT10S
       request-timeout: PT30S
       prompt-timeout: PT10M
+    # 华为 mate-service A2A agent 示例（默认禁用；启用时填入 hw-id + hw-app-key）
+    # url 是 mate-service 的 A2A request 入口，agent-name 会作为路径段拼到末尾
+    mate-kqa:
+      type: a2a
+      disabled: true
+      url: https://71.9.8.186:1433/mate-service/v1/a2a/request
+      agent-name: KnowledgeQAAgent
+      hw-id: ${HW_ID:a2a_test}
+      hw-app-key: ${HW_APPKEY:}
+      model: 100003         # 可选；spawn_agent 传 model 时覆盖此值
+      connect-timeout: PT10S
+      request-timeout: PT60S
+      # 仅当对端证书无法加入 JDK truststore（如 PoC 调内网自签 CA）时打开；
+      # 生产请把公司 CA 导入 cacerts 或用 -Djavax.net.ssl.trustStore 指定独立 keystore。
+      insecure-skip-verify: false
