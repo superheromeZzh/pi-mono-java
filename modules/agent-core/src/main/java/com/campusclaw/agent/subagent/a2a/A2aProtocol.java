@@ -13,6 +13,9 @@ import com.campusclaw.agent.subagent.SubAgentEvent;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import reactor.core.publisher.Sinks;
 
 /**
@@ -50,6 +53,8 @@ public final class A2aProtocol {
 
     public static final String METHOD_SEND_MESSAGE = "SendMessage";
     public static final String JSONRPC_VERSION = "2.0";
+
+    private static final Logger log = LoggerFactory.getLogger(A2aProtocol.class);
 
     private A2aProtocol() {}
 
@@ -135,7 +140,15 @@ public final class A2aProtocol {
 
         List<String> texts = extractTexts(result);
         if (texts.isEmpty()) {
-            sink.tryEmitNext(new SubAgentEvent.TextDelta(SubAgentEvent.Stream.OUTPUT, ""));
+            // Schema mismatch — surface the raw result so the user can read it AND so we have a
+            // sample to extend extractTexts() against. Better than silently returning empty.
+            String fallback = renderFallback(result, mapper);
+            log.warn(
+                    "a2a response did not match any known text-extraction path "
+                            + "(tried result.parts / result.status.message.parts / result.artifacts[].parts); "
+                            + "raw result: {}",
+                    fallback);
+            sink.tryEmitNext(new SubAgentEvent.TextDelta(SubAgentEvent.Stream.OUTPUT, fallback));
         } else {
             for (String text : texts) {
                 sink.tryEmitNext(new SubAgentEvent.TextDelta(SubAgentEvent.Stream.OUTPUT, text));
@@ -143,6 +156,15 @@ public final class A2aProtocol {
         }
         sink.tryEmitNext(new SubAgentEvent.Done(SubAgentEvent.StopReason.END_TURN));
         sink.tryEmitComplete();
+    }
+
+    private static String renderFallback(JsonNode result, ObjectMapper mapper) {
+        try {
+            return "[a2a: unrecognized response shape — raw result follows]\n"
+                    + mapper.writerWithDefaultPrettyPrinter().writeValueAsString(result);
+        } catch (com.fasterxml.jackson.core.JsonProcessingException ex) {
+            return "[a2a: unrecognized response shape — failed to render raw result: " + ex.getMessage() + "]";
+        }
     }
 
     private static List<String> extractTexts(JsonNode result) {
