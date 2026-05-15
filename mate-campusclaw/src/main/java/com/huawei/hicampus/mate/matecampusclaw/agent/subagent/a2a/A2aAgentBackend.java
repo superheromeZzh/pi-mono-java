@@ -93,7 +93,7 @@ public class A2aAgentBackend implements SubAgentBackend {
             SSLContext context = SSLContext.getInstance("TLS");
             context.init(null, new TrustManager[] {new TrustAllManager()}, new java.security.SecureRandom());
             builder.sslContext(context);
-            SSLParameters params = new SSLParameters();
+            SSLParameters params = context.getDefaultSSLParameters();
             params.setEndpointIdentificationAlgorithm(null);
             builder.sslParameters(params);
         } catch (GeneralSecurityException ex) {
@@ -177,8 +177,8 @@ public class A2aAgentBackend implements SubAgentBackend {
             }
             A2aProtocol.parseAndEmit(response.body(), mapper, sink);
         } catch (IOException ex) {
-            log.debug("a2a request failed for {}", session.keyString(), ex);
-            sink.tryEmitNext(new SubAgentEvent.Error("A2A_IO", describe(ex), true));
+            log.warn("a2a request failed for {} target={}: {}", session.keyString(), targetUri(), describe(ex), ex);
+            sink.tryEmitNext(new SubAgentEvent.Error("A2A_IO", describe(ex) + " (target=" + targetUri() + ")", true));
             sink.tryEmitComplete();
         } catch (InterruptedException ex) {
             Thread.currentThread().interrupt();
@@ -188,16 +188,29 @@ public class A2aAgentBackend implements SubAgentBackend {
     }
 
     private static String describe(Throwable ex) {
-        String msg = ex.getMessage();
-        if (msg != null && !msg.isBlank()) {
-            return ex.getClass().getSimpleName() + ": " + msg;
-        }
+        StringBuilder out = new StringBuilder();
+        appendOne(out, ex);
         Throwable cause = ex.getCause();
-        if (cause != null && cause.getMessage() != null && !cause.getMessage().isBlank()) {
-            return ex.getClass().getSimpleName() + " caused by "
-                    + cause.getClass().getSimpleName() + ": " + cause.getMessage();
+        int depth = 0;
+        while (cause != null && cause != ex && depth < 3) {
+            out.append(" <- ");
+            appendOne(out, cause);
+            Throwable next = cause.getCause();
+            if (next == cause) {
+                break;
+            }
+            cause = next;
+            depth++;
         }
-        return ex.getClass().getSimpleName() + " (no message)";
+        return out.toString();
+    }
+
+    private static void appendOne(StringBuilder out, Throwable t) {
+        out.append(t.getClass().getSimpleName());
+        String msg = t.getMessage();
+        if (msg != null && !msg.isBlank()) {
+            out.append(": ").append(msg);
+        }
     }
 
     private HttpRequest buildRequest(String text, Handle handle, Sinks.Many<SubAgentEvent> sink) {
