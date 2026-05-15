@@ -12,6 +12,8 @@ import java.util.Map;
 
 import com.campusclaw.agent.subagent.SubAgentBackend;
 import com.campusclaw.agent.subagent.SubAgentRegistry;
+import com.campusclaw.agent.subagent.a2a.A2aAgentBackend;
+import com.campusclaw.agent.subagent.a2a.A2aAgentConfig;
 import com.campusclaw.agent.subagent.acp.backend.ProcessAcpBackend;
 import com.campusclaw.agent.subagent.approval.ApprovalClassifier;
 import com.campusclaw.agent.subagent.approval.ApprovalPolicy;
@@ -46,6 +48,7 @@ public class SubAgentAutoConfiguration {
     private static final Logger log = LoggerFactory.getLogger(SubAgentAutoConfiguration.class);
     private static final String TYPE_ACP = "acp";
     private static final String TYPE_HTTP = "http";
+    private static final String TYPE_A2A = "a2a";
 
     private final SubAgentProperties properties;
     private final SubAgentRegistry registry;
@@ -94,9 +97,10 @@ public class SubAgentAutoConfiguration {
                     switch (type) {
                         case TYPE_ACP -> buildAcp(id, spec);
                         case TYPE_HTTP -> buildHttp(id, spec);
+                        case TYPE_A2A -> buildA2a(id, spec);
                         default ->
                             throw new IllegalArgumentException("subagent.backends." + id
-                                    + ".type must be 'acp' or 'http' (got '" + spec.getType() + "')");
+                                    + ".type must be 'acp', 'http', or 'a2a' (got '" + spec.getType() + "')");
                     };
             registry.register(backend);
             log.info("registered sub-agent backend '{}' ({})", backend.id(), type);
@@ -134,5 +138,30 @@ public class SubAgentAutoConfiguration {
                 spec.getRequestTimeout(),
                 spec.getPromptTimeout() == null ? Duration.ofMinutes(10L) : spec.getPromptTimeout());
         return new HttpAgentBackend(config, mapper);
+    }
+
+    private SubAgentBackend buildA2a(String id, SubAgentProperties.BackendSpec spec) {
+        if (spec.getUrl() == null || spec.getUrl().isBlank()) {
+            throw new IllegalArgumentException("a2a backend requires 'url'");
+        }
+        if (spec.getAgentName() == null || spec.getAgentName().isBlank()) {
+            throw new IllegalArgumentException("a2a backend requires 'agentName'");
+        }
+        if (spec.getHwId() == null || spec.getHwId().isBlank()) {
+            throw new IllegalArgumentException("a2a backend requires 'hwId'");
+        }
+        if (spec.getHwAppKey() == null || spec.getHwAppKey().isBlank()) {
+            throw new IllegalArgumentException("a2a backend requires 'hwAppKey'");
+        }
+        var config = new A2aAgentConfig(
+                id,
+                URI.create(spec.getUrl()),
+                spec.getAgentName(),
+                spec.getHwId(),
+                spec.getHwAppKey(),
+                spec.getModel(),
+                spec.getConnectTimeout(),
+                spec.getRequestTimeout());
+        return new A2aAgentBackend(config, mapper);
     }
 }

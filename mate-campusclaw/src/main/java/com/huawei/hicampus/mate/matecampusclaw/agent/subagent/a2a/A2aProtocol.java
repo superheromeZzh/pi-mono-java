@@ -1,0 +1,180 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026-2026. All rights reserved.
+ */
+
+package com.huawei.hicampus.mate.matecampusclaw.agent.subagent.a2a;
+
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+
+import com.huawei.hicampus.mate.matecampusclaw.agent.subagent.SubAgentEvent;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import reactor.core.publisher.Sinks;
+
+/**
+ * Wire helpers for the A2A JSON-RPC 2.0 envelope as accepted by Huawei mate-service.
+ *
+ * <p>Request shape (matches the
+ * {@code POST /mate-service/v1/a2a/request/{agentName}} contract):
+ *
+ * <pre>{@code
+ * {
+ *   "id": "<uuid>",
+ *   "jsonrpc": "2.0",
+ *   "method": "SendMessage",
+ *   "params": {
+ *     "message": {
+ *       "messageId": "<uuid>",
+ *       "kind": "message",
+ *       "role": "user",
+ *       "parts": [{"text": "..."}]
+ *     },
+ *     "metadata": {"model": "..."}
+ *   }
+ * }
+ * }</pre>
+ *
+ * <p>Response result text is extracted from the first available of:
+ * {@code result.parts[].text} → {@code result.status.message.parts[].text} →
+ * {@code result.artifacts[].parts[].text}, so the parser tolerates either a bare
+ * {@code Message} or a {@code Task} envelope.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/15]
+ * @since [br_eCampusCore 25.1.0_Next]
+ */
+public final class A2aProtocol {
+
+    public static final String METHOD_SEND_MESSAGE = "SendMessage";
+    public static final String JSONRPC_VERSION = "2.0";
+
+    private A2aProtocol() {}
+
+    /**
+     * Build the JSON-RPC envelope body sent to mate-service. Returned as a tree to keep field order
+     * stable and avoid pulling Jackson annotations into the protocol record types.
+     *
+     * @param requestId JSON-RPC top-level id (UUID recommended)
+     * @param messageId A2A message id (UUID recommended, distinct from {@code requestId})
+     * @param userText user-supplied text content
+     * @param model optional model identifier put into {@code params.metadata.model}; ignored when blank
+     * @return JSON-RPC request body as a nested {@link Map}/{@link List} structure
+     */
+    public static Map<String, Object> buildSendMessageRequest(
+            String requestId, String messageId, String userText, String model) {
+        Map<String, Object> textPart = new LinkedHashMap<>();
+        textPart.put("text", userText == null ? "" : userText);
+
+        Map<String, Object> message = new LinkedHashMap<>();
+        message.put("messageId", messageId);
+        message.put("kind", "message");
+        message.put("role", "user");
+        message.put("parts", List.of(textPart));
+
+        Map<String, Object> params = new LinkedHashMap<>();
+        params.put("message", message);
+        if (model != null && !model.isBlank()) {
+            Map<String, Object> metadata = new LinkedHashMap<>();
+            metadata.put("model", model);
+            params.put("metadata", metadata);
+        }
+
+        Map<String, Object> envelope = new LinkedHashMap<>();
+        envelope.put("id", requestId);
+        envelope.put("jsonrpc", JSONRPC_VERSION);
+        envelope.put("method", METHOD_SEND_MESSAGE);
+        envelope.put("params", params);
+        return envelope;
+    }
+
+    /**
+     * Parse a JSON-RPC 2.0 response body and emit equivalent {@link SubAgentEvent}s into
+     * {@code sink}. Emits one or more {@link SubAgentEvent.TextDelta} followed by a single
+     * {@link SubAgentEvent.Done}, or a single {@link SubAgentEvent.Error} when the response carries
+     * a JSON-RPC error or cannot be parsed.
+     *
+     * @param body raw response body
+     * @param mapper Jackson mapper used to decode the body
+     * @param sink reactive sink to publish events into
+     */
+    public static void parseAndEmit(String body, ObjectMapper mapper, Sinks.Many<SubAgentEvent> sink) {
+        if (body == null || body.isBlank()) {
+            sink.tryEmitNext(new SubAgentEvent.Error("A2A_EMPTY_RESPONSE", "empty response body", true));
+            sink.tryEmitComplete();
+            return;
+        }
+        JsonNode root;
+        try {
+            root = mapper.readTree(body);
+        } catch (com.fasterxml.jackson.core.JsonProcessingException ex) {
+            sink.tryEmitNext(new SubAgentEvent.Error(
+                    "A2A_BAD_RESPONSE", "malformed JSON-RPC response: " + ex.getMessage(), false));
+            sink.tryEmitComplete();
+            return;
+        }
+
+        JsonNode errorNode = root.get("error");
+        if (errorNode != null && !errorNode.isNull()) {
+            String code = "A2A_RPC_" + errorNode.path("code").asText("UNKNOWN");
+            String message = errorNode.path("message").asText("upstream error");
+            sink.tryEmitNext(new SubAgentEvent.Error(code, message, false));
+            sink.tryEmitComplete();
+            return;
+        }
+
+        JsonNode result = root.get("result");
+        if (result == null || result.isNull()) {
+            sink.tryEmitNext(
+                    new SubAgentEvent.Error("A2A_NO_RESULT", "response missing both result and error fields", false));
+            sink.tryEmitComplete();
+            return;
+        }
+
+        List<String> texts = extractTexts(result);
+        if (texts.isEmpty()) {
+            sink.tryEmitNext(new SubAgentEvent.TextDelta(SubAgentEvent.Stream.OUTPUT, ""));
+        } else {
+            for (String text : texts) {
+                sink.tryEmitNext(new SubAgentEvent.TextDelta(SubAgentEvent.Stream.OUTPUT, text));
+            }
+        }
+        sink.tryEmitNext(new SubAgentEvent.Done(SubAgentEvent.StopReason.END_TURN));
+        sink.tryEmitComplete();
+    }
+
+    private static List<String> extractTexts(JsonNode result) {
+        List<String> out = new ArrayList<>();
+        collectPartTexts(result.get("parts"), out);
+        if (out.isEmpty()) {
+            JsonNode statusMessage = result.path("status").path("message");
+            collectPartTexts(statusMessage.get("parts"), out);
+        }
+        if (out.isEmpty()) {
+            JsonNode artifacts = result.get("artifacts");
+            if (artifacts != null && artifacts.isArray()) {
+                for (JsonNode artifact : artifacts) {
+                    collectPartTexts(artifact.get("parts"), out);
+                }
+            }
+        }
+        return out;
+    }
+
+    private static void collectPartTexts(JsonNode parts, List<String> out) {
+        if (parts == null || !parts.isArray()) {
+            return;
+        }
+        for (JsonNode part : parts) {
+            JsonNode textNode = part.get("text");
+            if (textNode != null && textNode.isTextual()) {
+                String text = textNode.asText();
+                if (!text.isEmpty()) {
+                    out.add(text);
+                }
+            }
+        }
+    }
+}

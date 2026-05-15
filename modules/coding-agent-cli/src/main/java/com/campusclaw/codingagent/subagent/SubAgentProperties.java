@@ -51,7 +51,8 @@ public class SubAgentProperties {
     public static class BackendSpec {
 
         /**
-         * Backend transport: {@code acp} (process + ndJSON) or {@code http}.
+         * Backend transport: {@code acp} (process + ndJSON), {@code http} (CampusClaw HTTP NDJSON),
+         * or {@code a2a} (Huawei mate-service flavoured A2A JSON-RPC).
          */
         private String type;
 
@@ -72,6 +73,12 @@ public class SubAgentProperties {
         private String authHeaderName;
         private Duration connectTimeout;
         private Duration requestTimeout;
+
+        // --- A2A fields (Huawei mate-service) ---
+        private String agentName;
+        private String hwId;
+        private String hwAppKey;
+        private String model;
 
         public String getType() {
             return type;
@@ -183,6 +190,38 @@ public class SubAgentProperties {
 
         public void setRequestTimeout(Duration requestTimeout) {
             this.requestTimeout = requestTimeout;
+        }
+
+        public String getAgentName() {
+            return agentName;
+        }
+
+        public void setAgentName(String agentName) {
+            this.agentName = agentName;
+        }
+
+        public String getHwId() {
+            return hwId;
+        }
+
+        public void setHwId(String hwId) {
+            this.hwId = hwId;
+        }
+
+        public String getHwAppKey() {
+            return hwAppKey;
+        }
+
+        public void setHwAppKey(String hwAppKey) {
+            this.hwAppKey = hwAppKey;
+        }
+
+        public String getModel() {
+            return model;
+        }
+
+        public void setModel(String model) {
+            this.model = model;
         }
     }
 }

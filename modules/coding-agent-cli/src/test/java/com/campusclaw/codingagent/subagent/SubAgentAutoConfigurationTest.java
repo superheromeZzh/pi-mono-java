@@ -7,6 +7,7 @@ package com.campusclaw.codingagent.subagent;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.campusclaw.agent.subagent.SubAgentRegistry;
+import com.campusclaw.agent.subagent.a2a.A2aAgentBackend;
 import com.campusclaw.agent.subagent.acp.backend.ProcessAcpBackend;
 import com.campusclaw.agent.subagent.approval.ApprovalClassifier;
 import com.campusclaw.agent.subagent.approval.DefaultApprovalPolicy;
@@ -43,6 +44,41 @@ class SubAgentAutoConfigurationTest {
                     assertThat(registry.backendIds()).contains("claude-code", "remote");
                     assertThat(registry.requireBackend("claude-code")).isInstanceOf(ProcessAcpBackend.class);
                     assertThat(registry.requireBackend("remote")).isInstanceOf(HttpAgentBackend.class);
+                });
+    }
+
+    @Test
+    void registersA2aBackendFromProperties() {
+        runner.withPropertyValues(
+                        "subagent.enabled=true",
+                        "subagent.backends.mate-kqa.type=a2a",
+                        "subagent.backends.mate-kqa.url=https://mate.example.com/v1/a2a/request",
+                        "subagent.backends.mate-kqa.agent-name=KnowledgeQAAgent",
+                        "subagent.backends.mate-kqa.hw-id=a2a_test",
+                        "subagent.backends.mate-kqa.hw-app-key=appkey-xxx",
+                        "subagent.backends.mate-kqa.model=100003")
+                .run(context -> {
+                    SubAgentRegistry registry = context.getBean(SubAgentRegistry.class);
+                    assertThat(registry.backendIds()).contains("mate-kqa");
+                    assertThat(registry.requireBackend("mate-kqa")).isInstanceOf(A2aAgentBackend.class);
+                });
+    }
+
+    @Test
+    void a2aBackendMissingRequiredFieldIsSkipped() {
+        runner.withPropertyValues(
+                        "subagent.enabled=true",
+                        "subagent.backends.bad-a2a.type=a2a",
+                        "subagent.backends.bad-a2a.url=https://mate.example.com/v1/a2a/request",
+                        // missing agent-name, hw-id, hw-app-key
+                        "subagent.backends.good-a2a.type=a2a",
+                        "subagent.backends.good-a2a.url=https://mate.example.com/v1/a2a/request",
+                        "subagent.backends.good-a2a.agent-name=X",
+                        "subagent.backends.good-a2a.hw-id=h",
+                        "subagent.backends.good-a2a.hw-app-key=k")
+                .run(context -> {
+                    SubAgentRegistry registry = context.getBean(SubAgentRegistry.class);
+                    assertThat(registry.backendIds()).contains("good-a2a").doesNotContain("bad-a2a");
                 });
     }
 
