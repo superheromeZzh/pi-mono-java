@@ -61,6 +61,16 @@ public class A2aAgentBackend implements SubAgentBackend {
     private static final String HEADER_HW_ID = "X-HW-ID";
     private static final String HEADER_HW_APPKEY = "X-HW-APPKEY";
 
+    /**
+     * Sentinel for {@code SSLParameters.setEndpointIdentificationAlgorithm} that disables hostname
+     * verification under JDK HttpClient. Using an empty string (not {@code null}) is load-bearing:
+     * the HttpClient internals force {@code null} back to {@code "HTTPS"} unless the JVM was
+     * started with {@code -Djdk.internal.httpclient.disableHostnameVerification=true} (which is
+     * read once at class-init and cannot be flipped at runtime), while an empty string bypasses
+     * that override and the downstream SSLEngine treats it as no identification.
+     */
+    private static final String BYPASS_HOSTNAME_VERIFICATION = "";
+
     private final A2aAgentConfig config;
     private final ObjectMapper mapper;
     private final HttpClient http;
@@ -94,7 +104,7 @@ public class A2aAgentBackend implements SubAgentBackend {
             context.init(null, new TrustManager[] {new TrustAllManager()}, new java.security.SecureRandom());
             builder.sslContext(context);
             SSLParameters params = context.getDefaultSSLParameters();
-            params.setEndpointIdentificationAlgorithm(null);
+            params.setEndpointIdentificationAlgorithm(BYPASS_HOSTNAME_VERIFICATION);
             builder.sslParameters(params);
         } catch (GeneralSecurityException ex) {
             throw new IllegalStateException("failed to install insecure SSL context for a2a backend", ex);
