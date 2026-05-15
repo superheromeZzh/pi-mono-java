@@ -13,6 +13,9 @@ import com.huawei.hicampus.mate.matecampusclaw.agent.subagent.SubAgentEvent;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import reactor.core.publisher.Sinks;
 
 /**
@@ -38,10 +41,11 @@ import reactor.core.publisher.Sinks;
  * }
  * }</pre>
  *
- * <p>Response result text is extracted from the first available of:
- * {@code result.parts[].text} → {@code result.status.message.parts[].text} →
- * {@code result.artifacts[].parts[].text}, so the parser tolerates either a bare
- * {@code Message} or a {@code Task} envelope.
+ * <p>Response result extraction follows the A2A {@code SendMessageResponse} oneof:
+ * {@code result.task} (Task payload) or {@code result.message} (Message payload). Within Task,
+ * text is pulled from artifacts → status.message → top-level parts in that order. As a
+ * permissive fallback the same paths are also tried directly off {@code result} for
+ * implementations that omit the oneof discriminator.
  *
  * @version [br_eCampusCore 25.1.0_Next, 2026/05/15]
  * @since [br_eCampusCore 25.1.0_Next]
@@ -50,6 +54,8 @@ public final class A2aProtocol {
 
     public static final String METHOD_SEND_MESSAGE = "SendMessage";
     public static final String JSONRPC_VERSION = "2.0";
+
+    private static final Logger log = LoggerFactory.getLogger(A2aProtocol.class);
 
     private A2aProtocol() {}
 
@@ -135,7 +141,15 @@ public final class A2aProtocol {
 
         List<String> texts = extractTexts(result);
         if (texts.isEmpty()) {
-            sink.tryEmitNext(new SubAgentEvent.TextDelta(SubAgentEvent.Stream.OUTPUT, ""));
+            // Schema mismatch — surface the raw result so the user can read it AND so we have a
+            // sample to extend extractTexts() against. Better than silently returning empty.
+            String fallback = renderFallback(result, mapper);
+            log.warn(
+                    "a2a response did not match any known text-extraction path "
+                            + "(tried result.task.*, result.message.parts, and bare result.* shapes); "
+                            + "raw result: {}",
+                    fallback);
+            sink.tryEmitNext(new SubAgentEvent.TextDelta(SubAgentEvent.Stream.OUTPUT, fallback));
         } else {
             for (String text : texts) {
                 sink.tryEmitNext(new SubAgentEvent.TextDelta(SubAgentEvent.Stream.OUTPUT, text));
@@ -145,22 +159,46 @@ public final class A2aProtocol {
         sink.tryEmitComplete();
     }
 
+    private static String renderFallback(JsonNode result, ObjectMapper mapper) {
+        try {
+            return "[a2a: unrecognized response shape — raw result follows]\n"
+                    + mapper.writerWithDefaultPrettyPrinter().writeValueAsString(result);
+        } catch (com.fasterxml.jackson.core.JsonProcessingException ex) {
+            return "[a2a: unrecognized response shape — failed to render raw result: " + ex.getMessage() + "]";
+        }
+    }
+
     private static List<String> extractTexts(JsonNode result) {
         List<String> out = new ArrayList<>();
-        collectPartTexts(result.get("parts"), out);
-        if (out.isEmpty()) {
-            JsonNode statusMessage = result.path("status").path("message");
-            collectPartTexts(statusMessage.get("parts"), out);
+        JsonNode taskNode = result.get("task");
+        if (taskNode != null && !taskNode.isNull()) {
+            collectFromTask(taskNode, out);
         }
         if (out.isEmpty()) {
-            JsonNode artifacts = result.get("artifacts");
-            if (artifacts != null && artifacts.isArray()) {
-                for (JsonNode artifact : artifacts) {
-                    collectPartTexts(artifact.get("parts"), out);
-                }
+            JsonNode messageNode = result.get("message");
+            if (messageNode != null && !messageNode.isNull()) {
+                collectPartTexts(messageNode.get("parts"), out);
             }
         }
+        if (out.isEmpty()) {
+            collectFromTask(result, out);
+        }
         return out;
+    }
+
+    private static void collectFromTask(JsonNode task, List<String> out) {
+        JsonNode artifacts = task.get("artifacts");
+        if (artifacts != null && artifacts.isArray()) {
+            for (JsonNode artifact : artifacts) {
+                collectPartTexts(artifact.get("parts"), out);
+            }
+        }
+        if (out.isEmpty()) {
+            collectPartTexts(task.path("status").path("message").get("parts"), out);
+        }
+        if (out.isEmpty()) {
+            collectPartTexts(task.get("parts"), out);
+        }
     }
 
     private static void collectPartTexts(JsonNode parts, List<String> out) {
