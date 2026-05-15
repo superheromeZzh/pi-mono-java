@@ -26,6 +26,7 @@ import com.campusclaw.agent.subagent.SubAgentSession;
 import com.campusclaw.agent.subagent.SubAgentSessionKey;
 import com.campusclaw.agent.subagent.acp.AcpClient;
 import com.campusclaw.agent.subagent.acp.AcpProtocol;
+import com.campusclaw.agent.subagent.acp.AcpTransport;
 import com.campusclaw.agent.subagent.approval.ApprovalClassifier;
 import com.campusclaw.agent.subagent.approval.ApprovalDecision;
 import com.campusclaw.agent.subagent.approval.ApprovalPolicy;
@@ -185,26 +186,40 @@ public class ProcessAcpBackend implements SubAgentBackend {
 
     @Override
     public void close(SubAgentSession session, String reason) {
+        AcpTransport.note(
+                "ProcessAcpBackend.close enter session=" + session.keyString() + " reason=" + reason);
         RuntimeHandle handle = handles.remove(session.keyString());
         if (handle == null) {
+            AcpTransport.note("ProcessAcpBackend.close handle=null, return");
             return;
         }
         try {
+            AcpTransport.note("ProcessAcpBackend.close calling AcpClient.close");
             handle.client.close();
+            AcpTransport.note("ProcessAcpBackend.close AcpClient.close returned");
         } catch (RuntimeException ex) {
+            AcpTransport.note("ProcessAcpBackend.close AcpClient.close threw: " + ex);
             log.debug("client close failed: {}", ex.toString());
         }
         Process process = handle.process;
+        AcpTransport.note(
+                "ProcessAcpBackend.close process.destroy pid=" + process.pid() + " alive=" + process.isAlive());
         process.destroy();
         try {
-            if (!process.waitFor(5L, java.util.concurrent.TimeUnit.SECONDS)) {
+            boolean exited = process.waitFor(5L, java.util.concurrent.TimeUnit.SECONDS);
+            AcpTransport.note(
+                    "ProcessAcpBackend.close waitFor returned exited=" + exited);
+            if (!exited) {
+                AcpTransport.note("ProcessAcpBackend.close destroyForcibly descendants");
                 process.descendants().forEach(ProcessHandle::destroyForcibly);
                 process.destroyForcibly();
+                AcpTransport.note("ProcessAcpBackend.close destroyForcibly done");
             }
         } catch (InterruptedException ex) {
             Thread.currentThread().interrupt();
             process.destroyForcibly();
         }
+        AcpTransport.note("ProcessAcpBackend.close exit");
     }
 
     private SpawnResult startProcess(OpenRequest request, String drainerName) {

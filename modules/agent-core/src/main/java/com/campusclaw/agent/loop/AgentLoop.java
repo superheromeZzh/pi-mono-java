@@ -175,9 +175,13 @@ public class AgentLoop {
         var resolved = new ArrayList<ToolCallWithTool>();
         var unknownResults = new ArrayList<ToolResultMessage>();
         resolveToolCallsSafe(toolCalls, context.tools(), resolved, unknownResults);
+        AcpTransport.note("AgentLoop.runToolPhase resolved=" + resolved.size() + " unknown=" + unknownResults.size());
         var toolResults = new ArrayList<ToolResultMessage>();
         if (!resolved.isEmpty()) {
+            AcpTransport.note("AgentLoop.runToolPhase calling toolPipeline.executeAll");
             toolResults.addAll(toolPipeline.executeAll(resolved, toolExecutionMode, context, signal, eventListener));
+            AcpTransport.note(
+                    "AgentLoop.runToolPhase toolPipeline.executeAll returned results=" + toolResults.size());
         }
         toolResults.addAll(unknownResults);
         context.appendMessages(new ArrayList<>(toolResults));
@@ -185,7 +189,9 @@ public class AgentLoop {
         if (!steeringMessages.isEmpty()) {
             context.appendMessages(steeringMessages);
         }
+        AcpTransport.note("AgentLoop.runToolPhase emitting TurnEndEvent steering=" + steeringMessages.size());
         eventListener.onEvent(new TurnEndEvent(assistantMessage, toolResults));
+        AcpTransport.note("AgentLoop.runToolPhase TurnEndEvent emitted, returning");
         return steeringMessages;
     }
 

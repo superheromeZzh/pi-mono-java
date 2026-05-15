@@ -160,13 +160,20 @@ public class SpawnAgentTool implements AgentTool {
             return textResult("Error: failed to open sub-agent session: " + ex.getMessage());
         }
         registry.trackSession(session);
+        AgentToolResult result = null;
         try {
-            return streamPrompt(backend, session, task, signal, onUpdate, timeout);
+            result = streamPrompt(backend, session, task, signal, onUpdate, timeout);
+            AcpTransport.note("SpawnAgentTool.runSession streamPrompt returned");
+            return result;
         } finally {
+            AcpTransport.note("SpawnAgentTool.runSession entering finally (resultNull=" + (result == null) + ")");
             registry.forgetSession(session);
+            AcpTransport.note("SpawnAgentTool.runSession calling backend.close");
             try {
                 backend.close(session, "tool-finished");
+                AcpTransport.note("SpawnAgentTool.runSession backend.close returned");
             } catch (RuntimeException ex) {
+                AcpTransport.note("SpawnAgentTool.runSession backend.close threw: " + ex);
                 log.debug("close failed for {}: {}", session.keyString(), ex.toString());
             }
         }
@@ -209,15 +216,19 @@ public class SpawnAgentTool implements AgentTool {
 
         try {
             if (!done.await(timeout.toSeconds() + 5L, TimeUnit.SECONDS)) {
+                AcpTransport.note("SpawnAgentTool.streamPrompt awaitTimeout");
                 backend.cancel(session, "tool-timeout");
                 return textResult("Error: sub-agent turn timed out after " + timeout.toSeconds() + "s.");
             }
+            AcpTransport.note("SpawnAgentTool.streamPrompt awaitDone (latch released)");
         } catch (InterruptedException ex) {
             Thread.currentThread().interrupt();
             backend.cancel(session, "interrupted");
             return textResult("Error: interrupted while waiting for sub-agent.");
         } finally {
+            AcpTransport.note("SpawnAgentTool.streamPrompt disposing subscription");
             subscription.dispose();
+            AcpTransport.note("SpawnAgentTool.streamPrompt subscription disposed");
         }
 
         if (cancelledByParent.get()) {
