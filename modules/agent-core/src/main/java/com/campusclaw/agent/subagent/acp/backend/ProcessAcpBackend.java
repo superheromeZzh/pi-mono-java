@@ -186,8 +186,7 @@ public class ProcessAcpBackend implements SubAgentBackend {
 
     @Override
     public void close(SubAgentSession session, String reason) {
-        AcpTransport.note(
-                "ProcessAcpBackend.close enter session=" + session.keyString() + " reason=" + reason);
+        AcpTransport.note("ProcessAcpBackend.close enter session=" + session.keyString() + " reason=" + reason);
         RuntimeHandle handle = handles.remove(session.keyString());
         if (handle == null) {
             AcpTransport.note("ProcessAcpBackend.close handle=null, return");
@@ -207,8 +206,7 @@ public class ProcessAcpBackend implements SubAgentBackend {
         process.destroy();
         try {
             boolean exited = process.waitFor(5L, java.util.concurrent.TimeUnit.SECONDS);
-            AcpTransport.note(
-                    "ProcessAcpBackend.close waitFor returned exited=" + exited);
+            AcpTransport.note("ProcessAcpBackend.close waitFor returned exited=" + exited);
             if (!exited) {
                 AcpTransport.note("ProcessAcpBackend.close destroyForcibly descendants");
                 process.descendants().forEach(ProcessHandle::destroyForcibly);

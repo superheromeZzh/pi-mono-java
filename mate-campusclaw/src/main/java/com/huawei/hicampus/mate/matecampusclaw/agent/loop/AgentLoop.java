@@ -180,8 +180,7 @@ public class AgentLoop {
         if (!resolved.isEmpty()) {
             AcpTransport.note("AgentLoop.runToolPhase calling toolPipeline.executeAll");
             toolResults.addAll(toolPipeline.executeAll(resolved, toolExecutionMode, context, signal, eventListener));
-            AcpTransport.note(
-                    "AgentLoop.runToolPhase toolPipeline.executeAll returned results=" + toolResults.size());
+            AcpTransport.note("AgentLoop.runToolPhase toolPipeline.executeAll returned results=" + toolResults.size());
         }
         toolResults.addAll(unknownResults);
         context.appendMessages(new ArrayList<>(toolResults));
