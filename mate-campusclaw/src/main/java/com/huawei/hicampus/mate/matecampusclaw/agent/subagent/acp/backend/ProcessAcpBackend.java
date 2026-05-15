@@ -113,17 +113,49 @@ public class ProcessAcpBackend implements SubAgentBackend {
             handles.put(key.asString(), new RuntimeHandle(process, client, stderr));
             return new SubAgentSession(key, runtimeSessionId, this);
         } catch (RuntimeException ex) {
-            // Same Windows-pipe ordering rule as close(SubAgentSession,…): kill the child first so
-            // the reader thread's readLine sees EOF, then close the client so input.close doesn't
-            // deadlock on a pending read.
-            process.destroyForcibly();
-            try {
-                process.waitFor(2L, java.util.concurrent.TimeUnit.SECONDS);
-            } catch (InterruptedException ie) {
-                Thread.currentThread().interrupt();
-            }
+            // Same Windows-pipe ordering rule as close(SubAgentSession,…): kill the whole child
+            // process tree first so the reader thread's readLine sees EOF, then close the client
+            // so input.close doesn't deadlock on a pending read.
+            destroyTree(process, "open-failed");
             client.close();
             throw enrich(ex, process, stderr);
+        }
+    }
+
+    /**
+     * Force-kills a child process and all of its descendants, then waits briefly for them to exit.
+     *
+     * <p>CRITICAL on Windows: when the child is launched via {@code cmd.exe /c <shim>.cmd ...},
+     * {@code process.destroy()} only kills cmd.exe. The actual node.js process behind the
+     * {@code .cmd} npm shim becomes an orphan, keeps the inherited stdout pipe handle open,
+     * and blocks the ACP reader thread's {@code BufferedReader.readLine()} forever — which in
+     * turn deadlocks {@link AcpTransport#close()} → {@code input.close()} on Windows JDK.
+     *
+     * <p>Snapshot {@code descendants()} BEFORE killing the parent; once cmd.exe is gone, the
+     * OS-level parent-child link breaks and {@code descendants()} returns empty.
+     *
+     * @param process root of the process tree to kill
+     * @param reason short tag recorded in the ACP trace for diagnosis
+     */
+    private static void destroyTree(Process process, String reason) {
+        var descendants = process.descendants().toList();
+        AcpTransport.note("ProcessAcpBackend.destroyTree[" + reason + "] descendantsCount=" + descendants.size()
+                + " parentPid=" + process.pid() + " alive=" + process.isAlive());
+        descendants.forEach(ProcessHandle::destroyForcibly);
+        process.destroyForcibly();
+        try {
+            boolean parentExited = process.waitFor(2L, java.util.concurrent.TimeUnit.SECONDS);
+            AcpTransport.note("ProcessAcpBackend.destroyTree[" + reason + "] parentExited=" + parentExited);
+            for (ProcessHandle d : descendants) {
+                try {
+                    d.onExit().get(2L, java.util.concurrent.TimeUnit.SECONDS);
+                } catch (java.util.concurrent.TimeoutException | java.util.concurrent.ExecutionException ignored) {
+                    // best-effort; descendant may already be unreachable
+                }
+            }
+            AcpTransport.note("ProcessAcpBackend.destroyTree[" + reason + "] descendants drained");
+        } catch (InterruptedException ex) {
+            Thread.currentThread().interrupt();
         }
     }
 
@@ -201,36 +233,13 @@ public class ProcessAcpBackend implements SubAgentBackend {
             return;
         }
 
-        // ORDER MATTERS ON WINDOWS:
-        // 1) destroy the child process FIRST so its stdout/stderr pipe write-end is closed by the
-        //    OS — JVM-side PipeInputStream then sees EOF, BufferedReader.readLine() in the ACP
-        //    reader thread returns null and the reader exits naturally.
-        // 2) THEN call AcpClient.close() (which calls AcpTransport.close → input.close).
-        //    With the reader no longer blocked on readLine, input.close has no pending read to
-        //    wait on and returns immediately.
-        // Previously the order was client.close → process.destroy. On Windows JDK,
-        // PipeInputStream.close() waits for any pending read to complete; the pending readLine
-        // can only complete after the pipe sees EOF — which only happens after the child dies.
-        // Result: deadlock inside AcpTransport.close, the tool thread never returns, AgentLoop
-        // never progresses to the next invokeModel.
-        Process process = handle.process;
-        AcpTransport.note(
-                "ProcessAcpBackend.close process.destroy pid=" + process.pid() + " alive=" + process.isAlive());
-        process.destroy();
-        try {
-            boolean exited = process.waitFor(2L, java.util.concurrent.TimeUnit.SECONDS);
-            AcpTransport.note("ProcessAcpBackend.close waitFor(destroy) exited=" + exited);
-            if (!exited) {
-                AcpTransport.note("ProcessAcpBackend.close destroyForcibly descendants");
-                process.descendants().forEach(ProcessHandle::destroyForcibly);
-                process.destroyForcibly();
-                boolean forced = process.waitFor(2L, java.util.concurrent.TimeUnit.SECONDS);
-                AcpTransport.note("ProcessAcpBackend.close waitFor(destroyForcibly) exited=" + forced);
-            }
-        } catch (InterruptedException ex) {
-            Thread.currentThread().interrupt();
-            process.destroyForcibly();
-        }
+        // ORDER MATTERS ON WINDOWS: kill the entire child process tree FIRST so all pipe handles
+        // (including those held by orphaned npm-shim descendants like node.js behind a .cmd) get
+        // closed, the JVM-side PipeInputStream sees EOF, BufferedReader.readLine() in the reader
+        // thread returns null, and only THEN call AcpClient.close — at which point input.close
+        // has no pending read to wait on and returns immediately. See destroyTree javadoc.
+        destroyTree(handle.process, "close-" + reason);
+
         try {
             AcpTransport.note("ProcessAcpBackend.close calling AcpClient.close");
             handle.client.close();

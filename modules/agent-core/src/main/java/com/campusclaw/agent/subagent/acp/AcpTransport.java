@@ -19,6 +19,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
 import com.campusclaw.agent.subagent.SubAgentException;
+import com.campusclaw.agent.util.LoggingUncaughtExceptionHandler;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import org.slf4j.Logger;
@@ -158,16 +159,29 @@ public class AcpTransport implements AutoCloseable {
         if (!closed.compareAndSet(false, true)) {
             return;
         }
-        try {
-            input.close();
-        } catch (IOException ignored) {
-            // best-effort
-        }
-        try {
-            output.close();
-        } catch (IOException ignored) {
-            // best-effort
-        }
+
+        // On Windows JDK, input.close() blocks waiting for the reader thread's pending readLine
+        // to complete. That read only finishes when the pipe sees EOF, which only happens after
+        // the entire child process tree is dead. ProcessAcpBackend.close kills the tree before
+        // calling us, but as a defense-in-depth measure we run stream-close asynchronously so a
+        // missed grandchild can't freeze the agent loop. The closer is a daemon virtual thread,
+        // and once the OS tears down the orphan, input.close unblocks and the thread exits.
+        Thread closer = Thread.ofVirtual().name("acp-transport-closer").unstarted(() -> {
+            try {
+                input.close();
+            } catch (IOException ignored) {
+                // best-effort: child may already be gone
+            }
+            try {
+                output.close();
+            } catch (IOException ignored) {
+                // best-effort
+            }
+            note("AcpTransport.close streams closed (async)");
+        });
+        closer.setUncaughtExceptionHandler(LoggingUncaughtExceptionHandler.INSTANCE);
+        closer.start();
+
         if (reader != null) {
             reader.interrupt();
         }
