@@ -1,13 +1,22 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026-2026. All rights reserved.
+ */
+
 package com.huawei.hicampus.mate.matecampusclaw.ai.types;
+
+import java.util.Locale;
+import java.util.Optional;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
 
 /**
  * LLM provider identifier.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 public enum Provider {
-
     ANTHROPIC("anthropic"),
     OPENAI("openai"),
     GOOGLE("google"),
@@ -51,5 +60,28 @@ public enum Provider {
             }
         }
         throw new IllegalArgumentException("Unknown Provider: " + value);
+    }
+
+    /**
+     * Lenient variant of {@link #fromValue(String)} for user-supplied input.
+     * Returns empty for unknown / null / blank values instead of throwing.
+     * Matching is also case-insensitive and treats {@code _} and {@code -} as
+     * equivalent so {@code AZURE_OPENAI} matches {@code "azure-openai"} and
+     * {@code "azure_openai"}.
+     *
+     * @param value user-supplied provider identifier
+     * @return matching {@link Provider}, or empty when unrecognised
+     */
+    public static Optional<Provider> tryFromValue(String value) {
+        if (value == null || value.isBlank()) {
+            return Optional.empty();
+        }
+        String normalized = value.toLowerCase(Locale.ROOT).replace('_', '-');
+        for (var p : values()) {
+            if (p.value.toLowerCase(Locale.ROOT).replace('_', '-').equals(normalized)) {
+                return Optional.of(p);
+            }
+        }
+        return Optional.empty();
     }
 }

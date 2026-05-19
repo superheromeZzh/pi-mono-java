@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026-2026. All rights reserved.
+ */
+
 package com.huawei.hicampus.mate.matecampusclaw.cron.store;
 
 import java.io.IOException;
@@ -13,7 +17,6 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import com.huawei.hicampus.mate.matecampusclaw.cron.model.CronJob;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -24,6 +27,9 @@ import org.springframework.stereotype.Service;
 /**
  * JSON file persistence for cron job definitions.
  * Stores jobs in {@code ~/.campusclaw/agent/cron/jobs.json}.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 @Service
 public class CronStore {
@@ -65,8 +71,7 @@ public class CronStore {
         lock.writeLock().lock();
         try {
             Files.createDirectories(jobsFile.getParent());
-            mapper.writerWithDefaultPrettyPrinter()
-                .writeValue(jobsFile.toFile(), new JobsFile(1, jobs));
+            mapper.writerWithDefaultPrettyPrinter().writeValue(jobsFile.toFile(), new JobsFile(1, jobs));
         } catch (IOException e) {
             log.error("Failed to save cron jobs to {}", jobsFile, e);
         } finally {
@@ -136,8 +141,7 @@ public class CronStore {
     private void saveUnsafe(List<CronJob> jobs) {
         try {
             Files.createDirectories(jobsFile.getParent());
-            mapper.writerWithDefaultPrettyPrinter()
-                .writeValue(jobsFile.toFile(), new JobsFile(1, jobs));
+            mapper.writerWithDefaultPrettyPrinter().writeValue(jobsFile.toFile(), new JobsFile(1, jobs));
         } catch (IOException e) {
             log.error("Failed to save cron jobs", e);
         }
@@ -146,14 +150,14 @@ public class CronStore {
     /**
      * Acquire an inter-process exclusive file lock for safe concurrent access
      * from multiple JVM instances (e.g. --cron-tick via system scheduler).
-     * Returns null if locking fails.
+     *
+     * @return the acquired lock, or {@code null} if locking fails
      */
     public FileLock acquireProcessLock() {
         try {
             Files.createDirectories(jobsFile.getParent());
             Path lockPath = jobsFile.resolveSibling(jobsFile.getFileName() + ".lock");
-            var channel = FileChannel.open(lockPath,
-                    StandardOpenOption.CREATE, StandardOpenOption.WRITE);
+            var channel = FileChannel.open(lockPath, StandardOpenOption.CREATE, StandardOpenOption.WRITE);
             FileLock fileLock = channel.tryLock();
             if (fileLock == null) {
                 channel.close();
@@ -168,9 +172,13 @@ public class CronStore {
 
     /**
      * Release a previously acquired process lock.
+     *
+     * @param fileLock the lock returned by {@link #acquireProcessLock()}; {@code null} is allowed and ignored
      */
     public void releaseProcessLock(FileLock fileLock) {
-        if (fileLock == null) return;
+        if (fileLock == null) {
+            return;
+        }
         try {
             var channel = fileLock.channel();
             fileLock.release();
@@ -182,7 +190,10 @@ public class CronStore {
 
     private static Path defaultJobsPath() {
         return Path.of(System.getProperty("user.home"))
-            .resolve(".campusclaw").resolve("agent").resolve("cron").resolve("jobs.json");
+                .resolve(".campusclaw")
+                .resolve("agent")
+                .resolve("cron")
+                .resolve("jobs.json");
     }
 
     record JobsFile(int version, List<CronJob> jobs) {}

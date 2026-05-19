@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026-2026. All rights reserved.
+ */
+
 package com.campusclaw.codingagent.skill;
 
 import java.io.IOException;
@@ -25,6 +29,9 @@ import org.yaml.snakeyaml.Yaml;
  * <p>
  * Supports sandbox mode: when {@link SandboxSkillParser} is available and sandbox mode is enabled,
  * skills are parsed inside a Docker container for security.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 public class SkillLoader {
 
@@ -60,6 +67,8 @@ public class SkillLoader {
 
     /**
      * Checks if sandbox parsing is enabled and available.
+     *
+     * @return the result
      */
     public boolean isSandboxEnabled() {
         return sandboxEnabled;
@@ -98,12 +107,13 @@ public class SkillLoader {
                 if (!validationError.isEmpty()) {
                     throw new SkillLoadException("Skill validation failed: " + validationError);
                 }
+
                 // Parse in sandbox
                 log.debug("Parsing skill in sandbox: {}", filePath);
                 return sandboxParser.parseInSandbox(filePath, source);
             } catch (SkillLoadException e) {
-                log.warn("Sandbox parsing failed for {}, falling back to direct parsing: {}",
-                        filePath, e.getMessage());
+                log.warn("Sandbox parsing failed for {}, falling back to direct parsing: {}", filePath, e.getMessage());
+
                 // Fall back to direct parsing
                 return parseSkillFile(filePath, source);
             }
@@ -120,6 +130,7 @@ public class SkillLoader {
                 skills.add(loadSkillFile(skillFile, source));
             } catch (SkillLoadException e) {
                 log.warn("Failed to load skill from {}: {}", skillFile, e.getMessage());
+
                 // Skip invalid skill files during directory scanning
             }
             return;
@@ -139,6 +150,10 @@ public class SkillLoader {
 
     /**
      * Loads a single skill file, using sandbox if enabled.
+     *
+     * @param skillFile the skillFile
+     * @param source the source
+     * @return the result
      */
     private Skill loadSkillFile(Path skillFile, String source) {
         if (sandboxEnabled && sandboxParser != null) {
@@ -153,8 +168,9 @@ public class SkillLoader {
                 log.debug("Parsing skill in sandbox: {}", skillFile);
                 return sandboxParser.parseInSandbox(skillFile, source);
             } catch (SkillLoadException e) {
-                log.warn("Sandbox parsing failed for {}, falling back to direct parsing: {}",
-                        skillFile, e.getMessage());
+                log.warn(
+                        "Sandbox parsing failed for {}, falling back to direct parsing: {}", skillFile, e.getMessage());
+
                 // Fall back to direct parsing if sandbox fails
                 return parseSkillFile(skillFile, source);
             }
@@ -177,20 +193,16 @@ public class SkillLoader {
         String parentDirName = baseDir != null ? baseDir.getFileName().toString() : "";
 
         // Resolve name: frontmatter > parent directory name
-        String name = frontmatter.containsKey("name")
-                ? String.valueOf(frontmatter.get("name"))
-                : parentDirName;
+        String name = frontmatter.containsKey("name") ? String.valueOf(frontmatter.get("name")) : parentDirName;
 
         validateName(name, filePath);
 
         // Resolve description (required)
-        String description = frontmatter.containsKey("description")
-                ? String.valueOf(frontmatter.get("description"))
-                : null;
+        String description =
+                frontmatter.containsKey("description") ? String.valueOf(frontmatter.get("description")) : null;
 
         if (description == null || description.isBlank()) {
-            throw new SkillLoadException(
-                    "Skill description is required: " + filePath);
+            throw new SkillLoadException("Skill description is required: " + filePath);
         }
         if (description.length() > Skill.MAX_DESCRIPTION_LENGTH) {
             throw new SkillLoadException(
@@ -198,8 +210,7 @@ public class SkillLoader {
         }
 
         // Resolve disableModelInvocation flag
-        boolean disableModelInvocation = Boolean.TRUE.equals(
-                frontmatter.get("disable-model-invocation"));
+        boolean disableModelInvocation = Boolean.TRUE.equals(frontmatter.get("disable-model-invocation"));
 
         return new Skill(name, description, filePath, baseDir, source, disableModelInvocation);
     }
@@ -209,8 +220,7 @@ public class SkillLoader {
             throw new SkillLoadException("Skill name is required: " + filePath);
         }
         if (name.length() > Skill.MAX_NAME_LENGTH) {
-            throw new SkillLoadException(
-                    "Skill name exceeds " + Skill.MAX_NAME_LENGTH + " characters: " + filePath);
+            throw new SkillLoadException("Skill name exceeds " + Skill.MAX_NAME_LENGTH + " characters: " + filePath);
         }
         if (!NAME_REGEX.matcher(name).matches()) {
             throw new SkillLoadException(
@@ -221,6 +231,10 @@ public class SkillLoader {
     /**
      * Parses YAML frontmatter from content delimited by {@code ---} lines.
      * Returns an empty map if no frontmatter is present.
+     *
+     * @param content the content
+     *
+     * @return the result
      */
     @SuppressWarnings("unchecked")
     static Map<String, Object> parseFrontmatter(String content) {
@@ -257,6 +271,9 @@ public class SkillLoader {
 
     /**
      * Strips the YAML frontmatter from content, returning only the body.
+     *
+     * @param content the content
+     * @return the result
      */
     static String stripFrontmatter(String content) {
         if (content == null || !content.startsWith(FRONTMATTER_DELIMITER)) {

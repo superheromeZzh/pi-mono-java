@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026-2026. All rights reserved.
+ */
+
 package com.campusclaw.tui.component;
 
 import java.util.ArrayList;
@@ -19,6 +23,9 @@ import com.campusclaw.tui.ansi.AnsiUtils;
  * └──────────────────┘  ← border bottom
  * </pre>
  * When no border, only padding and background are applied.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 public class Box implements Component {
 
@@ -53,9 +60,14 @@ public class Box implements Component {
      * @param bgFn          background color function (null for none)
      * @param borderColorFn function to apply color to border characters (null for none)
      */
-    public Box(Component child, BorderStyle borderStyle, int padding,
-               int paddingX, int paddingY,
-               UnaryOperator<String> bgFn, UnaryOperator<String> borderColorFn) {
+    public Box(
+            Component child,
+            BorderStyle borderStyle,
+            int padding,
+            int paddingX,
+            int paddingY,
+            UnaryOperator<String> bgFn,
+            UnaryOperator<String> borderColorFn) {
         this.child = child;
         this.borderStyle = borderStyle;
         this.padding = padding;
@@ -85,6 +97,7 @@ public class Box implements Component {
     @Override
     public List<String> render(int width) {
         boolean hasBorder = borderStyle != null;
+
         // Border takes 1 column on each side
         int borderWidth = hasBorder ? 1 : 0;
         int contentWidth = Math.max(1, width - (borderWidth * 2) - (paddingX * 2));
@@ -99,8 +112,7 @@ public class Box implements Component {
 
         // --- Top border ---
         if (hasBorder) {
-            result.add(buildBorderLine(
-                    borderStyle.topLeft, borderStyle.horizontal, borderStyle.topRight, width));
+            result.add(buildBorderLine(borderStyle.topLeft, borderStyle.horizontal, borderStyle.topRight, width));
         }
 
         // --- Top padding ---
@@ -112,6 +124,7 @@ public class Box implements Component {
         String leftPad = " ".repeat(paddingX);
         for (String line : childLines) {
             String padded = leftPad + line;
+
             // Pad to innerWidth
             int visLen = AnsiUtils.visibleWidth(padded);
             int rightPad = Math.max(0, innerWidth - visLen);
@@ -136,8 +149,7 @@ public class Box implements Component {
 
         // --- Bottom border ---
         if (hasBorder) {
-            result.add(buildBorderLine(
-                    borderStyle.bottomLeft, borderStyle.horizontal, borderStyle.bottomRight, width));
+            result.add(buildBorderLine(borderStyle.bottomLeft, borderStyle.horizontal, borderStyle.bottomRight, width));
         }
 
         return result;
@@ -145,17 +157,25 @@ public class Box implements Component {
 
     /**
      * Builds a horizontal border line: corner + repeated horizontal + corner.
+     *
+     * @param left the left-corner character
+     * @param horizontal the repeated horizontal-line character
+     * @param right the right-corner character
+     * @param totalWidth total width including corners
+     * @return the styled border line
      */
     private String buildBorderLine(char left, char horizontal, char right, int totalWidth) {
         int innerCount = Math.max(0, totalWidth - 2);
-        String line = String.valueOf(left)
-                + String.valueOf(horizontal).repeat(innerCount)
-                + String.valueOf(right);
+        String line = String.valueOf(left) + String.valueOf(horizontal).repeat(innerCount) + String.valueOf(right);
         return colorBorder(line);
     }
 
     /**
      * Builds a padding line (empty space between border and content).
+     *
+     * @param innerWidth inner width in columns (excludes vertical borders)
+     * @param hasBorder whether vertical borders should bookend the line
+     * @return a styled padding line
      */
     private String buildPaddingLine(int innerWidth, boolean hasBorder) {
         String inner = " ".repeat(innerWidth);

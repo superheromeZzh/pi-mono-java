@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026-2026. All rights reserved.
+ */
+
 package com.huawei.hicampus.mate.matecampusclaw.cron.tool;
 
 import java.time.Instant;
@@ -10,10 +14,8 @@ import com.huawei.hicampus.mate.matecampusclaw.agent.tool.AgentTool;
 import com.huawei.hicampus.mate.matecampusclaw.agent.tool.AgentToolResult;
 import com.huawei.hicampus.mate.matecampusclaw.agent.tool.AgentToolUpdateCallback;
 import com.huawei.hicampus.mate.matecampusclaw.agent.tool.CancellationToken;
-import com.huawei.hicampus.mate.matecampusclaw.ai.types.ContentBlock;
 import com.huawei.hicampus.mate.matecampusclaw.ai.types.TextContent;
 import com.huawei.hicampus.mate.matecampusclaw.cron.CronService;
-import com.huawei.hicampus.mate.matecampusclaw.cron.model.CronJob;
 import com.huawei.hicampus.mate.matecampusclaw.cron.model.CronPayload;
 import com.huawei.hicampus.mate.matecampusclaw.cron.model.CronSchedule;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -24,13 +26,16 @@ import org.springframework.stereotype.Component;
 
 /**
  * Agent tool for managing cron jobs via LLM conversation.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 @Component
 public class CronTool implements AgentTool {
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
     private static final DateTimeFormatter TIME_FMT =
-        DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").withZone(ZoneId.systemDefault());
+            DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").withZone(ZoneId.systemDefault());
 
     private final CronService cronService;
 
@@ -59,70 +64,102 @@ public class CronTool implements AgentTool {
     @Override
     public JsonNode parameters() {
         var props = MAPPER.createObjectNode();
-
-        props.set("action", MAPPER.createObjectNode()
-            .put("type", "string")
-            .put("description", "Action: create, list, delete, trigger, status, runs")
-            .set("enum", MAPPER.createArrayNode()
-                .add("create").add("list").add("delete")
-                .add("trigger").add("status").add("runs")));
-
-        props.set("name", MAPPER.createObjectNode()
-            .put("type", "string")
-            .put("description", "Job name (for create)"));
-
-        props.set("description", MAPPER.createObjectNode()
-            .put("type", "string")
-            .put("description", "Job description (for create, optional)"));
-
-        props.set("schedule_type", MAPPER.createObjectNode()
-            .put("type", "string")
-            .put("description", "Schedule type: at, every, or cron (for create)")
-            .set("enum", MAPPER.createArrayNode()
-                .add("at").add("every").add("cron")));
-
-        props.set("schedule_value", MAPPER.createObjectNode()
-            .put("type", "string")
-            .put("description", "Schedule value: ISO timestamp for 'at', milliseconds for 'every', cron expression for 'cron'"));
-
-        props.set("timezone", MAPPER.createObjectNode()
-            .put("type", "string")
-            .put("description", "Timezone for cron expressions (optional, e.g. Asia/Shanghai)"));
-
-        props.set("prompt", MAPPER.createObjectNode()
-            .put("type", "string")
-            .put("description", "The prompt to send to the agent (for create)"));
-
-        props.set("model", MAPPER.createObjectNode()
-            .put("type", "string")
-            .put("description", "Model ID to use (for create, optional)"));
-
-        props.set("system_prompt", MAPPER.createObjectNode()
-            .put("type", "string")
-            .put("description", "Custom system prompt (for create, optional)"));
-
-        props.set("tools", MAPPER.createObjectNode()
-            .put("type", "array")
-            .put("description", "Allowed tool names (for create, optional, all tools if omitted)")
-            .set("items", MAPPER.createObjectNode().put("type", "string")));
-
-        props.set("job_id", MAPPER.createObjectNode()
-            .put("type", "string")
-            .put("description", "Job ID (for delete, trigger, status, runs)"));
-
-        props.set("limit", MAPPER.createObjectNode()
-            .put("type", "integer")
-            .put("description", "Max number of run records to return (for runs, default 10)"));
-
+        addActionField(props);
+        addCreateFields(props);
+        addScheduleFields(props);
+        addLookupFields(props);
         return MAPPER.createObjectNode()
-            .put("type", "object")
-            .<ObjectNode>set("properties", props)
-            .set("required", MAPPER.createArrayNode().add("action"));
+                .put("type", "object")
+                .<ObjectNode>set("properties", props)
+                .set("required", MAPPER.createArrayNode().add("action"));
+    }
+
+    private static void addActionField(ObjectNode props) {
+        props.set(
+                "action",
+                MAPPER.createObjectNode()
+                        .put("type", "string")
+                        .put("description", "Action: create, list, delete, trigger, status, runs")
+                        .set(
+                                "enum",
+                                MAPPER.createArrayNode()
+                                        .add("create")
+                                        .add("list")
+                                        .add("delete")
+                                        .add("trigger")
+                                        .add("status")
+                                        .add("runs")));
+    }
+
+    private static void addCreateFields(ObjectNode props) {
+        props.set("name", MAPPER.createObjectNode().put("type", "string").put("description", "Job name (for create)"));
+        props.set(
+                "description",
+                MAPPER.createObjectNode()
+                        .put("type", "string")
+                        .put("description", "Job description (for create, optional)"));
+        props.set(
+                "prompt",
+                MAPPER.createObjectNode()
+                        .put("type", "string")
+                        .put("description", "The prompt to send to the agent (for create)"));
+        props.set(
+                "model",
+                MAPPER.createObjectNode()
+                        .put("type", "string")
+                        .put("description", "Model ID to use (for create, optional)"));
+        props.set(
+                "system_prompt",
+                MAPPER.createObjectNode()
+                        .put("type", "string")
+                        .put("description", "Custom system prompt (for create, optional)"));
+        props.set(
+                "tools",
+                MAPPER.createObjectNode()
+                        .put("type", "array")
+                        .put("description", "Allowed tool names (for create, optional, all tools if omitted)")
+                        .set("items", MAPPER.createObjectNode().put("type", "string")));
+    }
+
+    private static void addScheduleFields(ObjectNode props) {
+        props.set(
+                "schedule_type",
+                MAPPER.createObjectNode()
+                        .put("type", "string")
+                        .put("description", "Schedule type: at, every, or cron (for create)")
+                        .set(
+                                "enum",
+                                MAPPER.createArrayNode().add("at").add("every").add("cron")));
+        props.set(
+                "schedule_value",
+                MAPPER.createObjectNode()
+                        .put("type", "string")
+                        .put(
+                                "description",
+                                "Schedule value: ISO timestamp for 'at', milliseconds for 'every', cron expression for 'cron'"));
+        props.set(
+                "timezone",
+                MAPPER.createObjectNode()
+                        .put("type", "string")
+                        .put("description", "Timezone for cron expressions (optional, e.g. Asia/Shanghai)"));
+    }
+
+    private static void addLookupFields(ObjectNode props) {
+        props.set(
+                "job_id",
+                MAPPER.createObjectNode()
+                        .put("type", "string")
+                        .put("description", "Job ID (for delete, trigger, status, runs)"));
+        props.set(
+                "limit",
+                MAPPER.createObjectNode()
+                        .put("type", "integer")
+                        .put("description", "Max number of run records to return (for runs, default 10)"));
     }
 
     @Override
-    public AgentToolResult execute(String toolCallId, Map<String, Object> params,
-                                    CancellationToken signal, AgentToolUpdateCallback onUpdate) {
+    public AgentToolResult execute(
+            String toolCallId, Map<String, Object> params, CancellationToken signal, AgentToolUpdateCallback onUpdate) {
         String action = (String) params.get("action");
         if (action == null) {
             return textResult("Error: action is required");
@@ -134,7 +171,9 @@ public class CronTool implements AgentTool {
             case "trigger" -> handleTrigger(params);
             case "status" -> handleStatus(params);
             case "runs" -> handleRuns(params);
-            default -> textResult("Error: unknown action '" + action + "'. Valid: create, list, delete, trigger, status, runs");
+            default ->
+                textResult(
+                        "Error: unknown action '" + action + "'. Valid: create, list, delete, trigger, status, runs");
         };
     }
 
@@ -165,11 +204,7 @@ public class CronTool implements AgentTool {
         @SuppressWarnings("unchecked")
         var tools = (List<String>) params.get("tools");
         var payload = new CronPayload.AgentPrompt(
-            prompt,
-            (String) params.get("system_prompt"),
-            (String) params.get("model"),
-            tools
-        );
+                prompt, (String) params.get("system_prompt"), (String) params.get("model"), tools);
 
         String description = (String) params.get("description");
         var job = cronService.createJob(name, description, schedule, payload);
@@ -197,11 +232,14 @@ public class CronTool implements AgentTool {
             sb.append(" (").append(job.id()).append(")\n");
             sb.append("    Schedule: ").append(formatSchedule(job.schedule())).append("\n");
             if (job.state().lastRunAtMs() > 0) {
-                sb.append("    Last run: ").append(TIME_FMT.format(Instant.ofEpochMilli(job.state().lastRunAtMs())));
+                sb.append("    Last run: ")
+                        .append(TIME_FMT.format(Instant.ofEpochMilli(job.state().lastRunAtMs())));
                 sb.append(" — ").append(job.state().lastRunStatus()).append("\n");
             }
             if (job.state().consecutiveErrors() > 0) {
-                sb.append("    Consecutive errors: ").append(job.state().consecutiveErrors()).append("\n");
+                sb.append("    Consecutive errors: ")
+                        .append(job.state().consecutiveErrors())
+                        .append("\n");
             }
             sb.append("\n");
         }
@@ -224,8 +262,7 @@ public class CronTool implements AgentTool {
         }
         try {
             var record = cronService.triggerJob(jobId);
-            return textResult("Triggered job " + jobId + " → run " + record.runId()
-                + " (" + record.status() + ")");
+            return textResult("Triggered job " + jobId + " → run " + record.runId() + " (" + record.status() + ")");
         } catch (IllegalArgumentException e) {
             return textResult("Error: " + e.getMessage());
         }
@@ -248,17 +285,22 @@ public class CronTool implements AgentTool {
         sb.append("  Total runs: ").append(job.state().totalRuns()).append("\n");
         if (job.state().runningAtMs() > 0) {
             sb.append("  Currently running since: ")
-                .append(TIME_FMT.format(Instant.ofEpochMilli(job.state().runningAtMs()))).append("\n");
+                    .append(TIME_FMT.format(Instant.ofEpochMilli(job.state().runningAtMs())))
+                    .append("\n");
         }
         if (job.state().lastRunAtMs() > 0) {
-            sb.append("  Last run: ").append(TIME_FMT.format(Instant.ofEpochMilli(job.state().lastRunAtMs())));
+            sb.append("  Last run: ")
+                    .append(TIME_FMT.format(Instant.ofEpochMilli(job.state().lastRunAtMs())));
             sb.append(" — ").append(job.state().lastRunStatus()).append("\n");
         }
         if (job.state().nextRunAtMs() > 0) {
             sb.append("  Next run: ")
-                .append(TIME_FMT.format(Instant.ofEpochMilli(job.state().nextRunAtMs()))).append("\n");
+                    .append(TIME_FMT.format(Instant.ofEpochMilli(job.state().nextRunAtMs())))
+                    .append("\n");
         }
-        sb.append("  Consecutive errors: ").append(job.state().consecutiveErrors()).append("\n");
+        sb.append("  Consecutive errors: ")
+                .append(job.state().consecutiveErrors())
+                .append("\n");
         return textResult(sb.toString());
     }
 
@@ -305,18 +347,19 @@ public class CronTool implements AgentTool {
                         yield new CronSchedule.At(Instant.parse(value).toEpochMilli());
                     } catch (Exception e2) {
                         throw new IllegalArgumentException(
-                            "Invalid 'at' value: expected epoch millis or ISO timestamp, got: " + value);
+                                "Invalid 'at' value: expected epoch millis or ISO timestamp, got: " + value);
                     }
                 }
             }
             case "every" -> {
                 try {
                     long ms = Long.parseLong(value);
-                    if (ms <= 0) throw new IllegalArgumentException("Interval must be positive");
+                    if (ms <= 0) {
+                        throw new IllegalArgumentException("Interval must be positive");
+                    }
                     yield new CronSchedule.Every(ms);
                 } catch (NumberFormatException e) {
-                    throw new IllegalArgumentException(
-                        "Invalid 'every' value: expected milliseconds, got: " + value);
+                    throw new IllegalArgumentException("Invalid 'every' value: expected milliseconds, got: " + value);
                 }
             }
             case "cron" -> {
@@ -333,13 +376,18 @@ public class CronTool implements AgentTool {
 
     private String formatSchedule(CronSchedule schedule) {
         return switch (schedule) {
-            case CronSchedule.At at ->
-                "once at " + TIME_FMT.format(Instant.ofEpochMilli(at.timestampMs()));
+            case CronSchedule.At at -> "once at " + TIME_FMT.format(Instant.ofEpochMilli(at.timestampMs()));
             case CronSchedule.Every every -> {
                 long ms = every.intervalMs();
-                if (ms >= 3_600_000) yield "every " + (ms / 3_600_000) + "h";
-                if (ms >= 60_000) yield "every " + (ms / 60_000) + "m";
-                if (ms >= 1_000) yield "every " + (ms / 1_000) + "s";
+                if (ms >= 3_600_000) {
+                    yield "every " + (ms / 3_600_000) + "h";
+                }
+                if (ms >= 60_000) {
+                    yield "every " + (ms / 60_000) + "m";
+                }
+                if (ms >= 1_000) {
+                    yield "every " + (ms / 1_000) + "s";
+                }
                 yield "every " + ms + "ms";
             }
             case CronSchedule.CronExpr cron -> {

@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026-2026. All rights reserved.
+ */
+
 package com.huawei.hicampus.mate.matecampusclaw.codingagent.util;
 
 import java.io.IOException;
@@ -21,24 +25,27 @@ import jakarta.annotation.Nullable;
 /**
  * Manages application changelog entries.
  * Loads from bundled changelog.json and supports user-read tracking.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 public class Changelog {
     private static final Logger log = LoggerFactory.getLogger(Changelog.class);
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
+    @SuppressWarnings("checkstyle:top_class_comment")
     @JsonIgnoreProperties(ignoreUnknown = true)
     public record ChangelogEntry(
-        @JsonProperty("version") String version,
-        @JsonProperty("date") String date,
-        @JsonProperty("title") @Nullable String title,
-        @JsonProperty("changes") List<Change> changes
-    ) {}
+            @JsonProperty("version") String version,
+            @JsonProperty("date") String date,
+            @JsonProperty("title") @Nullable String title,
+            @JsonProperty("changes") List<Change> changes) {}
 
+    @SuppressWarnings("checkstyle:top_class_comment")
     @JsonIgnoreProperties(ignoreUnknown = true)
     public record Change(
-        @JsonProperty("type") String type,       // "feature", "fix", "improvement", "breaking"
-        @JsonProperty("description") String description
-    ) {}
+            @JsonProperty("type") String type, // "feature", "fix", "improvement", "breaking"
+            @JsonProperty("description") String description) {}
 
     private final List<ChangelogEntry> entries = new ArrayList<>();
     private @Nullable String lastReadVersion;
@@ -49,11 +56,14 @@ public class Changelog {
         loadReadState();
     }
 
-    /** Load changelog entries from a JSON file. */
+    /**
+     * Load changelog entries from a JSON file.
+     *
+     * @param path the path
+     */
     public void loadFromFile(Path path) {
         try {
-            List<ChangelogEntry> loaded = MAPPER.readValue(path.toFile(),
-                new TypeReference<List<ChangelogEntry>>() {});
+            List<ChangelogEntry> loaded = MAPPER.readValue(path.toFile(), new TypeReference<List<ChangelogEntry>>() {});
             entries.clear();
             entries.addAll(loaded);
             entries.sort((a, b) -> b.date().compareTo(a.date())); // newest first
@@ -62,15 +72,18 @@ public class Changelog {
         }
     }
 
-    /** Load changelog from classpath resource. */
+    /**
+     * Load changelog from classpath resource.
+     *
+     * @param resourcePath the resourcePath
+     */
     public void loadFromResource(String resourcePath) {
         try (InputStream is = getClass().getResourceAsStream(resourcePath)) {
             if (is == null) {
                 log.debug("Changelog resource not found: {}", resourcePath);
                 return;
             }
-            List<ChangelogEntry> loaded = MAPPER.readValue(is,
-                new TypeReference<List<ChangelogEntry>>() {});
+            List<ChangelogEntry> loaded = MAPPER.readValue(is, new TypeReference<List<ChangelogEntry>>() {});
             entries.clear();
             entries.addAll(loaded);
             entries.sort((a, b) -> b.date().compareTo(a.date()));
@@ -79,28 +92,46 @@ public class Changelog {
         }
     }
 
-    /** Get all entries. */
+    /**
+     * Get all entries.
+     *
+     * @return the result
+     */
     public List<ChangelogEntry> getAll() {
         return Collections.unmodifiableList(entries);
     }
 
-    /** Get entries newer than the last read version. */
+    /**
+     * Get entries newer than the last read version.
+     *
+     * @return the result
+     */
     public List<ChangelogEntry> getUnread() {
-        if (lastReadVersion == null) return List.copyOf(entries);
+        if (lastReadVersion == null) {
+            return List.copyOf(entries);
+        }
         List<ChangelogEntry> unread = new ArrayList<>();
         for (ChangelogEntry entry : entries) {
-            if (entry.version().equals(lastReadVersion)) break;
+            if (entry.version().equals(lastReadVersion)) {
+                break;
+            }
             unread.add(entry);
         }
         return unread;
     }
 
-    /** Check if there are unread changes. */
+    /**
+     * Check if there are unread changes.
+     *
+     * @return the result
+     */
     public boolean hasUnread() {
         return !getUnread().isEmpty();
     }
 
-    /** Mark all entries as read up to the latest version. */
+    /**
+     * Mark all entries as read up to the latest version.
+     */
     public void markAllRead() {
         if (!entries.isEmpty()) {
             lastReadVersion = entries.get(0).version();
@@ -108,7 +139,12 @@ public class Changelog {
         }
     }
 
-    /** Format a changelog entry for terminal display. */
+    /**
+     * Format a changelog entry for terminal display.
+     *
+     * @param entry the entry
+     * @return the result
+     */
     public static String format(ChangelogEntry entry) {
         var sb = new StringBuilder();
         sb.append("\033[1m").append(entry.version());
@@ -118,19 +154,28 @@ public class Changelog {
         sb.append("\033[0m");
         sb.append(" \033[2m(").append(entry.date()).append(")\033[0m\n");
         for (Change change : entry.changes()) {
-            String icon = switch (change.type()) {
-                case "feature" -> "\033[32m✦\033[0m";
-                case "fix" -> "\033[31m✦\033[0m";
-                case "improvement" -> "\033[33m✦\033[0m";
-                case "breaking" -> "\033[91m⚠\033[0m";
-                default -> "•";
-            };
-            sb.append("  ").append(icon).append(" ").append(change.description()).append('\n');
+            String icon =
+                    switch (change.type()) {
+                        case "feature" -> "\033[32m✦\033[0m";
+                        case "fix" -> "\033[31m✦\033[0m";
+                        case "improvement" -> "\033[33m✦\033[0m";
+                        case "breaking" -> "\033[91m⚠\033[0m";
+                        default -> "•";
+                    };
+            sb.append("  ")
+                    .append(icon)
+                    .append(" ")
+                    .append(change.description())
+                    .append('\n');
         }
         return sb.toString();
     }
 
-    /** Format all entries. */
+    /**
+     * Format all entries.
+     *
+     * @return the result
+     */
     public String formatAll() {
         var sb = new StringBuilder();
         for (ChangelogEntry entry : entries) {
@@ -150,7 +195,9 @@ public class Changelog {
     }
 
     private void saveReadState() {
-        if (lastReadVersion == null) return;
+        if (lastReadVersion == null) {
+            return;
+        }
         try {
             Files.createDirectories(stateFile.getParent());
             Files.writeString(stateFile, lastReadVersion);

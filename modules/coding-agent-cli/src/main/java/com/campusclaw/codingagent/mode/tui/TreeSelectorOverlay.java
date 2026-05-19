@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026-2026. All rights reserved.
+ */
+
 package com.campusclaw.codingagent.mode.tui;
 
 import java.util.ArrayList;
@@ -16,6 +20,9 @@ import com.campusclaw.tui.component.SelectList;
  * Tree selector overlay for /tree command.
  * Shows session messages as a navigable list and lets user navigate branches.
  * Supports switching to a different point in the conversation.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 public class TreeSelectorOverlay implements Component, Focusable {
 
@@ -26,6 +33,7 @@ public class TreeSelectorOverlay implements Component, Focusable {
     private static final String ANSI_RESET = "\033[0m";
     private static final String ANSI_BOLD = "\033[1m";
 
+    @SuppressWarnings("checkstyle:top_class_comment")
     public record TreeItem(int index, String role, String preview) {}
 
     private final SelectList<TreeItem> selectList;
@@ -39,15 +47,20 @@ public class TreeSelectorOverlay implements Component, Focusable {
         this.empty = items.isEmpty();
 
         this.selectList = new SelectList<>(items, this::renderItem, 20);
+
         // Default to last item
         if (!items.isEmpty()) {
             selectList.setSelectedIndex(items.size() - 1);
         }
         selectList.setOnSelect(item -> {
-            if (onSelect != null) { onSelect.accept(item); }
+            if (onSelect != null) {
+                onSelect.accept(item);
+            }
         });
         selectList.setOnCancel(() -> {
-            if (onCancel != null) { onCancel.run(); }
+            if (onCancel != null) {
+                onCancel.run();
+            }
         });
     }
 
@@ -95,26 +108,29 @@ public class TreeSelectorOverlay implements Component, Focusable {
     }
 
     private String renderItem(TreeItem item) {
-        String roleColor = switch (item.role) {
-            case "user" -> ANSI_USER;
-            case "assistant" -> ANSI_ASSISTANT;
-            default -> ANSI_DIM;
-        };
-        String roleLabel = switch (item.role) {
-            case "user" -> "U";
-            case "assistant" -> "A";
-            default -> "T";
-        };
-        return String.format("%s[%s]%s %s#%d%s %s",
-                roleColor, roleLabel, ANSI_RESET,
-                ANSI_DIM, item.index + 1, ANSI_RESET,
-                item.preview);
+        String roleColor =
+                switch (item.role) {
+                    case "user" -> ANSI_USER;
+                    case "assistant" -> ANSI_ASSISTANT;
+                    default -> ANSI_DIM;
+                };
+        String roleLabel =
+                switch (item.role) {
+                    case "user" -> "U";
+                    case "assistant" -> "A";
+                    default -> "T";
+                };
+        return String.format(
+                "%s[%s]%s %s#%d%s %s",
+                roleColor, roleLabel, ANSI_RESET, ANSI_DIM, item.index + 1, ANSI_RESET, item.preview);
     }
 
     @Override
     public void handleInput(String data) {
         if ("\033".equals(data) || "\003".equals(data)) {
-            if (onCancel != null) { onCancel.run(); }
+            if (onCancel != null) {
+                onCancel.run();
+            }
             return;
         }
         selectList.handleInput(data);
@@ -129,8 +145,8 @@ public class TreeSelectorOverlay implements Component, Focusable {
     public List<String> render(int width) {
         var lines = new ArrayList<String>();
         lines.add("");
-        lines.add(" " + ANSI_BOLD + ANSI_ACCENT + "Session Tree" + ANSI_RESET
-                + ANSI_DIM + "  (↑↓ navigate, Enter select, Esc cancel)" + ANSI_RESET);
+        lines.add(" " + ANSI_BOLD + ANSI_ACCENT + "Session Tree" + ANSI_RESET + ANSI_DIM
+                + "  (↑↓ navigate, Enter select, Esc cancel)" + ANSI_RESET);
         lines.add("");
 
         if (empty) {
@@ -146,7 +162,9 @@ public class TreeSelectorOverlay implements Component, Focusable {
     }
 
     @Override
-    public boolean isFocused() { return focused; }
+    public boolean isFocused() {
+        return focused;
+    }
 
     @Override
     public void setFocused(boolean focused) {

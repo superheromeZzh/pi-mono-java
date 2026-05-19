@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026-2026. All rights reserved.
+ */
+
 package com.campusclaw.tui.component;
 
 import java.util.ArrayList;
@@ -11,6 +15,9 @@ import java.util.function.UnaryOperator;
  * Popped snapshots are returned directly since they are already detached.
  *
  * @param <S> the state type
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 public class UndoStack<S> {
 
@@ -26,28 +33,48 @@ public class UndoStack<S> {
         this.cloneFn = cloneFn;
     }
 
-    /** Push a deep clone of the given state onto the stack. */
+    /**
+     * Push a deep clone of the given state onto the stack.
+     *
+     * @param state the state snapshot to clone and store
+     */
     public void push(S state) {
         stack.add(cloneFn.apply(state));
     }
 
-    /** Pop and return the most recent snapshot, or null if empty. */
+    /**
+     * Pop and return the most recent snapshot, or null if empty.
+     *
+     * @return the most recent snapshot, or {@code null} when the stack is empty
+     */
     public S pop() {
-        if (stack.isEmpty()) { return null; }
+        if (stack.isEmpty()) {
+            return null;
+        }
         return stack.remove(stack.size() - 1);
     }
 
-    /** Remove all snapshots. */
+    /**
+     * Remove all snapshots.
+     */
     public void clear() {
         stack.clear();
     }
 
-    /** Returns the number of snapshots in the stack. */
+    /**
+     * Returns the number of snapshots in the stack.
+     *
+     * @return current snapshot count
+     */
     public int size() {
         return stack.size();
     }
 
-    /** Returns true if the stack has no snapshots. */
+    /**
+     * Returns true if the stack has no snapshots.
+     *
+     * @return {@code true} when there are no snapshots
+     */
     public boolean isEmpty() {
         return stack.isEmpty();
     }

@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026-2026. All rights reserved.
+ */
+
 package com.huawei.hicampus.mate.matecampusclaw.codingagent.prompt;
 
 import java.io.IOException;
@@ -26,14 +30,16 @@ import org.slf4j.LoggerFactory;
  *   <li>Global: {@code ~/.campusclaw/agent/prompts/}</li>
  *   <li>Project: {@code {cwd}/.campusclaw/prompts/}</li>
  * </ol>
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 public class PromptTemplateLoader {
 
     private static final Logger log = LoggerFactory.getLogger(PromptTemplateLoader.class);
-    private static final Pattern FRONTMATTER_PATTERN = Pattern.compile(
-            "\\A---\\s*\\n(.*?)\\n---\\s*\\n", Pattern.DOTALL);
-    private static final Pattern DESCRIPTION_PATTERN = Pattern.compile(
-            "^description:\\s*(.+)$", Pattern.MULTILINE);
+    private static final Pattern FRONTMATTER_PATTERN =
+            Pattern.compile("\\A---\\s*\\n(.*?)\\n---\\s*\\n", Pattern.DOTALL);
+    private static final Pattern DESCRIPTION_PATTERN = Pattern.compile("^description:\\s*(.+)$", Pattern.MULTILINE);
 
     /**
      * Loads prompt templates from global and project directories.
@@ -50,14 +56,17 @@ public class PromptTemplateLoader {
         loadFromDir(globalDir, "user", byName);
 
         // Project prompts override
-        Path projectDir = cwd.resolve(com.huawei.hicampus.mate.matecampusclaw.codingagent.config.AppPaths.CONFIG_DIR_NAME).resolve("prompts");
+        Path projectDir = cwd.resolve(com.huawei.hicampus.mate.matecampusclaw.codingagent.config.AppPaths.CONFIG_DIR_NAME)
+                .resolve("prompts");
         loadFromDir(projectDir, "project", byName);
 
         return List.copyOf(byName.values());
     }
 
     private void loadFromDir(Path dir, String source, Map<String, PromptTemplateEntry> byName) {
-        if (!Files.isDirectory(dir)) return;
+        if (!Files.isDirectory(dir)) {
+            return;
+        }
 
         try (Stream<Path> paths = Files.walk(dir)) {
             paths.filter(p -> Files.isRegularFile(p) && p.toString().endsWith(".md"))
@@ -97,9 +106,7 @@ public class PromptTemplateLoader {
                 for (String line : body.split("\n")) {
                     String trimmed = line.trim();
                     if (!trimmed.isEmpty()) {
-                        description = trimmed.length() > 60
-                                ? trimmed.substring(0, 60) + "..."
-                                : trimmed;
+                        description = trimmed.length() > 60 ? trimmed.substring(0, 60) + "..." : trimmed;
                         break;
                     }
                 }

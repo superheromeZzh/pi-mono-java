@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026-2026. All rights reserved.
+ */
+
 package com.huawei.hicampus.mate.matecampusclaw.codingagent.skill;
 
 import java.util.ArrayList;
@@ -9,6 +13,9 @@ import java.util.Optional;
 /**
  * Central registry that manages loaded {@link Skill}s.
  * Skills are keyed by name; registering a duplicate name overwrites the previous entry.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 public class SkillRegistry {
 
@@ -16,6 +23,8 @@ public class SkillRegistry {
 
     /**
      * Registers a single skill. Overwrites any existing skill with the same name.
+     *
+     * @param skill the skill
      */
     public void register(Skill skill) {
         skills.put(skill.name(), skill);
@@ -23,6 +32,8 @@ public class SkillRegistry {
 
     /**
      * Registers all skills in the given list.
+     *
+     * @param skillList the skillList
      */
     public void registerAll(List<Skill> skillList) {
         for (Skill skill : skillList) {
@@ -32,6 +43,9 @@ public class SkillRegistry {
 
     /**
      * Looks up a skill by name.
+     *
+     * @param name the name
+     * @return the result
      */
     public Optional<Skill> getByName(String name) {
         return Optional.ofNullable(skills.get(name));
@@ -39,6 +53,8 @@ public class SkillRegistry {
 
     /**
      * Returns all registered skills in registration order.
+     *
+     * @return the result
      */
     public List<Skill> getAll() {
         return new ArrayList<>(skills.values());
@@ -47,11 +63,11 @@ public class SkillRegistry {
     /**
      * Returns skills that should be visible in the system prompt
      * (i.e. those with {@code disableModelInvocation == false}).
+     *
+     * @return the result
      */
     public List<Skill> getVisibleSkills() {
-        return skills.values().stream()
-                .filter(s -> !s.disableModelInvocation())
-                .toList();
+        return skills.values().stream().filter(s -> !s.disableModelInvocation()).toList();
     }
 
     /**

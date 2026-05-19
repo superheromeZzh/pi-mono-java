@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026-2026. All rights reserved.
+ */
+
 package com.huawei.hicampus.mate.matecampusclaw.codingagent.loop;
 
 import java.util.Collection;
@@ -12,7 +16,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import com.huawei.hicampus.mate.matecampusclaw.codingagent.channel.MessageSubmitter;
+import com.huawei.hicampus.mate.matecampusclaw.agent.util.LoggingUncaughtExceptionHandler;
+import com.huawei.hicampus.mate.matecampusclaw.assistant.channel.MessageSubmitter;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -21,6 +27,9 @@ import org.springframework.stereotype.Service;
  * Manages in-session recurring prompts (loops). Unlike cron (isolated agent, persisted),
  * loops run within the current conversation session and output streams directly into chat.
  * Loops are session-scoped and do not survive application restart.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 @Service
 public class LoopManager implements MessageSubmitter {
@@ -33,11 +42,15 @@ public class LoopManager implements MessageSubmitter {
     private final AtomicInteger nextId = new AtomicInteger(1);
     private volatile ScheduledExecutorService scheduler;
 
+    @SuppressWarnings("checkstyle:top_class_comment")
     public record LoopEntry(String id, String prompt, long intervalMs, ScheduledFuture<?> future) {}
 
     /**
      * Initialize with the interactive mode's submit queue and execution flag.
      * Must be called before start/stop operations.
+     *
+     * @param submitQueue the submitQueue
+     * @param executingPrompt the executingPrompt
      */
     public void init(BlockingQueue<String> submitQueue, AtomicBoolean executingPrompt) {
         this.submitQueue = submitQueue;
@@ -45,6 +58,7 @@ public class LoopManager implements MessageSubmitter {
         this.scheduler = Executors.newSingleThreadScheduledExecutor(r -> {
             Thread t = new Thread(r, "loop-manager");
             t.setDaemon(true);
+            t.setUncaughtExceptionHandler(LoggingUncaughtExceptionHandler.INSTANCE);
             return t;
         });
         log.debug("LoopManager initialized");
@@ -54,24 +68,31 @@ public class LoopManager implements MessageSubmitter {
      * Start a new loop that submits the given prompt at fixed intervals.
      * Skips iterations when the agent is busy (skip-if-running).
      *
-     * @return the loop ID
+     * @param prompt the prompt to submit at each tick
+     * @param intervalMs the interval between submissions, in milliseconds
+     * @return the loop ID, used later to stop the loop
+     * @throws IllegalStateException if the operation fails
      */
     public String start(String prompt, long intervalMs) {
         if (scheduler == null) {
             throw new IllegalStateException("LoopManager not initialized — only available in interactive mode");
         }
         String id = String.valueOf(nextId.getAndIncrement());
-        var future = scheduler.scheduleAtFixedRate(() -> {
-            try {
-                if (executingPrompt != null && !executingPrompt.get()) {
-                    submitQueue.add(prompt);
-                } else {
-                    log.debug("Loop #{} skipped — agent is busy", id);
-                }
-            } catch (Exception e) {
-                log.warn("Loop #{} error: {}", id, e.getMessage());
-            }
-        }, intervalMs, intervalMs, TimeUnit.MILLISECONDS);
+        var future = scheduler.scheduleAtFixedRate(
+                () -> {
+                    try {
+                        if (executingPrompt != null && !executingPrompt.get()) {
+                            submitQueue.add(prompt);
+                        } else {
+                            log.debug("Loop #{} skipped — agent is busy", id);
+                        }
+                    } catch (Exception e) {
+                        log.warn("Loop #{} error: {}", id, e.getMessage());
+                    }
+                },
+                intervalMs,
+                intervalMs,
+                TimeUnit.MILLISECONDS);
         activeLoops.put(id, new LoopEntry(id, prompt, intervalMs, future));
         log.info("Started loop #{} (every {}ms): {}", id, intervalMs, prompt);
         return id;

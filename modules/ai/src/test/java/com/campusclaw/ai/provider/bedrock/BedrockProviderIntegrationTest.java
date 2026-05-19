@@ -1,9 +1,14 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026-2026. All rights reserved.
+ */
+
 package com.campusclaw.ai.provider.bedrock;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -62,14 +67,19 @@ class BedrockProviderIntegrationTest {
 
     private Model testModel() {
         return new Model(
-                "anthropic.claude-sonnet-4-20250514-v1:0", "Claude Sonnet 4 (Bedrock)",
-                Api.BEDROCK_CONVERSE_STREAM, Provider.AMAZON_BEDROCK,
-                null, false,
+                "anthropic.claude-sonnet-4-20250514-v1:0",
+                "Claude Sonnet 4 (Bedrock)",
+                Api.BEDROCK_CONVERSE_STREAM,
+                Provider.AMAZON_BEDROCK,
+                null,
+                false,
                 List.of(InputModality.TEXT, InputModality.IMAGE),
                 new ModelCost(3.0, 15.0, 0.3, 3.75),
-                200000, 8192, null, null,
-                null
-        );
+                200000,
+                8192,
+                null,
+                null,
+                null);
     }
 
     @BeforeEach
@@ -92,12 +102,10 @@ class BedrockProviderIntegrationTest {
 
         @Test
         void producesDefaultDoneEvent() {
-            when(mockClient.converseStream(any(ConverseStreamRequest.class),
-                    any(ConverseStreamResponseHandler.class)))
+            when(mockClient.converseStream(any(ConverseStreamRequest.class), any(ConverseStreamResponseHandler.class)))
                     .thenReturn(CompletableFuture.completedFuture(null));
 
-            var context = new Context(null,
-                    List.of(new UserMessage("Hi", 1L)), null);
+            var context = new Context(null, List.of(new UserMessage("Hi", 1L)), null);
             var eventStream = new AssistantMessageEventStream();
 
             provider.executeStream(testModel(), context, null, null, null, null, eventStream);
@@ -120,8 +128,7 @@ class BedrockProviderIntegrationTest {
 
         @Test
         void buildsCorrectRequestWithSystemPrompt() {
-            var context = new Context("Be helpful.",
-                    List.of(new UserMessage("Hello", 1L)), null);
+            var context = new Context("Be helpful.", List.of(new UserMessage("Hello", 1L)), null);
 
             var request = provider.buildRequest(testModel(), context, null, null, null, null);
 
@@ -132,10 +139,8 @@ class BedrockProviderIntegrationTest {
 
         @Test
         void buildsRequestWithTools() {
-            var tools = List.of(
-                    new com.campusclaw.ai.types.Tool("bash", "Run commands", null));
-            var context = new Context(null,
-                    List.of(new UserMessage("Hello", 1L)), tools);
+            var tools = List.of(new com.campusclaw.ai.types.Tool("bash", "Run commands", null));
+            var context = new Context(null, List.of(new UserMessage("Hello", 1L)), tools);
 
             var request = provider.buildRequest(testModel(), context, null, null, null, null);
 
@@ -145,8 +150,7 @@ class BedrockProviderIntegrationTest {
 
         @Test
         void buildsRequestWithCustomMaxTokensAndTemperature() {
-            var context = new Context(null,
-                    List.of(new UserMessage("Hello", 1L)), null);
+            var context = new Context(null, List.of(new UserMessage("Hello", 1L)), null);
 
             var request = provider.buildRequest(testModel(), context, 4096, 0.7, null, null);
 
@@ -156,8 +160,7 @@ class BedrockProviderIntegrationTest {
 
         @Test
         void omitsSystemPromptWhenNull() {
-            var context = new Context(null,
-                    List.of(new UserMessage("Hello", 1L)), null);
+            var context = new Context(null, List.of(new UserMessage("Hello", 1L)), null);
 
             var request = provider.buildRequest(testModel(), context, null, null, null, null);
 
@@ -166,8 +169,7 @@ class BedrockProviderIntegrationTest {
 
         @Test
         void omitsToolConfigWhenNoTools() {
-            var context = new Context(null,
-                    List.of(new UserMessage("Hello", 1L)), null);
+            var context = new Context(null, List.of(new UserMessage("Hello", 1L)), null);
 
             var request = provider.buildRequest(testModel(), context, null, null, null, null);
 
@@ -176,19 +178,17 @@ class BedrockProviderIntegrationTest {
 
         @Test
         void verifiesRequestSentToClient() {
-            when(mockClient.converseStream(any(ConverseStreamRequest.class),
-                    any(ConverseStreamResponseHandler.class)))
+            when(mockClient.converseStream(any(ConverseStreamRequest.class), any(ConverseStreamResponseHandler.class)))
                     .thenReturn(CompletableFuture.completedFuture(null));
 
-            var context = new Context("System prompt",
-                    List.of(new UserMessage("Hello", 1L)), null);
+            var context = new Context("System prompt", List.of(new UserMessage("Hello", 1L)), null);
             var eventStream = new AssistantMessageEventStream();
 
             provider.executeStream(testModel(), context, null, null, null, null, eventStream);
             eventStream.result().block();
 
-            verify(mockClient).converseStream(any(ConverseStreamRequest.class),
-                    any(ConverseStreamResponseHandler.class));
+            verify(mockClient)
+                    .converseStream(any(ConverseStreamRequest.class), any(ConverseStreamResponseHandler.class));
         }
     }
 
@@ -204,16 +204,19 @@ class BedrockProviderIntegrationTest {
             List<com.campusclaw.ai.types.Message> messages = List.of(
                     new UserMessage("Hello", 1L),
                     new AssistantMessage(
-                            List.of(new TextContent("Hi", null),
-                                    new ToolCall("toolu_1", "bash",
-                                            Map.of("command", "ls"), null)),
-                            "bedrock-converse-stream", "amazon-bedrock",
+                            List.of(
+                                    new TextContent("Hi", null),
+                                    new ToolCall("toolu_1", "bash", Map.of("command", "ls"), null)),
+                            "bedrock-converse-stream",
+                            "amazon-bedrock",
                             "anthropic.claude-sonnet-4-20250514-v1:0",
-                            null, Usage.empty(), StopReason.TOOL_USE, null, 2L),
-                    new ToolResultMessage("toolu_1", "bash",
-                            List.of(new TextContent("file1.txt")), null, false, 3L),
-                    new UserMessage("Good", 4L)
-            );
+                            null,
+                            Usage.empty(),
+                            StopReason.TOOL_USE,
+                            null,
+                            2L),
+                    new ToolResultMessage("toolu_1", "bash", List.of(new TextContent("file1.txt")), null, false, 3L),
+                    new UserMessage("Good", 4L));
 
             var result = BedrockProvider.convertMessages(messages);
             assertEquals(4, result.size());
@@ -307,12 +310,10 @@ class BedrockProviderIntegrationTest {
 
         @Test
         void handlesClientException() {
-            when(mockClient.converseStream(any(ConverseStreamRequest.class),
-                    any(ConverseStreamResponseHandler.class)))
+            when(mockClient.converseStream(any(ConverseStreamRequest.class), any(ConverseStreamResponseHandler.class)))
                     .thenThrow(new RuntimeException("Connection failed"));
 
-            var context = new Context(null,
-                    List.of(new UserMessage("Hello", 1L)), null);
+            var context = new Context(null, List.of(new UserMessage("Hello", 1L)), null);
             var eventStream = new AssistantMessageEventStream();
 
             provider.executeStream(testModel(), context, null, null, null, null, eventStream);
@@ -323,13 +324,10 @@ class BedrockProviderIntegrationTest {
 
         @Test
         void handlesCompletableFutureFailure() {
-            when(mockClient.converseStream(any(ConverseStreamRequest.class),
-                    any(ConverseStreamResponseHandler.class)))
-                    .thenReturn(CompletableFuture.failedFuture(
-                            new RuntimeException("Service unavailable")));
+            when(mockClient.converseStream(any(ConverseStreamRequest.class), any(ConverseStreamResponseHandler.class)))
+                    .thenReturn(CompletableFuture.failedFuture(new RuntimeException("Service unavailable")));
 
-            var context = new Context(null,
-                    List.of(new UserMessage("Hello", 1L)), null);
+            var context = new Context(null, List.of(new UserMessage("Hello", 1L)), null);
             var eventStream = new AssistantMessageEventStream();
 
             provider.executeStream(testModel(), context, null, null, null, null, eventStream);
@@ -347,12 +345,10 @@ class BedrockProviderIntegrationTest {
 
         @Test
         void closesClientAfterSuccessfulExecution() {
-            when(mockClient.converseStream(any(ConverseStreamRequest.class),
-                    any(ConverseStreamResponseHandler.class)))
+            when(mockClient.converseStream(any(ConverseStreamRequest.class), any(ConverseStreamResponseHandler.class)))
                     .thenReturn(CompletableFuture.completedFuture(null));
 
-            var context = new Context(null,
-                    List.of(new UserMessage("Hello", 1L)), null);
+            var context = new Context(null, List.of(new UserMessage("Hello", 1L)), null);
             var eventStream = new AssistantMessageEventStream();
 
             provider.executeStream(testModel(), context, null, null, null, null, eventStream);
@@ -363,12 +359,10 @@ class BedrockProviderIntegrationTest {
 
         @Test
         void closesClientOnException() {
-            when(mockClient.converseStream(any(ConverseStreamRequest.class),
-                    any(ConverseStreamResponseHandler.class)))
+            when(mockClient.converseStream(any(ConverseStreamRequest.class), any(ConverseStreamResponseHandler.class)))
                     .thenThrow(new RuntimeException("Connection failed"));
 
-            var context = new Context(null,
-                    List.of(new UserMessage("Hello", 1L)), null);
+            var context = new Context(null, List.of(new UserMessage("Hello", 1L)), null);
             var eventStream = new AssistantMessageEventStream();
 
             provider.executeStream(testModel(), context, null, null, null, null, eventStream);
@@ -387,22 +381,21 @@ class BedrockProviderIntegrationTest {
 
         @Test
         void streamReturnsEventStream() {
-            var context = new Context(null,
-                    List.of(new UserMessage("Hello", 1L)), null);
+            var context = new Context(null, List.of(new UserMessage("Hello", 1L)), null);
 
             var stream = provider.stream(testModel(), context, null);
-            assertNotNull(stream);
-            assertNotNull(stream.asFlux());
+
+            // asFlux() must return a stable, multicast view of the same Sink — not a fresh Flux per call
+            assertSame(stream.asFlux(), stream.asFlux());
         }
 
         @Test
         void streamSimpleReturnsEventStream() {
-            var context = new Context(null,
-                    List.of(new UserMessage("Hello", 1L)), null);
+            var context = new Context(null, List.of(new UserMessage("Hello", 1L)), null);
 
             var stream = provider.streamSimple(testModel(), context, null);
-            assertNotNull(stream);
-            assertNotNull(stream.asFlux());
+
+            assertSame(stream.asFlux(), stream.asFlux());
         }
     }
 
@@ -417,8 +410,9 @@ class BedrockProviderIntegrationTest {
     }
 
     private <T> void assertHasEventType(List<AssistantMessageEvent> events, Class<T> type) {
-        assertTrue(events.stream().anyMatch(type::isInstance),
-                "Expected event of type " + type.getSimpleName() + " but none found in: " +
-                        events.stream().map(e -> e.getClass().getSimpleName()).toList());
+        assertTrue(
+                events.stream().anyMatch(type::isInstance),
+                "Expected event of type " + type.getSimpleName() + " but none found in: "
+                        + events.stream().map(e -> e.getClass().getSimpleName()).toList());
     }
 }

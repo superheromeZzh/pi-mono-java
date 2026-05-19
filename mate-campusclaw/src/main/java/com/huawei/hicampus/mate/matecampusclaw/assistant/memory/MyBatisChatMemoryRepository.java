@@ -1,4 +1,13 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026-2026. All rights reserved.
+ */
+
 package com.huawei.hicampus.mate.matecampusclaw.assistant.memory;
+
+import java.io.UncheckedIOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
 
 import com.huawei.hicampus.mate.matecampusclaw.ai.types.AssistantMessage;
 import com.huawei.hicampus.mate.matecampusclaw.ai.types.Message;
@@ -7,11 +16,15 @@ import com.huawei.hicampus.mate.matecampusclaw.ai.types.UserMessage;
 import com.huawei.hicampus.mate.matecampusclaw.assistant.mapper.ChatMemoryMapper;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import java.io.UncheckedIOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-
+/**
+ * Default {@link ChatMemoryRepository} implementation that persists messages through
+ * {@link ChatMemoryMapper}. Serializes each {@link Message} as JSON via the provided
+ * {@link ObjectMapper} and assigns a monotonically increasing per-conversation sequence
+ * on append.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/13]
+ * @since [br_eCampusCore 25.1.0_Next]
+ */
 public class MyBatisChatMemoryRepository implements ChatMemoryRepository {
 
     private final ObjectMapper objectMapper;
@@ -31,7 +44,7 @@ public class MyBatisChatMemoryRepository implements ChatMemoryRepository {
                 messages.add(objectMapper.readValue(entity.content(), Message.class));
             } catch (Exception e) {
                 throw new UncheckedIOException(
-                    new java.io.IOException("Failed to parse message for conversation " + conversationId, e));
+                        new java.io.IOException("Failed to parse message for conversation " + conversationId, e));
             }
         }
         return messages;
@@ -41,7 +54,9 @@ public class MyBatisChatMemoryRepository implements ChatMemoryRepository {
     public void append(String conversationId, List<Message> messages) {
         Objects.requireNonNull(conversationId, "conversationId");
         Objects.requireNonNull(messages, "messages");
-        if (messages.isEmpty()) return;
+        if (messages.isEmpty()) {
+            return;
+        }
 
         List<ChatMemoryEntity> existing = mapper.selectByConversationId(conversationId);
         int nextSequence = existing.isEmpty() ? 0 : existing.getLast().sequence() + 1;
@@ -53,7 +68,7 @@ public class MyBatisChatMemoryRepository implements ChatMemoryRepository {
                 content = objectMapper.writeValueAsString(message);
             } catch (Exception e) {
                 throw new UncheckedIOException(
-                    new java.io.IOException("Failed to serialize message for conversation " + conversationId, e));
+                        new java.io.IOException("Failed to serialize message for conversation " + conversationId, e));
             }
             String role = extractRole(message);
             mapper.insert(new ChatMemoryEntity(conversationId, role, content, nextSequence + i));

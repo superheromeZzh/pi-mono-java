@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026-2026. All rights reserved.
+ */
+
 package com.campusclaw.codingagent.skill;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -20,10 +24,13 @@ class SkillRegistryTest {
     }
 
     private Skill skill(String name, boolean disableModelInvocation) {
-        return new Skill(name, "Description for " + name,
+        return new Skill(
+                name,
+                "Description for " + name,
                 Path.of("/skills/" + name + "/SKILL.md"),
                 Path.of("/skills/" + name),
-                "project", disableModelInvocation);
+                "project",
+                disableModelInvocation);
     }
 
     // -------------------------------------------------------------------
@@ -51,8 +58,7 @@ class SkillRegistryTest {
         @Test
         void overwritesDuplicateName() {
             Skill s1 = skill("commit", false);
-            Skill s2 = new Skill("commit", "Updated",
-                    Path.of("/other/SKILL.md"), Path.of("/other"), "user", false);
+            Skill s2 = new Skill("commit", "Updated", Path.of("/other/SKILL.md"), Path.of("/other"), "user", false);
 
             registry.register(s1);
             registry.register(s2);
@@ -70,11 +76,7 @@ class SkillRegistryTest {
 
         @Test
         void registersMultipleSkills() {
-            registry.registerAll(List.of(
-                    skill("commit", false),
-                    skill("review", false),
-                    skill("test-runner", false)
-            ));
+            registry.registerAll(List.of(skill("commit", false), skill("review", false), skill("test-runner", false)));
 
             assertEquals(3, registry.getAll().size());
         }

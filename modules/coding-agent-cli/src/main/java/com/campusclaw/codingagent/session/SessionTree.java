@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026-2026. All rights reserved.
+ */
+
 package com.campusclaw.codingagent.session;
 
 import java.util.ArrayList;
@@ -15,6 +19,9 @@ import com.campusclaw.ai.types.Message;
 /**
  * In-memory representation of a session as a tree of entries.
  * Supports forking (branching) and navigating between branches.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 public class SessionTree {
     private final List<SessionEntry> entries = new ArrayList<>();
@@ -22,31 +29,49 @@ public class SessionTree {
     private final Map<String, List<String>> childrenMap = new LinkedHashMap<>();
     private String currentEntryId = null;
 
-    /** Add an entry to the tree. */
+    /**
+     * Add an entry to the tree.
+     *
+     * @param entry the entry
+     */
     public void addEntry(SessionEntry entry) {
         entries.add(entry);
         entriesById.put(entry.id(), entry);
         if (entry.parentId() != null) {
-            childrenMap.computeIfAbsent(entry.parentId(), k -> new ArrayList<>()).add(entry.id());
+            childrenMap
+                    .computeIfAbsent(entry.parentId(), k -> new ArrayList<>())
+                    .add(entry.id());
         }
         currentEntryId = entry.id();
     }
 
-    /** Get the current branch (path from root to current entry). */
+    /**
+     * Get the current branch (path from root to current entry).
+     *
+     * @return the result
+     */
     public List<SessionEntry> getCurrentBranch() {
-        if (currentEntryId == null) { return List.of(); }
+        if (currentEntryId == null) {
+            return List.of();
+        }
         List<SessionEntry> branch = new ArrayList<>();
         String id = currentEntryId;
         while (id != null) {
             SessionEntry entry = entriesById.get(id);
-            if (entry == null) { break; }
+            if (entry == null) {
+                break;
+            }
             branch.add(0, entry);
             id = entry.parentId();
         }
         return branch;
     }
 
-    /** Get messages from the current branch. */
+    /**
+     * Get messages from the current branch.
+     *
+     * @return the result
+     */
     public List<Message> getCurrentMessages() {
         List<Message> messages = new ArrayList<>();
         for (SessionEntry entry : getCurrentBranch()) {
@@ -57,7 +82,14 @@ public class SessionTree {
         return messages;
     }
 
-    /** Fork at the given entry ID, creating a new branch point. */
+    /**
+     * Fork at the given entry ID, creating a new branch point.
+     *
+     * @param atEntryId the atEntryId
+     * @return the result
+     *
+     * @throws IllegalArgumentException if the operation fails
+     */
     public String fork(String atEntryId) {
         if (!entriesById.containsKey(atEntryId)) {
             throw new IllegalArgumentException("Entry not found: " + atEntryId);
@@ -66,7 +98,13 @@ public class SessionTree {
         return atEntryId;
     }
 
-    /** Switch to a different entry (navigating the tree). */
+    /**
+     * Switch to a different entry (navigating the tree).
+     *
+     * @param entryId the entryId
+     *
+     * @throws IllegalArgumentException if the operation fails
+     */
     public void switchTo(String entryId) {
         if (!entriesById.containsKey(entryId)) {
             throw new IllegalArgumentException("Entry not found: " + entryId);
@@ -74,11 +112,17 @@ public class SessionTree {
         currentEntryId = entryId;
     }
 
-    /** Get all leaf entries (branch tips). */
+    /**
+     * Get all leaf entries (branch tips).
+     *
+     * @return the result
+     */
     public List<SessionEntry> getLeaves() {
         Set<String> parents = new HashSet<>();
         for (SessionEntry e : entries) {
-            if (e.parentId() != null) { parents.add(e.parentId()); }
+            if (e.parentId() != null) {
+                parents.add(e.parentId());
+            }
         }
         List<SessionEntry> leaves = new ArrayList<>();
         for (SessionEntry e : entries) {
@@ -89,43 +133,75 @@ public class SessionTree {
         return leaves;
     }
 
-    /** Get children of an entry. */
+    /**
+     * Get children of an entry.
+     *
+     * @param entryId the entryId
+     * @return the result
+     */
     public List<SessionEntry> getChildren(String entryId) {
         List<String> childIds = childrenMap.getOrDefault(entryId, List.of());
         List<SessionEntry> children = new ArrayList<>();
         for (String id : childIds) {
             SessionEntry e = entriesById.get(id);
-            if (e != null) { children.add(e); }
+            if (e != null) {
+                children.add(e);
+            }
         }
         return children;
     }
 
-    /** Get all entries in order. */
+    /**
+     * Get all entries in order.
+     *
+     * @return the result
+     */
     public List<SessionEntry> getAllEntries() {
         return Collections.unmodifiableList(entries);
     }
 
-    /** Get current entry ID. */
+    /**
+     * Get current entry ID.
+     *
+     * @return the result
+     */
     public String getCurrentEntryId() {
         return currentEntryId;
     }
 
-    /** Get entry by ID. */
+    /**
+     * Get entry by ID.
+     *
+     * @param id the id
+     * @return the result
+     */
     public Optional<SessionEntry> getEntry(String id) {
         return Optional.ofNullable(entriesById.get(id));
     }
 
-    /** Generate a unique entry ID. */
+    /**
+     * Generate a unique entry ID.
+     *
+     * @return the result
+     */
     public static String generateId() {
         return UUID.randomUUID().toString().substring(0, 8);
     }
 
-    /** Get number of entries. */
+    /**
+     * Get number of entries.
+     *
+     * @return the result
+     */
     public int size() {
         return entries.size();
     }
 
-    /** Check if tree is empty. */
+    /**
+     * Check if tree is empty.
+     *
+     * @return the result
+     */
     public boolean isEmpty() {
         return entries.isEmpty();
     }

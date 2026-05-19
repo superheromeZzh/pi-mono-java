@@ -1,8 +1,12 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026-2026. All rights reserved.
+ */
+
 package com.huawei.hicampus.mate.matecampusclaw.tui.ansi;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
 import java.util.function.UnaryOperator;
@@ -157,8 +161,10 @@ class AnsiUtilsTest {
         @Test
         void sliceWithAnsiCodes() {
             String text = RED + "hello" + RESET;
+
             // Slice columns 1-4: should get "ell" with RED code preserved
             String result = AnsiUtils.sliceByColumn(text, 1, 4);
+
             // Should contain RED and "ell"
             assertTrue(result.contains("ell"));
             assertTrue(result.contains(RED));
@@ -183,6 +189,7 @@ class AnsiUtilsTest {
         void slicePreservesAnsiBeforeRange() {
             // ANSI code appears before the visible range
             String text = RED + "hello" + RESET;
+
             // Slice cols 2-5 should preserve the RED code since it was set before
             String result = AnsiUtils.sliceByColumn(text, 2, 5);
             assertTrue(result.contains(RED));
@@ -207,6 +214,7 @@ class AnsiUtilsTest {
         @Test
         void mixedContentSlice() {
             String text = "AB" + RED + "你好" + RESET + "CD";
+
             // A=0, B=1, 你=2-3, 好=4-5, C=6, D=7
             String result = AnsiUtils.sliceByColumn(text, 1, 6);
             assertTrue(result.contains("B"));
@@ -345,8 +353,10 @@ class AnsiUtilsTest {
             String text = RED + "hello world" + RESET;
             List<String> result = AnsiUtils.wrapTextWithAnsi(text, 5);
             assertEquals(2, result.size());
+
             // First line should start with RED
             assertTrue(result.get(0).startsWith(RED));
+
             // Second line should also have RED prefix (restored from tracker)
             assertTrue(result.get(1).contains(RED));
         }
@@ -392,6 +402,7 @@ class AnsiUtilsTest {
             List<String> result = AnsiUtils.wrapTextWithAnsi(text, 10);
             assertEquals(2, result.size());
             assertTrue(result.get(0).startsWith(RED));
+
             // Second line should inherit RED from first line
             assertTrue(result.get(1).contains(RED));
         }
@@ -430,9 +441,11 @@ class AnsiUtilsTest {
         void paddingToWidth() {
             UnaryOperator<String> bgFn = s -> BG_RED + s + RESET;
             String result = AnsiUtils.applyBackground("hi", 5, bgFn);
+
             // Should contain BG_RED, "hi", 3 spaces padding, and RESET
             assertTrue(result.startsWith(BG_RED));
             assertTrue(result.endsWith(RESET));
+
             // The visible content should be "hi" + 3 spaces = 5 chars
             String inner = result.substring(BG_RED.length(), result.length() - RESET.length());
             assertEquals("hi   ", inner);
@@ -449,6 +462,7 @@ class AnsiUtilsTest {
         @Test
         void textExceedsWidth() {
             UnaryOperator<String> bgFn = s -> BG_RED + s + RESET;
+
             // If text is wider than width, no padding is added
             String result = AnsiUtils.applyBackground("hello world", 5, bgFn);
             String inner = result.substring(BG_RED.length(), result.length() - RESET.length());
@@ -466,6 +480,7 @@ class AnsiUtilsTest {
         @Test
         void chineseTextPadding() {
             UnaryOperator<String> bgFn = s -> BG_RED + s + RESET;
+
             // "你好" = 4 columns, width 6, needs 2 spaces padding
             String result = AnsiUtils.applyBackground("你好", 6, bgFn);
             String inner = result.substring(BG_RED.length(), result.length() - RESET.length());
@@ -475,9 +490,11 @@ class AnsiUtilsTest {
         @Test
         void ansiTextPadding() {
             UnaryOperator<String> bgFn = s -> BG_RED + s + RESET;
+
             // RED + "hi" + RESET = visible width 2, pad to 5
             String input = RED + "hi" + RESET;
             String result = AnsiUtils.applyBackground(input, 5, bgFn);
+
             // Total visible width of inner content should be 5
             String inner = result.substring(BG_RED.length(), result.length() - RESET.length());
             assertEquals(5, AnsiUtils.visibleWidth(inner));
@@ -495,6 +512,7 @@ class AnsiUtilsTest {
         void sliceAndWidthConsistency() {
             String text = RED + "hello" + GREEN + "world" + RESET;
             String sliced = AnsiUtils.sliceByColumn(text, 0, 10);
+
             // Visible width of sliced result should be 10
             assertEquals(10, AnsiUtils.visibleWidth(sliced));
         }
@@ -515,7 +533,8 @@ class AnsiUtilsTest {
             String text = "这是一段包含中文和English混合的文本";
             List<String> wrapped = AnsiUtils.wrapTextWithAnsi(text, 10);
             for (String line : wrapped) {
-                assertTrue(AnsiUtils.visibleWidth(line) <= 10,
+                assertTrue(
+                        AnsiUtils.visibleWidth(line) <= 10,
                         "Line exceeds max width: '" + line + "' width=" + AnsiUtils.visibleWidth(line));
             }
         }
@@ -525,6 +544,7 @@ class AnsiUtilsTest {
             String text = BOLD + RED + UNDERLINE + "styled" + RESET;
             assertEquals(6, AnsiUtils.visibleWidth(text));
             List<AnsiSegment> segments = AnsiUtils.extractSegments(text);
+
             // Should have BOLD, RED, UNDERLINE as separate ANSI segments, "styled" as text, RESET as ANSI
             assertEquals(5, segments.size());
         }

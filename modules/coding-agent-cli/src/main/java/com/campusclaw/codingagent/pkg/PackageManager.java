@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026-2026. All rights reserved.
+ */
+
 package com.campusclaw.codingagent.pkg;
 
 import java.io.IOException;
@@ -21,28 +25,27 @@ import jakarta.annotation.Nullable;
 /**
  * Discovers and manages extension packages (skills, tools, commands).
  * Supports npm-style packages and git-based packages.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 public class PackageManager {
     private static final Logger log = LoggerFactory.getLogger(PackageManager.class);
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
+    @SuppressWarnings("checkstyle:top_class_comment")
     @JsonIgnoreProperties(ignoreUnknown = true)
     public record PackageManifest(
-        @JsonProperty("name") String name,
-        @JsonProperty("version") @Nullable String version,
-        @JsonProperty("description") @Nullable String description,
-        @JsonProperty("skills") @Nullable List<String> skills,
-        @JsonProperty("tools") @Nullable List<String> tools,
-        @JsonProperty("commands") @Nullable List<String> commands,
-        @JsonProperty("repository") @Nullable String repository
-    ) {}
+            @JsonProperty("name") String name,
+            @JsonProperty("version") @Nullable String version,
+            @JsonProperty("description") @Nullable String description,
+            @JsonProperty("skills") @Nullable List<String> skills,
+            @JsonProperty("tools") @Nullable List<String> tools,
+            @JsonProperty("commands") @Nullable List<String> commands,
+            @JsonProperty("repository") @Nullable String repository) {}
 
-    public record InstalledPackage(
-        String name,
-        String version,
-        Path location,
-        PackageManifest manifest
-    ) {}
+    @SuppressWarnings("checkstyle:top_class_comment")
+    public record InstalledPackage(String name, String version, Path location, PackageManifest manifest) {}
 
     private final Path packagesDir;
     private final Map<String, InstalledPackage> installed = new LinkedHashMap<>();
@@ -51,10 +54,14 @@ public class PackageManager {
         this.packagesDir = packagesDir;
     }
 
-    /** Scan packages directory for installed packages. */
+    /**
+     * Scan packages directory for installed packages.
+     */
     public void scan() {
         installed.clear();
-        if (!Files.isDirectory(packagesDir)) { return; }
+        if (!Files.isDirectory(packagesDir)) {
+            return;
+        }
 
         try (var dirs = Files.list(packagesDir)) {
             dirs.filter(Files::isDirectory).forEach(dir -> {
@@ -62,7 +69,9 @@ public class PackageManager {
                 if (Files.exists(manifestPath)) {
                     try {
                         PackageManifest manifest = MAPPER.readValue(manifestPath.toFile(), PackageManifest.class);
-                        String name = manifest.name() != null ? manifest.name() : dir.getFileName().toString();
+                        String name = manifest.name() != null
+                                ? manifest.name()
+                                : dir.getFileName().toString();
                         String version = manifest.version() != null ? manifest.version() : "0.0.0";
                         installed.put(name, new InstalledPackage(name, version, dir, manifest));
                         log.debug("Found package: {} v{}", name, version);
@@ -76,22 +85,40 @@ public class PackageManager {
         }
     }
 
-    /** Get all installed packages. */
+    /**
+     * Get all installed packages.
+     *
+     * @return the result
+     */
     public List<InstalledPackage> getInstalled() {
         return List.copyOf(installed.values());
     }
 
-    /** Get an installed package by name. */
+    /**
+     * Get an installed package by name.
+     *
+     * @param name the name
+     * @return the result
+     */
     public Optional<InstalledPackage> get(String name) {
         return Optional.ofNullable(installed.get(name));
     }
 
-    /** Check if a package is installed. */
+    /**
+     * Check if a package is installed.
+     *
+     * @param name the name
+     * @return the result
+     */
     public boolean isInstalled(String name) {
         return installed.containsKey(name);
     }
 
-    /** Get all skill paths from all packages. */
+    /**
+     * Get all skill paths from all packages.
+     *
+     * @return the result
+     */
     public List<Path> getAllSkillPaths() {
         List<Path> paths = new ArrayList<>();
         for (InstalledPackage pkg : installed.values()) {
@@ -100,12 +127,12 @@ public class PackageManager {
                     paths.add(pkg.location().resolve(skill));
                 }
             }
+
             // Also check for skills/ directory
             Path skillsDir = pkg.location().resolve("skills");
             if (Files.isDirectory(skillsDir)) {
                 try (var stream = Files.list(skillsDir)) {
-                    stream.filter(p -> p.toString().endsWith(".md"))
-                        .forEach(paths::add);
+                    stream.filter(p -> p.toString().endsWith(".md")).forEach(paths::add);
                 } catch (IOException e) {
                     log.debug("Failed to list skills dir for {}", pkg.name(), e);
                 }

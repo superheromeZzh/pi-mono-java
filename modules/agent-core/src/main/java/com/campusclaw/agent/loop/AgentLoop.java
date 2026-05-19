@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026-2026. All rights reserved.
+ */
+
 package com.campusclaw.agent.loop;
 
 import java.util.ArrayList;
@@ -16,6 +20,7 @@ import com.campusclaw.agent.event.MessageUpdateEvent;
 import com.campusclaw.agent.event.TurnEndEvent;
 import com.campusclaw.agent.event.TurnStartEvent;
 import com.campusclaw.agent.queue.MessageQueue;
+import com.campusclaw.agent.subagent.acp.AcpTransport;
 import com.campusclaw.agent.tool.AgentContext;
 import com.campusclaw.agent.tool.AgentTool;
 import com.campusclaw.agent.tool.CancellationToken;
@@ -23,6 +28,7 @@ import com.campusclaw.agent.tool.ToolCallWithTool;
 import com.campusclaw.agent.tool.ToolExecutionMode;
 import com.campusclaw.agent.tool.ToolExecutionPipeline;
 import com.campusclaw.ai.stream.AssistantMessageEvent;
+import com.campusclaw.ai.stream.AssistantMessageEventStream;
 import com.campusclaw.ai.types.AssistantMessage;
 import com.campusclaw.ai.types.Context;
 import com.campusclaw.ai.types.Message;
@@ -38,6 +44,9 @@ import reactor.core.publisher.Sinks;
 
 /**
  * Core agent loop that streams assistant responses, executes tools, and manages turn continuation.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 public class AgentLoop {
 
@@ -69,100 +78,120 @@ public class AgentLoop {
     }
 
     public List<Message> run(
-        List<Message> prompts,
-        AgentContext context,
-        AgentEventListener listener,
-        CancellationToken signal
-    ) {
+            List<Message> prompts, AgentContext context, AgentEventListener listener, CancellationToken signal) {
         return runInternal(prompts != null ? prompts : List.of(), context, listener, signal);
     }
 
-    public List<Message> continueLoop(
-        AgentContext context,
-        AgentEventListener listener,
-        CancellationToken signal
-    ) {
+    public List<Message> continueLoop(AgentContext context, AgentEventListener listener, CancellationToken signal) {
         return runInternal(List.of(), context, listener, signal);
     }
 
     private List<Message> runInternal(
-        List<Message> prompts,
-        AgentContext context,
-        AgentEventListener listener,
-        CancellationToken signal
-    ) {
+            List<Message> prompts, AgentContext context, AgentEventListener listener, CancellationToken signal) {
         Objects.requireNonNull(context, "context");
         Objects.requireNonNull(signal, "signal");
-
-        AgentEventListener eventListener = listener != null ? listener : event -> {
-        };
-
+        AgentEventListener eventListener = listener != null ? listener : event -> {};
         if (!prompts.isEmpty()) {
             context.appendMessages(prompts);
         }
-
         List<Message> pendingTurnInputs = List.copyOf(prompts);
         eventListener.onEvent(new AgentStartEvent());
-
+        int turn = 0;
         try {
             while (!signal.isCancelled()) {
+                turn++;
+                AcpTransport.note("AgentLoop.turn=" + turn + " start msgCount="
+                        + context.messages().size());
                 eventListener.onEvent(new TurnStartEvent());
                 emitPendingInputs(pendingTurnInputs, eventListener);
-
-                var assistantMessage = invokeModel(context, eventListener, signal);
+                AssistantMessage assistantMessage = invokeModelTraced(turn, context, eventListener, signal);
                 context.appendMessage(assistantMessage);
                 context.setAssistantMessage(assistantMessage);
                 eventListener.onEvent(new MessageEndEvent(assistantMessage));
-
-                // Stop on error or aborted stop reasons
                 if (assistantMessage.stopReason() == StopReason.ERROR
                         || assistantMessage.stopReason() == StopReason.ABORTED) {
+                    AcpTransport.note("AgentLoop.turn=" + turn + " end stopReason=" + assistantMessage.stopReason());
                     eventListener.onEvent(new TurnEndEvent(assistantMessage, List.of()));
                     break;
                 }
-
                 var toolCalls = extractToolCalls(assistantMessage);
+                AcpTransport.note("AgentLoop.turn=" + turn + " extractedToolCalls=" + toolCalls.size());
                 if (!toolCalls.isEmpty()) {
-                    // Separate resolved tools from unknown tools
-                    var resolved = new ArrayList<ToolCallWithTool>();
-                    var unknownResults = new ArrayList<ToolResultMessage>();
-                    resolveToolCallsSafe(toolCalls, context.tools(), resolved, unknownResults);
-
-                    // Execute resolved tools via pipeline
-                    var toolResults = new ArrayList<ToolResultMessage>();
-                    if (!resolved.isEmpty()) {
-                        toolResults.addAll(toolPipeline.executeAll(
-                            resolved, toolExecutionMode, context, signal, eventListener));
-                    }
-                    // Add error results for unknown tools
-                    toolResults.addAll(unknownResults);
-                    context.appendMessages(new ArrayList<>(toolResults));
-
-                    var steeringMessages = drainSteeringMessages();
-                    if (!steeringMessages.isEmpty()) {
-                        context.appendMessages(steeringMessages);
-                    }
-
-                    eventListener.onEvent(new TurnEndEvent(assistantMessage, toolResults));
-                    pendingTurnInputs = steeringMessages;
+                    pendingTurnInputs =
+                            runToolPhaseTraced(turn, context, signal, eventListener, assistantMessage, toolCalls);
                     continue;
                 }
-
                 var followUpMessages = drainFollowUpMessages();
                 eventListener.onEvent(new TurnEndEvent(assistantMessage, List.of()));
-                if (!followUpMessages.isEmpty()) {
-                    context.appendMessages(followUpMessages);
-                    pendingTurnInputs = followUpMessages;
-                    continue;
+                if (followUpMessages.isEmpty()) {
+                    AcpTransport.note("AgentLoop.turn=" + turn + " end no-tools no-followup");
+                    break;
                 }
-
-                break;
+                context.appendMessages(followUpMessages);
+                pendingTurnInputs = followUpMessages;
             }
-
+            AcpTransport.note("AgentLoop.exit cancelled=" + signal.isCancelled() + " totalTurns=" + turn);
             return context.messages();
         } finally {
             eventListener.onEvent(new AgentEndEvent(context.messages()));
         }
+    }
+
+    private AssistantMessage invokeModelTraced(
+            int turn, AgentContext context, AgentEventListener listener, CancellationToken signal) {
+        try {
+            return invokeModel(context, listener, signal);
+        } catch (RuntimeException ex) {
+            AcpTransport.note("AgentLoop.turn=" + turn + " invokeModel threw: " + ex);
+            throw ex;
+        }
+    }
+
+    private List<Message> runToolPhaseTraced(
+            int turn,
+            AgentContext context,
+            CancellationToken signal,
+            AgentEventListener eventListener,
+            AssistantMessage assistantMessage,
+            List<ToolCall> toolCalls) {
+        List<Message> result;
+        try {
+            result = runToolPhase(context, signal, eventListener, assistantMessage, toolCalls);
+        } catch (RuntimeException ex) {
+            AcpTransport.note("AgentLoop.turn=" + turn + " runToolPhase threw: " + ex);
+            throw ex;
+        }
+        AcpTransport.note("AgentLoop.turn=" + turn + " runToolPhase done msgCount="
+                + context.messages().size() + " cancelled=" + signal.isCancelled());
+        return result;
+    }
+
+    private List<Message> runToolPhase(
+            AgentContext context,
+            CancellationToken signal,
+            AgentEventListener eventListener,
+            AssistantMessage assistantMessage,
+            List<ToolCall> toolCalls) {
+        var resolved = new ArrayList<ToolCallWithTool>();
+        var unknownResults = new ArrayList<ToolResultMessage>();
+        resolveToolCallsSafe(toolCalls, context.tools(), resolved, unknownResults);
+        AcpTransport.note("AgentLoop.runToolPhase resolved=" + resolved.size() + " unknown=" + unknownResults.size());
+        var toolResults = new ArrayList<ToolResultMessage>();
+        if (!resolved.isEmpty()) {
+            AcpTransport.note("AgentLoop.runToolPhase calling toolPipeline.executeAll");
+            toolResults.addAll(toolPipeline.executeAll(resolved, toolExecutionMode, context, signal, eventListener));
+            AcpTransport.note("AgentLoop.runToolPhase toolPipeline.executeAll returned results=" + toolResults.size());
+        }
+        toolResults.addAll(unknownResults);
+        context.appendMessages(new ArrayList<>(toolResults));
+        var steeringMessages = drainSteeringMessages();
+        if (!steeringMessages.isEmpty()) {
+            context.appendMessages(steeringMessages);
+        }
+        AcpTransport.note("AgentLoop.runToolPhase emitting TurnEndEvent steering=" + steeringMessages.size());
+        eventListener.onEvent(new TurnEndEvent(assistantMessage, toolResults));
+        AcpTransport.note("AgentLoop.runToolPhase TurnEndEvent emitted, returning");
+        return steeringMessages;
     }
 
     private void emitPendingInputs(List<Message> pendingTurnInputs, AgentEventListener listener) {
@@ -172,33 +201,68 @@ public class AgentLoop {
         }
     }
 
-    private AssistantMessage invokeModel(
-        AgentContext context,
-        AgentEventListener listener,
-        CancellationToken signal
-    ) {
+    /**
+     * Result of consuming the LLM event stream until cancellation or completion.
+     */
+    private record StreamConsumeResult(AssistantMessage message, boolean assistantStarted) {}
+
+    private AssistantMessage invokeModel(AgentContext context, AgentEventListener listener, CancellationToken signal) {
         var transformedMessages = transformMessages(context.messages(), signal);
         var llmMessages = convertToLlm.convert(transformedMessages);
-        var llmContext = new Context(
-            context.systemPrompt(),
-            llmMessages,
-            toLlmTools(context.tools())
-        );
-
+        var llmContext = new Context(context.systemPrompt(), llmMessages, toLlmTools(context.tools()));
         var stream = streamFunction.stream(model, llmContext, streamOptions);
-
-        // Wire cancellation to immediately complete the upstream Flux, disposing the HTTP
-        // subscription so ESC responds without waiting for the next SSE chunk.
         var cancelSink = Sinks.<Object>one();
         signal.onCancel(() -> cancelSink.tryEmitEmpty());
+        var result = consumeStream(stream, cancelSink, listener, signal);
+        if (signal.isCancelled()) {
+            return synthesizeAbortedMessage(result, listener);
+        }
+        var assistantMessage = result.message();
+        if (assistantMessage == null) {
+            assistantMessage = stream.result().block();
+            if (assistantMessage != null && !result.assistantStarted()) {
+                listener.onEvent(new MessageStartEvent(assistantMessage));
+            }
+        }
+        if (assistantMessage == null) {
+            throw new IllegalStateException("LLM stream completed without producing an assistant message");
+        }
+        noteAssistant(assistantMessage, context.messages().size());
+        return assistantMessage;
+    }
 
+    private static void noteAssistant(AssistantMessage msg, int messageCount) {
+        int textChars = 0;
+        int toolCalls = 0;
+        int thinking = 0;
+        int otherBlocks = 0;
+        for (var block : msg.content()) {
+            if (block instanceof TextContent tc) {
+                textChars += tc.text() == null ? 0 : tc.text().length();
+            } else if (block instanceof ToolCall) {
+                toolCalls++;
+            } else if (block.getClass().getSimpleName().contains("Thinking")) {
+                thinking++;
+            } else {
+                otherBlocks++;
+            }
+        }
+        AcpTransport.note("AgentLoop.invokeModel returned: textChars=" + textChars
+                + " toolCalls=" + toolCalls + " thinking=" + thinking + " otherBlocks=" + otherBlocks
+                + " stopReason=" + msg.stopReason() + " msgCountInCtx=" + messageCount);
+    }
+
+    private StreamConsumeResult consumeStream(
+            AssistantMessageEventStream stream,
+            Sinks.One<Object> cancelSink,
+            AgentEventListener listener,
+            CancellationToken signal) {
         AssistantMessage assistantMessage = null;
         var assistantStarted = false;
-
-        for (var event : stream.asFlux()
-                .takeUntilOther(cancelSink.asMono())
-                .toIterable()) {
-            if (signal.isCancelled()) { break; }
+        for (var event : stream.asFlux().takeUntilOther(cancelSink.asMono()).toIterable()) {
+            if (signal.isCancelled()) {
+                break;
+            }
             var currentMessage = extractAssistantMessage(event);
             if (!assistantStarted) {
                 listener.onEvent(new MessageStartEvent(currentMessage));
@@ -209,39 +273,28 @@ public class AgentLoop {
             }
             assistantMessage = currentMessage;
         }
+        return new StreamConsumeResult(assistantMessage, assistantStarted);
+    }
 
-        if (signal.isCancelled()) {
-            // Synthesize an ABORTED message so the outer loop terminates cleanly
-            // instead of falling through to result().block() (which would hang on the torn-down stream).
-            var aborted = new AssistantMessage(
-                assistantMessage != null ? assistantMessage.content() : List.of(),
-                assistantMessage != null ? assistantMessage.api() : model.api().value(),
-                assistantMessage != null ? assistantMessage.provider() : model.provider().value(),
-                assistantMessage != null ? assistantMessage.model() : model.id(),
-                assistantMessage != null ? assistantMessage.responseId() : null,
-                assistantMessage != null ? assistantMessage.usage() : null,
+    // Synthesize an ABORTED message so the outer loop terminates cleanly
+    // instead of falling through to result().block(), which would hang on the
+    // torn-down stream.
+    private AssistantMessage synthesizeAbortedMessage(StreamConsumeResult result, AgentEventListener listener) {
+        var msg = result.message();
+        var aborted = new AssistantMessage(
+                msg != null ? msg.content() : List.of(),
+                msg != null ? msg.api() : model.api().value(),
+                msg != null ? msg.provider() : model.provider().value(),
+                msg != null ? msg.model() : model.id(),
+                msg != null ? msg.responseId() : null,
+                msg != null ? msg.usage() : null,
                 StopReason.ABORTED,
                 null,
-                System.currentTimeMillis()
-            );
-            if (!assistantStarted) {
-                listener.onEvent(new MessageStartEvent(aborted));
-            }
-            return aborted;
+                System.currentTimeMillis());
+        if (!result.assistantStarted()) {
+            listener.onEvent(new MessageStartEvent(aborted));
         }
-
-        if (assistantMessage == null) {
-            assistantMessage = stream.result().block();
-            if (assistantMessage != null && !assistantStarted) {
-                listener.onEvent(new MessageStartEvent(assistantMessage));
-            }
-        }
-
-        if (assistantMessage == null) {
-            throw new IllegalStateException("LLM stream completed without producing an assistant message");
-        }
-
-        return assistantMessage;
+        return aborted;
     }
 
     private List<Message> transformMessages(List<Message> messages, CancellationToken signal) {
@@ -262,8 +315,8 @@ public class AgentLoop {
         }
 
         return tools.stream()
-            .map(tool -> new Tool(tool.name(), tool.description(), tool.parameters()))
-            .toList();
+                .map(tool -> new Tool(tool.name(), tool.description(), tool.parameters()))
+                .toList();
     }
 
     private List<ToolCall> extractToolCalls(AssistantMessage assistantMessage) {
@@ -279,10 +332,17 @@ public class AgentLoop {
     /**
      * Resolves tool calls, separating known tools from unknown ones.
      * Unknown tools get an error result instead of throwing, matching TS behavior.
+     *
+     * @param toolCalls the tool calls emitted by the assistant
+     * @param tools the catalog of tools currently available to the agent
+     * @param resolved out-parameter populated with calls whose tool was found
+     * @param unknownResults out-parameter populated with error results for unknown tools
      */
     private void resolveToolCallsSafe(
-            List<ToolCall> toolCalls, List<AgentTool> tools,
-            List<ToolCallWithTool> resolved, List<ToolResultMessage> unknownResults) {
+            List<ToolCall> toolCalls,
+            List<AgentTool> tools,
+            List<ToolCallWithTool> resolved,
+            List<ToolResultMessage> unknownResults) {
 
         var toolsByName = new LinkedHashMap<String, AgentTool>();
         for (var tool : tools) {
@@ -301,8 +361,7 @@ public class AgentLoop {
                         List.of(new TextContent("Tool " + toolCall.name() + " not found", null)),
                         null,
                         true,
-                        System.currentTimeMillis()
-                ));
+                        System.currentTimeMillis()));
             }
         }
     }
@@ -310,7 +369,9 @@ public class AgentLoop {
     private List<Message> drainSteeringMessages() {
         if (getSteeringMessages != null) {
             var msgs = getSteeringMessages.get();
-            if (msgs != null && !msgs.isEmpty()) { return msgs; }
+            if (msgs != null && !msgs.isEmpty()) {
+                return msgs;
+            }
         }
         return steeringQueue.drain();
     }
@@ -318,7 +379,9 @@ public class AgentLoop {
     private List<Message> drainFollowUpMessages() {
         if (getFollowUpMessages != null) {
             var msgs = getFollowUpMessages.get();
-            if (msgs != null && !msgs.isEmpty()) { return msgs; }
+            if (msgs != null && !msgs.isEmpty()) {
+                return msgs;
+            }
         }
         return followUpQueue.drain();
     }

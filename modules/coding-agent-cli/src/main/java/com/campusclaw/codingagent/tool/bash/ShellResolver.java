@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026-2026. All rights reserved.
+ */
+
 package com.campusclaw.codingagent.tool.bash;
 
 import java.io.BufferedReader;
@@ -8,6 +12,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -21,10 +26,15 @@ import java.util.concurrent.TimeUnit;
  * </ul>
  * The result is cached for the lifetime of the JVM — the shell layout of the host
  * does not change at runtime.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 public final class ShellResolver {
 
-    /** Resolved shell plus the flag used to pass a single command string. */
+    /**
+     * Resolved shell plus the flag used to pass a single command string.
+     */
     public record ShellConfig(String shell, List<String> args) {
         public ShellConfig {
             args = List.copyOf(args);
@@ -35,7 +45,11 @@ public final class ShellResolver {
 
     private ShellResolver() {}
 
-    /** Resolve a shell, caching the result. Throws if no shell can be located (Windows only). */
+    /**
+     * Resolve a shell, caching the result. Throws if no shell can be located (Windows only).
+     *
+     * @return the result
+     */
     public static ShellConfig resolve() {
         ShellConfig local = cached;
         if (local != null) {
@@ -49,7 +63,9 @@ public final class ShellResolver {
         }
     }
 
-    /** Reset the cache. Intended for tests. */
+    /**
+     * Reset the cache. Intended for tests.
+     */
     static void resetCacheForTesting() {
         cached = null;
     }
@@ -99,6 +115,7 @@ public final class ShellResolver {
         if (fromPath != null) {
             return new ShellConfig(fromPath, List.of("-c"));
         }
+
         // Last resort — POSIX systems are required to ship sh.
         return new ShellConfig("sh", List.of("-c"));
     }
@@ -107,6 +124,11 @@ public final class ShellResolver {
      * Run {@code which}/{@code where} to locate an executable on PATH.
      * On Windows {@code where} sometimes returns paths that no longer exist, so the result is
      * verified with {@link Files#isRegularFile(Path, java.nio.file.LinkOption...)}.
+     *
+     * @param locator the locator
+     * @param target the target
+     * @param verifyExists the verifyExists
+     * @return the result
      */
     private static String findOnPath(String locator, String target, boolean verifyExists) {
         try {
@@ -114,8 +136,8 @@ public final class ShellResolver {
                     .redirectErrorStream(true)
                     .start();
             StringBuilder sb = new StringBuilder();
-            try (BufferedReader reader = new BufferedReader(
-                    new InputStreamReader(p.getInputStream(), StandardCharsets.UTF_8))) {
+            try (BufferedReader reader =
+                    new BufferedReader(new InputStreamReader(p.getInputStream(), StandardCharsets.UTF_8))) {
                 String line;
                 while ((line = reader.readLine()) != null) {
                     if (sb.length() == 0) {
@@ -147,6 +169,6 @@ public final class ShellResolver {
     }
 
     private static boolean isWindows() {
-        return System.getProperty("os.name", "").toLowerCase().contains("win");
+        return System.getProperty("os.name", "").toLowerCase(Locale.ROOT).contains("win");
     }
 }

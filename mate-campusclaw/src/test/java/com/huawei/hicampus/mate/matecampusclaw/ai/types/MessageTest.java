@@ -1,12 +1,16 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026-2026. All rights reserved.
+ */
+
 package com.huawei.hicampus.mate.matecampusclaw.ai.types;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
 import java.util.Map;
@@ -102,7 +106,8 @@ class MessageTest {
 
         @Test
         void deserialization() throws JsonProcessingException {
-            var json = """
+            var json =
+                    """
                 {
                   "role": "user",
                   "content": [{"type": "text", "text": "hello"}],
@@ -124,11 +129,15 @@ class MessageTest {
 
         private AssistantMessage createSample() {
             return new AssistantMessage(
-                List.of(new TextContent("Sure, here's the answer.")),
-                "messages", "anthropic", "claude-opus-4-6", "resp-123",
-                new Usage(100, 50, 0, 0, 150, new Cost(0.01, 0.03, 0.0, 0.0, 0.04)),
-                StopReason.STOP, null, 5000L
-            );
+                    List.of(new TextContent("Sure, here's the answer.")),
+                    "messages",
+                    "anthropic",
+                    "claude-opus-4-6",
+                    "resp-123",
+                    new Usage(100, 50, 0, 0, 150, new Cost(0.01, 0.03, 0.0, 0.0, 0.04)),
+                    StopReason.STOP,
+                    null,
+                    5000L);
         }
 
         @Test
@@ -147,10 +156,15 @@ class MessageTest {
         @Test
         void creationWithNullOptionals() {
             var msg = new AssistantMessage(
-                List.of(new TextContent("error")),
-                "messages", "anthropic", "claude-opus-4-6", null,
-                Usage.empty(), StopReason.ERROR, "rate limit exceeded", 6000L
-            );
+                    List.of(new TextContent("error")),
+                    "messages",
+                    "anthropic",
+                    "claude-opus-4-6",
+                    null,
+                    Usage.empty(),
+                    StopReason.ERROR,
+                    "rate limit exceeded",
+                    6000L);
             assertNull(msg.responseId());
             assertEquals("rate limit exceeded", msg.errorMessage());
             assertEquals(StopReason.ERROR, msg.stopReason());
@@ -174,7 +188,8 @@ class MessageTest {
 
         @Test
         void deserialization() throws JsonProcessingException {
-            var json = """
+            var json =
+                    """
                 {
                   "role": "assistant",
                   "content": [{"type": "text", "text": "hello"}],
@@ -202,10 +217,15 @@ class MessageTest {
         @Test
         void toolUseStopReason() throws JsonProcessingException {
             var msg = new AssistantMessage(
-                List.of(new ToolCall("tc-1", "search", Map.of("q", "java"), null)),
-                "messages", "anthropic", "claude-opus-4-6", null,
-                Usage.empty(), StopReason.TOOL_USE, null, 8000L
-            );
+                    List.of(new ToolCall("tc-1", "search", Map.of("q", "java"), null)),
+                    "messages",
+                    "anthropic",
+                    "claude-opus-4-6",
+                    null,
+                    Usage.empty(),
+                    StopReason.TOOL_USE,
+                    null,
+                    8000L);
             var json = mapper.readTree(mapper.writeValueAsString(msg));
             assertEquals("toolUse", json.get("stopReason").asText());
         }
@@ -219,10 +239,7 @@ class MessageTest {
         @Test
         void creation() {
             var msg = new ToolResultMessage(
-                "tc-1", "search",
-                List.of(new TextContent("result data")),
-                Map.of("status", 200), false, 9000L
-            );
+                    "tc-1", "search", List.of(new TextContent("result data")), Map.of("status", 200), false, 9000L);
             assertEquals("tc-1", msg.toolCallId());
             assertEquals("search", msg.toolName());
             assertEquals(1, msg.content().size());
@@ -234,30 +251,21 @@ class MessageTest {
         @Test
         void creationWithNullDetails() {
             var msg = new ToolResultMessage(
-                "tc-2", "read_file",
-                List.of(new TextContent("file contents")),
-                null, false, 10000L
-            );
+                    "tc-2", "read_file", List.of(new TextContent("file contents")), null, false, 10000L);
             assertNull(msg.details());
         }
 
         @Test
         void errorResult() {
             var msg = new ToolResultMessage(
-                "tc-3", "write_file",
-                List.of(new TextContent("Permission denied")),
-                null, true, 11000L
-            );
+                    "tc-3", "write_file", List.of(new TextContent("Permission denied")), null, true, 11000L);
             assertTrue(msg.isError());
         }
 
         @Test
         void serialization() throws JsonProcessingException {
-            var msg = new ToolResultMessage(
-                "tc-1", "search",
-                List.of(new TextContent("found it")),
-                null, false, 12000L
-            );
+            var msg =
+                    new ToolResultMessage("tc-1", "search", List.of(new TextContent("found it")), null, false, 12000L);
             var json = mapper.readTree(mapper.writeValueAsString(msg));
             assertEquals("toolResult", json.get("role").asText());
             assertEquals("tc-1", json.get("toolCallId").asText());
@@ -269,7 +277,8 @@ class MessageTest {
 
         @Test
         void deserialization() throws JsonProcessingException {
-            var json = """
+            var json =
+                    """
                 {
                   "role": "toolResult",
                   "toolCallId": "tc-5",
@@ -293,14 +302,18 @@ class MessageTest {
     @Test
     void polymorphicConversationRoundTrip() throws JsonProcessingException {
         List<Message> conversation = List.of(
-            new UserMessage("What is Java?", 1000L),
-            new AssistantMessage(
-                List.of(new TextContent("Java is a programming language.")),
-                "messages", "anthropic", "claude-opus-4-6", null,
-                Usage.empty(), StopReason.STOP, null, 2000L
-            ),
-            new UserMessage("Tell me more", 3000L)
-        );
+                new UserMessage("What is Java?", 1000L),
+                new AssistantMessage(
+                        List.of(new TextContent("Java is a programming language.")),
+                        "messages",
+                        "anthropic",
+                        "claude-opus-4-6",
+                        null,
+                        Usage.empty(),
+                        StopReason.STOP,
+                        null,
+                        2000L),
+                new UserMessage("Tell me more", 3000L));
 
         var json = mapper.writerFor(new TypeReference<List<Message>>() {}).writeValueAsString(conversation);
         List<Message> deserialized = mapper.readValue(json, new TypeReference<>() {});
@@ -309,8 +322,9 @@ class MessageTest {
         assertInstanceOf(UserMessage.class, deserialized.get(0));
         assertInstanceOf(AssistantMessage.class, deserialized.get(1));
         assertInstanceOf(UserMessage.class, deserialized.get(2));
-        assertEquals("What is Java?",
-            ((TextContent) ((UserMessage) deserialized.get(0)).content().get(0)).text());
+        assertEquals(
+                "What is Java?",
+                ((TextContent) ((UserMessage) deserialized.get(0)).content().get(0)).text());
     }
 
     // --- Sealed exhaustiveness ---
@@ -318,21 +332,27 @@ class MessageTest {
     @Test
     void sealedPatternMatching() {
         List<Message> messages = List.of(
-            new UserMessage("hi", 1L),
-            new AssistantMessage(List.of(new TextContent("hello")),
-                "messages", "anthropic", "model", null, Usage.empty(),
-                StopReason.STOP, null, 2L),
-            new ToolResultMessage("tc", "tool", List.of(new TextContent("ok")),
-                null, false, 3L)
-        );
+                new UserMessage("hi", 1L),
+                new AssistantMessage(
+                        List.of(new TextContent("hello")),
+                        "messages",
+                        "anthropic",
+                        "model",
+                        null,
+                        Usage.empty(),
+                        StopReason.STOP,
+                        null,
+                        2L),
+                new ToolResultMessage("tc", "tool", List.of(new TextContent("ok")), null, false, 3L));
 
-        for (var msg : messages) {
-            var role = switch (msg) {
-                case UserMessage u -> "user";
-                case AssistantMessage a -> "assistant";
-                case ToolResultMessage t -> "toolResult";
-            };
-            assertNotNull(role);
-        }
+        List<String> roles = messages.stream()
+                .map(msg -> switch (msg) {
+                    case UserMessage u -> "user";
+                    case AssistantMessage a -> "assistant";
+                    case ToolResultMessage t -> "toolResult";
+                })
+                .toList();
+
+        assertEquals(List.of("user", "assistant", "toolResult"), roles);
     }
 }

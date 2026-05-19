@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026-2026. All rights reserved.
+ */
+
 package com.campusclaw.codingagent.command.builtin;
 
 import java.util.ArrayList;
@@ -8,6 +12,14 @@ import com.campusclaw.codingagent.command.SlashCommand;
 import com.campusclaw.codingagent.command.SlashCommandContext;
 import com.campusclaw.codingagent.compaction.Compactor;
 
+/**
+ * Slash command {@code /compact} that runs the configured {@link Compactor} over the current
+ * session's history, replacing older messages with a summary plus the retained tail to reduce
+ * context size for subsequent turns.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/13]
+ * @since [br_eCampusCore 25.1.0_Next]
+ */
 public class CompactCommand implements SlashCommand {
 
     private final Compactor compactor;
@@ -41,19 +53,20 @@ public class CompactCommand implements SlashCommand {
         context.output().println("Compacting context...");
         try {
             var result = compactor.compact(new ArrayList<>(messages), model);
+
             // Build new message list with summary
             var newMessages = new ArrayList<Message>();
             if (!result.summary().isEmpty()) {
                 newMessages.add(new UserMessage(
-                        "[Context compaction summary]\n" + result.summary(),
-                        System.currentTimeMillis()));
+                        "[Context compaction summary]\n" + result.summary(), System.currentTimeMillis()));
             }
             newMessages.addAll(result.retainedMessages());
             agent.replaceMessages(newMessages);
 
             int removed = messages.size() - result.retainedMessages().size();
-            context.output().println("Compacted " + removed + " messages into summary, "
-                    + result.retainedMessages().size() + " recent messages kept.");
+            context.output()
+                    .println("Compacted " + removed + " messages into summary, "
+                            + result.retainedMessages().size() + " recent messages kept.");
         } catch (Exception e) {
             context.output().println("Compaction failed: " + e.getMessage());
         }

@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026-2026. All rights reserved.
+ */
+
 package com.campusclaw.tui;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -235,8 +239,7 @@ class DiffRendererTest {
         @Test
         void threeConsecutiveRenders() {
             // First: full rerender
-            assertInstanceOf(RenderDiff.FullRerender.class,
-                    renderer.computeDiff(List.of("a", "b")));
+            assertInstanceOf(RenderDiff.FullRerender.class, renderer.computeDiff(List.of("a", "b")));
 
             // Second: single change
             RenderDiff diff2 = renderer.computeDiff(List.of("A", "b"));
@@ -252,16 +255,13 @@ class DiffRendererTest {
         @Test
         void fullRerenderThenIncrementalThenStructural() {
             // First: full rerender
-            assertInstanceOf(RenderDiff.FullRerender.class,
-                    renderer.computeDiff(List.of("a", "b")));
+            assertInstanceOf(RenderDiff.FullRerender.class, renderer.computeDiff(List.of("a", "b")));
 
             // Second: incremental
-            assertInstanceOf(RenderDiff.LineUpdates.class,
-                    renderer.computeDiff(List.of("a", "B")));
+            assertInstanceOf(RenderDiff.LineUpdates.class, renderer.computeDiff(List.of("a", "B")));
 
             // Third: structural (line count change)
-            assertInstanceOf(RenderDiff.FullRerender.class,
-                    renderer.computeDiff(List.of("a", "B", "c")));
+            assertInstanceOf(RenderDiff.FullRerender.class, renderer.computeDiff(List.of("a", "B", "c")));
         }
     }
 
@@ -276,7 +276,8 @@ class DiffRendererTest {
         void lineUpdatesIsImmutable() {
             var updates = List.of(new RenderDiff.LineUpdate(0, "hi"));
             var lineUpdates = new RenderDiff.LineUpdates(updates);
-            assertThrows(UnsupportedOperationException.class,
+            assertThrows(
+                    UnsupportedOperationException.class,
                     () -> lineUpdates.updates().add(new RenderDiff.LineUpdate(1, "x")));
         }
 
@@ -296,21 +297,24 @@ class DiffRendererTest {
         void sealedInterfacePermits() {
             // Verify sealed interface hierarchy via pattern matching
             RenderDiff diff = new RenderDiff.FullRerender();
-            String result = switch (diff) {
-                case RenderDiff.LineUpdates lu -> "updates:" + lu.updates().size();
-                case RenderDiff.FullRerender fr -> "full";
-            };
+            String result =
+                    switch (diff) {
+                        case RenderDiff.LineUpdates lu ->
+                            "updates:" + lu.updates().size();
+                        case RenderDiff.FullRerender fr -> "full";
+                    };
             assertEquals("full", result);
         }
 
         @Test
         void patternMatchingOnLineUpdates() {
-            RenderDiff diff = new RenderDiff.LineUpdates(
-                    List.of(new RenderDiff.LineUpdate(2, "changed")));
-            String result = switch (diff) {
-                case RenderDiff.LineUpdates lu -> "updates:" + lu.updates().size();
-                case RenderDiff.FullRerender fr -> "full";
-            };
+            RenderDiff diff = new RenderDiff.LineUpdates(List.of(new RenderDiff.LineUpdate(2, "changed")));
+            String result =
+                    switch (diff) {
+                        case RenderDiff.LineUpdates lu ->
+                            "updates:" + lu.updates().size();
+                        case RenderDiff.FullRerender fr -> "full";
+                    };
             assertEquals("updates:1", result);
         }
     }

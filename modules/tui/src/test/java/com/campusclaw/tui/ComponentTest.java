@@ -1,5 +1,10 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026-2026. All rights reserved.
+ */
+
 package com.campusclaw.tui;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -28,8 +33,8 @@ class ComponentTest {
         @Test
         void handleInputDefaultDoesNothing() {
             Component component = new SimpleComponent("test");
-            // Should not throw
-            component.handleInput("a");
+
+            assertDoesNotThrow(() -> component.handleInput("a"));
         }
 
         @Test
@@ -96,7 +101,9 @@ class ComponentTest {
     // Test helpers
     // -------------------------------------------------------------------
 
-    /** Minimal Component implementation for testing. */
+    /**
+     * Minimal Component implementation for testing.
+     */
     static class SimpleComponent implements Component {
         private final List<String> lines;
         private boolean rendered = false;
@@ -121,7 +128,9 @@ class ComponentTest {
         }
     }
 
-    /** Component that also implements Focusable. */
+    /**
+     * Component that also implements Focusable.
+     */
     static class FocusableComponent implements Component, Focusable {
         private boolean focused = false;
 
@@ -131,8 +140,7 @@ class ComponentTest {
         }
 
         @Override
-        public void invalidate() {
-        }
+        public void invalidate() {}
 
         @Override
         public boolean isFocused() {

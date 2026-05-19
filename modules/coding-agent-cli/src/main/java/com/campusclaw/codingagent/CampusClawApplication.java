@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026-2026. All rights reserved.
+ */
+
 package com.campusclaw.codingagent;
 
 import com.campusclaw.codingagent.cli.CampusClawCommand;
@@ -12,10 +16,12 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import picocli.CommandLine;
 import picocli.CommandLine.IFactory;
 
-
 /**
  * CampusClaw — Spring Boot CLI application.
  * Bridges Picocli with Spring Boot via the picocli-spring-boot-starter.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 @SpringBootApplication(scanBasePackages = "com.campusclaw")
 @EnableConfigurationProperties(ToolExecutionProperties.class)

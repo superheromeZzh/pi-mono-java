@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026-2026. All rights reserved.
+ */
+
 package com.huawei.hicampus.mate.matecampusclaw.codingagent.tool.edit;
 
 /**
@@ -6,8 +10,7 @@ package com.huawei.hicampus.mate.matecampusclaw.codingagent.tool.edit;
  */
 final class FuzzyMatch {
 
-    private FuzzyMatch() {
-    }
+    private FuzzyMatch() {}
 
     /**
      * Result of a fuzzy match attempt.
@@ -15,14 +18,15 @@ final class FuzzyMatch {
      * @param start 0-indexed start position in the haystack
      * @param end   0-indexed end position (exclusive) in the haystack
      */
-    record Match(int start, int end) {
-    }
+    record Match(int start, int end) {}
 
     /**
      * Attempts to find needle in haystack using progressively relaxed matching:
      * 1. Exact match
      * 2. Whitespace-normalized match (collapse runs of whitespace to single space)
      *
+     * @param haystack the text to search within
+     * @param needle the substring to find
      * @return the match position, or null if no match found
      */
     static Match fuzzyFindText(String haystack, String needle) {
@@ -42,9 +46,15 @@ final class FuzzyMatch {
 
     /**
      * Counts occurrences of needle in haystack (exact match).
+     *
+     * @param haystack the haystack
+     * @param needle the needle
+     * @return the result
      */
     static int countOccurrences(String haystack, String needle) {
-        if (needle.isEmpty()) return 0;
+        if (needle.isEmpty()) {
+            return 0;
+        }
         int count = 0;
         int idx = 0;
         while ((idx = haystack.indexOf(needle, idx)) >= 0) {

@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026-2026. All rights reserved.
+ */
+
 package com.huawei.hicampus.mate.matecampusclaw.cron.model;
 
 import com.fasterxml.jackson.annotation.JsonSubTypes;
@@ -7,6 +11,9 @@ import org.springframework.lang.Nullable;
 
 /**
  * Sealed schedule type for cron jobs.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
 @JsonSubTypes({
@@ -16,12 +23,18 @@ import org.springframework.lang.Nullable;
 })
 public sealed interface CronSchedule {
 
-    /** One-shot schedule at a specific timestamp. */
+    /**
+     * One-shot schedule at a specific timestamp.
+     */
     record At(long timestampMs) implements CronSchedule {}
 
-    /** Recurring schedule at a fixed interval. */
+    /**
+     * Recurring schedule at a fixed interval.
+     */
     record Every(long intervalMs) implements CronSchedule {}
 
-    /** Recurring schedule using a Spring-compatible cron expression. */
+    /**
+     * Recurring schedule using a Spring-compatible cron expression.
+     */
     record CronExpr(String expression, @Nullable String timezone) implements CronSchedule {}
 }

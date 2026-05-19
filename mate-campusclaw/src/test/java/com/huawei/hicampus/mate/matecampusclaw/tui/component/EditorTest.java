@@ -1,9 +1,13 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026-2026. All rights reserved.
+ */
+
 package com.huawei.hicampus.mate.matecampusclaw.tui.component;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
@@ -49,22 +53,23 @@ class EditorTest {
         void emptyEditor() {
             var editor = new Editor();
             assertEquals("", editor.getText());
-            assertArrayEquals(new int[]{0, 0}, editor.getCursorPosition());
+            assertArrayEquals(new int[] {0, 0}, editor.getCursorPosition());
         }
 
         @Test
         void initialText() {
             var editor = new Editor("hello world");
             assertEquals("hello world", editor.getText());
+
             // Cursor at end
-            assertArrayEquals(new int[]{0, 11}, editor.getCursorPosition());
+            assertArrayEquals(new int[] {0, 11}, editor.getCursorPosition());
         }
 
         @Test
         void multiLineInitialText() {
             var editor = new Editor("line1\nline2\nline3");
             assertEquals("line1\nline2\nline3", editor.getText());
-            assertArrayEquals(new int[]{2, 5}, editor.getCursorPosition());
+            assertArrayEquals(new int[] {2, 5}, editor.getCursorPosition());
         }
 
         @Test
@@ -99,7 +104,7 @@ class EditorTest {
             editor.setCursorPosition(0, 0);
             editor.handleInput("a");
             assertEquals("a", editor.getText());
-            assertArrayEquals(new int[]{0, 1}, editor.getCursorPosition());
+            assertArrayEquals(new int[] {0, 1}, editor.getCursorPosition());
         }
 
         @Test
@@ -141,7 +146,7 @@ class EditorTest {
             editor.setCursorPosition(0, 5);
             editor.handleInput(KEY_ENTER);
             assertEquals("hello\n world", editor.getText());
-            assertArrayEquals(new int[]{1, 0}, editor.getCursorPosition());
+            assertArrayEquals(new int[] {1, 0}, editor.getCursorPosition());
         }
 
         @Test
@@ -174,7 +179,7 @@ class EditorTest {
             editor.setCursorPosition(0, 2);
             editor.handleInput(KEY_BACKSPACE);
             assertEquals("ac", editor.getText());
-            assertArrayEquals(new int[]{0, 1}, editor.getCursorPosition());
+            assertArrayEquals(new int[] {0, 1}, editor.getCursorPosition());
         }
 
         @Test
@@ -183,7 +188,7 @@ class EditorTest {
             editor.setCursorPosition(1, 0);
             editor.handleInput(KEY_BACKSPACE);
             assertEquals("line1line2", editor.getText());
-            assertArrayEquals(new int[]{0, 5}, editor.getCursorPosition());
+            assertArrayEquals(new int[] {0, 5}, editor.getCursorPosition());
         }
 
         @Test
@@ -200,7 +205,7 @@ class EditorTest {
             editor.setCursorPosition(0, 1);
             editor.handleInput(KEY_DELETE);
             assertEquals("ac", editor.getText());
-            assertArrayEquals(new int[]{0, 1}, editor.getCursorPosition());
+            assertArrayEquals(new int[] {0, 1}, editor.getCursorPosition());
         }
 
         @Test
@@ -232,7 +237,7 @@ class EditorTest {
             var editor = new Editor("abc");
             editor.setCursorPosition(0, 2);
             editor.handleInput(KEY_LEFT);
-            assertArrayEquals(new int[]{0, 1}, editor.getCursorPosition());
+            assertArrayEquals(new int[] {0, 1}, editor.getCursorPosition());
         }
 
         @Test
@@ -240,7 +245,7 @@ class EditorTest {
             var editor = new Editor("abc");
             editor.setCursorPosition(0, 1);
             editor.handleInput(KEY_RIGHT);
-            assertArrayEquals(new int[]{0, 2}, editor.getCursorPosition());
+            assertArrayEquals(new int[] {0, 2}, editor.getCursorPosition());
         }
 
         @Test
@@ -248,7 +253,7 @@ class EditorTest {
             var editor = new Editor("abc\ndef");
             editor.setCursorPosition(1, 0);
             editor.handleInput(KEY_LEFT);
-            assertArrayEquals(new int[]{0, 3}, editor.getCursorPosition());
+            assertArrayEquals(new int[] {0, 3}, editor.getCursorPosition());
         }
 
         @Test
@@ -256,7 +261,7 @@ class EditorTest {
             var editor = new Editor("abc\ndef");
             editor.setCursorPosition(0, 3);
             editor.handleInput(KEY_RIGHT);
-            assertArrayEquals(new int[]{1, 0}, editor.getCursorPosition());
+            assertArrayEquals(new int[] {1, 0}, editor.getCursorPosition());
         }
 
         @Test
@@ -264,7 +269,7 @@ class EditorTest {
             var editor = new Editor("abc");
             editor.setCursorPosition(0, 0);
             editor.handleInput(KEY_LEFT);
-            assertArrayEquals(new int[]{0, 0}, editor.getCursorPosition());
+            assertArrayEquals(new int[] {0, 0}, editor.getCursorPosition());
         }
 
         @Test
@@ -272,7 +277,7 @@ class EditorTest {
             var editor = new Editor("abc");
             editor.setCursorPosition(0, 3);
             editor.handleInput(KEY_RIGHT);
-            assertArrayEquals(new int[]{0, 3}, editor.getCursorPosition());
+            assertArrayEquals(new int[] {0, 3}, editor.getCursorPosition());
         }
 
         @Test
@@ -280,7 +285,7 @@ class EditorTest {
             var editor = new Editor("line1\nline2");
             editor.setCursorPosition(1, 3);
             editor.handleInput(KEY_UP);
-            assertArrayEquals(new int[]{0, 3}, editor.getCursorPosition());
+            assertArrayEquals(new int[] {0, 3}, editor.getCursorPosition());
         }
 
         @Test
@@ -288,7 +293,7 @@ class EditorTest {
             var editor = new Editor("line1\nline2");
             editor.setCursorPosition(0, 3);
             editor.handleInput(KEY_DOWN);
-            assertArrayEquals(new int[]{1, 3}, editor.getCursorPosition());
+            assertArrayEquals(new int[] {1, 3}, editor.getCursorPosition());
         }
 
         @Test
@@ -296,7 +301,7 @@ class EditorTest {
             var editor = new Editor("abc");
             editor.setCursorPosition(0, 2);
             editor.handleInput(KEY_UP);
-            assertArrayEquals(new int[]{0, 2}, editor.getCursorPosition());
+            assertArrayEquals(new int[] {0, 2}, editor.getCursorPosition());
         }
 
         @Test
@@ -304,7 +309,7 @@ class EditorTest {
             var editor = new Editor("abc");
             editor.setCursorPosition(0, 2);
             editor.handleInput(KEY_DOWN);
-            assertArrayEquals(new int[]{0, 2}, editor.getCursorPosition());
+            assertArrayEquals(new int[] {0, 2}, editor.getCursorPosition());
         }
 
         @Test
@@ -312,7 +317,7 @@ class EditorTest {
             var editor = new Editor("hello");
             editor.setCursorPosition(0, 3);
             editor.handleInput(KEY_HOME);
-            assertArrayEquals(new int[]{0, 0}, editor.getCursorPosition());
+            assertArrayEquals(new int[] {0, 0}, editor.getCursorPosition());
         }
 
         @Test
@@ -320,7 +325,7 @@ class EditorTest {
             var editor = new Editor("hello");
             editor.setCursorPosition(0, 0);
             editor.handleInput(KEY_END);
-            assertArrayEquals(new int[]{0, 5}, editor.getCursorPosition());
+            assertArrayEquals(new int[] {0, 5}, editor.getCursorPosition());
         }
 
         @Test
@@ -328,7 +333,7 @@ class EditorTest {
             var editor = new Editor("hello");
             editor.setCursorPosition(0, 3);
             editor.handleInput(KEY_CTRL_A);
-            assertArrayEquals(new int[]{0, 0}, editor.getCursorPosition());
+            assertArrayEquals(new int[] {0, 0}, editor.getCursorPosition());
         }
 
         @Test
@@ -336,7 +341,7 @@ class EditorTest {
             var editor = new Editor("hello");
             editor.setCursorPosition(0, 0);
             editor.handleInput(KEY_CTRL_E);
-            assertArrayEquals(new int[]{0, 5}, editor.getCursorPosition());
+            assertArrayEquals(new int[] {0, 5}, editor.getCursorPosition());
         }
 
         @Test
@@ -344,9 +349,9 @@ class EditorTest {
             var editor = new Editor("abcdef\nab\nabcdef");
             editor.setCursorPosition(0, 5);
             editor.handleInput(KEY_DOWN); // line 1 has only 2 chars, clamp to 2
-            assertArrayEquals(new int[]{1, 2}, editor.getCursorPosition());
+            assertArrayEquals(new int[] {1, 2}, editor.getCursorPosition());
             editor.handleInput(KEY_DOWN); // line 2 has 6 chars, restore to 5
-            assertArrayEquals(new int[]{2, 5}, editor.getCursorPosition());
+            assertArrayEquals(new int[] {2, 5}, editor.getCursorPosition());
         }
     }
 
@@ -362,8 +367,9 @@ class EditorTest {
             var editor = new Editor("hello world foo");
             editor.setCursorPosition(0, 0);
             editor.handleInput(KEY_ALT_RIGHT);
+
             // Skip "hello", cursor after "hello"
-            assertArrayEquals(new int[]{0, 5}, editor.getCursorPosition());
+            assertArrayEquals(new int[] {0, 5}, editor.getCursorPosition());
         }
 
         @Test
@@ -371,8 +377,9 @@ class EditorTest {
             var editor = new Editor("hello world foo");
             editor.setCursorPosition(0, 11);
             editor.handleInput(KEY_ALT_LEFT);
+
             // Skip back past "world" to position 6
-            assertArrayEquals(new int[]{0, 6}, editor.getCursorPosition());
+            assertArrayEquals(new int[] {0, 6}, editor.getCursorPosition());
         }
 
         @Test
@@ -380,8 +387,9 @@ class EditorTest {
             var editor = new Editor("hello   world");
             editor.setCursorPosition(0, 5);
             editor.handleInput(KEY_ALT_RIGHT);
+
             // Skip whitespace, then "world"
-            assertArrayEquals(new int[]{0, 13}, editor.getCursorPosition());
+            assertArrayEquals(new int[] {0, 13}, editor.getCursorPosition());
         }
 
         @Test
@@ -389,8 +397,9 @@ class EditorTest {
             var editor = new Editor("hello   world");
             editor.setCursorPosition(0, 8);
             editor.handleInput(KEY_ALT_LEFT);
+
             // Skip whitespace back, then "hello" → position 0
-            assertArrayEquals(new int[]{0, 0}, editor.getCursorPosition());
+            assertArrayEquals(new int[] {0, 0}, editor.getCursorPosition());
         }
 
         @Test
@@ -398,8 +407,9 @@ class EditorTest {
             var editor = new Editor("abc\ndef");
             editor.setCursorPosition(0, 3);
             editor.handleInput(KEY_ALT_RIGHT);
+
             // Moves to start of next line
-            assertArrayEquals(new int[]{1, 0}, editor.getCursorPosition());
+            assertArrayEquals(new int[] {1, 0}, editor.getCursorPosition());
         }
 
         @Test
@@ -407,8 +417,9 @@ class EditorTest {
             var editor = new Editor("abc\ndef");
             editor.setCursorPosition(1, 0);
             editor.handleInput(KEY_ALT_LEFT);
+
             // Moves to end of previous line
-            assertArrayEquals(new int[]{0, 3}, editor.getCursorPosition());
+            assertArrayEquals(new int[] {0, 3}, editor.getCursorPosition());
         }
     }
 
@@ -433,7 +444,7 @@ class EditorTest {
             editor.setCursorPosition(0, 5);
             editor.handleInput(KEY_CTRL_U);
             assertEquals(" world", editor.getText());
-            assertArrayEquals(new int[]{0, 0}, editor.getCursorPosition());
+            assertArrayEquals(new int[] {0, 0}, editor.getCursorPosition());
         }
 
         @Test
@@ -574,6 +585,7 @@ class EditorTest {
             editor.handleInput(" ");
             editor.handleInput("b");
             editor.handleInput(" ");
+
             // Text: "a b "
             // Undo groups: [""] (before "a"), ["a"] (before " b"), ["a b"] (before final " ")
             // Whitespace pushes snapshot, then "b" coalesces with " " into one group
@@ -601,6 +613,7 @@ class EditorTest {
             editor.handleInput("l");
             editor.handleInput("l");
             editor.handleInput("o");
+
             // All these should coalesce into one undo unit
             editor.handleInput(KEY_CTRL_Z);
             assertEquals("", editor.getText());
@@ -618,28 +631,28 @@ class EditorTest {
         void setTextResetsCursorToEnd() {
             var editor = new Editor();
             editor.setText("hello");
-            assertArrayEquals(new int[]{0, 5}, editor.getCursorPosition());
+            assertArrayEquals(new int[] {0, 5}, editor.getCursorPosition());
         }
 
         @Test
         void setTextMultiLine() {
             var editor = new Editor();
             editor.setText("line1\nline2");
-            assertArrayEquals(new int[]{1, 5}, editor.getCursorPosition());
+            assertArrayEquals(new int[] {1, 5}, editor.getCursorPosition());
         }
 
         @Test
         void setCursorPositionClamped() {
             var editor = new Editor("hi");
             editor.setCursorPosition(99, 99);
-            assertArrayEquals(new int[]{0, 2}, editor.getCursorPosition());
+            assertArrayEquals(new int[] {0, 2}, editor.getCursorPosition());
         }
 
         @Test
         void setCursorPositionNegativeClamped() {
             var editor = new Editor("hi");
             editor.setCursorPosition(-1, -1);
-            assertArrayEquals(new int[]{0, 0}, editor.getCursorPosition());
+            assertArrayEquals(new int[] {0, 0}, editor.getCursorPosition());
         }
 
         @Test
@@ -680,6 +693,7 @@ class EditorTest {
             editor.setFocused(true);
             editor.setCursorPosition(0, 1);
             List<String> lines = editor.render(40);
+
             // Should contain inverse video escape code
             assertTrue(lines.get(0).contains("\033[7m"), "Expected inverse video marker");
         }

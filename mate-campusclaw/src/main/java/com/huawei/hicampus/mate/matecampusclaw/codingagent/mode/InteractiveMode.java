@@ -1,6 +1,11 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026-2026. All rights reserved.
+ */
+
 package com.huawei.hicampus.mate.matecampusclaw.codingagent.mode;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
@@ -8,30 +13,25 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
-import com.huawei.hicampus.mate.matecampusclaw.agent.event.AgentEndEvent;
 import com.huawei.hicampus.mate.matecampusclaw.agent.event.AgentEvent;
-import com.huawei.hicampus.mate.matecampusclaw.agent.event.AgentEventListener;
-import com.huawei.hicampus.mate.matecampusclaw.agent.event.AgentStartEvent;
 import com.huawei.hicampus.mate.matecampusclaw.agent.event.MessageEndEvent;
-import com.huawei.hicampus.mate.matecampusclaw.agent.event.MessageStartEvent;
 import com.huawei.hicampus.mate.matecampusclaw.agent.event.MessageUpdateEvent;
 import com.huawei.hicampus.mate.matecampusclaw.agent.event.ToolExecutionEndEvent;
 import com.huawei.hicampus.mate.matecampusclaw.agent.event.ToolExecutionStartEvent;
 import com.huawei.hicampus.mate.matecampusclaw.agent.event.ToolExecutionUpdateEvent;
-import com.huawei.hicampus.mate.matecampusclaw.agent.event.TurnEndEvent;
 import com.huawei.hicampus.mate.matecampusclaw.agent.event.TurnStartEvent;
 import com.huawei.hicampus.mate.matecampusclaw.agent.tool.CancellationToken;
+import com.huawei.hicampus.mate.matecampusclaw.agent.util.LoggingUncaughtExceptionHandler;
 import com.huawei.hicampus.mate.matecampusclaw.ai.model.ModelRegistry;
 import com.huawei.hicampus.mate.matecampusclaw.ai.stream.AssistantMessageEvent;
 import com.huawei.hicampus.mate.matecampusclaw.ai.types.AssistantMessage;
@@ -47,13 +47,13 @@ import com.huawei.hicampus.mate.matecampusclaw.codingagent.mode.tui.AssistantMes
 import com.huawei.hicampus.mate.matecampusclaw.codingagent.mode.tui.BashExecutionComponent;
 import com.huawei.hicampus.mate.matecampusclaw.codingagent.mode.tui.CommandOutputComponent;
 import com.huawei.hicampus.mate.matecampusclaw.codingagent.mode.tui.EditorContainer;
+import com.huawei.hicampus.mate.matecampusclaw.codingagent.mode.tui.EditorContainer.CommandSuggestion;
 import com.huawei.hicampus.mate.matecampusclaw.codingagent.mode.tui.FooterComponent;
 import com.huawei.hicampus.mate.matecampusclaw.codingagent.mode.tui.ModelSelectorOverlay;
 import com.huawei.hicampus.mate.matecampusclaw.codingagent.mode.tui.SessionSelectorOverlay;
 import com.huawei.hicampus.mate.matecampusclaw.codingagent.mode.tui.ToolStatusComponent;
 import com.huawei.hicampus.mate.matecampusclaw.codingagent.mode.tui.TreeSelectorOverlay;
 import com.huawei.hicampus.mate.matecampusclaw.codingagent.mode.tui.UserMessageComponent;
-import com.huawei.hicampus.mate.matecampusclaw.codingagent.mode.tui.EditorContainer.CommandSuggestion;
 import com.huawei.hicampus.mate.matecampusclaw.codingagent.prompt.PromptTemplateEntry;
 import com.huawei.hicampus.mate.matecampusclaw.codingagent.session.AgentSession;
 import com.huawei.hicampus.mate.matecampusclaw.codingagent.skill.Skill;
@@ -65,6 +65,9 @@ import com.huawei.hicampus.mate.matecampusclaw.tui.Tui;
 import com.huawei.hicampus.mate.matecampusclaw.tui.component.Container;
 import com.huawei.hicampus.mate.matecampusclaw.tui.component.Text;
 import com.huawei.hicampus.mate.matecampusclaw.tui.terminal.Terminal;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
 
 /**
@@ -79,8 +82,13 @@ import org.springframework.context.ApplicationContext;
  *
  * <p>Components are rendered by the {@link Tui} engine which handles differential
  * updates and synchronized output for flicker-free display.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 public class InteractiveMode {
+
+    private static final Logger log = LoggerFactory.getLogger(InteractiveMode.class);
 
     private final SlashCommandRegistry commandRegistry;
     private final BashExecutor bashExecutor;
@@ -89,7 +97,7 @@ public class InteractiveMode {
     private final com.huawei.hicampus.mate.matecampusclaw.cron.CronService cronService;
     private final com.huawei.hicampus.mate.matecampusclaw.codingagent.loop.LoopManager loopManager;
     private final ApplicationContext applicationContext;
-    private Object chatMemoryStore; // ChatMemoryStore from assistant module, accessed via reflection
+    private com.huawei.hicampus.mate.matecampusclaw.assistant.memory.ChatMemoryStore chatMemoryStore;
 
     // Scoped models for Ctrl+P cycling (from --models flag)
     private List<Model> scopedModels = List.of();
@@ -147,6 +155,8 @@ public class InteractiveMode {
 
     /**
      * Sets the initial prompt to send automatically when the TUI starts.
+     *
+     * @param prompt the prompt
      */
     public void setInitialPrompt(String prompt) {
         this.initialPrompt = prompt;
@@ -155,18 +165,21 @@ public class InteractiveMode {
     /**
      * Sets scoped models for Ctrl+P cycling (from --models flag).
      * When set, Ctrl+P cycles only through these models instead of all registered ones.
+     *
+     * @param models the models
      */
     public void setScopedModels(List<Model> models) {
         this.scopedModels = models != null ? models : List.of();
     }
 
-    public InteractiveMode(SlashCommandRegistry commandRegistry,
-                           BashExecutor bashExecutor,
-                           Compactor compactor,
-                           ModelRegistry modelRegistry,
-                           com.huawei.hicampus.mate.matecampusclaw.cron.CronService cronService,
-                           com.huawei.hicampus.mate.matecampusclaw.codingagent.loop.LoopManager loopManager,
-                           ApplicationContext applicationContext) {
+    public InteractiveMode(
+            SlashCommandRegistry commandRegistry,
+            BashExecutor bashExecutor,
+            Compactor compactor,
+            ModelRegistry modelRegistry,
+            com.huawei.hicampus.mate.matecampusclaw.cron.CronService cronService,
+            com.huawei.hicampus.mate.matecampusclaw.codingagent.loop.LoopManager loopManager,
+            ApplicationContext applicationContext) {
         this.commandRegistry = Objects.requireNonNull(commandRegistry, "commandRegistry");
         this.bashExecutor = bashExecutor;
         this.compactor = compactor;
@@ -178,498 +191,51 @@ public class InteractiveMode {
 
     /**
      * Runs the full-screen interactive REPL.
+     *
+     * @param session the session
+     * @param terminal the terminal
      */
     public void run(AgentSession session, Terminal terminal) {
         Objects.requireNonNull(session, "session");
         Objects.requireNonNull(terminal, "terminal");
         this.currentSession = session;
-
-        // Resolve ChatMemoryStore from Spring context (optional — graceful if DB not configured)
-        if (applicationContext != null) {
-            try {
-                Class<?> clazz = Class.forName("com.campusclaw.assistant.memory.ChatMemoryStore");
-                chatMemoryStore = applicationContext.getBean(clazz);
-            } catch (Exception e) {
-                chatMemoryStore = null; // DB not configured, skip ChatMemory
-            }
-        }
-
-        // Build component tree
-        root = new Container();
-        chatContainer = new Container();
-        editorContainer = new EditorContainer();
-        footer = new FooterComponent();
-
-        // Welcome text with keybinding hints matching campusclaw style
-        // Colors from campusclaw dark theme: dim=#666666, muted=#808080
-        String DIM = "\033[38;2;102;102;102m";
-        String MUTED = "\033[38;2;128;128;128m";
-        String RST = "\033[0m";
-        var wb = new StringBuilder();
-        String version = CampusClawApplication.class.getPackage() != null
-                && CampusClawApplication.class.getPackage().getImplementationVersion() != null
-                ? CampusClawApplication.class.getPackage().getImplementationVersion() : "0.1.0";
-        wb.append("\033[1m\033[38;2;138;190;183mCampusClaw\033[0m").append(DIM).append(" v").append(version).append(RST).append("\n");
-
-        // Keybinding hints (aligned with campusclaw) — key in dim, description in muted
-        wb.append(DIM).append(" escape").append(RST).append(MUTED).append(" to interrupt").append(RST).append("\n");
-        wb.append(DIM).append(" ctrl+c").append(RST).append(MUTED).append(" to clear").append(RST).append("\n");
-        wb.append(DIM).append(" ctrl+c twice").append(RST).append(MUTED).append(" to exit").append(RST).append("\n");
-        wb.append(DIM).append(" ctrl+d").append(RST).append(MUTED).append(" to exit (empty)").append(RST).append("\n");
-        wb.append(DIM).append(" ctrl+z").append(RST).append(MUTED).append(" to suspend").append(RST).append("\n");
-        wb.append(DIM).append(" ctrl+k").append(RST).append(MUTED).append(" to delete to end").append(RST).append("\n");
-        wb.append(DIM).append(" shift+tab").append(RST).append(MUTED).append(" to cycle thinking level").append(RST).append("\n");
-        wb.append(DIM).append(" ctrl+p/shift+ctrl+p").append(RST).append(MUTED).append(" to cycle models").append(RST).append("\n");
-        wb.append(DIM).append(" ctrl+l").append(RST).append(MUTED).append(" to select model").append(RST).append("\n");
-        wb.append(DIM).append(" ctrl+o").append(RST).append(MUTED).append(" to expand tools").append(RST).append("\n");
-        wb.append(DIM).append(" ctrl+t").append(RST).append(MUTED).append(" to expand thinking").append(RST).append("\n");
-        wb.append(DIM).append(" ctrl+g").append(RST).append(MUTED).append(" for external editor").append(RST).append("\n");
-        wb.append(DIM).append(" /").append(RST).append(MUTED).append(" for commands").append(RST).append("\n");
-        wb.append(DIM).append(" !").append(RST).append(MUTED).append(" to run bash").append(RST).append("\n");
-        wb.append(DIM).append(" !!").append(RST).append(MUTED).append(" to run bash (no context)").append(RST).append("\n");
-        wb.append(DIM).append(" alt+enter").append(RST).append(MUTED).append(" to queue follow-up").append(RST).append("\n");
-        wb.append(DIM).append(" alt+up").append(RST).append(MUTED).append(" to edit all queued messages").append(RST).append("\n");
-        wb.append(DIM).append(" ctrl+v").append(RST).append(MUTED).append(" to paste image").append(RST).append("\n");
-        wb.append(DIM).append(" drop files").append(RST).append(MUTED).append(" to attach").append(RST).append("\n");
-        wb.append("\n");
-        wb.append(DIM).append(" CampusClaw can explain its own features and look up its docs. Ask it how to use or extend CampusClaw.").append(RST);
-        welcomeComponent = new Text(wb.toString());
-        chatContainer.addChild(welcomeComponent);
-
-        // Set model/footer info
-        var model = session.getAgent().getState().getModel();
-        if (model != null) {
-            footer.setModel(
-                    model.provider().name().toLowerCase(),
-                    model.id(),
-                    model.contextWindow() > 0 ? model.contextWindow() : 200000,
-                    model.reasoning());
-        }
-        // Set cwd and thinking level
+        resolveChatMemoryStore();
+        buildComponentTree(session);
         String cwd = System.getProperty("user.dir", "");
-        footer.setCwd(cwd);
-
-        var thinkingLevel = session.getAgent().getState().getThinkingLevel();
-        String thinkingLevelStr = thinkingLevel != null ? thinkingLevel.value() : "medium";
-        footer.setThinkingLevel(thinkingLevelStr);
-        // Set border color based on thinking level (matching campusclaw dynamic border)
-        editorContainer.setBorderForThinkingLevel(thinkingLevelStr);
-
-        // Register slash command autocomplete suggestions
+        applyInitialFooterState(session, cwd);
         buildCommandSuggestions(session);
-
-        root.addChild(chatContainer);
-        root.addChild(editorContainer);
-        root.addChild(footer);
-
-        // Setup TUI
         tui = new Tui(terminal);
         tui.setRoot(root);
-
-        // Start cron engine with TUI notifications
-        if (cronService != null) {
-            // Set default model for cron jobs based on current session model
-            var currentModel = session.getAgent().getState().getModel();
-            if (currentModel != null) {
-                cronService.setDefaultModelId(currentModel.id());
-            }
-            cronService.addListener(event -> {
-                String cronTag = "\033[38;2;102;178;178m[cron]\033[0m ";
-                String msg = switch (event) {
-                    case com.huawei.hicampus.mate.matecampusclaw.cron.model.CronEvent.JobStarted e ->
-                        cronTag + "Running: " + e.jobName();
-                    case com.huawei.hicampus.mate.matecampusclaw.cron.model.CronEvent.JobCompleted e -> {
-                        String line = cronTag + "Completed: " + e.jobName();
-                        if (e.output() != null && !e.output().isBlank()) {
-                            line += "\n" + e.output();
-                        }
-                        yield line;
-                    }
-                    case com.huawei.hicampus.mate.matecampusclaw.cron.model.CronEvent.JobFailed e ->
-                        cronTag + "Failed: " + e.jobName() + " — " + e.error();
-                };
-                synchronized (tuiLock) {
-                    chatContainer.addChild(new Text(msg));
-                    tui.render();
-                }
-            });
-            cronService.start();
-        }
-
-        // Set terminal title
+        startCronEngineWithTuiNotifications(session);
         terminal.write("\033]0;pi — " + cwd + "\007");
 
-        // Input routing — dispatch characters to editor, handle Ctrl+C/D globally
         BlockingQueue<String> submitQueue = new LinkedBlockingQueue<>();
         var eofFlag = new AtomicBoolean(false);
         var executingPrompt = new AtomicBoolean(false);
         var abortedFlag = new AtomicBoolean(false);
         var sessionRef = new AtomicReference<>(session);
         var followUpFlag = new AtomicBoolean(false);
-
-        // Initialize loop manager for in-session recurring prompts
         if (loopManager != null) {
             loopManager.init(submitQueue, executingPrompt);
         }
-
         editorContainer.setOnSubmit(value -> {
             if (value != null) {
                 submitQueue.add(value);
             }
         });
-
-        tui.setInputHandler(data -> {
-            // Route input to overlay when active
-            if (activeOverlay != null) {
-                activeOverlay.handleInput(data);
-                tui.render();
-                return;
-            }
-
-            int i = 0;
-            while (i < data.length()) {
-                char ch = data.charAt(i);
-
-                // Global: Ctrl+D = exit
-                if (ch == 4) {
-                    eofFlag.set(true);
-                    submitQueue.add(""); // unblock the queue
-                    return;
-                }
-
-                // Global: Ctrl+O — toggle tool output expand/collapse
-                if (ch == 15) { // 0x0F = Ctrl+O
-                    toolsExpanded = !toolsExpanded;
-                    for (var child : chatContainer.getChildren()) {
-                        if (child instanceof ToolStatusComponent tool) {
-                            tool.setExpanded(toolsExpanded);
-                        }
-                    }
-                    tui.render();
-                    i++;
-                    continue;
-                }
-
-                // Global: Ctrl+T — toggle thinking block visibility
-                if (ch == 20) { // 0x14 = Ctrl+T
-                    toggleThinkingBlockVisibility();
-                    tui.render();
-                    i++;
-                    continue;
-                }
-
-                // Global: Ctrl+P — cycle model forward
-                if (ch == 16) { // 0x10 = Ctrl+P
-                    cycleModel(session, true);
-                    tui.render();
-                    i++;
-                    continue;
-                }
-
-                // Global: Ctrl+L — open model selector overlay
-                if (ch == 12) { // 0x0C = Ctrl+L
-                    showModelSelector(session);
-                    tui.render();
-                    i++;
-                    continue;
-                }
-
-                // Global: Ctrl+G — open external editor
-                if (ch == 7) { // 0x07 = Ctrl+G
-                    openExternalEditor();
-                    tui.render();
-                    i++;
-                    continue;
-                }
-
-                // Global: Ctrl+V — paste image from clipboard
-                if (ch == 22) { // 0x16 = Ctrl+V
-                    pasteClipboardImage(session);
-                    tui.render();
-                    i++;
-                    continue;
-                }
-
-                // Global: Ctrl+Z — suspend process
-                if (ch == 26) { // 0x1A = Ctrl+Z
-                    tui.stop();
-                    try {
-                        // Send SIGTSTP to self
-                        ProcessHandle.current().pid();
-                        new ProcessBuilder("kill", "-TSTP", String.valueOf(ProcessHandle.current().pid()))
-                                .inheritIO().start().waitFor();
-                    } catch (Exception ignored) {}
-                    tui.start();
-                    tui.render();
-                    i++;
-                    continue;
-                }
-
-                // Global: Ctrl+C — clear input, or double-tap to exit
-                if (ch == 3) {
-                    if (executingPrompt.get()) {
-                        abortedFlag.set(true);
-                        sessionRef.get().abort();
-                    } else {
-                        // Cancel running bash command if any
-                        var token = bashCancelToken;
-                        if (token != null) {
-                            token.cancel();
-                        }
-
-                        // Double Ctrl+C within 500ms → exit
-                        long now = System.currentTimeMillis();
-                        if (now - lastCtrlCTime < 500) {
-                            eofFlag.set(true);
-                            submitQueue.add("");
-                            return;
-                        }
-                        lastCtrlCTime = now;
-
-                        // Clear input
-                        editorContainer.clear();
-                        bashMode = false;
-                        editorContainer.setBorderForThinkingLevel(
-                                session.getAgent().getState().getThinkingLevel() != null
-                                        ? session.getAgent().getState().getThinkingLevel().value() : "medium");
-                        tui.render();
-                    }
-                    i++;
-                    continue;
-                }
-
-                // Escape and escape sequences
-                if (ch == '\033') {
-                    // Standalone Escape — abort streaming, or double-escape → tree
-                    if (i + 1 >= data.length()) {
-                        if (executingPrompt.get()) {
-                            abortedFlag.set(true);
-                            sessionRef.get().abort();
-                        } else {
-                            // Cancel running bash command if any
-                            var token = bashCancelToken;
-                            if (token != null) {
-                                token.cancel();
-                            }
-
-                            // Double-escape within 500ms → show tree
-                            long now = System.currentTimeMillis();
-                            if (now - lastEscapeTime < 500) {
-                                showTreeSelector(session);
-                                lastEscapeTime = 0;
-                            } else {
-                                lastEscapeTime = now;
-                            }
-                        }
-                        i++;
-                        continue;
-                    }
-
-                    // Kitty protocol: Alt+Enter \033[13;2u
-                    if (data.startsWith("\033[13;2u", i)) {
-                        followUpFlag.set(true);
-                        String text = editorContainer.getEditor().getText();
-                        if (text != null && !text.trim().isEmpty()) {
-                            submitQueue.add(text);
-                        }
-                        i += 7;
-                        continue;
-                    }
-
-                    // Shift+Tab: \033[Z — cycle thinking level (unless slash menu is showing)
-                    if (data.startsWith("\033[Z", i) && !editorContainer.isShowingSuggestions()) {
-                        cycleThinkingLevel(session);
-                        tui.render();
-                        i += 3;
-                        continue;
-                    }
-
-                    // Shift+Ctrl+P: various terminal encodings
-                    // Kitty: \033[112;6u   xterm: \033[1;6P   etc.
-                    if (data.startsWith("\033[112;6u", i)) {
-                        cycleModel(session, false);
-                        tui.render();
-                        i += 8;
-                        continue;
-                    }
-
-                    // Alt+Enter: ESC CR
-                    if (data.charAt(i + 1) == '\r') {
-                        followUpFlag.set(true);
-                        String text = editorContainer.getEditor().getText();
-                        if (text != null && !text.trim().isEmpty()) {
-                            submitQueue.add(text);
-                        }
-                        i += 2;
-                        continue;
-                    }
-
-                    // Route escape sequence to editor
-                    int seqEnd = findEscapeSequenceEnd(data, i);
-                    editorContainer.handleInput(data.substring(i, seqEnd));
-                    i = seqEnd;
-                } else {
-                    // Route to editor
-                    editorContainer.handleInput(String.valueOf(ch));
-                    i++;
-                }
-            }
-
-            // Detect bash mode from editor content
-            String editorText = editorContainer.getEditor().getText();
-            boolean wasBashMode = bashMode;
-            bashMode = editorText != null && editorText.stripLeading().startsWith("!");
-            if (wasBashMode != bashMode) {
-                if (bashMode) {
-                    editorContainer.setBorderColor(EditorContainer.BORDER_BASH);
-                } else {
-                    editorContainer.setBorderForThinkingLevel(
-                            session.getAgent().getState().getThinkingLevel() != null
-                                    ? session.getAgent().getState().getThinkingLevel().value() : "medium");
-                }
-            }
-
-            tui.render();
-        });
+        tui.setInputHandler(data -> dispatchInput(
+                data, session, submitQueue, eofFlag, executingPrompt, abortedFlag, sessionRef, followUpFlag));
 
         tui.start();
         tui.render();
-
-        // Send initial prompt if provided (from CLI positional args)
         if (initialPrompt != null && !initialPrompt.isBlank()) {
-            String expanded = expandFileReferences(initialPrompt);
             executingPrompt.set(true);
-            executePrompt(session, expanded, abortedFlag);
+            executePrompt(session, expandFileReferences(initialPrompt), abortedFlag);
             executingPrompt.set(false);
             checkAutoCompaction(session);
         }
-
-        // REPL loop
         try {
-            while (!eofFlag.get()) {
-                // Wait for user input
-                abortedFlag.set(false);
-                followUpFlag.set(false);
-
-                String input;
-                try {
-                    input = submitQueue.take(); // blocks until input available
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                    break;
-                }
-
-                if (eofFlag.get()) break;
-                if (input == null || input.trim().isEmpty()) {
-                    tui.render();
-                    continue;
-                }
-
-                String trimmed = input.trim();
-                editorContainer.addToHistory(trimmed);
-                editorContainer.clear();
-                bashMode = false;
-                editorContainer.setBorderForThinkingLevel(
-                                session.getAgent().getState().getThinkingLevel() != null
-                                        ? session.getAgent().getState().getThinkingLevel().value() : "medium");
-
-                // Special overlay commands
-                if ("/resume".equals(trimmed)) {
-                    showSessionSelector(session);
-                    tui.render();
-                    continue;
-                }
-                if ("/tree".equals(trimmed)) {
-                    showTreeSelector(session);
-                    tui.render();
-                    continue;
-                }
-
-                // Slash commands — skip if it's a /skill: invocation or prompt template
-                if (trimmed.startsWith("/") && !isSkillOrTemplate(trimmed, session)) {
-                    try {
-                        if (handleSlashCommand(trimmed, session)) {
-                        // Refresh state after commands that change it
-                        if (trimmed.startsWith("/new") || trimmed.startsWith("/reload")) {
-                            buildCommandSuggestions(session);
-                        }
-                        // Clear chat display and reset tokens on /new
-                        if (trimmed.equals("/new")) {
-                            chatContainer.clear();
-                            chatContainer.addChild(new Text(
-                                    "\033[38;2;138;190;183m\u2713 New session started\033[0m", 1, 1));
-                            footer.resetUsage();
-                            lastStatusComponent = null;
-                            // Create a new session file
-                            var sm = session.getSessionManager();
-                            if (sm != null) {
-                                sm.close();
-                                sm.createSession(cwd);
-                            }
-                        }
-                        // Update footer after model switch
-                        if (trimmed.startsWith("/model ")) {
-                            var newModel = session.getAgent().getState().getModel();
-                            if (newModel != null) {
-                                footer.setModel(
-                                        newModel.provider().name().toLowerCase(),
-                                        newModel.id(),
-                                        newModel.contextWindow() > 0 ? newModel.contextWindow() : 200000,
-                                        newModel.reasoning());
-                            }
-                        }
-                        // Update footer session name after /name command
-                        if (trimmed.startsWith("/name ")) {
-                            footer.setSessionName(trimmed.substring(6).trim());
-                        }
-                        tui.render();
-                        continue;
-                    }
-                    } catch (com.huawei.hicampus.mate.matecampusclaw.codingagent.command.QuitException e) {
-                        // Graceful exit requested via /quit command
-                        break;
-                    }
-                }
-
-                // Bash mode: ! or !! prefix
-                if (trimmed.startsWith("!")) {
-                    boolean excluded = trimmed.startsWith("!!");
-                    String command = excluded ? trimmed.substring(2).trim() : trimmed.substring(1).trim();
-                    if (!command.isEmpty()) {
-                        handleBashCommand(command, excluded, cwd);
-                        tui.render();
-                        continue;
-                    }
-                }
-
-                // Follow-up: queue message while streaming
-                if (followUpFlag.get() && session.isStreaming()) {
-                    session.getAgent().followUp(new UserMessage(trimmed, System.currentTimeMillis()));
-                    chatContainer.addChild(new Text(
-                            "\033[2m  ↳ Follow-up queued: " + truncateDisplay(trimmed, 60) + "\033[0m"));
-                    tui.render();
-                    continue;
-                }
-
-                // Steering: if agent is streaming, steer instead of new prompt
-                if (session.isStreaming()) {
-                    session.steer(trimmed);
-                    chatContainer.addChild(new UserMessageComponent(trimmed));
-                    tui.render();
-                    continue;
-                }
-
-                // Expand @file references before sending
-                String expandedInput = expandFileReferences(trimmed);
-
-                // Execute prompt
-                executingPrompt.set(true);
-                executePrompt(session, expandedInput, abortedFlag);
-                executingPrompt.set(false);
-
-                // Auto-compaction check after prompt completes
-                checkAutoCompaction(session);
-            }
+            runReplLoop(session, cwd, submitQueue, eofFlag, executingPrompt, abortedFlag, followUpFlag);
         } finally {
             if (loopManager != null) {
                 loopManager.shutdown();
@@ -681,12 +247,517 @@ public class InteractiveMode {
         }
     }
 
+    // ChatMemoryStore is optional — silently no-op when the DB isn't configured.
+    private void resolveChatMemoryStore() {
+        if (applicationContext == null) {
+            return;
+        }
+        try {
+            chatMemoryStore = applicationContext.getBean(com.huawei.hicampus.mate.matecampusclaw.assistant.memory.ChatMemoryStore.class);
+        } catch (Exception e) {
+            chatMemoryStore = null;
+        }
+    }
+
+    private void buildComponentTree(AgentSession session) {
+        root = new Container();
+        chatContainer = new Container();
+        editorContainer = new EditorContainer();
+        footer = new FooterComponent();
+        welcomeComponent = new Text(buildWelcomeBanner());
+        chatContainer.addChild(welcomeComponent);
+        root.addChild(chatContainer);
+        root.addChild(editorContainer);
+        root.addChild(footer);
+    }
+
+    private void applyInitialFooterState(AgentSession session, String cwd) {
+        var model = session.getAgent().getState().getModel();
+        if (model != null) {
+            footer.setModel(
+                    model.provider().name().toLowerCase(Locale.ROOT),
+                    model.id(),
+                    model.contextWindow() > 0 ? model.contextWindow() : 200000,
+                    model.reasoning());
+        }
+        footer.setCwd(cwd);
+        String level = currentThinkingLevel(session);
+        footer.setThinkingLevel(level);
+        editorContainer.setBorderForThinkingLevel(level);
+    }
+
+    // Colors from campusclaw dark theme: dim=#666666, muted=#808080.
+    private static final String BANNER_DIM = "\033[38;2;102;102;102m";
+    private static final String BANNER_MUTED = "\033[38;2;128;128;128m";
+    private static final String BANNER_RESET = "\033[0m";
+
+    private static String buildWelcomeBanner() {
+        var wb = new StringBuilder();
+        String version = CampusClawApplication.class.getPackage() != null
+                        && CampusClawApplication.class.getPackage().getImplementationVersion() != null
+                ? CampusClawApplication.class.getPackage().getImplementationVersion()
+                : "0.1.0";
+        wb.append("\033[1m\033[38;2;138;190;183mCampusClaw\033[0m")
+                .append(BANNER_DIM)
+                .append(" v")
+                .append(version)
+                .append(BANNER_RESET)
+                .append("\n");
+
+        // Keybinding hints (aligned with campusclaw) — key in dim, description in muted.
+        appendHint(wb, " escape", " to interrupt");
+        appendHint(wb, " ctrl+c", " to clear");
+        appendHint(wb, " ctrl+c twice", " to exit");
+        appendHint(wb, " ctrl+d", " to exit (empty)");
+        appendHint(wb, " ctrl+z", " to suspend");
+        appendHint(wb, " ctrl+k", " to delete to end");
+        appendHint(wb, " shift+tab", " to cycle thinking level");
+        appendHint(wb, " ctrl+p/shift+ctrl+p", " to cycle models");
+        appendHint(wb, " ctrl+l", " to select model");
+        appendHint(wb, " ctrl+o", " to expand tools");
+        appendHint(wb, " ctrl+t", " to expand thinking");
+        appendHint(wb, " ctrl+g", " for external editor");
+        appendHint(wb, " /", " for commands");
+        appendHint(wb, " !", " to run bash");
+        appendHint(wb, " !!", " to run bash (no context)");
+        appendHint(wb, " alt+enter", " to queue follow-up");
+        appendHint(wb, " alt+up", " to edit all queued messages");
+        appendHint(wb, " ctrl+v", " to paste image");
+        appendHint(wb, " drop files", " to attach");
+        wb.append("\n");
+        wb.append(BANNER_DIM)
+                .append(
+                        " CampusClaw can explain its own features and look up its docs. Ask it how to use or extend CampusClaw.")
+                .append(BANNER_RESET);
+        return wb.toString();
+    }
+
+    private static void appendHint(StringBuilder wb, String key, String description) {
+        wb.append(BANNER_DIM)
+                .append(key)
+                .append(BANNER_RESET)
+                .append(BANNER_MUTED)
+                .append(description)
+                .append(BANNER_RESET)
+                .append("\n");
+    }
+
+    private void dispatchInput(
+            String data,
+            AgentSession session,
+            BlockingQueue<String> submitQueue,
+            AtomicBoolean eofFlag,
+            AtomicBoolean executingPrompt,
+            AtomicBoolean abortedFlag,
+            AtomicReference<AgentSession> sessionRef,
+            AtomicBoolean followUpFlag) {
+        if (activeOverlay != null) {
+            activeOverlay.handleInput(data);
+            tui.render();
+            return;
+        }
+        int i = 0;
+        while (i < data.length()) {
+            char ch = data.charAt(i);
+            int advance = handleControlChar(
+                    ch, data, i, session, submitQueue, eofFlag, executingPrompt, abortedFlag, sessionRef, followUpFlag);
+            if (advance == EOF_RETURN) {
+                return;
+            }
+            if (advance > 0) {
+                i += advance;
+                continue;
+            }
+            if (ch == '\033') {
+                i = handleEscapeSequence(
+                        data, i, session, submitQueue, executingPrompt, abortedFlag, sessionRef, followUpFlag);
+            } else {
+                editorContainer.handleInput(String.valueOf(ch));
+                i++;
+            }
+        }
+        refreshBashModeBorder(session);
+        tui.render();
+    }
+
+    private static final int EOF_RETURN = -1;
+
+    // Handles single-char globals (Ctrl+D/O/T/P/L/G/V/Z/C). Returns:
+    //   EOF_RETURN to exit dispatchInput entirely (Ctrl+D, double Ctrl+C),
+    //   >0  to advance i by that many chars,
+    //   0   when ch wasn't a global and caller should fall through.
+    private int handleControlChar(
+            char ch,
+            String data,
+            int i,
+            AgentSession session,
+            BlockingQueue<String> submitQueue,
+            AtomicBoolean eofFlag,
+            AtomicBoolean executingPrompt,
+            AtomicBoolean abortedFlag,
+            AtomicReference<AgentSession> sessionRef,
+            AtomicBoolean followUpFlag) {
+        if (ch == 4) {
+            eofFlag.set(true);
+            submitQueue.add("");
+            return EOF_RETURN;
+        }
+        if (ch == 3) {
+            return handleCtrlC(session, submitQueue, eofFlag, executingPrompt, abortedFlag, sessionRef);
+        }
+        if (handleSimpleControlChar(ch, session)) {
+            return 1;
+        }
+        return 0;
+    }
+
+    // Single-shot control characters that don't need access to the input loop
+    // state. Returns true if {@code ch} was handled.
+    private boolean handleSimpleControlChar(char ch, AgentSession session) {
+        switch (ch) {
+            case 15 -> { // Ctrl+O — toggle tool output expand/collapse
+                toolsExpanded = !toolsExpanded;
+                for (var child : chatContainer.getChildren()) {
+                    if (child instanceof ToolStatusComponent tool) {
+                        tool.setExpanded(toolsExpanded);
+                    }
+                }
+            }
+            case 20 -> toggleThinkingBlockVisibility(); // Ctrl+T
+            case 16 -> cycleModel(session, true); // Ctrl+P
+            case 12 -> showModelSelector(session); // Ctrl+L
+            case 7 -> openExternalEditor(); // Ctrl+G
+            case 22 -> pasteClipboardImage(session); // Ctrl+V
+            case 26 -> {
+                // Ctrl+Z — suspendSelf already does its own render
+                suspendSelf();
+                return true;
+            }
+            default -> {
+                return false;
+            }
+        }
+        tui.render();
+        return true;
+    }
+
+    private void suspendSelf() {
+        tui.stop();
+        try {
+            new ProcessBuilder(
+                            "kill",
+                            "-TSTP",
+                            String.valueOf(ProcessHandle.current().pid()))
+                    .inheritIO()
+                    .start()
+                    .waitFor();
+        } catch (Exception ignored) {
+            // SIGTSTP self-send is a convenience; fall through and re-render.
+        }
+        tui.start();
+        tui.render();
+    }
+
+    private int handleCtrlC(
+            AgentSession session,
+            BlockingQueue<String> submitQueue,
+            AtomicBoolean eofFlag,
+            AtomicBoolean executingPrompt,
+            AtomicBoolean abortedFlag,
+            AtomicReference<AgentSession> sessionRef) {
+        if (executingPrompt.get()) {
+            abortedFlag.set(true);
+            sessionRef.get().abort();
+            return 1;
+        }
+        var token = bashCancelToken;
+        if (token != null) {
+            token.cancel();
+        }
+        long now = System.currentTimeMillis();
+        if (now - lastCtrlCTime < 500) {
+            eofFlag.set(true);
+            submitQueue.add("");
+            return EOF_RETURN;
+        }
+        lastCtrlCTime = now;
+        editorContainer.clear();
+        bashMode = false;
+        editorContainer.setBorderForThinkingLevel(currentThinkingLevel(session));
+        tui.render();
+        return 1;
+    }
+
+    // Dispatches `\033` sequences. Returns the new i (after consuming the sequence).
+    private int handleEscapeSequence(
+            String data,
+            int i,
+            AgentSession session,
+            BlockingQueue<String> submitQueue,
+            AtomicBoolean executingPrompt,
+            AtomicBoolean abortedFlag,
+            AtomicReference<AgentSession> sessionRef,
+            AtomicBoolean followUpFlag) {
+        // Standalone Escape — abort streaming, or double-escape → tree.
+        if (i + 1 >= data.length()) {
+            handleStandaloneEscape(session, executingPrompt, abortedFlag, sessionRef);
+            return i + 1;
+        }
+
+        // Kitty protocol: Alt+Enter \033[13;2u
+        if (data.startsWith("\033[13;2u", i)) {
+            queueFollowUp(submitQueue, followUpFlag);
+            return i + 7;
+        }
+
+        // Shift+Tab: \033[Z — cycle thinking level (unless slash menu is showing).
+        if (data.startsWith("\033[Z", i) && !editorContainer.isShowingSuggestions()) {
+            cycleThinkingLevel(session);
+            tui.render();
+            return i + 3;
+        }
+
+        // Shift+Ctrl+P (Kitty variant).
+        if (data.startsWith("\033[112;6u", i)) {
+            cycleModel(session, false);
+            tui.render();
+            return i + 8;
+        }
+
+        // Alt+Enter: ESC CR.
+        if (data.charAt(i + 1) == '\r') {
+            queueFollowUp(submitQueue, followUpFlag);
+            return i + 2;
+        }
+        int seqEnd = findEscapeSequenceEnd(data, i);
+        editorContainer.handleInput(data.substring(i, seqEnd));
+        return seqEnd;
+    }
+
+    private void handleStandaloneEscape(
+            AgentSession session,
+            AtomicBoolean executingPrompt,
+            AtomicBoolean abortedFlag,
+            AtomicReference<AgentSession> sessionRef) {
+        if (executingPrompt.get()) {
+            abortedFlag.set(true);
+            sessionRef.get().abort();
+            return;
+        }
+        var token = bashCancelToken;
+        if (token != null) {
+            token.cancel();
+        }
+        long now = System.currentTimeMillis();
+        if (now - lastEscapeTime < 500) {
+            showTreeSelector(session);
+            lastEscapeTime = 0;
+        } else {
+            lastEscapeTime = now;
+        }
+    }
+
+    private void queueFollowUp(BlockingQueue<String> submitQueue, AtomicBoolean followUpFlag) {
+        followUpFlag.set(true);
+        String text = editorContainer.getEditor().getText();
+        if (text != null && !text.trim().isEmpty()) {
+            submitQueue.add(text);
+        }
+    }
+
+    private void refreshBashModeBorder(AgentSession session) {
+        String editorText = editorContainer.getEditor().getText();
+        boolean wasBashMode = bashMode;
+        bashMode = editorText != null && editorText.stripLeading().startsWith("!");
+        if (wasBashMode == bashMode) {
+            return;
+        }
+        if (bashMode) {
+            editorContainer.setBorderColor(EditorContainer.BORDER_BASH);
+        } else {
+            editorContainer.setBorderForThinkingLevel(currentThinkingLevel(session));
+        }
+    }
+
+    private static String currentThinkingLevel(AgentSession session) {
+        var level = session.getAgent().getState().getThinkingLevel();
+        return level != null ? level.value() : "medium";
+    }
+
+    private void runReplLoop(
+            AgentSession session,
+            String cwd,
+            BlockingQueue<String> submitQueue,
+            AtomicBoolean eofFlag,
+            AtomicBoolean executingPrompt,
+            AtomicBoolean abortedFlag,
+            AtomicBoolean followUpFlag) {
+        while (!eofFlag.get()) {
+            abortedFlag.set(false);
+            followUpFlag.set(false);
+            String input;
+            try {
+                input = submitQueue.take();
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                return;
+            }
+            if (eofFlag.get()) {
+                return;
+            }
+            if (input == null || input.trim().isEmpty()) {
+                tui.render();
+                continue;
+            }
+            try {
+                processReplInput(input.trim(), session, cwd, executingPrompt, abortedFlag, followUpFlag);
+            } catch (com.huawei.hicampus.mate.matecampusclaw.codingagent.command.QuitException e) {
+                return;
+            }
+        }
+    }
+
+    private void processReplInput(
+            String trimmed,
+            AgentSession session,
+            String cwd,
+            AtomicBoolean executingPrompt,
+            AtomicBoolean abortedFlag,
+            AtomicBoolean followUpFlag) {
+        editorContainer.addToHistory(trimmed);
+        editorContainer.clear();
+        bashMode = false;
+        editorContainer.setBorderForThinkingLevel(currentThinkingLevel(session));
+        if (handleSpecialOverlayCommand(trimmed, session)) {
+            return;
+        }
+        if (trimmed.startsWith("/")
+                && !isSkillOrTemplate(trimmed, session)
+                && handleSlashCommandWithSideEffects(trimmed, session, cwd)) {
+            return;
+        }
+        if (trimmed.startsWith("!") && handleBashPrefix(trimmed, cwd)) {
+            return;
+        }
+        if (followUpFlag.get() && session.isStreaming()) {
+            session.getAgent().followUp(new UserMessage(trimmed, System.currentTimeMillis()));
+            chatContainer.addChild(
+                    new Text("\033[2m  ↳ Follow-up queued: " + truncateDisplay(trimmed, 60) + "\033[0m"));
+            tui.render();
+            return;
+        }
+        if (session.isStreaming()) {
+            session.steer(trimmed);
+            chatContainer.addChild(new UserMessageComponent(trimmed));
+            tui.render();
+            return;
+        }
+        executingPrompt.set(true);
+        executePrompt(session, expandFileReferences(trimmed), abortedFlag);
+        executingPrompt.set(false);
+        checkAutoCompaction(session);
+    }
+
+    private boolean handleSpecialOverlayCommand(String trimmed, AgentSession session) {
+        if ("/resume".equals(trimmed)) {
+            showSessionSelector(session);
+            tui.render();
+            return true;
+        }
+        if ("/tree".equals(trimmed)) {
+            showTreeSelector(session);
+            tui.render();
+            return true;
+        }
+        if ("/model".equals(trimmed) || "/models".equals(trimmed)) {
+            showModelSelector(session);
+            tui.render();
+            return true;
+        }
+        return false;
+    }
+
+    private boolean handleSlashCommandWithSideEffects(String trimmed, AgentSession session, String cwd) {
+        if (!handleSlashCommand(trimmed, session)) {
+            return false;
+        }
+        if (trimmed.startsWith("/new") || trimmed.startsWith("/reload")) {
+            buildCommandSuggestions(session);
+        }
+        if (trimmed.equals("/new")) {
+            chatContainer.clear();
+            chatContainer.addChild(new Text("\033[38;2;138;190;183m✓ New session started\033[0m", 1, 1));
+            footer.resetUsage();
+            lastStatusComponent = null;
+            var sm = session.getSessionManager();
+            if (sm != null) {
+                sm.close();
+                sm.createSession(cwd);
+            }
+        }
+        if (trimmed.startsWith("/model ")) {
+            var newModel = session.getAgent().getState().getModel();
+            if (newModel != null) {
+                footer.setModel(
+                        newModel.provider().name().toLowerCase(Locale.ROOT),
+                        newModel.id(),
+                        newModel.contextWindow() > 0 ? newModel.contextWindow() : 200000,
+                        newModel.reasoning());
+            }
+        }
+        if (trimmed.startsWith("/name ")) {
+            footer.setSessionName(trimmed.substring(6).trim());
+        }
+        tui.render();
+        return true;
+    }
+
+    private boolean handleBashPrefix(String trimmed, String cwd) {
+        boolean excluded = trimmed.startsWith("!!");
+        String command =
+                excluded ? trimmed.substring(2).trim() : trimmed.substring(1).trim();
+        if (command.isEmpty()) {
+            return false;
+        }
+        handleBashCommand(command, excluded, cwd);
+        tui.render();
+        return true;
+    }
+
+    private void startCronEngineWithTuiNotifications(AgentSession session) {
+        if (cronService == null) {
+            return;
+        }
+        var currentModel = session.getAgent().getState().getModel();
+        if (currentModel != null) {
+            cronService.setDefaultModelId(currentModel.id());
+        }
+        cronService.addListener(event -> {
+            String cronTag = "\033[38;2;102;178;178m[cron]\033[0m ";
+            String msg =
+                    switch (event) {
+                        case com.huawei.hicampus.mate.matecampusclaw.cron.model.CronEvent.JobStarted e -> cronTag + "Running: " + e.jobName();
+                        case com.huawei.hicampus.mate.matecampusclaw.cron.model.CronEvent.JobCompleted e -> {
+                            String line = cronTag + "Completed: " + e.jobName();
+                            if (e.output() != null && !e.output().isBlank()) {
+                                line += "\n" + e.output();
+                            }
+                            yield line;
+                        }
+                        case com.huawei.hicampus.mate.matecampusclaw.cron.model.CronEvent.JobFailed e ->
+                            cronTag + "Failed: " + e.jobName() + " — " + e.error();
+                    };
+            synchronized (tuiLock) {
+                chatContainer.addChild(new Text(msg));
+                tui.render();
+            }
+        });
+        cronService.start();
+    }
+
     private boolean handleSlashCommand(String input, AgentSession session) {
         var outputLines = new ArrayList<String>();
-        SlashCommandContext context = new SlashCommandContext(
-                session,
-                outputLines::add
-        );
+        SlashCommandContext context = new SlashCommandContext(session, outputLines::add);
         boolean handled = commandRegistry.execute(input, context);
         if (handled) {
             // Don't echo slash commands as user messages (matching campusclaw behavior)
@@ -714,7 +785,9 @@ public class InteractiveMode {
                 output.append(result.stdout());
             }
             if (result.stderr() != null && !result.stderr().isEmpty()) {
-                if (!output.isEmpty()) output.append("\n");
+                if (!output.isEmpty()) {
+                    output.append("\n");
+                }
                 output.append(result.stderr());
             }
 
@@ -727,43 +800,17 @@ public class InteractiveMode {
     }
 
     private void executePrompt(AgentSession session, String input, AtomicBoolean aborted) {
-        chatContainer.addChild(new UserMessageComponent(input));
-
-        // Persist user message to session file
-        var sm = session.getSessionManager();
-        if (sm != null) {
-            sm.appendMessage(new UserMessage(input, System.currentTimeMillis()));
-        }
-
-        // Persist user message to ChatMemory (GaussDB)
-        if (chatMemoryStore != null && sm != null) {
-            try {
-                // ChatMemory persistence disabled - no assistant module
-            } catch (Exception e) {
-                System.err.println("[InteractiveMode] Failed to persist user message to ChatMemory: " + e.getMessage());
-            }
-        }
-
+        var userMessageComponent = new UserMessageComponent(input);
+        chatContainer.addChild(userMessageComponent);
+        int agentMessageCountBefore =
+                session.getAgent().getState().getMessages().size();
+        persistUserMessage(session, input);
         currentAssistantMessage = new AssistantMessageComponent();
         chatContainer.addChild(currentAssistantMessage);
         pendingTools.clear();
-
         tui.render();
 
-        // Spinner animation timer — drives re-renders at 80ms for the "Working..." spinner
-        var spinnerTimer = Executors.newSingleThreadScheduledExecutor(r -> {
-            var t = new Thread(r, "spinner-timer");
-            t.setDaemon(true);
-            return t;
-        });
-        spinnerTimer.scheduleAtFixedRate(() -> {
-            synchronized (tuiLock) {
-                if (currentAssistantMessage != null && !currentAssistantMessage.hasContent()) {
-                    tui.render();
-                }
-            }
-        }, 80, 80, TimeUnit.MILLISECONDS);
-
+        var spinnerTimer = startSpinnerTimer();
         Runnable unsub = session.getAgent().subscribe(event -> {
             synchronized (tuiLock) {
                 handleEvent(event);
@@ -771,60 +818,115 @@ public class InteractiveMode {
             }
         });
 
-        CompletableFuture<Void> future = session.prompt(input);
-
-        boolean showedAbort = false;
         try {
-            future.join();
+            session.prompt(input).join();
         } catch (Exception e) {
-            String error = session.getAgent().getState().getError();
-            if (aborted.get()) {
-                chatContainer.addChild(new Text("\033[38;2;204;102;102m Operation aborted\033[0m"));
-                showedAbort = true;
-            } else {
+            if (!aborted.get()) {
+                String error = session.getAgent().getState().getError();
                 chatContainer.addChild(new Text(
                         "\033[38;2;204;102;102m Error: " + (error != null ? error : e.getMessage()) + "\033[0m"));
             }
         }
 
-        // Show abort message if cancellation completed without exception
-        if (aborted.get() && !showedAbort) {
-            chatContainer.addChild(new Text("\033[38;2;204;102;102m Operation aborted\033[0m"));
+        if (aborted.get()) {
+            rollbackAbortedTurn(session, input, userMessageComponent, agentMessageCountBefore);
         }
-
         String error = session.getAgent().getState().getError();
         if (error != null && !aborted.get()) {
             chatContainer.addChild(new Text("\033[38;2;204;102;102m Error: " + error + "\033[0m"));
         }
-
-        // Stop spinner animation timer
         spinnerTimer.shutdownNow();
 
-        if (currentAssistantMessage != null) {
-            currentAssistantMessage.setComplete(true);
+        finalizeAssistantBubble();
+        if (unsub != null) {
+            unsub.run();
+        }
+        tui.render();
+    }
 
-            // Publish agent response event for WebSocket gateway to relay back
-            if (applicationContext != null && currentAssistantMessage.hasContent()) {
-                String replyText = currentAssistantMessage.getTextContent();
-                if (replyText != null && !replyText.isEmpty()) {
-                    try {
-                        applicationContext.publishEvent(
-                            new com.huawei.hicampus.mate.matecampusclaw.codingagent.channel.AgentResponseEvent(this, replyText));
-                    } catch (Exception e) {
-                        System.err.println("[InteractiveMode] Failed to publish AgentResponseEvent: " + e.getMessage());
+    private void persistUserMessage(AgentSession session, String input) {
+        var sm = session.getSessionManager();
+        if (sm != null) {
+            sm.appendMessage(new UserMessage(input, System.currentTimeMillis()));
+        }
+        if (chatMemoryStore != null && sm != null) {
+            try {
+                chatMemoryStore.append(sm.getSessionId(), List.of(new UserMessage(input, System.currentTimeMillis())));
+            } catch (Exception e) {
+                log.debug("Failed to persist user message to ChatMemory (DB unavailable?): {}", e.getMessage());
+            }
+        }
+    }
+
+    // Drives re-renders at 80ms so the "Working..." spinner animates while
+    // the assistant bubble has no content yet.
+    private java.util.concurrent.ScheduledExecutorService startSpinnerTimer() {
+        var timer = Executors.newSingleThreadScheduledExecutor(r -> {
+            var t = new Thread(r, "spinner-timer");
+            t.setDaemon(true);
+            t.setUncaughtExceptionHandler(LoggingUncaughtExceptionHandler.INSTANCE);
+            return t;
+        });
+        timer.scheduleAtFixedRate(
+                () -> {
+                    synchronized (tuiLock) {
+                        if (currentAssistantMessage != null && !currentAssistantMessage.hasContent()) {
+                            tui.render();
+                        }
                     }
+                },
+                80,
+                80,
+                TimeUnit.MILLISECONDS);
+        return timer;
+    }
+
+    // Remove the turn's chat display, roll back agent history, and restore the
+    // user's input into the editor so they can amend and resubmit.
+    private void rollbackAbortedTurn(
+            AgentSession session,
+            String input,
+            UserMessageComponent userMessageComponent,
+            int agentMessageCountBefore) {
+        chatContainer.removeChild(userMessageComponent);
+        if (currentAssistantMessage != null) {
+            chatContainer.removeChild(currentAssistantMessage);
+            currentAssistantMessage = null;
+        }
+        var agentState = session.getAgent().getState();
+        var trimmed = new ArrayList<>(agentState.getMessages());
+        while (trimmed.size() > agentMessageCountBefore) {
+            trimmed.remove(trimmed.size() - 1);
+        }
+        agentState.replaceMessages(trimmed);
+        editorContainer.getEditor().setText(input);
+    }
+
+    private void finalizeAssistantBubble() {
+        if (currentAssistantMessage == null) {
+            currentAssistantMessage = null;
+            return;
+        }
+        currentAssistantMessage.setComplete(true);
+        if (applicationContext != null && currentAssistantMessage.hasContent()) {
+            String replyText = currentAssistantMessage.getTextContent();
+            if (replyText != null && !replyText.isEmpty()) {
+                try {
+                    applicationContext.publishEvent(
+                            new com.huawei.hicampus.mate.matecampusclaw.assistant.channel.gateway.AgentResponseEvent(this, replyText));
+                } catch (Exception e) {
+                    log.error("Failed to publish AgentResponseEvent", e);
                 }
             }
         }
         currentAssistantMessage = null;
-
-        if (unsub != null) unsub.run();
-        tui.render();
     }
 
     /**
      * Cycles thinking level: off → minimal → low → medium → high → xhigh → off.
      * Skips xhigh if model doesn't support it. Shows status message.
+     *
+     * @param session the session
      */
     private void cycleThinkingLevel(AgentSession session) {
         var model = session.getAgent().getState().getModel();
@@ -835,86 +937,99 @@ public class InteractiveMode {
 
         ThinkingLevel[] levels = ModelRegistry.supportsXhigh(model)
                 ? ThinkingLevel.values()
-                : new ThinkingLevel[]{ThinkingLevel.OFF, ThinkingLevel.MINIMAL, ThinkingLevel.LOW,
-                        ThinkingLevel.MEDIUM, ThinkingLevel.HIGH};
+                : new ThinkingLevel[] {
+                    ThinkingLevel.OFF,
+                    ThinkingLevel.MINIMAL,
+                    ThinkingLevel.LOW,
+                    ThinkingLevel.MEDIUM,
+                    ThinkingLevel.HIGH
+                };
 
         var current = session.getAgent().getState().getThinkingLevel();
         int idx = 0;
         for (int j = 0; j < levels.length; j++) {
-            if (levels[j] == current) { idx = j; break; }
+            if (levels[j] == current) {
+                idx = j;
+                break;
+            }
         }
         var next = levels[(idx + 1) % levels.length];
         session.getAgent().setThinkingLevel(next);
         footer.setThinkingLevel(next.value());
         editorContainer.setBorderForThinkingLevel(next.value());
+
         // Persist thinking level change
         var sm = session.getSessionManager();
-        if (sm != null) sm.appendThinkingLevelChange(next.value());
+        if (sm != null) {
+            sm.appendThinkingLevelChange(next.value());
+        }
         showStatus("Thinking: " + next.value());
     }
 
     /**
      * Cycles through available models with configured auth.
      * @param forward true for next, false for previous
+     *
+     * @param session the session
      */
     private void cycleModel(AgentSession session, boolean forward) {
-        if (modelRegistry == null) return;
-
-        // Use scoped models if available, otherwise all models
-        List<Model> candidates;
-        if (!scopedModels.isEmpty()) {
-            candidates = new ArrayList<>(scopedModels);
-        } else {
-            candidates = modelRegistry.getAllModels();
-            // Sort models by provider then id for stable ordering
-            candidates.sort(Comparator.comparing((Model m) -> m.provider().value())
-                    .thenComparing(Model::id));
+        if (modelRegistry == null) {
+            return;
         }
-
+        List<Model> candidates = resolveCycleCandidates();
         if (candidates.size() <= 1) {
             showStatus(scopedModels.isEmpty() ? "只有一个模型可用" : "只有一个 scoped 模型");
             return;
         }
-
-        var allModels = candidates;
-
         var currentModel = session.getAgent().getState().getModel();
-        int currentIdx = -1;
-        if (currentModel != null) {
-            for (int j = 0; j < allModels.size(); j++) {
-                if (ModelRegistry.modelsAreEqual(allModels.get(j), currentModel)) {
-                    currentIdx = j;
-                    break;
-                }
+        int currentIdx = indexOfModel(candidates, currentModel);
+        int nextIdx = forward
+                ? (currentIdx + 1) % candidates.size()
+                : (currentIdx - 1 + candidates.size()) % candidates.size();
+        var newModel = candidates.get(nextIdx);
+        applyModelSwitch(session, newModel);
+    }
+
+    private List<Model> resolveCycleCandidates() {
+        if (!scopedModels.isEmpty()) {
+            return new ArrayList<>(scopedModels);
+        }
+        List<Model> all = modelRegistry.getAllModels();
+        all.sort(Comparator.comparing((Model m) -> m.provider().value()).thenComparing(Model::id));
+        return all;
+    }
+
+    private static int indexOfModel(List<Model> models, Model target) {
+        if (target == null) {
+            return 0;
+        }
+        for (int j = 0; j < models.size(); j++) {
+            if (ModelRegistry.modelsAreEqual(models.get(j), target)) {
+                return j;
             }
         }
-        if (currentIdx == -1) currentIdx = 0;
+        return 0;
+    }
 
-        int nextIdx = forward
-                ? (currentIdx + 1) % allModels.size()
-                : (currentIdx - 1 + allModels.size()) % allModels.size();
-        var newModel = allModels.get(nextIdx);
+    private void applyModelSwitch(AgentSession session, Model newModel) {
         session.getAgent().setModel(newModel);
-
         footer.setModel(
-                newModel.provider().name().toLowerCase(),
+                newModel.provider().name().toLowerCase(Locale.ROOT),
                 newModel.id(),
                 newModel.contextWindow() > 0 ? newModel.contextWindow() : 200000,
                 newModel.reasoning());
-
-        // Re-clamp thinking level for new model
         if (!newModel.reasoning()) {
             session.getAgent().setThinkingLevel(ThinkingLevel.OFF);
             footer.setThinkingLevel("off");
         }
         editorContainer.setBorderForThinkingLevel(
                 session.getAgent().getState().getThinkingLevel() != null
-                        ? session.getAgent().getState().getThinkingLevel().value() : "off");
-
-        // Persist model change
+                        ? session.getAgent().getState().getThinkingLevel().value()
+                        : "off");
         var sm = session.getSessionManager();
-        if (sm != null) sm.appendModelChange(newModel.provider().value(), newModel.id());
-
+        if (sm != null) {
+            sm.appendModelChange(newModel.provider().value(), newModel.id());
+        }
         String thinkingStr = newModel.reasoning()
                 ? " • " + session.getAgent().getState().getThinkingLevel().value()
                 : "";
@@ -936,9 +1051,13 @@ public class InteractiveMode {
 
     /**
      * Shows the model selector overlay. Replaces the chat area until dismissed.
+     *
+     * @param session the session
      */
     private void showModelSelector(AgentSession session) {
-        if (modelRegistry == null) return;
+        if (modelRegistry == null) {
+            return;
+        }
         var currentModel = session.getAgent().getState().getModel();
         var overlay = new ModelSelectorOverlay(modelRegistry, currentModel);
 
@@ -946,7 +1065,7 @@ public class InteractiveMode {
             // Apply model change
             session.getAgent().setModel(model);
             footer.setModel(
-                    model.provider().name().toLowerCase(),
+                    model.provider().name().toLowerCase(Locale.ROOT),
                     model.id(),
                     model.contextWindow() > 0 ? model.contextWindow() : 200000,
                     model.reasoning());
@@ -956,10 +1075,14 @@ public class InteractiveMode {
             }
             editorContainer.setBorderForThinkingLevel(
                     session.getAgent().getState().getThinkingLevel() != null
-                            ? session.getAgent().getState().getThinkingLevel().value() : "off");
+                            ? session.getAgent().getState().getThinkingLevel().value()
+                            : "off");
+
             // Persist model change
             var sm = session.getSessionManager();
-            if (sm != null) sm.appendModelChange(model.provider().value(), model.id());
+            if (sm != null) {
+                sm.appendModelChange(model.provider().value(), model.id());
+            }
 
             dismissOverlay();
             showStatus("切换到 " + model.name());
@@ -971,6 +1094,8 @@ public class InteractiveMode {
 
     /**
      * Shows the session selector overlay for /resume.
+     *
+     * @param session the session
      */
     private void showSessionSelector(AgentSession session) {
         String cwd = System.getProperty("user.dir", "");
@@ -1005,6 +1130,8 @@ public class InteractiveMode {
 
     /**
      * Shows the tree selector overlay for /tree command.
+     *
+     * @param session the session
      */
     private void showTreeSelector(AgentSession session) {
         var messages = session.getHistory();
@@ -1061,6 +1188,8 @@ public class InteractiveMode {
 
     /**
      * Shows an overlay component, replacing the chat area.
+     *
+     * @param overlay the overlay
      */
     private void showOverlay(Component overlay) {
         activeOverlay = overlay;
@@ -1098,7 +1227,9 @@ public class InteractiveMode {
         }
 
         String currentText = editorContainer.getEditor().getText();
-        if (currentText == null) currentText = "";
+        if (currentText == null) {
+            currentText = "";
+        }
 
         try {
             Path tmpFile = Files.createTempFile("campusclaw-editor-", ".pi.md");
@@ -1112,9 +1243,7 @@ public class InteractiveMode {
             var cmd = new ArrayList<>(List.of(parts));
             cmd.add(tmpFile.toString());
 
-            var process = new ProcessBuilder(cmd)
-                    .inheritIO()
-                    .start();
+            var process = new ProcessBuilder(cmd).inheritIO().start();
             process.waitFor();
 
             if (process.exitValue() == 0) {
@@ -1135,15 +1264,16 @@ public class InteractiveMode {
     /**
      * Pastes an image from the system clipboard into the conversation.
      * Uses osascript on macOS to detect clipboard image.
+     *
+     * @param session the session
      */
     private void pasteClipboardImage(AgentSession session) {
         try {
             // macOS: use osascript to check clipboard for image
-            var check = new ProcessBuilder("osascript", "-e",
-                    "the clipboard info for (class PNGf)")
+            var check = new ProcessBuilder("osascript", "-e", "the clipboard info for (class PNGf)")
                     .redirectErrorStream(true)
                     .start();
-            String output = new String(check.getInputStream().readAllBytes()).trim();
+            String output = new String(check.getInputStream().readAllBytes(), StandardCharsets.UTF_8).trim();
             int exit = check.waitFor();
 
             if (exit != 0 || output.isEmpty()) {
@@ -1153,17 +1283,17 @@ public class InteractiveMode {
 
             // Save clipboard image to temp file
             Path tmpFile = Files.createTempFile("campusclaw-clipboard-", ".png");
-            var save = new ProcessBuilder("osascript", "-e",
-                    "set imgData to the clipboard as «class PNGf»\n" +
-                    "set fp to open for access POSIX file \"" + tmpFile + "\" with write permission\n" +
-                    "write imgData to fp\n" +
-                    "close access fp")
+            var save = new ProcessBuilder(
+                            "osascript",
+                            "-e",
+                            "set imgData to the clipboard as «class PNGf»\n" + "set fp to open for access POSIX file \""
+                                    + tmpFile + "\" with write permission\n" + "write imgData to fp\n"
+                                    + "close access fp")
                     .redirectErrorStream(true)
                     .start();
             save.waitFor();
 
             if (Files.exists(tmpFile) && Files.size(tmpFile) > 0) {
-                // TODO: Attach image to message when image support is implemented
                 showStatus("已粘贴图片: " + tmpFile.getFileName());
             } else {
                 showStatus("读取剪贴板图片失败");
@@ -1177,11 +1307,15 @@ public class InteractiveMode {
     /**
      * Shows a temporary status message in the chat area.
      * Reuses the last status line if it's at the bottom (matches campusclaw behavior).
+     *
+     * @param message the message
      */
     private void showStatus(String message) {
         var children = chatContainer.getChildren();
+
         // Reuse last status component if it's the last child
-        if (lastStatusComponent != null && !children.isEmpty()
+        if (lastStatusComponent != null
+                && !children.isEmpty()
                 && children.get(children.size() - 1) == lastStatusComponent) {
             // Replace with new text
             chatContainer.removeChild(lastStatusComponent);
@@ -1193,73 +1327,114 @@ public class InteractiveMode {
 
     void handleEvent(AgentEvent event) {
         switch (event) {
-            case TurnStartEvent e -> {
-                // Create a new AssistantMessageComponent for continuation turns
-                // (after tool calls) so thinking/text from each turn are separate.
-                if (currentAssistantMessage != null && currentAssistantMessage.hasContent()) {
-                    currentAssistantMessage.setComplete(true);
-                    currentAssistantMessage = new AssistantMessageComponent();
-                    chatContainer.addChild(currentAssistantMessage);
-                }
+            case TurnStartEvent e -> onTurnStart();
+            case MessageUpdateEvent e -> onMessageUpdate(e);
+            case MessageEndEvent e -> onMessageEnd(e);
+            case ToolExecutionStartEvent e -> onToolStart(e);
+            case ToolExecutionUpdateEvent e -> onToolUpdate(e);
+            case ToolExecutionEndEvent e -> onToolEnd(e);
+            default -> {
+                // other events ignored by the interactive TUI
             }
-            case MessageUpdateEvent e -> {
-                if (currentAssistantMessage == null) return;
-                if (e.assistantMessageEvent() instanceof AssistantMessageEvent.TextDeltaEvent delta) {
-                    currentAssistantMessage.appendText(delta.delta());
-                } else if (e.assistantMessageEvent() instanceof AssistantMessageEvent.ThinkingDeltaEvent thinking) {
-                    currentAssistantMessage.appendThinking(thinking.delta());
-                }
+        }
+    }
+
+    // Continuation turn after a non-tool finish: close the previous bubble so
+    // the next text delta lazily opens a fresh one.
+    private void onTurnStart() {
+        if (currentAssistantMessage != null && currentAssistantMessage.hasContent()) {
+            currentAssistantMessage.setComplete(true);
+            currentAssistantMessage = null;
+        }
+    }
+
+    private void onMessageUpdate(MessageUpdateEvent e) {
+        if (currentAssistantMessage == null) {
+            currentAssistantMessage = new AssistantMessageComponent();
+            chatContainer.addChild(currentAssistantMessage);
+        }
+        if (e.assistantMessageEvent() instanceof AssistantMessageEvent.TextDeltaEvent delta) {
+            currentAssistantMessage.appendText(delta.delta());
+        } else if (e.assistantMessageEvent() instanceof AssistantMessageEvent.ThinkingDeltaEvent thinking) {
+            currentAssistantMessage.appendThinking(thinking.delta());
+        }
+    }
+
+    private void onMessageEnd(MessageEndEvent e) {
+        if (!(e.message() instanceof AssistantMessage msg)) {
+            return;
+        }
+        if (msg.usage() != null) {
+            double cost = msg.usage().cost() != null ? msg.usage().cost().total() : 0;
+            footer.updateUsage(
+                    msg.usage().input(),
+                    msg.usage().output(),
+                    msg.usage().cacheRead(),
+                    msg.usage().cacheWrite(),
+                    cost);
+        }
+        persistAssistantMessage(msg);
+    }
+
+    private void persistAssistantMessage(AssistantMessage msg) {
+        if (currentSession == null) {
+            return;
+        }
+        var sm = currentSession.getSessionManager();
+        if (sm != null) {
+            sm.appendMessage(msg);
+        }
+        if (chatMemoryStore != null && sm != null) {
+            try {
+                chatMemoryStore.append(sm.getSessionId(), List.of(msg));
+            } catch (Exception ex) {
+                log.debug("Failed to persist assistant message to ChatMemory (DB unavailable?): {}", ex.getMessage());
             }
-            case MessageEndEvent e -> {
-                if (e.message() instanceof AssistantMessage msg) {
-                    if (msg.usage() != null) {
-                        double cost = msg.usage().cost() != null ? msg.usage().cost().total() : 0;
-                        footer.updateUsage(msg.usage().input(), msg.usage().output(),
-                                msg.usage().cacheRead(), msg.usage().cacheWrite(), cost);
-                    }
-                    // Persist assistant message to session file
-                    if (currentSession != null) {
-                        var sm = currentSession.getSessionManager();
-                        if (sm != null) sm.appendMessage(msg);
-                        // Persist assistant message to ChatMemory (GaussDB)
-                        if (chatMemoryStore != null) {
-                            try {
-                                // ChatMemory persistence disabled - no assistant module
-                            } catch (Exception ex) {
-                                System.err.println("[InteractiveMode] Failed to persist assistant message to ChatMemory: " + ex.getMessage());
-                            }
-                        }
-                    }
-                }
+        }
+    }
+
+    // Close the current assistant bubble before the tool block so any text that
+    // arrives in the next turn opens a fresh bubble below the tool. Drop the
+    // bubble entirely if it never received any thinking/text — an empty
+    // pre-created placeholder shouldn't leave a gap above the tool.
+    private void onToolStart(ToolExecutionStartEvent e) {
+        if (currentAssistantMessage != null) {
+            currentAssistantMessage.setComplete(true);
+            if (!currentAssistantMessage.hasContent()) {
+                chatContainer.removeChild(currentAssistantMessage);
             }
-            case ToolExecutionStartEvent e -> {
-                var tool = new ToolStatusComponent(e.toolName());
-                tool.setArgs(e.args());
-                tool.setExpanded(toolsExpanded);
-                pendingTools.put(e.toolCallId(), tool);
-                chatContainer.addChild(tool);
-            }
-            case ToolExecutionUpdateEvent e -> {
-                var tool = pendingTools.get(e.toolCallId());
-                if (tool != null) {
-                    tool.updatePartialResult(e.partialResult());
-                }
-            }
-            case ToolExecutionEndEvent e -> {
-                var tool = pendingTools.get(e.toolCallId());
-                if (tool != null) {
-                    tool.setComplete(e.isError(), e.result());
-                }
-            }
-            default -> { }
+            currentAssistantMessage = null;
+        }
+        var tool = new ToolStatusComponent(e.toolName());
+        tool.setArgs(e.args());
+        tool.setExpanded(toolsExpanded);
+        pendingTools.put(e.toolCallId(), tool);
+        chatContainer.addChild(tool);
+    }
+
+    private void onToolUpdate(ToolExecutionUpdateEvent e) {
+        var tool = pendingTools.get(e.toolCallId());
+        if (tool != null) {
+            tool.updatePartialResult(e.partialResult());
+        }
+    }
+
+    private void onToolEnd(ToolExecutionEndEvent e) {
+        var tool = pendingTools.get(e.toolCallId());
+        if (tool != null) {
+            tool.setComplete(e.isError(), e.result());
         }
     }
 
     private void checkAutoCompaction(AgentSession session) {
-        if (compactor == null) return;
+        if (compactor == null) {
+            return;
+        }
 
         var model = session.getAgent().getState().getModel();
-        if (model == null || model.contextWindow() <= 0) return;
+        if (model == null || model.contextWindow() <= 0) {
+            return;
+        }
 
         var messages = session.getHistory();
         if (compactor.needsCompaction(messages, model.contextWindow())) {
@@ -1271,18 +1446,15 @@ public class InteractiveMode {
                 var newMessages = new ArrayList<Message>();
                 if (!result.summary().isEmpty()) {
                     newMessages.add(new UserMessage(
-                            "[Context compaction summary]\n" + result.summary(),
-                            System.currentTimeMillis()));
+                            "[Context compaction summary]\n" + result.summary(), System.currentTimeMillis()));
                 }
                 newMessages.addAll(result.retainedMessages());
                 session.getAgent().replaceMessages(newMessages);
 
                 int removed = messages.size() - result.retainedMessages().size();
-                chatContainer.addChild(new Text(
-                        "\033[2m  Compacted " + removed + " messages.\033[0m"));
+                chatContainer.addChild(new Text("\033[2m  Compacted " + removed + " messages.\033[0m"));
             } catch (Exception e) {
-                chatContainer.addChild(new Text(
-                        "\033[31m  Auto-compaction failed: " + e.getMessage() + "\033[0m"));
+                chatContainer.addChild(new Text("\033[31m  Auto-compaction failed: " + e.getMessage() + "\033[0m"));
             }
             tui.render();
         }
@@ -1297,22 +1469,31 @@ public class InteractiveMode {
     }
 
     private static String truncateDisplay(String s, int max) {
-        if (s.length() <= max) return s;
+        if (s.length() <= max) {
+            return s;
+        }
         return s.substring(0, max - 3) + "...";
     }
 
     /**
      * Expands @file references in the input text. Each @filepath token is replaced
      * with the file's content. Matches campusclaw TS @file behavior.
+     *
+     * @param input the input
+     * @return the result
      */
     static String expandFileReferences(String input) {
-        if (input == null || !input.contains("@")) return input;
+        if (input == null || !input.contains("@")) {
+            return input;
+        }
 
         var sb = new StringBuilder();
         var tokens = input.split("\\s+");
         boolean first = true;
         for (String token : tokens) {
-            if (!first) sb.append(' ');
+            if (!first) {
+                sb.append(' ');
+            }
             first = false;
 
             if (token.startsWith("@") && token.length() > 1) {
@@ -1322,7 +1503,11 @@ public class InteractiveMode {
                     try {
                         sb.append(Files.readString(path));
                     } catch (IOException e) {
-                        sb.append("[Error reading ").append(filePath).append(": ").append(e.getMessage()).append("]");
+                        sb.append("[Error reading ")
+                                .append(filePath)
+                                .append(": ")
+                                .append(e.getMessage())
+                                .append("]");
                     }
                 } else {
                     sb.append(token); // Not a valid file, keep as-is
@@ -1338,15 +1523,23 @@ public class InteractiveMode {
      * Checks if the input is a /skill:name invocation or a prompt template command,
      * both of which should be sent to AgentSession.prompt() for expansion instead
      * of being processed as slash commands.
+     *
+     * @param input the input
+     * @param session the session
+     * @return the result
      */
     private boolean isSkillOrTemplate(String input, AgentSession session) {
-        if (input.startsWith("/skill:")) return true;
+        if (input.startsWith("/skill:")) {
+            return true;
+        }
 
         // Check if it matches a prompt template name
         int spaceIdx = input.indexOf(' ');
         String name = spaceIdx >= 0 ? input.substring(1, spaceIdx) : input.substring(1);
         for (PromptTemplateEntry template : session.getPromptTemplates()) {
-            if (template.name().equals(name)) return true;
+            if (template.name().equals(name)) {
+                return true;
+            }
         }
         return false;
     }
@@ -1354,6 +1547,8 @@ public class InteractiveMode {
     /**
      * Builds the full list of slash command suggestions for autocomplete,
      * combining built-in commands, skills, and prompt templates.
+     *
+     * @param session the session
      */
     private void buildCommandSuggestions(AgentSession session) {
         var suggestions = new ArrayList<CommandSuggestion>();
@@ -1365,16 +1560,14 @@ public class InteractiveMode {
 
         // 2. Skills as /skill:name commands
         for (Skill skill : session.getSkillRegistry().getAll()) {
-            suggestions.add(new CommandSuggestion(
-                    "skill:" + skill.name(),
-                    "[" + skill.source() + "] " + skill.description()));
+            suggestions.add(
+                    new CommandSuggestion("skill:" + skill.name(), "[" + skill.source() + "] " + skill.description()));
         }
 
         // 3. Prompt templates as /templatename commands
         for (PromptTemplateEntry template : session.getPromptTemplates()) {
-            suggestions.add(new CommandSuggestion(
-                    template.name(),
-                    "[" + template.source() + "] " + template.description()));
+            suggestions.add(
+                    new CommandSuggestion(template.name(), "[" + template.source() + "] " + template.description()));
         }
 
         // Sort alphabetically
@@ -1383,12 +1576,16 @@ public class InteractiveMode {
     }
 
     static int findEscapeSequenceEnd(String data, int start) {
-        if (start + 1 >= data.length()) return start + 1;
+        if (start + 1 >= data.length()) {
+            return start + 1;
+        }
         char second = data.charAt(start + 1);
         if (second == '[') {
             int j = start + 2;
             while (j < data.length()) {
-                if (data.charAt(j) >= 0x40 && data.charAt(j) <= 0x7E) return j + 1;
+                if (data.charAt(j) >= 0x40 && data.charAt(j) <= 0x7E) {
+                    return j + 1;
+                }
                 j++;
             }
             return data.length();

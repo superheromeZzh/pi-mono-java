@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026-2026. All rights reserved.
+ */
+
 package com.campusclaw.tui.component;
 
 import java.util.ArrayList;
@@ -11,6 +15,9 @@ import com.campusclaw.tui.Component;
  * Container component — arranges children vertically.
  * Each child is rendered at the full available width and the results are concatenated.
  * Uses CopyOnWriteArrayList for thread-safe iteration during concurrent rendering.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 public class Container implements Component {
 

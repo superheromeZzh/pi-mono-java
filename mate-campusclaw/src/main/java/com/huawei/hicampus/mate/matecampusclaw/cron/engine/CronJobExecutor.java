@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026-2026. All rights reserved.
+ */
+
 package com.huawei.hicampus.mate.matecampusclaw.cron.engine;
 
 import java.util.List;
@@ -28,6 +32,9 @@ import org.springframework.stereotype.Service;
 
 /**
  * Executes a single cron job by creating an isolated Agent instance.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 @Service
 public class CronJobExecutor {
@@ -41,9 +48,12 @@ public class CronJobExecutor {
     private final List<AgentTool> availableTools;
     private final com.huawei.hicampus.mate.matecampusclaw.cron.CronService cronService;
 
-    public CronJobExecutor(CampusClawAiService aiService, ModelRegistry modelRegistry,
-                           CronRunLog runLog, @Lazy List<AgentTool> availableTools,
-                           @Lazy com.huawei.hicampus.mate.matecampusclaw.cron.CronService cronService) {
+    public CronJobExecutor(
+            CampusClawAiService aiService,
+            ModelRegistry modelRegistry,
+            CronRunLog runLog,
+            @Lazy List<AgentTool> availableTools,
+            @Lazy com.huawei.hicampus.mate.matecampusclaw.cron.CronService cronService) {
         this.aiService = aiService;
         this.modelRegistry = modelRegistry;
         this.runLog = runLog;
@@ -54,83 +64,81 @@ public class CronJobExecutor {
     public CronRunRecord execute(CronJob job) {
         String runId = UUID.randomUUID().toString().substring(0, 8);
         long startedAt = System.currentTimeMillis();
-
-        var startRecord = new CronRunRecord(
-            runId, job.id(), startedAt, 0,
-            CronRunRecord.RunStatus.RUNNING, null, null, 0
-        );
-        runLog.appendRun(startRecord);
-
+        runLog.appendRun(
+                new CronRunRecord(runId, job.id(), startedAt, 0, CronRunRecord.RunStatus.RUNNING, null, null, 0));
         try {
             var payload = (CronPayload.AgentPrompt) job.payload();
-
-            // Create isolated agent
-            Agent agent = new Agent(aiService);
-
-            // Resolve model — required for Agent to execute
-            Model model = resolveModel(payload.modelId());
-            if (model == null) {
-                throw new IllegalStateException("No model available for cron job execution");
-            }
-            agent.setModel(model);
-
-            // Set system prompt
-            if (payload.systemPrompt() != null) {
-                agent.setSystemPrompt(payload.systemPrompt());
-            } else {
-                agent.setSystemPrompt("You are a cron task executor. Complete the task efficiently and concisely.");
-            }
-
-            // Filter tools
-            List<AgentTool> tools = filterTools(payload.allowedTools());
-            agent.setTools(tools);
-
-            // Execute with timeout — await the prompt future directly
-            // (waitForIdle() won't surface errors if prompt() itself fails)
-            int timeout = DEFAULT_TIMEOUT_SECONDS;
+            Agent agent = buildAgentForPayload(payload);
             try {
-                agent.prompt(payload.prompt()).get(timeout, TimeUnit.SECONDS);
+                agent.prompt(payload.prompt()).get(DEFAULT_TIMEOUT_SECONDS, TimeUnit.SECONDS);
             } catch (TimeoutException e) {
                 agent.abort();
-                log.warn("Cron job {} timed out after {}s", job.name(), timeout);
-                var record = new CronRunRecord(
-                    runId, job.id(), startedAt, System.currentTimeMillis(),
-                    CronRunRecord.RunStatus.FAILED, "Timeout after " + timeout + "s", null, 0
-                );
-                runLog.appendRun(record);
-                return record;
+                log.warn("Cron job {} timed out after {}s", job.name(), DEFAULT_TIMEOUT_SECONDS);
+                return appendAndReturn(new CronRunRecord(
+                        runId,
+                        job.id(),
+                        startedAt,
+                        System.currentTimeMillis(),
+                        CronRunRecord.RunStatus.FAILED,
+                        "Timeout after " + DEFAULT_TIMEOUT_SECONDS + "s",
+                        null,
+                        0));
             }
-
-            // Extract assistant response text
-            String output = extractOutput(agent);
-
-            var record = new CronRunRecord(
-                runId, job.id(), startedAt, System.currentTimeMillis(),
-                CronRunRecord.RunStatus.SUCCESS, null, output, 0
-            );
-            runLog.appendRun(record);
-            return record;
-
+            return appendAndReturn(new CronRunRecord(
+                    runId,
+                    job.id(),
+                    startedAt,
+                    System.currentTimeMillis(),
+                    CronRunRecord.RunStatus.SUCCESS,
+                    null,
+                    extractOutput(agent),
+                    0));
         } catch (Exception e) {
             log.error("Cron job {} failed: {}", job.name(), e.getMessage(), e);
-            var record = new CronRunRecord(
-                runId, job.id(), startedAt, System.currentTimeMillis(),
-                CronRunRecord.RunStatus.FAILED, e.getMessage(), null, 0
-            );
-            runLog.appendRun(record);
-            return record;
+            return appendAndReturn(new CronRunRecord(
+                    runId,
+                    job.id(),
+                    startedAt,
+                    System.currentTimeMillis(),
+                    CronRunRecord.RunStatus.FAILED,
+                    e.getMessage(),
+                    null,
+                    0));
         }
+    }
+
+    private Agent buildAgentForPayload(CronPayload.AgentPrompt payload) {
+        Agent agent = new Agent(aiService);
+        Model model = resolveModel(payload.modelId());
+        if (model == null) {
+            throw new IllegalStateException("No model available for cron job execution");
+        }
+        agent.setModel(model);
+        agent.setSystemPrompt(
+                payload.systemPrompt() != null
+                        ? payload.systemPrompt()
+                        : "You are a cron task executor. Complete the task efficiently and concisely.");
+        agent.setTools(filterTools(payload.allowedTools()));
+        return agent;
+    }
+
+    private CronRunRecord appendAndReturn(CronRunRecord record) {
+        runLog.appendRun(record);
+        return record;
     }
 
     private String extractOutput(Agent agent) {
         var messages = agent.getState().getMessages();
         var sb = new StringBuilder();
+
         // Walk messages in reverse to find the last assistant response
         for (int i = messages.size() - 1; i >= 0; i--) {
             Message msg = messages.get(i);
             if (msg instanceof AssistantMessage am) {
                 for (ContentBlock block : am.content()) {
-                    if (block instanceof TextContent tc && tc.text() != null && !tc.text().isBlank()) {
+                    if (block instanceof TextContent tc
+                            && tc.text() != null
+                            && !tc.text().isBlank()) {
                         sb.append(tc.text());
                     }
                 }
@@ -143,7 +151,8 @@ public class CronJobExecutor {
 
     private Model resolveModel(String modelId) {
         // Use explicit modelId, or fall back to the session's default model
-        String effectiveId = (modelId != null && !modelId.isBlank()) ? modelId
+        String effectiveId = (modelId != null && !modelId.isBlank())
+                ? modelId
                 : (cronService != null ? cronService.getDefaultModelId() : null);
 
         if (effectiveId != null && !effectiveId.isBlank()) {
@@ -153,6 +162,7 @@ public class CronJobExecutor {
                     return model.get();
                 }
             }
+
             // Try substring match (e.g., "glm-5" matching "glm-5-plus")
             for (Model m : modelRegistry.getAllModels()) {
                 if (m.id().contains(effectiveId) || effectiveId.contains(m.id())) {
@@ -172,7 +182,7 @@ public class CronJobExecutor {
             return availableTools;
         }
         return availableTools.stream()
-            .filter(t -> allowedTools.contains(t.name()))
-            .collect(Collectors.toList());
+                .filter(t -> allowedTools.contains(t.name()))
+                .collect(Collectors.toList());
     }
 }

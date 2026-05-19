@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026-2026. All rights reserved.
+ */
+
 package com.campusclaw.codingagent.prompt;
 
 import java.util.List;
@@ -16,6 +20,9 @@ import java.util.regex.Pattern;
  *
  * <p>Example: {@code "Explain $1 in the context of $2"} with args ["React", "frontend"]
  * produces {@code "Explain React in the context of frontend"}.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 public final class PromptTemplate {
 
@@ -31,7 +38,9 @@ public final class PromptTemplate {
      * @return the expanded string
      */
     public static String expand(String template, List<String> args) {
-        if (template == null || template.isEmpty()) { return template; }
+        if (template == null || template.isEmpty()) {
+            return template;
+        }
         if (args == null || args.isEmpty()) {
             // Remove unfilled placeholders
             return PARAM_PATTERN.matcher(template).replaceAll("");
@@ -62,6 +71,9 @@ public final class PromptTemplate {
 
     /**
      * Checks if a template string contains any parameter placeholders.
+     *
+     * @param template the template
+     * @return the result
      */
     public static boolean hasParameters(String template) {
         return template != null && PARAM_PATTERN.matcher(template).find();

@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026-2026. All rights reserved.
+ */
+
 package com.campusclaw.codingagent.skill;
 
 import java.io.IOException;
@@ -18,6 +22,9 @@ import lombok.extern.slf4j.Slf4j;
 /**
  * 沙箱内的 Skill 解析器
  * 将 SKILL.md 拷贝到沙箱容器中解析，确保安全
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 @Slf4j
 @Component
@@ -25,72 +32,14 @@ public class SandboxSkillParser {
 
     private final DockerSandboxClient sandboxClient;
 
-    @Autowired
-    public SandboxSkillParser(DockerSandboxClient sandboxClient) {
-        this.sandboxClient = sandboxClient;
-    }
-
     /**
-     * 检查沙箱解析是否可用
+     * Shell script template (POSIX sh) that parses a SKILL.md frontmatter block
+     * inside the sandbox container. The single {@code %s} placeholder receives
+     * the base64-encoded file contents. Kept as a constant so the method body
+     * is just substitution — the script itself is data, not logic.
      */
-    public boolean isAvailable() {
-        return sandboxClient != null && sandboxClient.isAvailable();
-    }
-
-    /**
-     * 在沙箱中解析 SKILL.md 文件
-     *
-     * @param skillMdPath SKILL.md 文件路径（宿主机路径）
-     * @param source      来源标记（"user" 或 "project"）
-     * @return 解析后的 Skill
-     * @throws SkillLoadException 解析失败
-     */
-    public Skill parseInSandbox(Path skillMdPath, String source) {
-        if (!isAvailable()) {
-            throw new SkillLoadException("Sandbox not available for skill parsing: " + skillMdPath);
-        }
-
-        try {
-            // 1. 读取文件内容（宿主机）
-            String content = Files.readString(skillMdPath, StandardCharsets.UTF_8);
-
-            // 2. 使用 base64 编码内容，避免 shell 注入问题
-            String base64Content = Base64.getEncoder().encodeToString(content.getBytes(StandardCharsets.UTF_8));
-
-            // 3. 构建沙箱解析脚本
-            String parseScript = buildParseScript(base64Content);
-
-            // 4. 在沙箱中执行解析
-            var result = sandboxClient.execute(
-                List.of("sh", "-c", parseScript),
-                ResourceLimits.defaults()
-            );
-
-            if (result.isTimeout()) {
-                throw new SkillLoadException("Skill parsing timed out in sandbox: " + skillMdPath);
-            }
-
-            if (result.getExitCode() != 0) {
-                throw new SkillLoadException(
-                    "Skill parsing failed in sandbox: " + skillMdPath +
-                    "\nstderr: " + result.getStderr()
-                );
-            }
-
-            // 5. 解析沙箱返回的 JSON 结果
-            return parseSandboxResult(result.getStdout(), skillMdPath, source);
-
-        } catch (IOException e) {
-            throw new SkillLoadException("Failed to read skill file: " + skillMdPath, e);
-        }
-    }
-
-    /**
-     * 构建沙箱内的解析脚本 (POSIX sh 兼容，支持 busybox ash/dash)
-     * 使用临时文件传递变量，避免子 shell 问题
-     */
-    private String buildParseScript(String base64Content) {
-        return """
+    private static final String PARSE_SCRIPT_TEMPLATE =
+            """
             # 解码 base64 内容
             CONTENT=$(echo '%s' | base64 -d)
 
@@ -146,11 +95,84 @@ public class SandboxSkillParser {
 
             # 输出 JSON
             printf '{"name":"%%s","description":"%%s","disableModelInvocation":%%s}' "$name_escaped" "$desc_escaped" "$disable_bool"
-            """.formatted(base64Content);
+            """;
+
+    @Autowired
+    public SandboxSkillParser(DockerSandboxClient sandboxClient) {
+        this.sandboxClient = sandboxClient;
     }
 
     /**
-     * 解析沙箱返回的 JSON 结果
+     * 检查沙箱解析是否可用
+     *
+     * @return the result
+     */
+    public boolean isAvailable() {
+        return sandboxClient != null && sandboxClient.isAvailable();
+    }
+
+    /**
+     * 在沙箱中解析 SKILL.md 文件
+     *
+     * @param skillMdPath SKILL.md 文件路径（宿主机路径）
+     * @param source      来源标记（"user" 或 "project"）
+     * @return 解析后的 Skill
+     * @throws SkillLoadException 解析失败
+     */
+    public Skill parseInSandbox(Path skillMdPath, String source) {
+        if (!isAvailable()) {
+            throw new SkillLoadException("Sandbox not available for skill parsing: " + skillMdPath);
+        }
+
+        try {
+            // 1. 读取文件内容（宿主机）
+            String content = Files.readString(skillMdPath, StandardCharsets.UTF_8);
+
+            // 2. 使用 base64 编码内容，避免 shell 注入问题
+            String base64Content = Base64.getEncoder().encodeToString(content.getBytes(StandardCharsets.UTF_8));
+
+            // 3. 构建沙箱解析脚本
+            String parseScript = buildParseScript(base64Content);
+
+            // 4. 在沙箱中执行解析
+            var result = sandboxClient.execute(List.of("sh", "-c", parseScript), ResourceLimits.defaults());
+
+            if (result.isTimeout()) {
+                throw new SkillLoadException("Skill parsing timed out in sandbox: " + skillMdPath);
+            }
+
+            if (result.getExitCode() != 0) {
+                throw new SkillLoadException(
+                        "Skill parsing failed in sandbox: " + skillMdPath + "\nstderr: " + result.getStderr());
+            }
+
+            // 5. 解析沙箱返回的 JSON 结果
+            return parseSandboxResult(result.getStdout(), skillMdPath, source);
+
+        } catch (IOException e) {
+            throw new SkillLoadException("Failed to read skill file: " + skillMdPath, e);
+        }
+    }
+
+    /**
+     * 构建沙箱内的解析脚本 (POSIX sh 兼容，支持 busybox ash/dash)
+     * 使用临时文件传递变量，避免子 shell 问题
+     *
+     * @param base64Content the base64Content
+     * @return the result
+     */
+    private String buildParseScript(String base64Content) {
+        return PARSE_SCRIPT_TEMPLATE.formatted(base64Content);
+    }
+
+    /**
+     * 解析沙箱返回的 JSON 结果.
+     *
+     * @param json 沙箱返回的 JSON 文本
+     * @param filePath 当前正在解析的 skill 文件路径（用于错误信息）
+     * @param source skill 来源描述
+     * @return 解析得到的 {@link Skill}
+     * @throws SkillLoadException JSON 解析失败、字段缺失或非法
      */
     private Skill parseSandboxResult(String json, Path filePath, String source) {
         // 简单 JSON 解析（避免引入 JSON 库依赖）
@@ -173,17 +195,10 @@ public class SandboxSkillParser {
             }
             if (description.length() > Skill.MAX_DESCRIPTION_LENGTH) {
                 throw new SkillLoadException(
-                    "Skill description exceeds " + Skill.MAX_DESCRIPTION_LENGTH + " characters: " + filePath);
+                        "Skill description exceeds " + Skill.MAX_DESCRIPTION_LENGTH + " characters: " + filePath);
             }
 
-            return new Skill(
-                name,
-                description,
-                filePath,
-                filePath.getParent(),
-                source,
-                disableModelInvocation
-            );
+            return new Skill(name, description, filePath, filePath.getParent(), source, disableModelInvocation);
         } catch (Exception e) {
             throw new SkillLoadException("Failed to parse sandbox result: " + json, e);
         }
@@ -191,6 +206,10 @@ public class SandboxSkillParser {
 
     /**
      * 简单的 JSON 字段提取（不引入额外依赖）
+     *
+     * @param json the json
+     * @param fieldName the fieldName
+     * @return the result
      */
     private String extractJsonField(String json, String fieldName) {
         String pattern = "\"" + fieldName + "\":\\s*\"([^\"]*)\"";
@@ -212,80 +231,69 @@ public class SandboxSkillParser {
     }
 
     /**
-     * 在沙箱中加载 SKILL.md 的 body 内容（去掉 frontmatter 后的 Markdown 部分）
+     * POSIX sh script that strips frontmatter and emits the SKILL.md body.
+     */
+    private static final String EXTRACT_BODY_SCRIPT_TEMPLATE =
+            """
+            # 解码 base64 内容
+            CONTENT=$(echo '%s' | base64 -d)
+
+            # 提取 body（去掉 frontmatter）- POSIX sh 兼容
+            # 策略：删除从开头到第二个 --- 的所有内容
+            strip_frontmatter() {
+                _content="$1"
+                case "$_content" in
+                    ---*)
+                        ;;
+                    *)
+                        echo "$_content"
+                        return
+                        ;;
+                esac
+
+                # 使用 awk 删除第一个 --- 到第二个 --- 之间的所有内容（包括这两个标记）
+                # 保留第二个 --- 之后的内容
+                echo "$_content" | awk '
+                    /^---$/ {
+                        if (count == 0) {
+                            count = 1
+                            next
+                        } else if (count == 1) {
+                            count = 2
+                            next
+                        }
+                    }
+                    count == 2 { print }
+                '
+            }
+
+            strip_frontmatter "$CONTENT"
+            """;
+
+    /**
+     * Loads the body of a SKILL.md file inside the sandbox (Markdown content with frontmatter stripped).
      *
-     * @param skillMdPath SKILL.md 文件路径（宿主机路径）
-     * @return body 内容
-     * @throws SkillLoadException 加载失败
+     * @param skillMdPath path to SKILL.md on the host
+     * @return the SKILL.md body
+     * @throws SkillLoadException if loading fails
      */
     public String loadBodyInSandbox(Path skillMdPath) {
         if (!isAvailable()) {
             throw new SkillLoadException("Sandbox not available for loading skill body: " + skillMdPath);
         }
-
         try {
-            // 1. 读取文件内容（宿主机）
             String content = Files.readString(skillMdPath, StandardCharsets.UTF_8);
-
-            // 2. 使用 base64 编码内容
             String base64Content = Base64.getEncoder().encodeToString(content.getBytes(StandardCharsets.UTF_8));
-
-            // 3. 构建沙箱脚本：提取 body 部分 (POSIX sh 兼容)
-            String extractScript = """
-                # 解码 base64 内容
-                CONTENT=$(echo '%s' | base64 -d)
-
-                # 提取 body（去掉 frontmatter）- POSIX sh 兼容
-                # 策略：删除从开头到第二个 --- 的所有内容
-                strip_frontmatter() {
-                    _content="$1"
-                    case "$_content" in
-                        ---*)
-                            ;;
-                        *)
-                            echo "$_content"
-                            return
-                            ;;
-                    esac
-
-                    # 使用 awk 删除第一个 --- 到第二个 --- 之间的所有内容（包括这两个标记）
-                    # 保留第二个 --- 之后的内容
-                    echo "$_content" | awk '
-                        /^---$/ {
-                            if (count == 0) {
-                                count = 1
-                                next
-                            } else if (count == 1) {
-                                count = 2
-                                next
-                            }
-                        }
-                        count == 2 { print }
-                    '
-                }
-
-                strip_frontmatter "$CONTENT"
-                """.formatted(base64Content);
-
-            // 4. 在沙箱中执行
-            var result = sandboxClient.execute(
-                List.of("sh", "-c", extractScript),
-                ResourceLimits.defaults()
-            );
-
+            String extractScript = EXTRACT_BODY_SCRIPT_TEMPLATE.formatted(base64Content);
+            var result = sandboxClient.execute(List.of("sh", "-c", extractScript), ResourceLimits.defaults());
             if (result.isTimeout()) {
                 throw new SkillLoadException("Skill body loading timed out in sandbox: " + skillMdPath);
             }
-
             if (result.getExitCode() != 0) {
                 throw new SkillLoadException(
-                    "Skill body loading failed in sandbox: " + skillMdPath +
-                    "\nstderr: " + result.getStderr()
-                );
+                        "Skill body loading failed in sandbox: " + skillMdPath + "\nstderr: " + result.getStderr());
             }
-
             return result.getStdout();
-
         } catch (IOException e) {
             throw new SkillLoadException("Failed to read skill file for body extraction: " + skillMdPath, e);
         }
@@ -306,7 +314,8 @@ public class SandboxSkillParser {
             String content = Files.readString(skillMdPath, StandardCharsets.UTF_8);
             String base64Content = Base64.getEncoder().encodeToString(content.getBytes(StandardCharsets.UTF_8));
 
-            String validateScript = """
+            String validateScript =
+                    """
                 CONTENT=$(echo '%s' | base64 -d)
 
                 # 检查文件大小（最大 1MB）
@@ -329,12 +338,10 @@ public class SandboxSkillParser {
                 esac
 
                 echo "VALIDATION_PASSED"
-                """.formatted(base64Content);
+                """
+                            .formatted(base64Content);
 
-            var result = sandboxClient.execute(
-                List.of("sh", "-c", validateScript),
-                ResourceLimits.defaults()
-            );
+            var result = sandboxClient.execute(List.of("sh", "-c", validateScript), ResourceLimits.defaults());
 
             if (result.isTimeout()) {
                 return "Validation timed out";

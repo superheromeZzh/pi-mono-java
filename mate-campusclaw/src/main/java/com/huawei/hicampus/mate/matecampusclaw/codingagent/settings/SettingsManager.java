@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026-2026. All rights reserved.
+ */
+
 package com.huawei.hicampus.mate.matecampusclaw.codingagent.settings;
 
 import java.io.IOException;
@@ -13,6 +17,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
+/**
+ * Service that loads and saves {@link Settings} from the global and project JSON files,
+ * deep-merging project overrides on top of global defaults. Exposes both typed accessors
+ * and JSON-key mutators used by the {@code /settings} slash command.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/13]
+ * @since [br_eCampusCore 25.1.0_Next]
+ */
 @Service
 public class SettingsManager {
     private static final Logger log = LoggerFactory.getLogger(SettingsManager.class);
@@ -23,9 +35,15 @@ public class SettingsManager {
 
     private Path workingDir = Path.of(System.getProperty("user.dir"));
 
-    public void setWorkingDir(Path workingDir) { this.workingDir = workingDir; }
+    public void setWorkingDir(Path workingDir) {
+        this.workingDir = workingDir;
+    }
 
-    /** Load merged settings (project overrides global). */
+    /**
+     * Load merged settings (project overrides global).
+     *
+     * @return the result
+     */
     public Settings load() {
         JsonNode global = loadJsonFile(GLOBAL_SETTINGS);
         JsonNode project = loadJsonFile(workingDir.resolve(PROJECT_SETTINGS));
@@ -38,17 +56,31 @@ public class SettingsManager {
         }
     }
 
-    /** Load only global settings. */
+    /**
+     * Load only global settings.
+     *
+     * @return the result
+     */
     public Settings loadGlobal() {
         return loadFromFile(GLOBAL_SETTINGS);
     }
 
-    /** Save a value to global settings. */
+    /**
+     * Save a value to global settings.
+     *
+     * @param key the key
+     * @param value the value
+     */
     public void setGlobal(String key, Object value) {
         saveToFile(GLOBAL_SETTINGS, key, value);
     }
 
-    /** Save a value to project settings. */
+    /**
+     * Save a value to project settings.
+     *
+     * @param key the key
+     * @param value the value
+     */
     public void setProject(String key, Object value) {
         saveToFile(workingDir.resolve(PROJECT_SETTINGS), key, value);
     }
@@ -80,7 +112,9 @@ public class SettingsManager {
     }
 
     private JsonNode loadJsonFile(Path path) {
-        if (!Files.exists(path)) return MAPPER.createObjectNode();
+        if (!Files.exists(path)) {
+            return MAPPER.createObjectNode();
+        }
         try {
             return MAPPER.readTree(Files.readString(path));
         } catch (Exception e) {
@@ -89,9 +123,17 @@ public class SettingsManager {
         }
     }
 
-    /** Deep merge: project values override global values. */
+    /**
+     * Deep merge: project values override global values.
+     *
+     * @param base the base
+     * @param override the override
+     * @return the result
+     */
     static JsonNode deepMerge(JsonNode base, JsonNode override) {
-        if (!base.isObject() || !override.isObject()) return override;
+        if (!base.isObject() || !override.isObject()) {
+            return override;
+        }
         ObjectNode result = base.deepCopy();
         Iterator<String> fieldNames = ((ObjectNode) override).fieldNames();
         while (fieldNames.hasNext()) {

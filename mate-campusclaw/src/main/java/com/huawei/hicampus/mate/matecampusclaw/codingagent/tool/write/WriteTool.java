@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026-2026. All rights reserved.
+ */
+
 package com.huawei.hicampus.mate.matecampusclaw.codingagent.tool.write;
 
 import java.nio.file.Path;
@@ -25,6 +29,9 @@ import org.springframework.stereotype.Component;
  * Agent tool that creates or overwrites files.
  * Automatically creates parent directories and serializes writes
  * through {@link FileMutationQueue}.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 @Component
 @ConditionalOnProperty(name = "tool.execution.hybrid-enabled", havingValue = "false", matchIfMissing = true)
@@ -65,12 +72,10 @@ public class WriteTool implements AgentTool {
     @Override
     public JsonNode parameters() {
         ObjectNode props = MAPPER.createObjectNode();
-        props.set("path", MAPPER.createObjectNode()
-                .put("type", "string")
-                .put("description", "The file path to write"));
-        props.set("content", MAPPER.createObjectNode()
-                .put("type", "string")
-                .put("description", "The content to write to the file"));
+        props.set("path", MAPPER.createObjectNode().put("type", "string").put("description", "The file path to write"));
+        props.set(
+                "content",
+                MAPPER.createObjectNode().put("type", "string").put("description", "The content to write to the file"));
 
         return MAPPER.createObjectNode()
                 .put("type", "object")
@@ -80,11 +85,8 @@ public class WriteTool implements AgentTool {
 
     @Override
     public AgentToolResult execute(
-            String toolCallId,
-            Map<String, Object> params,
-            CancellationToken signal,
-            AgentToolUpdateCallback onUpdate
-    ) throws Exception {
+            String toolCallId, Map<String, Object> params, CancellationToken signal, AgentToolUpdateCallback onUpdate)
+            throws Exception {
         String pathInput = (String) params.get("path");
         String content = (String) params.get("content");
 
@@ -109,17 +111,11 @@ public class WriteTool implements AgentTool {
             }
             writeOperations.writeFile(resolvedPath, content);
 
-            return new AgentToolResult(
-                    List.<ContentBlock>of(new TextContent("Wrote " + pathInput)),
-                    null
-            );
+            return new AgentToolResult(List.<ContentBlock>of(new TextContent("Wrote " + pathInput)), null);
         });
     }
 
     private static AgentToolResult errorResult(String message) {
-        return new AgentToolResult(
-                List.<ContentBlock>of(new TextContent(message)),
-                null
-        );
+        return new AgentToolResult(List.<ContentBlock>of(new TextContent(message)), null);
     }
 }

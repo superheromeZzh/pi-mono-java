@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026-2026. All rights reserved.
+ */
+
 package com.huawei.hicampus.mate.matecampusclaw.tui.terminal;
 
 import java.io.IOException;
@@ -19,6 +23,9 @@ import org.jline.utils.NonBlockingReader;
  * <p>
  * Supports raw mode, terminal size detection, resize events (via SIGWINCH),
  * and non-blocking input reading on a daemon thread.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 public class JLineTerminal implements Terminal {
 
@@ -32,6 +39,8 @@ public class JLineTerminal implements Terminal {
 
     /**
      * Creates a JLineTerminal wrapping the system terminal.
+     *
+     * @throws UncheckedIOException when the JLine terminal cannot be built
      */
     public JLineTerminal() {
         try {
@@ -61,6 +70,8 @@ public class JLineTerminal implements Terminal {
     /**
      * Creates a JLineTerminal wrapping a pre-built JLine terminal instance.
      * Useful for testing or custom terminal configurations.
+     *
+     * @param jlineTerminal a pre-constructed JLine terminal to adopt
      */
     JLineTerminal(org.jline.terminal.Terminal jlineTerminal) {
         this.jline = jlineTerminal;
@@ -99,11 +110,9 @@ public class JLineTerminal implements Terminal {
         Size size = jline.getSize();
         int width = size.getColumns();
         int height = size.getRows();
+
         // Fall back to sensible defaults if the terminal reports 0
-        return new TerminalSize(
-                width > 0 ? width : 80,
-                height > 0 ? height : 24
-        );
+        return new TerminalSize(width > 0 ? width : 80, height > 0 ? height : 24);
     }
 
     @Override
@@ -126,6 +135,7 @@ public class JLineTerminal implements Terminal {
     public void enterRawMode() {
         savedAttributes = jline.getAttributes();
         jline.enterRawMode();
+
         // JLine's enterRawMode() doesn't disable ISIG, so Ctrl+C still generates
         // SIGINT and the 0x03 character is consumed by the OS. Disable ISIG so
         // Ctrl+C is delivered as a regular character to the input reader.
@@ -177,11 +187,21 @@ public class JLineTerminal implements Terminal {
                     }
                     buf.setLength(0);
                     buf.append((char) c);
-                    // Drain any immediately available characters (escape sequences)
-                    while (reader.peek(10) > 0) {
-                        int next = reader.read();
-                        if (next < 0) break;
-                        buf.append((char) next);
+
+                    // Only drain for escape sequences — the rest of the sequence may
+                    // still be arriving and must be delivered together (otherwise a
+                    // standalone ESC fires the abort handler). Regular keystrokes
+                    // dispatch immediately so typing feels responsive.
+                    // NB: peek(0) in JLine treats timeout=0 as infinite wait, so we
+                    // must use a positive timeout here.
+                    if (c == '\033') {
+                        while (reader.peek(10) > 0) {
+                            int next = reader.read();
+                            if (next < 0) {
+                                break;
+                            }
+                            buf.append((char) next);
+                        }
                     }
                     String data = buf.toString();
                     for (Consumer<String> listener : inputListeners) {
@@ -193,6 +213,7 @@ public class JLineTerminal implements Terminal {
                     // Unexpected error during reading
                     throw new UncheckedIOException("Error reading terminal input", e);
                 }
+
                 // Expected: closed during shutdown
             }
         });

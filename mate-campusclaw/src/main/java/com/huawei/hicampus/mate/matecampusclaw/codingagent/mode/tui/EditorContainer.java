@@ -1,7 +1,12 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026-2026. All rights reserved.
+ */
+
 package com.huawei.hicampus.mate.matecampusclaw.codingagent.mode.tui;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.function.Consumer;
 
 import com.huawei.hicampus.mate.matecampusclaw.tui.Component;
@@ -16,20 +21,25 @@ import com.huawei.hicampus.mate.matecampusclaw.tui.component.Editor;
  * Includes inline slash command autocomplete: when the editor text starts with
  * {@code /}, matching commands are shown below the editor. Tab cycles through
  * suggestions, Enter accepts the selected one.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 public class EditorContainer implements Component, Focusable {
 
     // Default border is "border" blue from theme
     public static final String BORDER_DEFAULT = "\033[38;2;95;135;255m";
+
     // Bash mode border: green #b5bd68
     public static final String BORDER_BASH = "\033[38;2;181;189;104m";
+
     // Thinking level border colors (from campusclaw dark theme)
-    public static final String THINKING_OFF = "\033[38;2;80;80;80m";       // #505050
+    public static final String THINKING_OFF = "\033[38;2;80;80;80m"; // #505050
     public static final String THINKING_MINIMAL = "\033[38;2;110;110;110m"; // #6e6e6e
-    public static final String THINKING_LOW = "\033[38;2;95;135;175m";     // #5f87af
+    public static final String THINKING_LOW = "\033[38;2;95;135;175m"; // #5f87af
     public static final String THINKING_MEDIUM = "\033[38;2;129;162;190m"; // #81a2be
-    public static final String THINKING_HIGH = "\033[38;2;178;148;187m";   // #b294bb
-    public static final String THINKING_XHIGH = "\033[38;2;209;131;232m";  // #d183e8
+    public static final String THINKING_HIGH = "\033[38;2;178;148;187m"; // #b294bb
+    public static final String THINKING_XHIGH = "\033[38;2;209;131;232m"; // #d183e8
     // Legacy aliases
     public static final String CYAN = BORDER_DEFAULT;
     public static final String YELLOW = BORDER_BASH;
@@ -88,7 +98,11 @@ public class EditorContainer implements Component, Focusable {
         dismissSuggestions();
     }
 
-    /** Add a submitted prompt to command history for up/down navigation. */
+    /**
+     * Add a submitted prompt to command history for up/down navigation.
+     *
+     * @param text the text
+     */
     public void addToHistory(String text) {
         editor.addToHistory(text);
     }
@@ -97,14 +111,22 @@ public class EditorContainer implements Component, Focusable {
         return editor;
     }
 
-    /** Sets the border color ANSI code (e.g. CYAN for normal, YELLOW for bash mode). */
+    /**
+     * Sets the border color ANSI code (e.g. CYAN for normal, YELLOW for bash mode).
+     *
+     * @param color the color
+     */
     public void setBorderColor(String color) {
         this.borderColor = color;
     }
 
-    /** Sets the border color based on thinking level (matching campusclaw dynamic border). */
+    /**
+     * Sets the border color based on thinking level (matching campusclaw dynamic border).
+     *
+     * @param level the level
+     */
     public void setBorderForThinkingLevel(String level) {
-        this.borderColor = switch (level != null ? level.toLowerCase() : "off") {
+        this.borderColor = switch (level != null ? level.toLowerCase(Locale.ROOT) : "off") {
             case "off" -> THINKING_OFF;
             case "minimal" -> THINKING_MINIMAL;
             case "low" -> THINKING_LOW;
@@ -117,12 +139,18 @@ public class EditorContainer implements Component, Focusable {
 
     /**
      * Sets the available slash commands for autocomplete.
+     *
+     * @param commands the commands
      */
     public void setCommands(List<CommandSuggestion> commands) {
         this.allCommands = commands != null ? List.copyOf(commands) : List.of();
     }
 
-    /** Returns true if the slash command suggestion menu is currently visible. */
+    /**
+     * Returns true if the slash command suggestion menu is currently visible.
+     *
+     * @return the result
+     */
     public boolean isShowingSuggestions() {
         return showingSuggestions;
     }
@@ -144,6 +172,7 @@ public class EditorContainer implements Component, Focusable {
             acceptSuggestion();
             return;
         }
+
         // Shift+Tab — cycle to previous suggestion
         if (KEY_SHIFT_TAB.equals(data) && showingSuggestions) {
             cyclePrev();
@@ -163,62 +192,62 @@ public class EditorContainer implements Component, Focusable {
     @Override
     public List<String> render(int width) {
         var lines = new ArrayList<String>();
-        // Top separator
         lines.add(borderColor + "─".repeat(width) + ANSI_RESET);
-        // Editor line(s)
         lines.addAll(editor.render(width));
-
-        // Slash command suggestions with scrolling window
         if (showingSuggestions && !filteredSuggestions.isEmpty()) {
-            int total = filteredSuggestions.size();
-            // Calculate visible window centered on selected item (matching pi-mono SelectList)
-            int startIndex = Math.max(0,
-                    Math.min(suggestionIndex - MAX_SUGGESTIONS / 2, total - MAX_SUGGESTIONS));
-            int endIndex = Math.min(startIndex + MAX_SUGGESTIONS, total);
-
-            for (int i = startIndex; i < endIndex; i++) {
-                var suggestion = filteredSuggestions.get(i);
-                boolean isSelected = (i == suggestionIndex);
-                String prefix = isSelected ? "→ " : "  ";
-                int availableWidth = Math.max(1, width - 2);
-
-                String display = "/" + suggestion.name();
-                if (suggestion.description() != null && !suggestion.description().isEmpty()) {
-                    String desc = " — " + suggestion.description();
-                    int nameWidth = AnsiUtils.visibleWidth(display);
-                    if (nameWidth + desc.length() > availableWidth) {
-                        int remaining = availableWidth - nameWidth - 4;
-                        if (remaining > 10) {
-                            desc = " — " + suggestion.description().substring(0, Math.min(remaining, suggestion.description().length()));
-                            if (remaining < suggestion.description().length()) desc += "…";
-                        } else {
-                            desc = "";
-                        }
-                    }
-                    display += desc;
-                }
-
-                if (AnsiUtils.visibleWidth(display) > availableWidth) {
-                    display = AnsiUtils.sliceByColumn(display, 0, availableWidth - 1) + "…";
-                }
-
-                String line;
-                if (isSelected) {
-                    line = "\033[34m" + prefix + "\033[0m\033[1m" + display + "\033[0m";
-                } else {
-                    line = "\033[2m" + prefix + display + "\033[0m";
-                }
-                lines.add(line);
-            }
-            // Show scroll position indicator when not all items are visible
-            if (startIndex > 0 || endIndex < total) {
-                lines.add("\033[2m  (" + (suggestionIndex + 1) + "/" + total + ")\033[0m");
-            }
+            appendSuggestionLines(lines, width);
         }
-
-        // Bottom separator
         lines.add(borderColor + "─".repeat(width) + ANSI_RESET);
         return lines;
+    }
+
+    private void appendSuggestionLines(List<String> lines, int width) {
+        int total = filteredSuggestions.size();
+
+        // Visible window centered on the selected item (matching pi-mono SelectList).
+        int startIndex = Math.max(0, Math.min(suggestionIndex - MAX_SUGGESTIONS / 2, total - MAX_SUGGESTIONS));
+        int endIndex = Math.min(startIndex + MAX_SUGGESTIONS, total);
+        int availableWidth = Math.max(1, width - 2);
+        for (int i = startIndex; i < endIndex; i++) {
+            lines.add(formatSuggestionLine(filteredSuggestions.get(i), i == suggestionIndex, availableWidth));
+        }
+        if (startIndex > 0 || endIndex < total) {
+            lines.add("\033[2m  (" + (suggestionIndex + 1) + "/" + total + ")\033[0m");
+        }
+    }
+
+    private static String formatSuggestionLine(CommandSuggestion suggestion, boolean isSelected, int availableWidth) {
+        String prefix = isSelected ? "→ " : "  ";
+        String display = buildSuggestionDisplay(suggestion, availableWidth);
+        if (AnsiUtils.visibleWidth(display) > availableWidth) {
+            display = AnsiUtils.sliceByColumn(display, 0, availableWidth - 1) + "…";
+        }
+        return isSelected
+                ? "\033[34m" + prefix + "\033[0m\033[1m" + display + "\033[0m"
+                : "\033[2m" + prefix + display + "\033[0m";
+    }
+
+    private static String buildSuggestionDisplay(CommandSuggestion suggestion, int availableWidth) {
+        String display = "/" + suggestion.name();
+        String descriptionText = suggestion.description();
+        if (descriptionText == null || descriptionText.isEmpty()) {
+            return display;
+        }
+        String desc = " — " + descriptionText;
+        int nameWidth = AnsiUtils.visibleWidth(display);
+        if (nameWidth + desc.length() <= availableWidth) {
+            return display + desc;
+        }
+        int remaining = availableWidth - nameWidth - 4;
+        if (remaining <= 10) {
+            return display;
+        }
+        int take = Math.min(remaining, descriptionText.length());
+        String truncated = " — " + descriptionText.substring(0, take);
+        if (remaining < descriptionText.length()) {
+            truncated += "…";
+        }
+        return display + truncated;
     }
 
     @Override
@@ -245,10 +274,10 @@ public class EditorContainer implements Component, Focusable {
             return;
         }
 
-        String prefix = text.substring(1).toLowerCase();
+        String prefix = text.substring(1).toLowerCase(Locale.ROOT);
         List<CommandSuggestion> matches = new ArrayList<>();
         for (var cmd : allCommands) {
-            if (prefix.isEmpty() || cmd.name().toLowerCase().startsWith(prefix)) {
+            if (prefix.isEmpty() || cmd.name().toLowerCase(Locale.ROOT).startsWith(prefix)) {
                 matches.add(cmd);
             }
         }
@@ -263,12 +292,16 @@ public class EditorContainer implements Component, Focusable {
     }
 
     private void cycleNext() {
-        if (filteredSuggestions.isEmpty()) return;
+        if (filteredSuggestions.isEmpty()) {
+            return;
+        }
         suggestionIndex = (suggestionIndex + 1) % filteredSuggestions.size();
     }
 
     private void cyclePrev() {
-        if (filteredSuggestions.isEmpty()) return;
+        if (filteredSuggestions.isEmpty()) {
+            return;
+        }
         suggestionIndex = suggestionIndex <= 0 ? filteredSuggestions.size() - 1 : suggestionIndex - 1;
     }
 

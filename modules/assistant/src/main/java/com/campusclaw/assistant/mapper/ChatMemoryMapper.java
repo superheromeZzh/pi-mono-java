@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026-2026. All rights reserved.
+ */
+
 package com.campusclaw.assistant.mapper;
 
 import java.util.List;
@@ -9,6 +13,13 @@ import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Select;
 
+/**
+ * MyBatis mapper backing {@link com.campusclaw.assistant.memory.MyBatisChatMemoryRepository}.
+ * Provides CRUD queries against the {@code chat_memory} table keyed by conversation id.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/13]
+ * @since [br_eCampusCore 25.1.0_Next]
+ */
 @Mapper
 public interface ChatMemoryMapper {
 

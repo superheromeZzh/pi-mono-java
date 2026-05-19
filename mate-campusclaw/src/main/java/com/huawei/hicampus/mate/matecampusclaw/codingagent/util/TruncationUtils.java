@@ -1,18 +1,26 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026-2026. All rights reserved.
+ */
+
 package com.huawei.hicampus.mate.matecampusclaw.codingagent.util;
 
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * Utilities for truncating text output by line count and byte size.
  * Supports head truncation (keep last N lines) and tail truncation (keep first N lines).
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 public final class TruncationUtils {
 
-    private TruncationUtils() {
-    }
+    private TruncationUtils() {}
 
+    @SuppressWarnings("checkstyle:top_class_comment")
     public record TruncationResult(
             boolean truncated,
             int outputLines,
@@ -20,9 +28,7 @@ public final class TruncationUtils {
             Integer maxLines,
             Integer maxBytes,
             boolean firstLineExceedsLimit,
-            String truncatedBy
-    ) {
-    }
+            String truncatedBy) {}
 
     /**
      * Truncates text from the head (beginning), keeping the last lines.
@@ -60,8 +66,8 @@ public final class TruncationUtils {
             truncatedByBytes = true;
         }
 
-        boolean firstLineExceedsLimit = !lines.isEmpty()
-                && lines.get(0).getBytes(StandardCharsets.UTF_8).length > maxBytes;
+        boolean firstLineExceedsLimit =
+                !lines.isEmpty() && lines.get(0).getBytes(StandardCharsets.UTF_8).length > maxBytes;
 
         boolean truncated = truncatedByLines || truncatedByBytes;
         String truncatedBy = null;
@@ -70,14 +76,7 @@ public final class TruncationUtils {
         }
 
         return new TruncationResult(
-                truncated,
-                lines.size(),
-                totalLines,
-                maxLines,
-                maxBytes,
-                firstLineExceedsLimit,
-                truncatedBy
-        );
+                truncated, lines.size(), totalLines, maxLines, maxBytes, firstLineExceedsLimit, truncatedBy);
     }
 
     /**
@@ -116,8 +115,8 @@ public final class TruncationUtils {
             truncatedByBytes = true;
         }
 
-        boolean firstLineExceedsLimit = !lines.isEmpty()
-                && lines.get(0).getBytes(StandardCharsets.UTF_8).length > maxBytes;
+        boolean firstLineExceedsLimit =
+                !lines.isEmpty() && lines.get(0).getBytes(StandardCharsets.UTF_8).length > maxBytes;
 
         boolean truncated = truncatedByLines || truncatedByBytes;
         String truncatedBy = null;
@@ -126,14 +125,7 @@ public final class TruncationUtils {
         }
 
         return new TruncationResult(
-                truncated,
-                lines.size(),
-                totalLines,
-                maxLines,
-                maxBytes,
-                firstLineExceedsLimit,
-                truncatedBy
-        );
+                truncated, lines.size(), totalLines, maxLines, maxBytes, firstLineExceedsLimit, truncatedBy);
     }
 
     /**
@@ -198,8 +190,9 @@ public final class TruncationUtils {
         if (value == Math.floor(value) && value < 1_000_000) {
             return String.valueOf((long) value);
         }
+
         // One decimal place, strip trailing zero
-        String formatted = String.format("%.1f", value);
+        String formatted = String.format(Locale.ROOT, "%.1f", value);
         if (formatted.endsWith(".0")) {
             return formatted.substring(0, formatted.length() - 2);
         }

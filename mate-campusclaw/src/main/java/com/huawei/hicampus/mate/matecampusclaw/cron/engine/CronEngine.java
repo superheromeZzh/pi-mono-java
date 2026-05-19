@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026-2026. All rights reserved.
+ */
+
 package com.huawei.hicampus.mate.matecampusclaw.cron.engine;
 
 import java.time.Instant;
@@ -14,10 +18,10 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 
+import com.huawei.hicampus.mate.matecampusclaw.agent.util.LoggingUncaughtExceptionHandler;
 import com.huawei.hicampus.mate.matecampusclaw.cron.model.CronEvent;
 import com.huawei.hicampus.mate.matecampusclaw.cron.model.CronJob;
 import com.huawei.hicampus.mate.matecampusclaw.cron.model.CronJobState;
-import com.huawei.hicampus.mate.matecampusclaw.cron.model.CronPayload;
 import com.huawei.hicampus.mate.matecampusclaw.cron.model.CronRunRecord;
 import com.huawei.hicampus.mate.matecampusclaw.cron.model.CronSchedule;
 import com.huawei.hicampus.mate.matecampusclaw.cron.store.CronStore;
@@ -30,12 +34,15 @@ import org.springframework.stereotype.Service;
 /**
  * Scheduling engine for cron jobs. Manages tick-based scheduling, concurrent execution,
  * and job lifecycle. Must be explicitly started/stopped (not SmartLifecycle).
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 @Service
 public class CronEngine {
 
     private static final Logger log = LoggerFactory.getLogger(CronEngine.class);
-    private static final long MAX_TICK_INTERVAL_MS = 60_000;
+    private static final long MAX_TICK_INTERVAL_MS = 60_000L;
     private static final long STALE_THRESHOLD_MS = 2 * 60 * 60 * 1000; // 2 hours
     private static final int MAX_CONSECUTIVE_ERRORS = 3;
 
@@ -54,11 +61,14 @@ public class CronEngine {
     }
 
     public void start() {
-        if (running) return;
+        if (running) {
+            return;
+        }
         running = true;
         scheduler = Executors.newSingleThreadScheduledExecutor(r -> {
             Thread t = new Thread(r, "cron-engine");
             t.setDaemon(true);
+            t.setUncaughtExceptionHandler(LoggingUncaughtExceptionHandler.INSTANCE);
             return t;
         });
 
@@ -72,12 +82,16 @@ public class CronEngine {
                 scheduleJob(job);
             }
         }
-        log.info("Cron engine started with {} jobs ({} enabled)",
-            jobs.size(), jobs.stream().filter(CronJob::enabled).count());
+        log.info(
+                "Cron engine started with {} jobs ({} enabled)",
+                jobs.size(),
+                jobs.stream().filter(CronJob::enabled).count());
     }
 
     public void stop() {
-        if (!running) return;
+        if (!running) {
+            return;
+        }
         running = false;
         scheduledJobs.values().forEach(f -> f.cancel(false));
         scheduledJobs.clear();
@@ -100,9 +114,15 @@ public class CronEngine {
         listeners.remove(listener);
     }
 
-    /** Schedule or reschedule a job. Called when a job is created/updated. */
+    /**
+     * Schedule or reschedule a job. Called when a job is created/updated.
+     *
+     * @param job the job whose schedule should be installed (or refreshed)
+     */
     public void scheduleJob(CronJob job) {
-        if (!running || scheduler == null) return;
+        if (!running || scheduler == null) {
+            return;
+        }
 
         // Cancel existing schedule
         var existing = scheduledJobs.remove(job.id());
@@ -110,7 +130,9 @@ public class CronEngine {
             existing.cancel(false);
         }
 
-        if (!job.enabled()) return;
+        if (!job.enabled()) {
+            return;
+        }
 
         long delayMs = computeNextDelay(job);
         if (delayMs < 0) {
@@ -124,15 +146,21 @@ public class CronEngine {
         // Update next run time in state
         long nextRunAtMs = System.currentTimeMillis() + delayMs;
         store.updateJob(job.withState(new CronJobState(
-            nextRunAtMs, job.state().runningAtMs(),
-            job.state().lastRunAtMs(), job.state().lastRunStatus(),
-            job.state().consecutiveErrors(), job.state().totalRuns()
-        )));
+                nextRunAtMs,
+                job.state().runningAtMs(),
+                job.state().lastRunAtMs(),
+                job.state().lastRunStatus(),
+                job.state().consecutiveErrors(),
+                job.state().totalRuns())));
 
         log.debug("Scheduled job {} to run in {}ms", job.name(), delayMs);
     }
 
-    /** Unschedule a job. Called when a job is deleted/disabled. */
+    /**
+     * Unschedule a job. Called when a job is deleted/disabled.
+     *
+     * @param jobId identifier of the job to remove from the active schedule
+     */
     public void unscheduleJob(String jobId) {
         var future = scheduledJobs.remove(jobId);
         if (future != null) {
@@ -140,7 +168,13 @@ public class CronEngine {
         }
     }
 
-    /** Trigger immediate execution of a job. */
+    /**
+     * Trigger immediate execution of a job.
+     *
+     * @param jobId identifier of the job to run now
+     * @return the resulting run record
+     * @throws IllegalArgumentException if no job exists with the given id
+     */
     public CronRunRecord triggerJob(String jobId) {
         var jobOpt = store.getJob(jobId);
         if (jobOpt.isEmpty()) {
@@ -156,7 +190,9 @@ public class CronEngine {
         }
         try {
             var jobOpt = store.getJob(jobId);
-            if (jobOpt.isEmpty() || !jobOpt.get().enabled()) return;
+            if (jobOpt.isEmpty() || !jobOpt.get().enabled()) {
+                return;
+            }
 
             var job = jobOpt.get();
 
@@ -179,95 +215,102 @@ public class CronEngine {
     }
 
     private CronRunRecord executeJob(CronJob job) {
-        // Mark as running
-        store.updateJob(job.withState(new CronJobState(
-            job.state().nextRunAtMs(), System.currentTimeMillis(),
-            job.state().lastRunAtMs(), job.state().lastRunStatus(),
-            job.state().consecutiveErrors(), job.state().totalRuns()
-        )));
-
-        String runId = null;
+        markJobRunning(job);
         emit(new CronEvent.JobStarted(job.id(), job.name(), ""));
-
         try {
             CronRunRecord result = executor.execute(job);
-            runId = result.runId();
+            recordJobOutcome(job, result);
+            return result;
+        } catch (Exception e) {
+            log.error("Unexpected error executing job {}", job.name(), e);
+            return recordJobException(job, e);
+        }
+    }
 
-            // Update state based on result
-            boolean success = result.status() == CronRunRecord.RunStatus.SUCCESS;
-            int errors = success ? 0 : job.state().consecutiveErrors() + 1;
-            boolean shouldDisable = errors >= MAX_CONSECUTIVE_ERRORS;
+    private void markJobRunning(CronJob job) {
+        store.updateJob(job.withState(new CronJobState(
+                job.state().nextRunAtMs(),
+                System.currentTimeMillis(),
+                job.state().lastRunAtMs(),
+                job.state().lastRunStatus(),
+                job.state().consecutiveErrors(),
+                job.state().totalRuns())));
+    }
 
-            var newState = new CronJobState(
-                0, 0,
+    private void recordJobOutcome(CronJob job, CronRunRecord result) {
+        boolean success = result.status() == CronRunRecord.RunStatus.SUCCESS;
+        int errors = success ? 0 : job.state().consecutiveErrors() + 1;
+        boolean shouldDisable = errors >= MAX_CONSECUTIVE_ERRORS;
+        var newState = new CronJobState(
+                0,
+                0,
                 System.currentTimeMillis(),
                 success ? "success" : "failed",
                 errors,
-                job.state().totalRuns() + 1
-            );
-
-            var updatedJob = job.withState(newState);
-            if (shouldDisable) {
-                updatedJob = updatedJob.withEnabled(false);
-                log.warn("Job {} auto-disabled after {} consecutive errors", job.name(), errors);
-            }
-
-            // Handle deleteAfterRun for one-shot At schedules
-            if (job.deleteAfterRun() && success) {
-                store.removeJob(job.id());
-                unscheduleJob(job.id());
-            } else {
-                store.updateJob(updatedJob);
-            }
-
-            if (success) {
-                emit(new CronEvent.JobCompleted(job.id(), job.name(), runId, result.output()));
-            } else {
-                emit(new CronEvent.JobFailed(job.id(), job.name(), runId,
-                    result.error() != null ? result.error() : "Unknown error"));
-            }
-
-            return result;
-
-        } catch (Exception e) {
-            log.error("Unexpected error executing job {}", job.name(), e);
-
-            int errors = job.state().consecutiveErrors() + 1;
-            var newState = new CronJobState(
-                0, 0,
-                System.currentTimeMillis(), "failed",
-                errors, job.state().totalRuns() + 1
-            );
-            var updatedJob = job.withState(newState);
-            if (errors >= MAX_CONSECUTIVE_ERRORS) {
-                updatedJob = updatedJob.withEnabled(false);
-            }
-            store.updateJob(updatedJob);
-
-            emit(new CronEvent.JobFailed(job.id(), job.name(),
-                runId != null ? runId : "", e.getMessage()));
-
-            return new CronRunRecord(
-                runId != null ? runId : "", job.id(),
-                System.currentTimeMillis(), System.currentTimeMillis(),
-                CronRunRecord.RunStatus.FAILED, e.getMessage(), null, 0
-            );
+                job.state().totalRuns() + 1);
+        var updatedJob = job.withState(newState);
+        if (shouldDisable) {
+            updatedJob = updatedJob.withEnabled(false);
+            log.warn("Job {} auto-disabled after {} consecutive errors", job.name(), errors);
         }
+
+        // Handle deleteAfterRun for one-shot At schedules.
+        if (job.deleteAfterRun() && success) {
+            store.removeJob(job.id());
+            unscheduleJob(job.id());
+        } else {
+            store.updateJob(updatedJob);
+        }
+        if (success) {
+            emit(new CronEvent.JobCompleted(job.id(), job.name(), result.runId(), result.output()));
+        } else {
+            emit(new CronEvent.JobFailed(
+                    job.id(), job.name(), result.runId(), result.error() != null ? result.error() : "Unknown error"));
+        }
+    }
+
+    private CronRunRecord recordJobException(CronJob job, Exception e) {
+        int errors = job.state().consecutiveErrors() + 1;
+        var newState = new CronJobState(
+                0, 0, System.currentTimeMillis(), "failed", errors, job.state().totalRuns() + 1);
+        var updatedJob = job.withState(newState);
+        if (errors >= MAX_CONSECUTIVE_ERRORS) {
+            updatedJob = updatedJob.withEnabled(false);
+        }
+        store.updateJob(updatedJob);
+        emit(new CronEvent.JobFailed(job.id(), job.name(), "", e.getMessage()));
+        return new CronRunRecord(
+                "",
+                job.id(),
+                System.currentTimeMillis(),
+                System.currentTimeMillis(),
+                CronRunRecord.RunStatus.FAILED,
+                e.getMessage(),
+                null,
+                0);
     }
 
     /**
      * Perform a single synchronous tick: check all enabled jobs, execute those that are due.
      * Designed for {@code --cron-tick} mode where an external scheduler (launchd/crontab) invokes the CLI.
+     *
+     * @return the run record for each job that was executed during this tick
      */
     public List<CronRunRecord> tickOnce() {
         cleanStaleRunning();
         var results = new ArrayList<CronRunRecord>();
         var jobs = store.load();
         for (var job : jobs) {
-            if (!job.enabled()) continue;
-            if (job.state().runningAtMs() != 0) continue; // skip if running
+            if (!job.enabled()) {
+                continue;
+            }
+            if (job.state().runningAtMs() != 0) {
+                continue;
+            } // skip if running
             long delay = computeNextDelay(job);
-            if (delay < 0) continue; // past one-shot or invalid
+            if (delay < 0) {
+                continue;
+            } // past one-shot or invalid
             if (delay <= 60_000) { // due within 1 minute (tick tolerance)
                 results.add(executeJob(job));
             }
@@ -285,12 +328,10 @@ public class CronEngine {
             case CronSchedule.Every every -> {
                 long base = Math.max(job.state().lastRunAtMs(), job.createdAtMs());
                 long next = base + every.intervalMs();
+
                 // Apply exponential backoff if there are consecutive errors
                 if (job.state().consecutiveErrors() > 0) {
-                    long backoff = Math.min(
-                        1000L * (1L << job.state().consecutiveErrors()),
-                        3_600_000L
-                    );
+                    long backoff = Math.min(1000L * (1L << job.state().consecutiveErrors()), 3_600_000L);
                     next = Math.max(next, now + backoff);
                 }
                 yield Math.max(0, next - now);
@@ -298,9 +339,7 @@ public class CronEngine {
             case CronSchedule.CronExpr cron -> {
                 try {
                     var expr = CronExpression.parse(cron.expression());
-                    ZoneId zone = cron.timezone() != null
-                        ? ZoneId.of(cron.timezone())
-                        : ZoneId.systemDefault();
+                    ZoneId zone = cron.timezone() != null ? ZoneId.of(cron.timezone()) : ZoneId.systemDefault();
                     var next = expr.next(ZonedDateTime.now(zone));
                     if (next == null) {
                         yield -1L;
@@ -318,15 +357,18 @@ public class CronEngine {
         long now = System.currentTimeMillis();
         var jobs = new ArrayList<>(store.load());
         for (var job : jobs) {
-            if (job.state().runningAtMs() != 0
-                    && (now - job.state().runningAtMs()) > STALE_THRESHOLD_MS) {
-                log.warn("Clearing stale running mark for job {} (running since {})",
-                    job.name(), Instant.ofEpochMilli(job.state().runningAtMs()));
+            if (job.state().runningAtMs() != 0 && (now - job.state().runningAtMs()) > STALE_THRESHOLD_MS) {
+                log.warn(
+                        "Clearing stale running mark for job {} (running since {})",
+                        job.name(),
+                        Instant.ofEpochMilli(job.state().runningAtMs()));
                 store.updateJob(job.withState(new CronJobState(
-                    job.state().nextRunAtMs(), 0,
-                    job.state().lastRunAtMs(), "stale",
-                    job.state().consecutiveErrors(), job.state().totalRuns()
-                )));
+                        job.state().nextRunAtMs(),
+                        0,
+                        job.state().lastRunAtMs(),
+                        "stale",
+                        job.state().consecutiveErrors(),
+                        job.state().totalRuns())));
             }
         }
     }

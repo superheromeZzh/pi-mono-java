@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026-2026. All rights reserved.
+ */
+
 package com.campusclaw.agent.context;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -21,10 +25,8 @@ class ContextConversionTest {
 
     @Test
     void defaultMessageConverterPassesMessagesThrough() {
-        var messages = List.<Message>of(
-            new UserMessage("hello", 1L),
-            new UserMessage(List.of(new TextContent("world")), 2L)
-        );
+        var messages =
+                List.<Message>of(new UserMessage("hello", 1L), new UserMessage(List.of(new TextContent("world")), 2L));
         var converter = new DefaultMessageConverter();
 
         var converted = converter.convert(messages);
@@ -35,10 +37,7 @@ class ContextConversionTest {
     @Test
     void messageConverterSupportsLambdaImplementations() {
         MessageConverter converter = messages -> List.of(messages.getLast());
-        var messages = List.<Message>of(
-            new UserMessage("first", 1L),
-            new UserMessage("second", 2L)
-        );
+        var messages = List.<Message>of(new UserMessage("first", 1L), new UserMessage("second", 2L));
 
         var converted = converter.convert(messages);
 
@@ -58,7 +57,9 @@ class ContextConversionTest {
         var transformed = transformer.transform(input, signal).get();
 
         assertEquals(2, transformed.size());
-        assertEquals("transformed", ((TextContent) ((UserMessage) transformed.getFirst()).content().getFirst()).text());
+        assertEquals(
+                "transformed",
+                ((TextContent) ((UserMessage) transformed.getFirst()).content().getFirst()).text());
         assertEquals(input.getFirst(), transformed.get(1));
     }
 

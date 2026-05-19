@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026-2026. All rights reserved.
+ */
+
 package com.huawei.hicampus.mate.matecampusclaw.codingagent.util;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -72,52 +76,45 @@ class PathUtilsTest {
 
         @Test
         void dotDotEscapeBlocked() {
-            assertThrows(SecurityException.class, () ->
-                    PathUtils.resolveToCwd("../outside.txt", tempDir));
+            assertThrows(SecurityException.class, () -> PathUtils.resolveToCwd("../outside.txt", tempDir));
         }
 
         @Test
         void deepDotDotEscapeBlocked() {
-            assertThrows(SecurityException.class, () ->
-                    PathUtils.resolveToCwd("a/b/../../../../etc/passwd", tempDir));
+            assertThrows(SecurityException.class, () -> PathUtils.resolveToCwd("a/b/../../../../etc/passwd", tempDir));
         }
 
         @Test
         void absolutePathOutsideCwdBlocked() {
-            assertThrows(SecurityException.class, () ->
-                    PathUtils.resolveToCwd("/etc/passwd", tempDir));
+            assertThrows(SecurityException.class, () -> PathUtils.resolveToCwd("/etc/passwd", tempDir));
         }
 
         @Test
         void dotDotFromSubdirEscapeBlocked() {
-            assertThrows(SecurityException.class, () ->
-                    PathUtils.resolveToCwd("sub/../../outside", tempDir));
+            assertThrows(SecurityException.class, () -> PathUtils.resolveToCwd("sub/../../outside", tempDir));
         }
 
         // --- invalid arguments ---
 
         @Test
         void nullInputThrows() {
-            assertThrows(IllegalArgumentException.class, () ->
-                    PathUtils.resolveToCwd(null, tempDir));
+            assertThrows(IllegalArgumentException.class, () -> PathUtils.resolveToCwd(null, tempDir));
         }
 
         @Test
         void blankInputThrows() {
-            assertThrows(IllegalArgumentException.class, () ->
-                    PathUtils.resolveToCwd("   ", tempDir));
+            assertThrows(IllegalArgumentException.class, () -> PathUtils.resolveToCwd("   ", tempDir));
         }
 
         @Test
         void nullCwdThrows() {
-            assertThrows(IllegalArgumentException.class, () ->
-                    PathUtils.resolveToCwd("file.txt", null));
+            assertThrows(IllegalArgumentException.class, () -> PathUtils.resolveToCwd("file.txt", null));
         }
 
         @Test
         void relativeCwdThrows() {
-            assertThrows(IllegalArgumentException.class, () ->
-                    PathUtils.resolveToCwd("file.txt", Path.of("relative/dir")));
+            assertThrows(
+                    IllegalArgumentException.class, () -> PathUtils.resolveToCwd("file.txt", Path.of("relative/dir")));
         }
     }
 
@@ -136,20 +133,17 @@ class PathUtilsTest {
 
         @Test
         void dotDotEscapeBlocked() {
-            assertThrows(SecurityException.class, () ->
-                    PathUtils.resolveReadPath("../outside.txt", tempDir));
+            assertThrows(SecurityException.class, () -> PathUtils.resolveReadPath("../outside.txt", tempDir));
         }
 
         @Test
         void absolutePathOutsideCwdBlocked() {
-            assertThrows(SecurityException.class, () ->
-                    PathUtils.resolveReadPath("/etc/passwd", tempDir));
+            assertThrows(SecurityException.class, () -> PathUtils.resolveReadPath("/etc/passwd", tempDir));
         }
 
         @Test
         void nullInputThrows() {
-            assertThrows(IllegalArgumentException.class, () ->
-                    PathUtils.resolveReadPath(null, tempDir));
+            assertThrows(IllegalArgumentException.class, () -> PathUtils.resolveReadPath(null, tempDir));
         }
 
         @Test
@@ -189,8 +183,7 @@ class PathUtilsTest {
                 Path link = tempDir.resolve("escape-link.txt");
                 Files.createSymbolicLink(link, outsideFile);
 
-                assertThrows(SecurityException.class, () ->
-                        PathUtils.resolveReadPath("escape-link.txt", tempDir));
+                assertThrows(SecurityException.class, () -> PathUtils.resolveReadPath("escape-link.txt", tempDir));
             } finally {
                 Files.deleteIfExists(outsideDir.resolve("secret.txt"));
                 Files.deleteIfExists(outsideDir);
@@ -206,8 +199,7 @@ class PathUtilsTest {
                 Path linkDir = tempDir.resolve("linked-dir");
                 Files.createSymbolicLink(linkDir, outsideDir);
 
-                assertThrows(SecurityException.class, () ->
-                        PathUtils.resolveReadPath("linked-dir/data.txt", tempDir));
+                assertThrows(SecurityException.class, () -> PathUtils.resolveReadPath("linked-dir/data.txt", tempDir));
             } finally {
                 Files.deleteIfExists(outsideDir.resolve("data.txt"));
                 Files.deleteIfExists(outsideDir);

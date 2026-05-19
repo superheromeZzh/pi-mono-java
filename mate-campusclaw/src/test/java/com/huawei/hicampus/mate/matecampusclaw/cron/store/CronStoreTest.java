@@ -1,4 +1,12 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026-2026. All rights reserved.
+ */
+
 package com.huawei.hicampus.mate.matecampusclaw.cron.store;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -11,10 +19,6 @@ import com.huawei.hicampus.mate.matecampusclaw.cron.model.CronSchedule;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 
 class CronStoreTest {
 
@@ -111,8 +115,10 @@ class CronStoreTest {
     }
 
     private CronJob createJob(String name) {
-        return CronJob.create(name, null,
-            new CronSchedule.Every(60000L),
-            new CronPayload.AgentPrompt("do something", null, null, null));
+        return CronJob.create(
+                name,
+                null,
+                new CronSchedule.Every(60000L),
+                new CronPayload.AgentPrompt("do something", null, null, null));
     }
 }

@@ -1,8 +1,13 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026-2026. All rights reserved.
+ */
+
 package com.campusclaw.tui.component;
 
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * Fuzzy string matching for autocomplete and search functionality.
@@ -10,14 +15,16 @@ import java.util.List;
  * Implements a simple fuzzy matching algorithm: each character in the query must appear
  * (in order) in the candidate string. Matching is case-insensitive. Results are scored
  * by match quality — consecutive matches and matches at word boundaries score higher.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 public class FuzzyMatcher {
 
     /**
      * A single fuzzy match result with scoring information.
      */
-    public record MatchResult<T>(T item, String text, int score, List<Integer> matchPositions) {
-    }
+    public record MatchResult<T>(T item, String text, int score, List<Integer> matchPositions) {}
 
     /**
      * Tests whether the query fuzzy-matches the candidate string.
@@ -27,11 +34,15 @@ public class FuzzyMatcher {
      * @return true if all query characters appear in order in the candidate
      */
     public static boolean matches(String query, String candidate) {
-        if (query == null || query.isEmpty()) { return true; }
-        if (candidate == null || candidate.isEmpty()) { return false; }
+        if (query == null || query.isEmpty()) {
+            return true;
+        }
+        if (candidate == null || candidate.isEmpty()) {
+            return false;
+        }
 
-        String lowerQuery = query.toLowerCase();
-        String lowerCandidate = candidate.toLowerCase();
+        String lowerQuery = query.toLowerCase(Locale.ROOT);
+        String lowerCandidate = candidate.toLowerCase(Locale.ROOT);
 
         int qi = 0;
         for (int ci = 0; ci < lowerCandidate.length() && qi < lowerQuery.length(); ci++) {
@@ -60,11 +71,15 @@ public class FuzzyMatcher {
      * @return the match score, or -1 if no match
      */
     public static int score(String query, String candidate) {
-        if (query == null || query.isEmpty()) { return 0; }
-        if (candidate == null || candidate.isEmpty()) { return -1; }
+        if (query == null || query.isEmpty()) {
+            return 0;
+        }
+        if (candidate == null || candidate.isEmpty()) {
+            return -1;
+        }
 
-        String lowerQuery = query.toLowerCase();
-        String lowerCandidate = candidate.toLowerCase();
+        String lowerQuery = query.toLowerCase(Locale.ROOT);
+        String lowerCandidate = candidate.toLowerCase(Locale.ROOT);
 
         int score = 0;
         int qi = 0;
@@ -112,11 +127,15 @@ public class FuzzyMatcher {
      * @return list of match positions, or null if no match
      */
     public static List<Integer> matchPositions(String query, String candidate) {
-        if (query == null || query.isEmpty()) { return List.of(); }
-        if (candidate == null || candidate.isEmpty()) { return null; }
+        if (query == null || query.isEmpty()) {
+            return List.of();
+        }
+        if (candidate == null || candidate.isEmpty()) {
+            return null;
+        }
 
-        String lowerQuery = query.toLowerCase();
-        String lowerCandidate = candidate.toLowerCase();
+        String lowerQuery = query.toLowerCase(Locale.ROOT);
+        String lowerCandidate = candidate.toLowerCase(Locale.ROOT);
 
         List<Integer> positions = new ArrayList<>();
         int qi = 0;
@@ -139,7 +158,9 @@ public class FuzzyMatcher {
      * @return sorted list of match results (best matches first)
      */
     public static List<MatchResult<String>> filter(String query, List<String> candidates) {
-        if (candidates == null || candidates.isEmpty()) { return List.of(); }
+        if (candidates == null || candidates.isEmpty()) {
+            return List.of();
+        }
         if (query == null || query.isEmpty()) {
             List<MatchResult<String>> results = new ArrayList<>();
             for (String c : candidates) {
@@ -153,7 +174,8 @@ public class FuzzyMatcher {
             int matchScore = score(query, candidate);
             if (matchScore >= 0) {
                 List<Integer> positions = matchPositions(query, candidate);
-                results.add(new MatchResult<>(candidate, candidate, matchScore, positions != null ? positions : List.of()));
+                results.add(
+                        new MatchResult<>(candidate, candidate, matchScore, positions != null ? positions : List.of()));
             }
         }
 

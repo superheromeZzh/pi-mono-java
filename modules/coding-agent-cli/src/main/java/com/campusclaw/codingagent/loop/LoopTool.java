@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026-2026. All rights reserved.
+ */
+
 package com.campusclaw.codingagent.loop;
 
 import java.util.List;
@@ -21,6 +25,9 @@ import org.springframework.stereotype.Component;
  *
  * Use this for tasks the user wants to see repeated in the current session.
  * Use CronTool for persistent background tasks that survive across sessions.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 @Component
 public class LoopTool implements AgentTool {
@@ -54,23 +61,30 @@ public class LoopTool implements AgentTool {
     public JsonNode parameters() {
         var props = MAPPER.createObjectNode();
 
-        props.set("action", MAPPER.createObjectNode()
-                .put("type", "string")
-                .put("description", "Action: start, stop, stop_all, list")
-                .set("enum", MAPPER.createArrayNode()
-                        .add("start").add("stop").add("stop_all").add("list")));
+        props.set(
+                "action",
+                MAPPER.createObjectNode()
+                        .put("type", "string")
+                        .put("description", "Action: start, stop, stop_all, list")
+                        .set(
+                                "enum",
+                                MAPPER.createArrayNode()
+                                        .add("start")
+                                        .add("stop")
+                                        .add("stop_all")
+                                        .add("list")));
 
-        props.set("prompt", MAPPER.createObjectNode()
-                .put("type", "string")
-                .put("description", "The prompt to repeat (for start)"));
+        props.set(
+                "prompt",
+                MAPPER.createObjectNode().put("type", "string").put("description", "The prompt to repeat (for start)"));
 
-        props.set("interval_ms", MAPPER.createObjectNode()
-                .put("type", "integer")
-                .put("description", "Interval in milliseconds (for start, default 600000 = 10 minutes)"));
+        props.set(
+                "interval_ms",
+                MAPPER.createObjectNode()
+                        .put("type", "integer")
+                        .put("description", "Interval in milliseconds (for start, default 600000 = 10 minutes)"));
 
-        props.set("id", MAPPER.createObjectNode()
-                .put("type", "string")
-                .put("description", "Loop ID (for stop)"));
+        props.set("id", MAPPER.createObjectNode().put("type", "string").put("description", "Loop ID (for stop)"));
 
         return MAPPER.createObjectNode()
                 .put("type", "object")
@@ -79,8 +93,8 @@ public class LoopTool implements AgentTool {
     }
 
     @Override
-    public AgentToolResult execute(String toolCallId, Map<String, Object> params,
-                                    CancellationToken signal, AgentToolUpdateCallback onUpdate) {
+    public AgentToolResult execute(
+            String toolCallId, Map<String, Object> params, CancellationToken signal, AgentToolUpdateCallback onUpdate) {
         String action = (String) params.get("action");
         if (action == null) {
             return text("Error: action is required");
@@ -105,7 +119,7 @@ public class LoopTool implements AgentTool {
             return text("Error: prompt is required for start");
         }
 
-        long intervalMs = 600_000; // default 10 minutes
+        long intervalMs = 600_000L; // default 10 minutes
         if (params.get("interval_ms") instanceof Number n) {
             intervalMs = n.longValue();
         }
@@ -141,18 +155,27 @@ public class LoopTool implements AgentTool {
         var sb = new StringBuilder();
         sb.append("Active loops (").append(loops.size()).append("):\n");
         for (var entry : loops) {
-            sb.append("  #").append(entry.id())
-                    .append("  every ").append(formatInterval(entry.intervalMs()))
-                    .append("  ").append(entry.prompt())
+            sb.append("  #")
+                    .append(entry.id())
+                    .append("  every ")
+                    .append(formatInterval(entry.intervalMs()))
+                    .append("  ")
+                    .append(entry.prompt())
                     .append("\n");
         }
         return text(sb.toString());
     }
 
     private static String formatInterval(long ms) {
-        if (ms >= 3_600_000 && ms % 3_600_000 == 0) { return (ms / 3_600_000) + "h"; }
-        if (ms >= 60_000 && ms % 60_000 == 0) { return (ms / 60_000) + "m"; }
-        if (ms >= 1000 && ms % 1000 == 0) { return (ms / 1000) + "s"; }
+        if (ms >= 3_600_000 && ms % 3_600_000 == 0) {
+            return (ms / 3_600_000) + "h";
+        }
+        if (ms >= 60_000 && ms % 60_000 == 0) {
+            return (ms / 60_000) + "m";
+        }
+        if (ms >= 1000 && ms % 1000 == 0) {
+            return (ms / 1000) + "s";
+        }
         return ms + "ms";
     }
 

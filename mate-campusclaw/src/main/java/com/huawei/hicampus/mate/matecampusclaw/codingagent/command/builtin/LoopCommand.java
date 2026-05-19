@@ -1,4 +1,10 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026-2026. All rights reserved.
+ */
+
 package com.huawei.hicampus.mate.matecampusclaw.codingagent.command.builtin;
+
+import java.util.Locale;
 
 import com.huawei.hicampus.mate.matecampusclaw.codingagent.command.SlashCommand;
 import com.huawei.hicampus.mate.matecampusclaw.codingagent.command.SlashCommandContext;
@@ -7,10 +13,15 @@ import com.huawei.hicampus.mate.matecampusclaw.codingagent.loop.LoopManager;
 /**
  * Slash command for managing in-session recurring prompts.
  *
+ * <pre>
  * Usage:
- *   /loop [interval] <prompt>   — start a loop (default interval: 10m)
+ *   /loop [interval] &lt;prompt&gt;   — start a loop (default interval: 10m)
  *   /loop stop [id]             — stop one or all loops
  *   /loop list                  — list active loops
+ * </pre>
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 public class LoopCommand implements SlashCommand {
 
@@ -94,16 +105,21 @@ public class LoopCommand implements SlashCommand {
         var sb = new StringBuilder();
         sb.append("Active loops (").append(loops.size()).append("):\n");
         for (var entry : loops) {
-            sb.append("  #").append(entry.id())
-              .append("  every ").append(formatInterval(entry.intervalMs()))
-              .append("  ").append(truncate(entry.prompt(), 60))
-              .append("\n");
+            sb.append("  #")
+                    .append(entry.id())
+                    .append("  every ")
+                    .append(formatInterval(entry.intervalMs()))
+                    .append("  ")
+                    .append(truncate(entry.prompt(), 60))
+                    .append("\n");
         }
         context.output().println(sb.toString().stripTrailing());
     }
 
     private void printUsage(SlashCommandContext context) {
-        context.output().println("""
+        context.output()
+                .println(
+                        """
             Usage:
               /loop [interval] <prompt>   Start a recurring prompt (default: 10m)
               /loop stop [id]             Stop one or all loops
@@ -115,26 +131,38 @@ public class LoopCommand implements SlashCommand {
               /loop 5m check deploy status
               /loop 30s output a random emoji
               /loop list
-              /loop stop 1""".stripIndent().stripTrailing());
+              /loop stop 1"""
+                                .stripIndent()
+                                .stripTrailing());
     }
 
     /**
      * Parse an interval string like "5s", "2m", "1h", "1min", "30sec", "2hr".
      * Returns -1 if not a valid interval.
+     *
+     * @param s the s
+     * @return the result
      */
     static long parseInterval(String s) {
-        if (s == null || s.length() < 2) return -1;
+        if (s == null || s.length() < 2) {
+            return -1;
+        }
+
         // Extract trailing non-digit suffix
         int i = 0;
         while (i < s.length() && (Character.isDigit(s.charAt(i)) || s.charAt(i) == '.')) {
             i++;
         }
-        if (i == 0 || i == s.length()) return -1;
+        if (i == 0 || i == s.length()) {
+            return -1;
+        }
         String numStr = s.substring(0, i);
-        String unit = s.substring(i).toLowerCase();
+        String unit = s.substring(i).toLowerCase(Locale.ROOT);
         try {
             long value = Long.parseLong(numStr);
-            if (value <= 0) return -1;
+            if (value <= 0) {
+                return -1;
+            }
             return switch (unit) {
                 case "s", "sec", "secs", "second", "seconds" -> value * 1000;
                 case "m", "min", "mins", "minute", "minutes" -> value * 60 * 1000;
@@ -147,9 +175,15 @@ public class LoopCommand implements SlashCommand {
     }
 
     static String formatInterval(long ms) {
-        if (ms >= 3_600_000 && ms % 3_600_000 == 0) return (ms / 3_600_000) + "h";
-        if (ms >= 60_000 && ms % 60_000 == 0) return (ms / 60_000) + "m";
-        if (ms >= 1000 && ms % 1000 == 0) return (ms / 1000) + "s";
+        if (ms >= 3_600_000 && ms % 3_600_000 == 0) {
+            return (ms / 3_600_000) + "h";
+        }
+        if (ms >= 60_000 && ms % 60_000 == 0) {
+            return (ms / 60_000) + "m";
+        }
+        if (ms >= 1000 && ms % 1000 == 0) {
+            return (ms / 1000) + "s";
+        }
         return ms + "ms";
     }
 

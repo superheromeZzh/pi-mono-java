@@ -1,6 +1,11 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026-2026. All rights reserved.
+ */
+
 package com.campusclaw.codingagent.command.builtin;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
@@ -11,14 +16,21 @@ import com.campusclaw.codingagent.export.HtmlExporter;
 /**
  * Share session as a secret GitHub Gist.
  * Requires the `gh` CLI to be installed and authenticated.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 public class ShareCommand implements SlashCommand {
 
     @Override
-    public String name() { return "share"; }
+    public String name() {
+        return "share";
+    }
 
     @Override
-    public String description() { return "Share session as a secret GitHub gist"; }
+    public String description() {
+        return "Share session as a secret GitHub gist";
+    }
 
     @Override
     public void execute(SlashCommandContext context, String arguments) {
@@ -40,12 +52,16 @@ public class ShareCommand implements SlashCommand {
 
             // Use gh CLI to create a gist
             var process = new ProcessBuilder(
-                    "gh", "gist", "create",
-                    "--desc", "CampusClaw session (" + messages.size() + " messages)",
-                    tmpFile.toString()
-            ).redirectErrorStream(true).start();
+                            "gh",
+                            "gist",
+                            "create",
+                            "--desc",
+                            "CampusClaw session (" + messages.size() + " messages)",
+                            tmpFile.toString())
+                    .redirectErrorStream(true)
+                    .start();
 
-            String output = new String(process.getInputStream().readAllBytes()).trim();
+            String output = new String(process.getInputStream().readAllBytes(), StandardCharsets.UTF_8).trim();
             int exitCode = process.waitFor();
 
             Files.deleteIfExists(tmpFile);

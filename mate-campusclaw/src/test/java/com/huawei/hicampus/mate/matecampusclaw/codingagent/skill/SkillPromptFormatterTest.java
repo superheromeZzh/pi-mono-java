@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026-2026. All rights reserved.
+ */
+
 package com.huawei.hicampus.mate.matecampusclaw.codingagent.skill;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -12,9 +16,7 @@ import org.junit.jupiter.api.Test;
 class SkillPromptFormatterTest {
 
     private Skill skill(String name, String description, String filePath) {
-        return new Skill(name, description,
-                Path.of(filePath), Path.of(filePath).getParent(),
-                "project", false);
+        return new Skill(name, description, Path.of(filePath), Path.of(filePath).getParent(), "project", false);
     }
 
     // -------------------------------------------------------------------
@@ -26,9 +28,7 @@ class SkillPromptFormatterTest {
 
         @Test
         void formatsAvailableSkillsXml() {
-            List<Skill> skills = List.of(
-                    skill("commit", "Create git commits", "/skills/commit/SKILL.md")
-            );
+            List<Skill> skills = List.of(skill("commit", "Create git commits", "/skills/commit/SKILL.md"));
 
             String result = SkillPromptFormatter.format(skills);
 
@@ -43,8 +43,7 @@ class SkillPromptFormatterTest {
         void formatsMultipleSkills() {
             List<Skill> skills = List.of(
                     skill("commit", "Git commits", "/skills/commit/SKILL.md"),
-                    skill("review", "Code review", "/skills/review/SKILL.md")
-            );
+                    skill("review", "Code review", "/skills/review/SKILL.md"));
 
             String result = SkillPromptFormatter.format(skills);
 
@@ -97,9 +96,7 @@ class SkillPromptFormatterTest {
 
         @Test
         void escapesSpecialCharsInFormattedSkill() {
-            List<Skill> skills = List.of(
-                    skill("test", "desc & <special> \"chars\"", "/path/SKILL.md")
-            );
+            List<Skill> skills = List.of(skill("test", "desc & <special> \"chars\"", "/path/SKILL.md"));
 
             String result = SkillPromptFormatter.format(skills);
 

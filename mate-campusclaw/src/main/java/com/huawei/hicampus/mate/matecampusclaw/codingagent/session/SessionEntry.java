@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026-2026. All rights reserved.
+ */
+
 package com.huawei.hicampus.mate.matecampusclaw.codingagent.session;
 
 import com.huawei.hicampus.mate.matecampusclaw.ai.types.Message;
@@ -8,17 +12,19 @@ import jakarta.annotation.Nullable;
 
 /**
  * A single entry in the session log. Entries form a tree via parentId references.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 public record SessionEntry(
-    @JsonProperty("id") String id,
-    @JsonProperty("parentId") @Nullable String parentId,
-    @JsonProperty("type") String type,
-    @JsonProperty("message") @Nullable Message message,
-    @JsonProperty("summary") @Nullable String summary,
-    @JsonProperty("branchName") @Nullable String branchName,
-    @JsonProperty("timestamp") long timestamp
-) {
+        @JsonProperty("id") String id,
+        @JsonProperty("parentId") @Nullable String parentId,
+        @JsonProperty("type") String type,
+        @JsonProperty("message") @Nullable Message message,
+        @JsonProperty("summary") @Nullable String summary,
+        @JsonProperty("branchName") @Nullable String branchName,
+        @JsonProperty("timestamp") long timestamp) {
     public static SessionEntry message(String id, @Nullable String parentId, Message message) {
         return new SessionEntry(id, parentId, "message", message, null, null, System.currentTimeMillis());
     }

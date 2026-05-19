@@ -1,18 +1,16 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026-2026. All rights reserved.
+ */
+
 package com.huawei.hicampus.mate.matecampusclaw.codingagent.mode;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.when;
-import static org.mockito.Mockito.thenReturn;
-import static org.mockito.Mockito.verify;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.contains;
-import static org.mockito.Mockito.Mock;
-import static org.mockito.Mockito.BeforeEach;
-import static org.mockito.Mockito.Test;
-import static org.mockito.Mockito.ExtendWith;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
@@ -23,7 +21,13 @@ import java.util.concurrent.CompletableFuture;
 
 import com.huawei.hicampus.mate.matecampusclaw.agent.Agent;
 import com.huawei.hicampus.mate.matecampusclaw.agent.state.AgentState;
-import com.huawei.hicampus.mate.matecampusclaw.ai.types.*;
+import com.huawei.hicampus.mate.matecampusclaw.ai.types.AssistantMessage;
+import com.huawei.hicampus.mate.matecampusclaw.ai.types.StopReason;
+import com.huawei.hicampus.mate.matecampusclaw.ai.types.TextContent;
+import com.huawei.hicampus.mate.matecampusclaw.ai.types.ToolCall;
+import com.huawei.hicampus.mate.matecampusclaw.ai.types.ToolResultMessage;
+import com.huawei.hicampus.mate.matecampusclaw.ai.types.Usage;
+import com.huawei.hicampus.mate.matecampusclaw.ai.types.UserMessage;
 import com.huawei.hicampus.mate.matecampusclaw.codingagent.session.AgentSession;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -39,8 +43,11 @@ import org.mockito.quality.Strictness;
 @MockitoSettings(strictness = Strictness.LENIENT)
 class OneShotModeTest {
 
-    @Mock AgentSession session;
-    @Mock Agent agent;
+    @Mock
+    AgentSession session;
+
+    @Mock
+    Agent agent;
 
     ByteArrayOutputStream outBytes;
     ByteArrayOutputStream errBytes;
@@ -76,16 +83,27 @@ class OneShotModeTest {
     private AssistantMessage assistantMsg(String text, StopReason reason) {
         return new AssistantMessage(
                 List.of(new TextContent(text, null)),
-                "messages", "anthropic", "model",
-                null, Usage.empty(), reason, null, 1000L
-        );
+                "messages",
+                "anthropic",
+                "model",
+                null,
+                Usage.empty(),
+                reason,
+                null,
+                1000L);
     }
 
     private AssistantMessage assistantErrorMsg(String errorMessage) {
         return new AssistantMessage(
-                List.of(), "messages", "anthropic", "model",
-                null, Usage.empty(), StopReason.ERROR, errorMessage, 1000L
-        );
+                List.of(),
+                "messages",
+                "anthropic",
+                "model",
+                null,
+                Usage.empty(),
+                StopReason.ERROR,
+                errorMessage,
+                1000L);
     }
 
     // -------------------------------------------------------------------
@@ -98,10 +116,8 @@ class OneShotModeTest {
         @Test
         void returnsZeroOnSuccess() {
             when(session.prompt("hello")).thenReturn(CompletableFuture.completedFuture(null));
-            when(session.getHistory()).thenReturn(List.of(
-                    new UserMessage("hello", 1L),
-                    assistantMsg("Hi there!", StopReason.STOP)
-            ));
+            when(session.getHistory())
+                    .thenReturn(List.of(new UserMessage("hello", 1L), assistantMsg("Hi there!", StopReason.STOP)));
 
             int exitCode = mode.run(session, "hello");
 
@@ -111,10 +127,8 @@ class OneShotModeTest {
         @Test
         void printsAssistantTextToStdout() {
             when(session.prompt("hello")).thenReturn(CompletableFuture.completedFuture(null));
-            when(session.getHistory()).thenReturn(List.of(
-                    new UserMessage("hello", 1L),
-                    assistantMsg("Hello, world!", StopReason.STOP)
-            ));
+            when(session.getHistory())
+                    .thenReturn(List.of(new UserMessage("hello", 1L), assistantMsg("Hello, world!", StopReason.STOP)));
 
             mode.run(session, "hello");
 
@@ -124,17 +138,17 @@ class OneShotModeTest {
         @Test
         void printsMultipleTextBlocks() {
             AssistantMessage msg = new AssistantMessage(
-                    List.of(
-                            new TextContent("Part one. ", null),
-                            new TextContent("Part two.", null)
-                    ),
-                    "messages", "anthropic", "model",
-                    null, Usage.empty(), StopReason.STOP, null, 1L
-            );
+                    List.of(new TextContent("Part one. ", null), new TextContent("Part two.", null)),
+                    "messages",
+                    "anthropic",
+                    "model",
+                    null,
+                    Usage.empty(),
+                    StopReason.STOP,
+                    null,
+                    1L);
             when(session.prompt("test")).thenReturn(CompletableFuture.completedFuture(null));
-            when(session.getHistory()).thenReturn(List.of(
-                    new UserMessage("test", 1L), msg
-            ));
+            when(session.getHistory()).thenReturn(List.of(new UserMessage("test", 1L), msg));
 
             mode.run(session, "test");
 
@@ -146,15 +160,17 @@ class OneShotModeTest {
             AssistantMessage msg = new AssistantMessage(
                     List.of(
                             new TextContent("visible", null),
-                            new ToolCall("tc-1", "bash", Map.of("command", "ls"), null)
-                    ),
-                    "messages", "anthropic", "model",
-                    null, Usage.empty(), StopReason.TOOL_USE, null, 1L
-            );
+                            new ToolCall("tc-1", "bash", Map.of("command", "ls"), null)),
+                    "messages",
+                    "anthropic",
+                    "model",
+                    null,
+                    Usage.empty(),
+                    StopReason.TOOL_USE,
+                    null,
+                    1L);
             when(session.prompt("test")).thenReturn(CompletableFuture.completedFuture(null));
-            when(session.getHistory()).thenReturn(List.of(
-                    new UserMessage("test", 1L), msg
-            ));
+            when(session.getHistory()).thenReturn(List.of(new UserMessage("test", 1L), msg));
 
             mode.run(session, "test");
 
@@ -165,13 +181,12 @@ class OneShotModeTest {
         @Test
         void usesLastAssistantMessage() {
             when(session.prompt("test")).thenReturn(CompletableFuture.completedFuture(null));
-            when(session.getHistory()).thenReturn(List.of(
-                    new UserMessage("test", 1L),
-                    assistantMsg("first response", StopReason.TOOL_USE),
-                    new ToolResultMessage("tc-1", "bash",
-                            List.of(new TextContent("ok")), null, false, 2L),
-                    assistantMsg("final response", StopReason.STOP)
-            ));
+            when(session.getHistory())
+                    .thenReturn(List.of(
+                            new UserMessage("test", 1L),
+                            assistantMsg("first response", StopReason.TOOL_USE),
+                            new ToolResultMessage("tc-1", "bash", List.of(new TextContent("ok")), null, false, 2L),
+                            assistantMsg("final response", StopReason.STOP)));
 
             mode.run(session, "test");
 
@@ -182,9 +197,7 @@ class OneShotModeTest {
         @Test
         void returnsZeroWhenNoAssistantMessage() {
             when(session.prompt("test")).thenReturn(CompletableFuture.completedFuture(null));
-            when(session.getHistory()).thenReturn(List.of(
-                    new UserMessage("test", 1L)
-            ));
+            when(session.getHistory()).thenReturn(List.of(new UserMessage("test", 1L)));
 
             int exitCode = mode.run(session, "test");
 
@@ -226,10 +239,8 @@ class OneShotModeTest {
         @Test
         void returnsOneWhenStopReasonIsError() {
             when(session.prompt("test")).thenReturn(CompletableFuture.completedFuture(null));
-            when(session.getHistory()).thenReturn(List.of(
-                    new UserMessage("test", 1L),
-                    assistantErrorMsg("model error occurred")
-            ));
+            when(session.getHistory())
+                    .thenReturn(List.of(new UserMessage("test", 1L), assistantErrorMsg("model error occurred")));
 
             int exitCode = mode.run(session, "test");
 
@@ -240,10 +251,7 @@ class OneShotModeTest {
         @Test
         void returnsOneWithDefaultMessageWhenErrorMessageNull() {
             when(session.prompt("test")).thenReturn(CompletableFuture.completedFuture(null));
-            when(session.getHistory()).thenReturn(List.of(
-                    new UserMessage("test", 1L),
-                    assistantErrorMsg(null)
-            ));
+            when(session.getHistory()).thenReturn(List.of(new UserMessage("test", 1L), assistantErrorMsg(null)));
 
             int exitCode = mode.run(session, "test");
 
@@ -284,14 +292,12 @@ class OneShotModeTest {
 
         @Test
         void throwsOnNullSession() {
-            assertThrows(NullPointerException.class,
-                    () -> mode.run(null, "prompt"));
+            assertThrows(NullPointerException.class, () -> mode.run(null, "prompt"));
         }
 
         @Test
         void throwsOnNullPrompt() {
-            assertThrows(NullPointerException.class,
-                    () -> mode.run(session, null));
+            assertThrows(NullPointerException.class, () -> mode.run(session, null));
         }
     }
 
@@ -304,8 +310,7 @@ class OneShotModeTest {
 
         @Test
         void passesPromptToSession() {
-            when(session.prompt("my specific prompt"))
-                    .thenReturn(CompletableFuture.completedFuture(null));
+            when(session.prompt("my specific prompt")).thenReturn(CompletableFuture.completedFuture(null));
             when(session.getHistory()).thenReturn(List.of());
 
             mode.run(session, "my specific prompt");

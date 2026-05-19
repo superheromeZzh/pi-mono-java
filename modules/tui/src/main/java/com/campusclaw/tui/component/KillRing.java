@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026-2026. All rights reserved.
+ */
+
 package com.campusclaw.tui.component;
 
 import java.util.ArrayList;
@@ -9,6 +13,9 @@ import java.util.List;
  * Tracks killed (deleted) text entries. Consecutive kills can accumulate
  * into a single entry. Supports yank (paste most recent) and yank-pop
  * (cycle through older entries).
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 public class KillRing {
 
@@ -22,7 +29,9 @@ public class KillRing {
      * @param accumulate merge with the most recent entry instead of creating a new one
      */
     public void push(String text, boolean prepend, boolean accumulate) {
-        if (text == null || text.isEmpty()) { return; }
+        if (text == null || text.isEmpty()) {
+            return;
+        }
 
         if (accumulate && !ring.isEmpty()) {
             String last = ring.remove(ring.size() - 1);
@@ -32,12 +41,18 @@ public class KillRing {
         }
     }
 
-    /** Get the most recent entry without modifying the ring. Returns null if empty. */
+    /**
+     * Get the most recent entry without modifying the ring.
+     *
+     * @return the most recent entry, or {@code null} when the ring is empty
+     */
     public String peek() {
         return ring.isEmpty() ? null : ring.get(ring.size() - 1);
     }
 
-    /** Move the last entry to the front (for yank-pop cycling). */
+    /**
+     * Move the last entry to the front (for yank-pop cycling).
+     */
     public void rotate() {
         if (ring.size() > 1) {
             String last = ring.remove(ring.size() - 1);
@@ -45,17 +60,27 @@ public class KillRing {
         }
     }
 
-    /** Returns the number of entries in the ring. */
+    /**
+     * Returns the number of entries in the ring.
+     *
+     * @return current entry count
+     */
     public int size() {
         return ring.size();
     }
 
-    /** Returns true if the ring is empty. */
+    /**
+     * Returns true if the ring is empty.
+     *
+     * @return {@code true} when the ring is empty
+     */
     public boolean isEmpty() {
         return ring.isEmpty();
     }
 
-    /** Remove all entries. */
+    /**
+     * Remove all entries.
+     */
     public void clear() {
         ring.clear();
     }

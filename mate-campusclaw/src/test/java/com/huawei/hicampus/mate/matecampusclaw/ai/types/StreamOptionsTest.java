@@ -1,9 +1,13 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026-2026. All rights reserved.
+ */
+
 package com.huawei.hicampus.mate.matecampusclaw.ai.types;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Map;
 
@@ -196,16 +200,16 @@ class StreamOptionsTest {
         @Test
         void builder() {
             var opts = StreamOptions.builder()
-                .temperature(0.7)
-                .maxTokens(4096)
-                .apiKey("sk-test")
-                .transport(Transport.SSE)
-                .cacheRetention(CacheRetention.SHORT)
-                .sessionId("session-1")
-                .headers(Map.of("X-Custom", "value"))
-                .maxRetryDelayMs(5000L)
-                .metadata(Map.of("key", "val"))
-                .build();
+                    .temperature(0.7)
+                    .maxTokens(4096)
+                    .apiKey("sk-test")
+                    .transport(Transport.SSE)
+                    .cacheRetention(CacheRetention.SHORT)
+                    .sessionId("session-1")
+                    .headers(Map.of("X-Custom", "value"))
+                    .maxRetryDelayMs(5000L)
+                    .metadata(Map.of("key", "val"))
+                    .build();
 
             assertEquals(0.7, opts.temperature());
             assertEquals(4096, opts.maxTokens());
@@ -220,15 +224,11 @@ class StreamOptionsTest {
 
         @Test
         void toBuilder() {
-            var original = StreamOptions.builder()
-                .temperature(0.5)
-                .maxTokens(1024)
-                .build();
+            var original =
+                    StreamOptions.builder().temperature(0.5).maxTokens(1024).build();
 
-            var modified = original.toBuilder()
-                .temperature(0.9)
-                .apiKey("sk-new")
-                .build();
+            var modified =
+                    original.toBuilder().temperature(0.9).apiKey("sk-new").build();
 
             assertEquals(0.9, modified.temperature());
             assertEquals(1024, modified.maxTokens());
@@ -238,10 +238,10 @@ class StreamOptionsTest {
         @Test
         void serialization() throws JsonProcessingException {
             var opts = StreamOptions.builder()
-                .temperature(0.7)
-                .transport(Transport.WEBSOCKET)
-                .cacheRetention(CacheRetention.LONG)
-                .build();
+                    .temperature(0.7)
+                    .transport(Transport.WEBSOCKET)
+                    .cacheRetention(CacheRetention.LONG)
+                    .build();
 
             var json = mapper.readTree(mapper.writeValueAsString(opts));
             assertEquals(0.7, json.get("temperature").asDouble());
@@ -251,7 +251,8 @@ class StreamOptionsTest {
 
         @Test
         void deserialization() throws JsonProcessingException {
-            var json = """
+            var json =
+                    """
                 {
                   "temperature": 0.5,
                   "maxTokens": 2048,
@@ -288,13 +289,13 @@ class StreamOptionsTest {
         @Test
         void roundTrip() throws JsonProcessingException {
             var original = StreamOptions.builder()
-                .temperature(0.8)
-                .maxTokens(4096)
-                .transport(Transport.AUTO)
-                .cacheRetention(CacheRetention.SHORT)
-                .sessionId("s1")
-                .maxRetryDelayMs(3000L)
-                .build();
+                    .temperature(0.8)
+                    .maxTokens(4096)
+                    .transport(Transport.AUTO)
+                    .cacheRetention(CacheRetention.SHORT)
+                    .sessionId("s1")
+                    .maxRetryDelayMs(3000L)
+                    .build();
 
             var json = mapper.writeValueAsString(original);
             var restored = mapper.readValue(json, StreamOptions.class);
@@ -319,12 +320,12 @@ class StreamOptionsTest {
         void builder() {
             var budgets = new ThinkingBudgets(1024, 2048, 4096, 8192);
             var opts = SimpleStreamOptions.builder()
-                .temperature(0.7)
-                .maxTokens(4096)
-                .transport(Transport.SSE)
-                .reasoning(ThinkingLevel.HIGH)
-                .thinkingBudgets(budgets)
-                .build();
+                    .temperature(0.7)
+                    .maxTokens(4096)
+                    .transport(Transport.SSE)
+                    .reasoning(ThinkingLevel.HIGH)
+                    .thinkingBudgets(budgets)
+                    .build();
 
             assertEquals(0.7, opts.temperature());
             assertEquals(4096, opts.maxTokens());
@@ -336,11 +337,11 @@ class StreamOptionsTest {
         @Test
         void fromStreamOptions() {
             var base = StreamOptions.builder()
-                .temperature(0.5)
-                .maxTokens(2048)
-                .apiKey("sk-test")
-                .transport(Transport.WEBSOCKET)
-                .build();
+                    .temperature(0.5)
+                    .maxTokens(2048)
+                    .apiKey("sk-test")
+                    .transport(Transport.WEBSOCKET)
+                    .build();
 
             var simple = SimpleStreamOptions.from(base);
             assertEquals(0.5, simple.temperature());
@@ -354,28 +355,29 @@ class StreamOptionsTest {
         @Test
         void toStreamOptions() {
             var simple = SimpleStreamOptions.builder()
-                .temperature(0.7)
-                .maxTokens(4096)
-                .reasoning(ThinkingLevel.MEDIUM)
-                .build();
+                    .temperature(0.7)
+                    .maxTokens(4096)
+                    .reasoning(ThinkingLevel.MEDIUM)
+                    .build();
 
             var base = simple.toStreamOptions();
             assertEquals(0.7, base.temperature());
             assertEquals(4096, base.maxTokens());
+
             // reasoning fields are not present in StreamOptions
         }
 
         @Test
         void toBuilder() {
             var original = SimpleStreamOptions.builder()
-                .temperature(0.5)
-                .reasoning(ThinkingLevel.LOW)
-                .build();
+                    .temperature(0.5)
+                    .reasoning(ThinkingLevel.LOW)
+                    .build();
 
             var modified = original.toBuilder()
-                .reasoning(ThinkingLevel.HIGH)
-                .thinkingBudgets(new ThinkingBudgets(null, null, null, 8192))
-                .build();
+                    .reasoning(ThinkingLevel.HIGH)
+                    .thinkingBudgets(new ThinkingBudgets(null, null, null, 8192))
+                    .build();
 
             assertEquals(0.5, modified.temperature());
             assertEquals(ThinkingLevel.HIGH, modified.reasoning());
@@ -385,10 +387,10 @@ class StreamOptionsTest {
         @Test
         void serialization() throws JsonProcessingException {
             var opts = SimpleStreamOptions.builder()
-                .temperature(0.7)
-                .reasoning(ThinkingLevel.XHIGH)
-                .thinkingBudgets(new ThinkingBudgets(1024, 2048, 4096, 8192))
-                .build();
+                    .temperature(0.7)
+                    .reasoning(ThinkingLevel.XHIGH)
+                    .thinkingBudgets(new ThinkingBudgets(1024, 2048, 4096, 8192))
+                    .build();
 
             var json = mapper.readTree(mapper.writeValueAsString(opts));
             assertEquals(0.7, json.get("temperature").asDouble());
@@ -399,7 +401,8 @@ class StreamOptionsTest {
 
         @Test
         void deserialization() throws JsonProcessingException {
-            var json = """
+            var json =
+                    """
                 {
                   "temperature": 0.5,
                   "maxTokens": 2048,
@@ -424,13 +427,13 @@ class StreamOptionsTest {
         @Test
         void roundTrip() throws JsonProcessingException {
             var original = SimpleStreamOptions.builder()
-                .temperature(0.8)
-                .maxTokens(4096)
-                .transport(Transport.SSE)
-                .cacheRetention(CacheRetention.LONG)
-                .reasoning(ThinkingLevel.MEDIUM)
-                .thinkingBudgets(new ThinkingBudgets(1024, 2048, 4096, 8192))
-                .build();
+                    .temperature(0.8)
+                    .maxTokens(4096)
+                    .transport(Transport.SSE)
+                    .cacheRetention(CacheRetention.LONG)
+                    .reasoning(ThinkingLevel.MEDIUM)
+                    .thinkingBudgets(new ThinkingBudgets(1024, 2048, 4096, 8192))
+                    .build();
 
             var json = mapper.writeValueAsString(original);
             var restored = mapper.readValue(json, SimpleStreamOptions.class);

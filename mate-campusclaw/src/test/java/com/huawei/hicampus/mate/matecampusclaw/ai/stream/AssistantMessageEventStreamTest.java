@@ -1,13 +1,25 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026-2026. All rights reserved.
+ */
+
 package com.huawei.hicampus.mate.matecampusclaw.ai.stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertSame;
 
 import java.util.List;
 
-import com.huawei.hicampus.mate.matecampusclaw.ai.stream.AssistantMessageEvent.*;
-import com.huawei.hicampus.mate.matecampusclaw.ai.types.*;
+import com.huawei.hicampus.mate.matecampusclaw.ai.stream.AssistantMessageEvent.DoneEvent;
+import com.huawei.hicampus.mate.matecampusclaw.ai.stream.AssistantMessageEvent.ErrorEvent;
+import com.huawei.hicampus.mate.matecampusclaw.ai.stream.AssistantMessageEvent.StartEvent;
+import com.huawei.hicampus.mate.matecampusclaw.ai.stream.AssistantMessageEvent.TextDeltaEvent;
+import com.huawei.hicampus.mate.matecampusclaw.ai.stream.AssistantMessageEvent.TextEndEvent;
+import com.huawei.hicampus.mate.matecampusclaw.ai.stream.AssistantMessageEvent.TextStartEvent;
+import com.huawei.hicampus.mate.matecampusclaw.ai.types.AssistantMessage;
+import com.huawei.hicampus.mate.matecampusclaw.ai.types.StopReason;
+import com.huawei.hicampus.mate.matecampusclaw.ai.types.TextContent;
+import com.huawei.hicampus.mate.matecampusclaw.ai.types.Usage;
 
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -16,19 +28,23 @@ import reactor.test.StepVerifier;
 
 class AssistantMessageEventStreamTest {
 
-    /** Creates a minimal AssistantMessage for use in tests. */
+    /**
+     * Creates a minimal AssistantMessage for use in tests.
+     *
+     * @param reason stop reason embedded in the resulting message
+     * @return a minimal assistant message
+     */
     private AssistantMessage sampleMessage(StopReason reason) {
         return new AssistantMessage(
-            List.of(new TextContent("hello")),
-            "anthropic-messages",
-            "anthropic",
-            "claude-opus-4-6",
-            null,
-            Usage.empty(),
-            reason,
-            null,
-            System.currentTimeMillis()
-        );
+                List.of(new TextContent("hello")),
+                "anthropic-messages",
+                "anthropic",
+                "claude-opus-4-6",
+                null,
+                Usage.empty(),
+                reason,
+                null,
+                System.currentTimeMillis());
     }
 
     private AssistantMessage samplePartial() {
@@ -54,30 +70,28 @@ class AssistantMessageEventStreamTest {
             stream.pushDone(StopReason.STOP, finalMsg);
 
             StepVerifier.create(stream.asFlux())
-                .assertNext(e -> assertInstanceOf(StartEvent.class, e))
-                .assertNext(e -> assertInstanceOf(TextStartEvent.class, e))
-                .assertNext(e -> {
-                    var delta = assertInstanceOf(TextDeltaEvent.class, e);
-                    assertEquals("Hello", delta.delta());
-                    assertEquals(0, delta.contentIndex());
-                })
-                .assertNext(e -> {
-                    var delta = assertInstanceOf(TextDeltaEvent.class, e);
-                    assertEquals(" world", delta.delta());
-                })
-                .assertNext(e -> {
-                    var end = assertInstanceOf(TextEndEvent.class, e);
-                    assertEquals("Hello world", end.content());
-                })
-                .assertNext(e -> {
-                    var done = assertInstanceOf(DoneEvent.class, e);
-                    assertEquals(StopReason.STOP, done.reason());
-                })
-                .verifyComplete();
+                    .assertNext(e -> assertInstanceOf(StartEvent.class, e))
+                    .assertNext(e -> assertInstanceOf(TextStartEvent.class, e))
+                    .assertNext(e -> {
+                        var delta = assertInstanceOf(TextDeltaEvent.class, e);
+                        assertEquals("Hello", delta.delta());
+                        assertEquals(0, delta.contentIndex());
+                    })
+                    .assertNext(e -> {
+                        var delta = assertInstanceOf(TextDeltaEvent.class, e);
+                        assertEquals(" world", delta.delta());
+                    })
+                    .assertNext(e -> {
+                        var end = assertInstanceOf(TextEndEvent.class, e);
+                        assertEquals("Hello world", end.content());
+                    })
+                    .assertNext(e -> {
+                        var done = assertInstanceOf(DoneEvent.class, e);
+                        assertEquals(StopReason.STOP, done.reason());
+                    })
+                    .verifyComplete();
 
-            StepVerifier.create(stream.result())
-                .expectNext(finalMsg)
-                .verifyComplete();
+            StepVerifier.create(stream.result()).expectNext(finalMsg).verifyComplete();
         }
 
         @Test
@@ -91,17 +105,15 @@ class AssistantMessageEventStreamTest {
             stream.pushError("error", errorMsg);
 
             StepVerifier.create(stream.asFlux())
-                .assertNext(e -> assertInstanceOf(StartEvent.class, e))
-                .assertNext(e -> assertInstanceOf(TextDeltaEvent.class, e))
-                .assertNext(e -> {
-                    var err = assertInstanceOf(ErrorEvent.class, e);
-                    assertEquals("error", err.reason());
-                })
-                .verifyComplete();
+                    .assertNext(e -> assertInstanceOf(StartEvent.class, e))
+                    .assertNext(e -> assertInstanceOf(TextDeltaEvent.class, e))
+                    .assertNext(e -> {
+                        var err = assertInstanceOf(ErrorEvent.class, e);
+                        assertEquals("error", err.reason());
+                    })
+                    .verifyComplete();
 
-            StepVerifier.create(stream.result())
-                .expectNext(errorMsg)
-                .verifyComplete();
+            StepVerifier.create(stream.result()).expectNext(errorMsg).verifyComplete();
         }
     }
 
@@ -120,14 +132,14 @@ class AssistantMessageEventStreamTest {
             stream.pushDone(StopReason.STOP, finalMsg);
 
             StepVerifier.create(stream.asFlux())
-                .assertNext(e -> {
-                    var delta = assertInstanceOf(TextDeltaEvent.class, e);
-                    assertEquals(2, delta.contentIndex());
-                    assertEquals("delta-text", delta.delta());
-                    assertSame(partial, delta.partial());
-                })
-                .assertNext(e -> assertInstanceOf(DoneEvent.class, e))
-                .verifyComplete();
+                    .assertNext(e -> {
+                        var delta = assertInstanceOf(TextDeltaEvent.class, e);
+                        assertEquals(2, delta.contentIndex());
+                        assertEquals("delta-text", delta.delta());
+                        assertSame(partial, delta.partial());
+                    })
+                    .assertNext(e -> assertInstanceOf(DoneEvent.class, e))
+                    .verifyComplete();
         }
 
         @Test
@@ -137,17 +149,15 @@ class AssistantMessageEventStreamTest {
 
             stream.pushDone(StopReason.TOOL_USE, finalMsg);
 
-            StepVerifier.create(stream.result())
-                .expectNext(finalMsg)
-                .verifyComplete();
+            StepVerifier.create(stream.result()).expectNext(finalMsg).verifyComplete();
 
             StepVerifier.create(stream.asFlux())
-                .assertNext(e -> {
-                    var done = assertInstanceOf(DoneEvent.class, e);
-                    assertEquals(StopReason.TOOL_USE, done.reason());
-                    assertSame(finalMsg, done.message());
-                })
-                .verifyComplete();
+                    .assertNext(e -> {
+                        var done = assertInstanceOf(DoneEvent.class, e);
+                        assertEquals(StopReason.TOOL_USE, done.reason());
+                        assertSame(finalMsg, done.message());
+                    })
+                    .verifyComplete();
         }
 
         @Test
@@ -157,17 +167,15 @@ class AssistantMessageEventStreamTest {
 
             stream.pushError("aborted", errorMsg);
 
-            StepVerifier.create(stream.result())
-                .expectNext(errorMsg)
-                .verifyComplete();
+            StepVerifier.create(stream.result()).expectNext(errorMsg).verifyComplete();
 
             StepVerifier.create(stream.asFlux())
-                .assertNext(e -> {
-                    var err = assertInstanceOf(ErrorEvent.class, e);
-                    assertEquals("aborted", err.reason());
-                    assertSame(errorMsg, err.error());
-                })
-                .verifyComplete();
+                    .assertNext(e -> {
+                        var err = assertInstanceOf(ErrorEvent.class, e);
+                        assertEquals("aborted", err.reason());
+                        assertSame(errorMsg, err.error());
+                    })
+                    .verifyComplete();
         }
     }
 
@@ -188,9 +196,9 @@ class AssistantMessageEventStreamTest {
             stream.pushTextDelta(0, "ignored", samplePartial());
 
             StepVerifier.create(stream.asFlux())
-                .assertNext(e -> assertInstanceOf(StartEvent.class, e))
-                .assertNext(e -> assertInstanceOf(DoneEvent.class, e))
-                .verifyComplete();
+                    .assertNext(e -> assertInstanceOf(StartEvent.class, e))
+                    .assertNext(e -> assertInstanceOf(DoneEvent.class, e))
+                    .verifyComplete();
         }
 
         @Test
@@ -205,9 +213,9 @@ class AssistantMessageEventStreamTest {
             stream.pushTextDelta(0, "ignored", samplePartial());
 
             StepVerifier.create(stream.asFlux())
-                .assertNext(e -> assertInstanceOf(StartEvent.class, e))
-                .assertNext(e -> assertInstanceOf(ErrorEvent.class, e))
-                .verifyComplete();
+                    .assertNext(e -> assertInstanceOf(StartEvent.class, e))
+                    .assertNext(e -> assertInstanceOf(ErrorEvent.class, e))
+                    .verifyComplete();
         }
 
         @Test
@@ -219,13 +227,9 @@ class AssistantMessageEventStreamTest {
             stream.push(new StartEvent(samplePartial()));
             stream.pushTextDelta(0, "ignored", samplePartial());
 
-            StepVerifier.create(stream.asFlux().count())
-                .expectNext(1L)
-                .verifyComplete();
+            StepVerifier.create(stream.asFlux().count()).expectNext(1L).verifyComplete();
 
-            StepVerifier.create(stream.result())
-                .expectNext(finalMsg)
-                .verifyComplete();
+            StepVerifier.create(stream.result()).expectNext(finalMsg).verifyComplete();
         }
     }
 
@@ -244,12 +248,10 @@ class AssistantMessageEventStreamTest {
             stream.end(result);
 
             StepVerifier.create(stream.asFlux())
-                .assertNext(e -> assertInstanceOf(StartEvent.class, e))
-                .verifyComplete();
+                    .assertNext(e -> assertInstanceOf(StartEvent.class, e))
+                    .verifyComplete();
 
-            StepVerifier.create(stream.result())
-                .expectNext(result)
-                .verifyComplete();
+            StepVerifier.create(stream.result()).expectNext(result).verifyComplete();
         }
 
         @Test
@@ -259,13 +261,13 @@ class AssistantMessageEventStreamTest {
             stream.error(new RuntimeException("connection lost"));
 
             StepVerifier.create(stream.asFlux())
-                .assertNext(e -> assertInstanceOf(StartEvent.class, e))
-                .expectErrorMessage("connection lost")
-                .verify();
+                    .assertNext(e -> assertInstanceOf(StartEvent.class, e))
+                    .expectErrorMessage("connection lost")
+                    .verify();
 
             StepVerifier.create(stream.result())
-                .expectErrorMessage("connection lost")
-                .verify();
+                    .expectErrorMessage("connection lost")
+                    .verify();
         }
     }
 
@@ -282,37 +284,36 @@ class AssistantMessageEventStreamTest {
             stream.pushDone(StopReason.STOP, msg);
 
             StepVerifier.create(stream.result())
-                .assertNext(result -> {
-                    assertSame(msg, result);
-                    assertEquals(StopReason.STOP, result.stopReason());
-                })
-                .verifyComplete();
+                    .assertNext(result -> {
+                        assertSame(msg, result);
+                        assertEquals(StopReason.STOP, result.stopReason());
+                    })
+                    .verifyComplete();
         }
 
         @Test
         void errorEventExtractsErrorMessage() {
             var stream = new AssistantMessageEventStream();
             var errorMsg = new AssistantMessage(
-                List.of(),
-                "anthropic-messages",
-                "anthropic",
-                "claude-opus-4-6",
-                null,
-                Usage.empty(),
-                StopReason.ERROR,
-                "Something went wrong",
-                System.currentTimeMillis()
-            );
+                    List.of(),
+                    "anthropic-messages",
+                    "anthropic",
+                    "claude-opus-4-6",
+                    null,
+                    Usage.empty(),
+                    StopReason.ERROR,
+                    "Something went wrong",
+                    System.currentTimeMillis());
 
             stream.pushError("error", errorMsg);
 
             StepVerifier.create(stream.result())
-                .assertNext(result -> {
-                    assertSame(errorMsg, result);
-                    assertEquals(StopReason.ERROR, result.stopReason());
-                    assertEquals("Something went wrong", result.errorMessage());
-                })
-                .verifyComplete();
+                    .assertNext(result -> {
+                        assertSame(errorMsg, result);
+                        assertEquals(StopReason.ERROR, result.stopReason());
+                        assertEquals("Something went wrong", result.errorMessage());
+                    })
+                    .verifyComplete();
         }
 
         @Test
@@ -325,9 +326,7 @@ class AssistantMessageEventStreamTest {
             stream.pushDone(StopReason.STOP, msg);
 
             // Check result without consuming Flux
-            StepVerifier.create(stream.result())
-                .expectNext(msg)
-                .verifyComplete();
+            StepVerifier.create(stream.result()).expectNext(msg).verifyComplete();
         }
     }
 }

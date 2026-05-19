@@ -1,9 +1,16 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026-2026. All rights reserved.
+ */
+
 package com.huawei.hicampus.mate.matecampusclaw.codingagent.skill;
 
 import java.util.List;
 
 /**
  * Formats a list of visible skills into an XML block suitable for inclusion in the system prompt.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 public class SkillPromptFormatter {
 
@@ -29,8 +36,12 @@ public class SkillPromptFormatter {
         for (Skill skill : visibleSkills) {
             sb.append("  <skill>\n");
             sb.append("    <name>").append(escapeXml(skill.name())).append("</name>\n");
-            sb.append("    <description>").append(escapeXml(skill.description())).append("</description>\n");
-            sb.append("    <location>").append(escapeXml(skill.filePath().toString())).append("</location>\n");
+            sb.append("    <description>")
+                    .append(escapeXml(skill.description()))
+                    .append("</description>\n");
+            sb.append("    <location>")
+                    .append(escapeXml(skill.filePath().toString()))
+                    .append("</location>\n");
             sb.append("  </skill>\n");
         }
 
@@ -39,7 +50,9 @@ public class SkillPromptFormatter {
     }
 
     static String escapeXml(String s) {
-        if (s == null) return "";
+        if (s == null) {
+            return "";
+        }
         return s.replace("&", "&amp;")
                 .replace("<", "&lt;")
                 .replace(">", "&gt;")

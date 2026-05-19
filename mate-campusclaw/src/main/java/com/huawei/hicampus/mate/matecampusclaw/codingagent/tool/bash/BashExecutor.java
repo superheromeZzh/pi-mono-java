@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026-2026. All rights reserved.
+ */
+
 package com.huawei.hicampus.mate.matecampusclaw.codingagent.tool.bash;
 
 import java.io.ByteArrayOutputStream;
@@ -5,6 +9,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 
 import org.springframework.stereotype.Service;
@@ -12,6 +19,9 @@ import org.springframework.stereotype.Service;
 /**
  * Execution engine for bash commands, independent of the Bash tool.
  * Manages process lifecycle, timeout, cancellation, and separate stdout/stderr capture.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 @Service
 public class BashExecutor {
@@ -26,11 +36,20 @@ public class BashExecutor {
      * @throws IOException if the process cannot be started
      */
     public BashExecutionResult execute(String command, Path cwd, BashExecutorOptions options) throws IOException {
-        ProcessBuilder pb = new ProcessBuilder("/bin/bash", "-c", command);
+        boolean windows =
+                System.getProperty("os.name", "").toLowerCase(Locale.ROOT).contains("win");
+        ShellResolver.ShellConfig shell = ShellResolver.resolve();
+        String nullDevice = windows ? "NUL" : "/dev/null";
+        List<String> argv = new ArrayList<>(shell.args().size() + 2);
+        argv.add(shell.shell());
+        argv.addAll(shell.args());
+        argv.add(command);
+        ProcessBuilder pb = new ProcessBuilder(argv);
         pb.directory(cwd.toFile());
-        // Redirect stdin from /dev/null so the child bash doesn't steal
+
+        // Redirect stdin from the null device so the child bash doesn't steal
         // the parent's terminal input, which can break JLine's reader.
-        pb.redirectInput(ProcessBuilder.Redirect.from(new java.io.File("/dev/null")));
+        pb.redirectInput(ProcessBuilder.Redirect.from(new java.io.File(nullDevice)));
 
         if (!options.env().isEmpty()) {
             pb.environment().putAll(options.env());
@@ -39,19 +58,17 @@ public class BashExecutor {
         Process process = pb.start();
 
         if (options.signal() != null) {
-            options.signal().onCancel(process::destroyForcibly);
+            options.signal().onCancel(() -> killProcessTree(process));
         }
 
         // Drain stdout and stderr on virtual threads to prevent blocking
         var stdoutBuf = new ByteArrayOutputStream();
         var stderrBuf = new ByteArrayOutputStream();
 
-        Thread stdoutDrainer = Thread.ofVirtual()
-                .name("bash-stdout-drainer")
-                .start(() -> drain(process.getInputStream(), stdoutBuf));
-        Thread stderrDrainer = Thread.ofVirtual()
-                .name("bash-stderr-drainer")
-                .start(() -> drain(process.getErrorStream(), stderrBuf));
+        Thread stdoutDrainer =
+                Thread.ofVirtual().name("bash-stdout-drainer").start(() -> drain(process.getInputStream(), stdoutBuf));
+        Thread stderrDrainer =
+                Thread.ofVirtual().name("bash-stderr-drainer").start(() -> drain(process.getErrorStream(), stderrBuf));
 
         boolean timedOut = false;
         try {
@@ -59,29 +76,25 @@ public class BashExecutor {
                 boolean finished = process.waitFor(options.timeout().toMillis(), TimeUnit.MILLISECONDS);
                 if (!finished) {
                     timedOut = true;
-                    process.destroyForcibly();
+                    killProcessTree(process);
                     process.waitFor(5, TimeUnit.SECONDS);
                 }
             } else {
                 process.waitFor();
             }
         } catch (InterruptedException e) {
-            process.destroyForcibly();
+            killProcessTree(process);
             Thread.currentThread().interrupt();
             joinDrainers(stdoutDrainer, stderrDrainer);
-            return new BashExecutionResult(null,
-                    stdoutBuf.toString(StandardCharsets.UTF_8),
-                    stderrBuf.toString(StandardCharsets.UTF_8));
+            return new BashExecutionResult(
+                    null, stdoutBuf.toString(StandardCharsets.UTF_8), stderrBuf.toString(StandardCharsets.UTF_8));
         }
 
         joinDrainers(stdoutDrainer, stderrDrainer);
 
         Integer exitCode = timedOut ? null : process.exitValue();
         return new BashExecutionResult(
-                exitCode,
-                stdoutBuf.toString(StandardCharsets.UTF_8),
-                stderrBuf.toString(StandardCharsets.UTF_8)
-        );
+                exitCode, stdoutBuf.toString(StandardCharsets.UTF_8), stderrBuf.toString(StandardCharsets.UTF_8));
     }
 
     private static void drain(InputStream is, ByteArrayOutputStream out) {
@@ -94,6 +107,18 @@ public class BashExecutor {
         } catch (IOException ignored) {
             // Stream closed due to process destruction — expected on timeout/cancel
         }
+    }
+
+    /**
+     * Destroy a process together with every live descendant. On Windows a plain
+     * {@code destroyForcibly()} leaves grandchildren running; walking descendants
+     * mirrors the {@code taskkill /F /T} approach used by the pi-mono reference.
+     *
+     * @param process the process
+     */
+    private static void killProcessTree(Process process) {
+        process.descendants().forEach(ProcessHandle::destroyForcibly);
+        process.destroyForcibly();
     }
 
     private static void joinDrainers(Thread stdout, Thread stderr) {

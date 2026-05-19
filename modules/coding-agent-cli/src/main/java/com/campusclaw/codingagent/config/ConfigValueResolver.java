@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026-2026. All rights reserved.
+ */
+
 package com.campusclaw.codingagent.config;
 
 import java.util.regex.Matcher;
@@ -13,6 +17,9 @@ import java.util.regex.Pattern;
  *   <li>{@code ${ENV_VAR:-default}} — expands with a default value if unset</li>
  *   <li>{@code ~} — expands to the user's home directory</li>
  * </ul>
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 public final class ConfigValueResolver {
 
@@ -28,7 +35,9 @@ public final class ConfigValueResolver {
      * @return the resolved value with placeholders expanded
      */
     public static String resolve(String value) {
-        if (value == null) { return null; }
+        if (value == null) {
+            return null;
+        }
 
         // Expand ~ to home directory
         if (value.startsWith("~")) {
@@ -49,6 +58,9 @@ public final class ConfigValueResolver {
 
     /**
      * Resolves a single environment variable expression.
+     *
+     * @param expr the expr
+     * @return the result
      */
     private static String resolveEnvExpr(String expr) {
         Matcher defaultMatcher = ENV_DEFAULT_PATTERN.matcher(expr);
@@ -65,6 +77,9 @@ public final class ConfigValueResolver {
 
     /**
      * Checks if a value contains any unresolved placeholders.
+     *
+     * @param value the value
+     * @return the result
      */
     public static boolean hasPlaceholders(String value) {
         return value != null && (ENV_PATTERN.matcher(value).find() || value.startsWith("~"));

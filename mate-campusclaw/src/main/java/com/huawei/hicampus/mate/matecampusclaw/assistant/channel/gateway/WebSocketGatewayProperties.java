@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026-2026. All rights reserved.
+ */
+
 package com.huawei.hicampus.mate.matecampusclaw.assistant.channel.gateway;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -5,6 +9,9 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 /**
  * Configuration properties for WebSocket Gateway server.
  * The gateway acts as a WebSocket server that chat tools can connect to directly.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 @ConfigurationProperties(prefix = "pi.assistant.gateway")
 public class WebSocketGatewayProperties {
@@ -17,8 +24,8 @@ public class WebSocketGatewayProperties {
     private int tickIntervalMs = 30000;
     private int protocolVersion = 3;
     private String serverVersion = "1.0.0";
-    private int maxPayload = 16777216;       // 16MB
-    private int maxBufferedBytes = 1048576;  // 1MB
+    private int maxPayload = 16777216; // 16MB
+    private int maxBufferedBytes = 1048576; // 1MB
 
     public boolean isEnabled() {
         return enabled;

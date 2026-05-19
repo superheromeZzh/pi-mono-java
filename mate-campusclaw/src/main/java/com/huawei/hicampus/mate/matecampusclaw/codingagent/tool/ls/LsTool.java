@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026-2026. All rights reserved.
+ */
+
 package com.huawei.hicampus.mate.matecampusclaw.codingagent.tool.ls;
 
 import java.io.IOException;
@@ -29,6 +33,9 @@ import org.springframework.stereotype.Component;
  * Agent tool that lists directory contents.
  * Output format: one entry per line with type indicator, size, date, and name.
  * Directories are listed first, then alphabetical within each group.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 @Component
 public class LsTool implements AgentTool {
@@ -70,9 +77,11 @@ public class LsTool implements AgentTool {
     @Override
     public JsonNode parameters() {
         ObjectNode props = MAPPER.createObjectNode();
-        props.set("path", MAPPER.createObjectNode()
-                .put("type", "string")
-                .put("description", "Directory path to list (relative or absolute)"));
+        props.set(
+                "path",
+                MAPPER.createObjectNode()
+                        .put("type", "string")
+                        .put("description", "Directory path to list (relative or absolute)"));
 
         return MAPPER.createObjectNode()
                 .put("type", "object")
@@ -82,87 +91,67 @@ public class LsTool implements AgentTool {
 
     @Override
     public AgentToolResult execute(
-            String toolCallId,
-            Map<String, Object> params,
-            CancellationToken signal,
-            AgentToolUpdateCallback onUpdate
-    ) throws Exception {
+            String toolCallId, Map<String, Object> params, CancellationToken signal, AgentToolUpdateCallback onUpdate)
+            throws Exception {
         String pathInput = (String) params.get("path");
         if (pathInput == null || pathInput.isBlank()) {
             return errorResult("Error: path is required");
         }
-
         Path resolvedPath;
         try {
             resolvedPath = PathUtils.resolveReadPath(pathInput, cwd);
         } catch (SecurityException e) {
             return errorResult("Error: " + e.getMessage());
         }
-
         if (!Files.isDirectory(resolvedPath)) {
             return errorResult("Error: not a directory: " + pathInput);
         }
-
         List<LsEntry> entries;
         try {
             entries = lsOperations.list(resolvedPath);
         } catch (IOException e) {
             return errorResult("Error listing directory: " + e.getMessage());
         }
-
         if (entries.isEmpty()) {
             return textResult("(empty directory)");
         }
-
-        // Sort: directories first, then alphabetical by name within each group
-        entries.sort(Comparator
-                .comparing((LsEntry e) -> !"directory".equals(e.type()))
+        entries.sort(Comparator.comparing((LsEntry e) -> !"directory".equals(e.type()))
                 .thenComparing(LsEntry::name, String.CASE_INSENSITIVE_ORDER));
-
-        // Limit results
         boolean truncated = entries.size() > MAX_ENTRIES;
         if (truncated) {
             entries = entries.subList(0, MAX_ENTRIES);
         }
+        return textResult(formatEntries(entries, truncated));
+    }
 
+    private static String formatEntries(List<LsEntry> entries, boolean truncated) {
         var sb = new StringBuilder();
         for (int i = 0; i < entries.size(); i++) {
-            if (i > 0) sb.append('\n');
-            LsEntry entry = entries.get(i);
-            String typeFlag = switch (entry.type()) {
-                case "directory" -> "drw-";
-                case "symlink" -> "lrw-";
-                default -> "-rw-";
-            };
-            String name = entry.name();
-            if ("directory".equals(entry.type())) {
-                name = name + "/";
+            if (i > 0) {
+                sb.append('\n');
             }
-            sb.append(String.format("%s %5d  %s  %s",
-                    typeFlag,
-                    entry.size(),
-                    DATE_FORMAT.format(entry.lastModified()),
-                    name));
+            LsEntry entry = entries.get(i);
+            String typeFlag =
+                    switch (entry.type()) {
+                        case "directory" -> "drw-";
+                        case "symlink" -> "lrw-";
+                        default -> "-rw-";
+                    };
+            String name = "directory".equals(entry.type()) ? entry.name() + "/" : entry.name();
+            sb.append(String.format(
+                    "%s %5d  %s  %s", typeFlag, entry.size(), DATE_FORMAT.format(entry.lastModified()), name));
         }
-
         if (truncated) {
             sb.append("\n... (truncated to ").append(MAX_ENTRIES).append(" entries)");
         }
-
-        return textResult(sb.toString());
+        return sb.toString();
     }
 
     private static AgentToolResult textResult(String text) {
-        return new AgentToolResult(
-                List.<ContentBlock>of(new TextContent(text)),
-                null
-        );
+        return new AgentToolResult(List.<ContentBlock>of(new TextContent(text)), null);
     }
 
     private static AgentToolResult errorResult(String message) {
-        return new AgentToolResult(
-                List.<ContentBlock>of(new TextContent(message)),
-                null
-        );
+        return new AgentToolResult(List.<ContentBlock>of(new TextContent(message)), null);
     }
 }

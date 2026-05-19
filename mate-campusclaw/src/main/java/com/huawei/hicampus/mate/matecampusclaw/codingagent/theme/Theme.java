@@ -1,5 +1,10 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026-2026. All rights reserved.
+ */
+
 package com.huawei.hicampus.mate.matecampusclaw.codingagent.theme;
 
+import java.util.Locale;
 import java.util.Map;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -10,13 +15,15 @@ import jakarta.annotation.Nullable;
 /**
  * Theme definition with configurable colors for all UI elements.
  * Supports 40+ configurable color properties for terminal display.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 public record Theme(
-    @JsonProperty("name") String name,
-    @JsonProperty("colors") Map<String, String> colors,
-    @JsonProperty("description") @Nullable String description
-) {
+        @JsonProperty("name") String name,
+        @JsonProperty("colors") Map<String, String> colors,
+        @JsonProperty("description") @Nullable String description) {
     // Standard color keys
     public static final String PRIMARY = "primary";
     public static final String SECONDARY = "secondary";
@@ -61,14 +68,27 @@ public record Theme(
     public static final String SELECTION = "selection";
     public static final String CURSOR = "cursor";
 
-    /** Get an ANSI color escape for a theme color key. */
+    /**
+     * Returns an ANSI color escape sequence for a theme color key.
+     *
+     * @param key one of the canonical color keys (e.g. {@link #PRIMARY}, {@link #DIFF_ADDED})
+     * @return the ANSI escape, or an empty string when the key is not bound to a color
+     */
     public String ansi(String key) {
         String color = colors.getOrDefault(key, null);
-        if (color == null) return "";
+        if (color == null) {
+            return "";
+        }
         return toAnsi(color);
     }
 
-    /** Convert hex color (#RRGGBB) or named color to ANSI escape. */
+    /**
+     * Converts a hex color ({@code #RRGGBB}) or named color (e.g. {@code "red"},
+     * {@code "bright_yellow"}) into an ANSI escape sequence.
+     *
+     * @param color hex string or recognized color name
+     * @return the corresponding ANSI escape sequence, or the SGR reset for unrecognized inputs
+     */
     public static String toAnsi(String color) {
         if (color.startsWith("#") && color.length() == 7) {
             int r = Integer.parseInt(color.substring(1, 3), 16);
@@ -76,7 +96,7 @@ public record Theme(
             int b = Integer.parseInt(color.substring(5, 7), 16);
             return "\033[38;2;" + r + ";" + g + ";" + b + "m";
         }
-        return switch (color.toLowerCase()) {
+        return switch (color.toLowerCase(Locale.ROOT)) {
             case "black" -> "\033[30m";
             case "red" -> "\033[31m";
             case "green" -> "\033[32m";

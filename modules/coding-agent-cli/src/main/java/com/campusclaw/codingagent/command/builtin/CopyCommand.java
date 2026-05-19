@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026-2026. All rights reserved.
+ */
+
 package com.campusclaw.codingagent.command.builtin;
 
 import com.campusclaw.ai.types.AssistantMessage;
@@ -7,6 +11,13 @@ import com.campusclaw.codingagent.command.SlashCommand;
 import com.campusclaw.codingagent.command.SlashCommandContext;
 import com.campusclaw.codingagent.util.ClipboardUtils;
 
+/**
+ * Slash command {@code /copy} that locates the most recent assistant message in the session
+ * history and copies its concatenated text content to the system clipboard.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/13]
+ * @since [br_eCampusCore 25.1.0_Next]
+ */
 public class CopyCommand implements SlashCommand {
 
     @Override
@@ -22,6 +33,7 @@ public class CopyCommand implements SlashCommand {
     @Override
     public void execute(SlashCommandContext context, String arguments) {
         var messages = context.session().getHistory();
+
         // Find last assistant message
         String lastReply = null;
         for (int i = messages.size() - 1; i >= 0; i--) {

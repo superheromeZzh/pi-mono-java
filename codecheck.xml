@@ -7,9 +7,389 @@
     <property name="severity" value="error"/>
     <property name="fileExtensions" value="java"/>
 
+    <!-- 让 @SuppressWarnings("checkstyle:xxx") 注解能抑制对应规则的违规。
+         需要 TreeWalker 内的 SuppressWarningsHolder 配合。 -->
+    <module name="SuppressWarningsFilter"/>
+
+    <!-- FileHeaderComment: every .java file must start with the Huawei copyright header.
+         Year range \d{4}-\d{4} accepts e.g. 2026-2026 or 2024-2026. -->
+    <module name="RegexpHeader">
+        <property name="header"
+                  value="^/\*$\n^ \* Copyright \(c\) Huawei Technologies Co\., Ltd\. \d{4}-\d{4}\. All rights reserved\.$\n^ \*/$"/>
+        <property name="fileExtensions" value="java"/>
+    </module>
+
+    <!-- comment_blank_line_before: 行注释 // 紧跟在以 `;` 或 `}` 结尾的代码行下方时，
+         中间必须空一行——把「段落标题式注释」与上一段代码视觉分开。
+         匹配示例（BAD）：
+             int x = 1;
+             // next section
+         应当写为（GOOD）：
+             int x = 1;
+
+             // next section
+         排除：
+         - `///` 三斜线（DocC-style）；
+         - 上一行以 `{`、`(`、`,` 等结尾——块内开场或参数延续不属于「新段落」。
+         由 RegexpMultiline 在 Checker 级跨行扫描；不影响 trailing 注释（同一行的 `; //...`）。 -->
+    <module name="RegexpMultiline">
+        <property name="id" value="comment_blank_line_before"/>
+        <property name="format" value="[;}][ \t]*\r?\n[ \t]*//[^/\r\n]"/>
+        <property name="fileExtensions" value="java"/>
+        <property name="message" value="独占一行的 // 注释紧跟在 ; 或 } 之后时，请在注释行上方空一行。"/>
+    </module>
+
+    <!-- no_back_to_back_javadoc: 两段 Javadoc `*/` 后紧跟 `/**` 视为非法。
+         成因通常是：方法被移动 / 重命名后旧 Javadoc 滞留，或者重复生成；
+         此时只有第二段会绑定到下一个声明，第一段悬空（Javadoc 工具忽略，但读者会困惑）。
+         发现违规时应当：保留更准确的一段 / 把 Javadoc 移到目标声明正上方。 -->
+    <module name="RegexpMultiline">
+        <property name="id" value="no_back_to_back_javadoc"/>
+        <property name="format" value="\*/[ \t]*\r?\n[ \t]*/\*\*"/>
+        <property name="fileExtensions" value="java"/>
+        <property name="message" value="检测到相邻的两段 Javadoc 块——上一段已悬空。请删除冗余的一段，或把 Javadoc 移到目标声明正上方。"/>
+    </module>
+
     <module name="TreeWalker">
+        <module name="SuppressWarningsHolder"/>
+
         <module name="NeedBraces">
             <property name="tokens" value="LITERAL_IF, LITERAL_ELSE, LITERAL_FOR, LITERAL_WHILE, LITERAL_DO"/>
+        </module>
+
+        <!-- BracesPosition: 左大括号放行尾，右大括号另起一行（K&R 衔接除外）。 -->
+        <module name="LeftCurly">
+            <property name="option" value="eol"/>
+        </module>
+        <!-- 多块语句的中间收尾：} 与 else/catch/finally/while-of-do 同行。 -->
+        <module name="RightCurly">
+            <property name="id" value="RightCurlySame"/>
+            <property name="option" value="same"/>
+            <property name="tokens" value="LITERAL_TRY, LITERAL_CATCH, LITERAL_FINALLY, LITERAL_IF, LITERAL_ELSE, LITERAL_DO"/>
+        </module>
+        <!-- 定义体与其他独立块的收尾：} 单独一行（允许单行块如空构造器 `Foo() {}`）。 -->
+        <module name="RightCurly">
+            <property name="id" value="RightCurlyAlone"/>
+            <property name="option" value="alone_or_singleline"/>
+            <property name="tokens" value="METHOD_DEF, CTOR_DEF, CLASS_DEF, INTERFACE_DEF, ENUM_DEF, RECORD_DEF, ANNOTATION_DEF, STATIC_INIT, INSTANCE_INIT, COMPACT_CTOR_DEF, LITERAL_FOR, LITERAL_WHILE, LITERAL_SWITCH"/>
+        </module>
+
+        <!-- Locale: 禁止无参数的 toLowerCase/toUpperCase，避免 Turkish 等 locale 引发的诡异 bug
+             (例如 "I".toLowerCase() 在土耳其 locale 下变 "ı" 而非 "i")。 -->
+        <module name="RegexpSinglelineJava">
+            <property name="id" value="LocaleCaseConversion"/>
+            <property name="format" value="\.(toLowerCase|toUpperCase)\s*\(\s*\)"/>
+            <property name="message" value="字符串大小写转换必须显式传入 Locale.ROOT 或 Locale.ENGLISH。"/>
+            <property name="ignoreComments" value="true"/>
+        </module>
+        <!-- Locale: 禁止 String.format 直接以字符串字面量为第一参数（即未指定 Locale）。
+             允许 String.format(Locale.X, "...") 或 String.format(localeVar, "...")。 -->
+        <module name="RegexpSinglelineJava">
+            <property name="id" value="LocaleStringFormat"/>
+            <property name="format" value="\bString\.format\s*\(\s*&quot;"/>
+            <property name="message" value="String.format 必须显式以 Locale.ROOT 或 Locale.ENGLISH 作为第一参数。"/>
+            <property name="ignoreComments" value="true"/>
+        </module>
+
+        <!-- explicit_charset_*: 字符 ↔ 字节互转 API 必须显式传 Charset（统一 StandardCharsets.UTF_8）。
+             覆盖最常见的「单凭语法即可判定无歧义错误」的几个调用点；语义模糊的（如
+             new String(byte[]) vs new String(char[]) 类型相关、Files.readString 默认即 UTF-8）
+             保留为 CLAUDE.md 中的软约束，靠 review 把关。
+             检测思路：行内出现违规调用，且整行没有任何 Charset/UTF_x/ASCII/ISO_8859 字样
+             即报错——`Charset.forName(...)` 或 `, StandardCharsets.UTF_8)` 都能算作豁免。
+             副作用：调用被换行折断时（new InputStreamReader( 和参数分两行）可能误报，
+             修复方式是把调用合并为单行（与 palantir 默认行为一致）。-->
+        <module name="RegexpSinglelineJava">
+            <property name="id" value="explicit_charset_get_bytes"/>
+            <property name="format" value="\.getBytes\(\s*\)"/>
+            <property name="message" value="字符串转字节数组必须显式传 Charset：用 .getBytes(StandardCharsets.UTF_8) 替代无参 .getBytes()。"/>
+            <property name="ignoreComments" value="true"/>
+        </module>
+        <module name="RegexpSinglelineJava">
+            <property name="id" value="explicit_charset_input_stream_reader"/>
+            <property name="format" value="^(?=(?:(?!StandardCharsets|Charset|UTF_8|UTF_16|US_ASCII|ISO_8859).)*$).*\bnew\s+InputStreamReader\s*\("/>
+            <property name="message" value="new InputStreamReader(...) 必须显式传 Charset（StandardCharsets.UTF_8）。"/>
+            <property name="ignoreComments" value="true"/>
+        </module>
+        <module name="RegexpSinglelineJava">
+            <property name="id" value="explicit_charset_output_stream_writer"/>
+            <property name="format" value="^(?=(?:(?!StandardCharsets|Charset|UTF_8|UTF_16|US_ASCII|ISO_8859).)*$).*\bnew\s+OutputStreamWriter\s*\("/>
+            <property name="message" value="new OutputStreamWriter(...) 必须显式传 Charset（StandardCharsets.UTF_8）。"/>
+            <property name="ignoreComments" value="true"/>
+        </module>
+        <module name="RegexpSinglelineJava">
+            <property name="id" value="explicit_charset_file_reader"/>
+            <property name="format" value="^(?=(?:(?!StandardCharsets|Charset|UTF_8|UTF_16|US_ASCII|ISO_8859).)*$).*\bnew\s+FileReader\s*\("/>
+            <property name="message" value="new FileReader(...) 必须显式传 Charset（StandardCharsets.UTF_8）。"/>
+            <property name="ignoreComments" value="true"/>
+        </module>
+        <module name="RegexpSinglelineJava">
+            <property name="id" value="explicit_charset_file_writer"/>
+            <property name="format" value="^(?=(?:(?!StandardCharsets|Charset|UTF_8|UTF_16|US_ASCII|ISO_8859).)*$).*\bnew\s+FileWriter\s*\("/>
+            <property name="message" value="new FileWriter(...) 必须显式传 Charset（StandardCharsets.UTF_8）。"/>
+            <property name="ignoreComments" value="true"/>
+        </module>
+
+        <!-- no_system_out_err: 禁止把 System.out / System.err 当日志使用。
+             所有「记录日志」诉求一律走 SLF4J（private static final Logger log = LoggerFactory.getLogger(...)）。
+             少数 stdout/stderr 本就是接口的场景——Picocli CLI 用户输出、Print/Rpc 模式的协议输出、
+             TUI 终端渲染、Server 启动 banner——必须在类声明上加
+             @SuppressWarnings("checkstyle:no_system_out_err") 显式声明意图，让 reviewer
+             一眼看出「这是协议/UI 输出，不是日志」。
+             检测：行内出现 System.(out|err).(print|println|printf|format|append|write) 即报错；
+             ignoreComments=true 让 javadoc / 注释里提及 System.out.println(...) 不被误判。 -->
+        <module name="RegexpSinglelineJava">
+            <property name="id" value="no_system_out_err"/>
+            <property name="format" value="\bSystem\.(out|err)\.(print|println|printf|format|append|write)\b"/>
+            <property name="message" value="禁止用 System.out/System.err 打印日志：请改用 SLF4J（private static final Logger log = LoggerFactory.getLogger(...)）。如确属 CLI/协议/UI 输出，请在类上加 @SuppressWarnings(&quot;checkstyle:no_system_out_err&quot;)。"/>
+            <property name="ignoreComments" value="true"/>
+        </module>
+
+        <!-- no_print_stack_trace: 禁止 Throwable.printStackTrace()，必须走 log.error("...", e)，
+             让异常进入 SLF4J / logback / log4j 配置链——能被 appender 收集、能被测试静默、
+             带上下文（logger 名、线程、级别、时间戳）。
+             当前仓内存量已为 0，规则上锁防止回潮。 -->
+        <module name="RegexpSinglelineJava">
+            <property name="id" value="no_print_stack_trace"/>
+            <property name="format" value="\.printStackTrace\s*\("/>
+            <property name="message" value="禁止 Throwable.printStackTrace()：请改用 log.error(&quot;...&quot;, e) 让异常进入日志框架。"/>
+            <property name="ignoreComments" value="true"/>
+        </module>
+
+        <!-- no_chinese_in_log: 日志消息模板字面量禁含 CJK 字符或中日韩全角标点。
+             CampusClaw 不只服务中文区客户——日志消费方包括海外 SRE、ELK/Splunk 全文检索、
+             grep/awk 流水线、CI 截图、客户附带的 support bundle。一旦消息含中文：
+             海外协作者读不懂、charset 误解码即不可恢复乱码、grep / logstash mutate 难以匹配、
+             终端字体缺失或 BiDi 渲染下错位、合规归档非英文不便审计。
+             检测：行内出现 (log|logger|LOGGER|LOG).(trace|debug|info|warn|error)( 且首个 String
+             字面量内含 Unicode 4E00–9FFF（CJK 统一表意） / 3000–303F（CJK 符号标点） /
+             FF00–FFEF（半角与全角形式）任意字符即报错。变量值通过 {} 占位符传入不受限——
+             规则只管模板字面量。ignoreComments=true 让 javadoc 举反例不被误判。
+             当前仓内存量已为 0，规则上锁防止回潮。 -->
+        <module name="RegexpSinglelineJava">
+            <property name="id" value="no_chinese_in_log"/>
+            <property name="format" value="\b(log|logger|LOGGER|LOG)\.(trace|debug|info|warn|error)\s*\(\s*&quot;[^&quot;]*[一-鿿　-〿＀-￯]"/>
+            <property name="message" value="日志消息模板禁含中文字符 / 全角标点：请改写为英文（变量值通过 {} 占位符传入不受限）。"/>
+            <property name="ignoreComments" value="true"/>
+        </module>
+
+        <!-- comment_marker_space: 行首注释符 // 与 /* 之后必须紧跟空白（空格/制表符/换行）
+             或者重复同样的符号（`///` 三斜线、`/**` Javadoc 起始）。
+             正例：`// foo`、`/** ... */`、`/* foo */`、`//` 空注释、`///`、`/**`。
+             反例：`//foo`、`/*foo*/`。
+             理由：注释符紧贴注释内容（`//foo`）极大降低可读性，IDE 折叠/语法着色
+             也会失效。空格之后再写文字是社区惯例（Google / Sun / Oracle 风格指南均要求）。
+             检测范围：仅匹配「行首空白前缀 + 注释符」的情况——避免字符串字面量中
+             `://`、`-//Apple//DTD ...`、shell 脚本里的 `s/foo//` 等被误判。
+             行尾追加的 trailing 注释（如 `int x = 1; //foo`）不在此规则覆盖范围内，
+             以代码评审把关。 -->
+        <module name="RegexpSinglelineJava">
+            <property name="id" value="comment_marker_space"/>
+            <property name="format" value="^[ \t]*(?://[^/ \t]|/\*[^* \t])"/>
+            <property name="message" value="注释符与注释内容之间必须有空格：// 后留空格再写内容（/* 同理）。"/>
+            <property name="ignoreComments" value="false"/>
+        </module>
+
+        <!-- non_constant_field_camel_case: 非常量字段必须 lowerCamelCase。
+             覆盖两类字段：
+             - 实例字段（MemberName）：`private String userName`、`int retryCount` 等
+             - 静态非 final 字段（StaticVariableName）：`private static Logger log` 等
+             不覆盖 `static final` 常量（ConstantName 的领域，通常 UPPER_SNAKE_CASE）。
+             正则 `^[a-z][a-zA-Z0-9]*$`：必须小写字母开头，纯字母数字，禁止下划线/美元号。
+             ❌ 反例：`user_name`、`UserName`、`_count`、`m_value`。
+             ✅ 正例：`userName`、`retryCount`、`isActive`、`log`。 -->
+        <module name="MemberName">
+            <property name="id" value="non_constant_field_camel_case_instance"/>
+            <property name="format" value="^[a-z][a-zA-Z0-9]*$"/>
+        </module>
+        <module name="StaticVariableName">
+            <property name="id" value="non_constant_field_camel_case_static"/>
+            <property name="format" value="^[a-z][a-zA-Z0-9]*$"/>
+        </module>
+        <!-- 局部变量也按 lowerCamelCase（含 final 局部变量）；for 循环单字符变量豁免。 -->
+        <module name="LocalVariableName">
+            <property name="id" value="non_constant_field_camel_case_local"/>
+            <property name="format" value="^[a-z][a-zA-Z0-9]*$"/>
+            <property name="allowOneCharVarInForLoop" value="true"/>
+        </module>
+        <module name="LocalFinalVariableName">
+            <property name="id" value="non_constant_field_camel_case_local_final"/>
+            <property name="format" value="^[a-z][a-zA-Z0-9]*$"/>
+        </module>
+
+        <!-- no_fake_assertion_*: 测试代码必须包含**真实**的断言检查，禁止「虚假断言」。
+             虚假断言指语义上恒成立、无法验证被测代码行为的断言——它在 CI 上永远绿，
+             看似有覆盖率实则什么都没测，是单测里最隐蔽的「无效资产」。本仓的硬约束
+             分三个角度覆盖最常见的虚假写法，存量为 0，规则上锁防止回潮：
+
+             1) no_fake_assertion_constant：断言常量自身。
+                ❌ assertTrue(true)            assertTrue(true, "msg")
+                ❌ assertFalse(false)          assertFalse(false, () -> "msg")
+                ❌ assertNull(null)
+                这些断言不引用任何被测变量，唯一作用是让测试方法「看起来有断言」，
+                典型出现在测试占位、TODO 删除残留、AI 生成代码兜底。
+             2) no_fake_assertion_self_compare：左右两侧完全相同的等值/同一比较。
+                ❌ assertEquals(x, x)          assertSame(Foo.BAR, Foo.BAR)
+                ❌ assertEquals(1, 1)          assertNotEquals("a", "a")
+                ❌ assertEquals("foo bar", "foo bar")
+                同 token 自比恒真（或恒假），等同于没有断言。正则用反向引用 \1 严格匹配
+                「首参与第二参字面相同」，复杂表达式（含括号/换行）不会误报。
+             3) no_fake_assertion_assertj_literal：AssertJ 字面量自我断言。
+                ❌ assertThat(true).isTrue()     assertThat(false).isFalse()
+                ❌ assertThat(null).isNull()     assertThat(true).isNotNull()
+                等同于角度 1，只是换了 fluent 写法。
+
+             检测范围：覆盖 src/main 与 src/test/java——不仅限测试目录，是因为生产代码里
+             写 `assertTrue(true)` 一样是 dead code（且通常是误删条件后的残余）。
+             ignoreComments=true 让 javadoc 举反例不被误判。
+
+             **不覆盖**的情况（靠 PR review 与单测覆盖率把关）：
+             - `@Test` 方法整体没有任何断言（Checkstyle 的 regex 难以稳健地跨越方法体大括号）；
+             - `assertNotNull(someJustConstructedObject)` 这类语义弱断言；
+             - `verify(mock)` 完全没设期望的 mockito 调用——存在但无意义。 -->
+        <module name="RegexpSinglelineJava">
+            <property name="id" value="no_fake_assertion_constant"/>
+            <property name="format" value="\bassert(?:True\s*\(\s*true|False\s*\(\s*false|Null\s*\(\s*null)\s*[,)]"/>
+            <property name="message" value="禁止虚假断言：assertTrue(true)/assertFalse(false)/assertNull(null) 不引用任何被测变量，等同于没有断言。请改为断言被测代码真实产生的值。"/>
+            <property name="ignoreComments" value="true"/>
+        </module>
+        <module name="RegexpSinglelineJava">
+            <property name="id" value="no_fake_assertion_self_compare"/>
+            <property name="format" value="\bassert(?:Equals|Same|NotEquals|NotSame)\s*\(\s*([^,()\n]+?)\s*,\s*\1\s*[,)]"/>
+            <property name="message" value="禁止虚假断言：assertEquals/assertSame 等左右两侧完全相同等同于没有断言。请让一侧是期望值字面量、另一侧是被测代码产生的实际值。"/>
+            <property name="ignoreComments" value="true"/>
+        </module>
+        <module name="RegexpSinglelineJava">
+            <property name="id" value="no_fake_assertion_assertj_literal"/>
+            <property name="format" value="\bassertThat\s*\(\s*(?:true|false|null)\s*\)\s*\.\s*(?:isTrue|isFalse|isNull|isNotNull)"/>
+            <property name="message" value="禁止虚假断言：assertThat(true).isTrue() 这类对字面量的 AssertJ 断言等同于没有断言。请把被测代码产生的实际值传入 assertThat(...)。"/>
+            <property name="ignoreComments" value="true"/>
+        </module>
+
+        <!-- no_empty_catch_block: 禁止用「空 catch 块」静默吞掉异常。
+             空 catch（含 `catch (Exception ignored) {}` 这种形式）让异常在生产环境彻底失声——
+             日志拿不到、监控拿不到、复现也复现不出，故障溯源时只能靠猜。
+             规则放行两种合规写法：
+             1. 把异常交给 SLF4J：`log.debug/warn/error("...", e)`；
+             2. 确实是无害的 fall-through，但**必须**在 catch 体内留一行解释性注释（默认
+                commentFormat=`.*` 接受任意非空注释），让 reviewer 一眼能判断这是「有意忽略」
+                而非「忘了处理」。
+             检测：Checkstyle 内置 EmptyCatchBlock 模块。exceptionVariableName 留默认 `^$`——
+             即便变量起名 `ignored`/`expected` 也照样拒，强制让作者把忽略理由写出来。 -->
+        <module name="EmptyCatchBlock">
+            <property name="id" value="no_empty_catch_block"/>
+            <property name="commentFormat" value=".*"/>
+        </module>
+
+        <!-- huge_cyclomatic_complexity: 圈复杂度超阈值即拒。
+             switchBlockAsSingleDecisionPoint=true: 整段 switch 算 1 个决策点
+             而非每 case 一个，避免合理的查表式 switch 被误判为「复杂」。
+             阈值 20：让大多数协议解析 / mode dispatch 类「单一职责但分支多」的方法
+             不必拆得过碎；真正超过 20 的方法基本都该拆。 -->
+        <module name="CyclomaticComplexity">
+            <property name="id" value="huge_cyclomatic_complexity"/>
+            <property name="max" value="20"/>
+            <property name="switchBlockAsSingleDecisionPoint" value="true"/>
+        </module>
+
+        <!-- huge_method: 方法的非空非（行）注释行数不得超过 50。
+             countEmpty=false: 跳过空行；Checkstyle 同时跳过仅含 `//` 单行注释的行。
+             仍计入：方法签名行、`}`、含代码的行尾注释、块注释 `/* ... */` 内部行。
+             50 行是经验线：超过这条线的方法几乎都在做多件事，拆出子方法可读性
+             明显更好；想保留就用 @SuppressWarnings("checkstyle:huge_method")
+             并在 PR description 里写明保留理由。 -->
+        <module name="MethodLength">
+            <property name="id" value="huge_method"/>
+            <property name="max" value="50"/>
+            <property name="countEmpty" value="false"/>
+            <property name="tokens" value="METHOD_DEF, CTOR_DEF, COMPACT_CTOR_DEF"/>
+        </module>
+
+        <!-- TopClassComment: public 类必须有 Javadoc 描述功能，且包含 @version 标签
+             记录版本+创建日期。@since 由配套 Javadoc 自带，不强制校验（Checkstyle 没有
+             标准 @since 校验项），但脚本会一同补齐。 -->
+        <module name="MissingJavadocType">
+            <property name="id" value="top_class_comment"/>
+            <property name="scope" value="public"/>
+        </module>
+        <module name="JavadocType">
+            <property name="id" value="top_class_comment_version"/>
+            <property name="scope" value="public"/>
+            <property name="versionFormat" value="\[br_eCampusCore [^,\]]+,\s*\d{4}/\d{2}/\d{2}\]"/>
+            <!-- 不强制每个泛型/record 组件都要 @param —— 那超出 TopClassComment 范围。 -->
+            <property name="allowMissingParamTags" value="true"/>
+        </module>
+
+        <!-- JavaComponentOrder: 文件按 copyright / package / import / 类 顺序排列且空行分隔。
+             Java 语法已强制了相对顺序，这里主要约束「空行分隔」。 -->
+        <module name="EmptyLineSeparator">
+            <property name="id" value="java_component_order_blank_line"/>
+            <property name="tokens" value="PACKAGE_DEF, IMPORT, STATIC_IMPORT"/>
+        </module>
+        <!-- 禁止 import xxx.* 与 import static xxx.*。 -->
+        <module name="AvoidStarImport">
+            <property name="id" value="java_component_order_no_star_import"/>
+        </module>
+
+        <!-- UpperEllRule (1/2): long 字面量必须用大写 L 后缀（避免小写 l 与数字 1 混淆）。 -->
+        <module name="UpperEll">
+            <property name="id" value="upper_ell_rule_l_suffix"/>
+        </module>
+        <!-- UpperEllRule (2/2): long 类型变量赋值整数字面量时，字面量必须以 L 结尾。
+             正则匹配 `long <ident> = <digits>(_<digits>)*[ ;,)]`（无 L 后缀）。
+             注意：Long 包装类型的拆箱赋值同样适用。 -->
+        <module name="RegexpSinglelineJava">
+            <property name="id" value="upper_ell_rule_long_assignment"/>
+            <property name="format" value="\b(?:long|Long)\s+\w+\s*=\s*-?\d+(?:_\d+)*\s*[;,)]"/>
+            <property name="message" value="long 类型变量赋值的整数字面量必须以 L 结尾（如 60_000L），避免静默的 int→long 转换。"/>
+            <property name="ignoreComments" value="true"/>
+        </module>
+
+        <!-- no_todo_fixme_in_delivery_code: 正式交付代码不允许 TODO/FIXME 注释。
+             未完成工作改记录到仓内 docs/DEFERRED.md（或 issue tracker），
+             代码里残留 TODO/FIXME 会让客户误解为已知缺陷。
+             正则前置 // 或 /* 或 ` * `（Javadoc 续行），等价于「只检查注释」，
+             避免字符串字面量 "TODO" 或标识符 todoList 误报。 -->
+        <module name="RegexpSinglelineJava">
+            <property name="id" value="no_todo_fixme_in_delivery_code"/>
+            <property name="format" value="(?://|/\*+|\*\s)[^\n]*\b(?:TODO|FIXME)\b"/>
+            <property name="message" value="正式交付代码不应包含 TODO/FIXME 注释。请把未完成工作改记录到 docs/DEFERRED.md。"/>
+            <property name="ignoreComments" value="false"/>
+        </module>
+
+        <!-- one_variable_per_declaration: 每条 declaration 只能声明一个变量。
+             禁止 `int a = 0, b = 0;` / `int m = a.size(), n = b.size();` 这类串联声明：
+             一、diff 时新增/删除某个变量会污染其他变量行；
+             二、IDE 提取/重命名时串联声明常被遗漏；
+             三、类型与多份初始化逻辑挤在一行影响阅读。
+             改成多行 `int a = 0;` `int b = 0;` 即可。
+             同时覆盖类字段与方法局部变量；不限制 `for (int i = 0, j = 0; ...; ...)`
+             这类 for 初始化器（Checkstyle 默认只检查 VARIABLE_DEF 不检查 FOR_INIT）。 -->
+        <module name="MultipleVariableDeclarations">
+            <property name="id" value="one_variable_per_declaration"/>
+        </module>
+
+        <!-- JavaDocFormat: 一旦方法写了 Javadoc，就必须严格合规——@param 覆盖所有参数、
+             非 void 方法必须有 @return、@throws 必须覆盖签名声明的受检异常。
+             仍然**不**强制每个方法都有 Javadoc（无 Javadoc 的方法不报错）。
+             作用域覆盖所有访问级别：public / protected / package / private 都要遵守。 -->
+        <module name="JavadocMethod">
+            <property name="id" value="java_doc_format_consistency"/>
+            <property name="accessModifiers" value="public,protected,package,private"/>
+            <property name="allowMissingParamTags" value="false"/>
+            <property name="allowMissingReturnTag" value="false"/>
+            <property name="validateThrows" value="true"/>
+            <property name="allowedAnnotations" value="Override,Generated,GeneratedBy,Bean"/>
+        </module>
+
+        <!-- AtclauseOrder: Javadoc 块标签必须按 @param → @return → @throws → @see → @since
+             → @serial → @deprecated 顺序排列。理由：标准约定（JLS、Google Java Style、Oracle）
+             一致要求这一顺序，IDE / Javadoc 工具按此渲染，与签名读取顺序一致（先读入参再读出参）。
+             历史上出现过 `@return` 写在 `@param` 之前的批量生成代码，违反阅读直觉。 -->
+        <module name="AtclauseOrder">
+            <property name="id" value="javadoc_clause_order"/>
+            <property name="tagOrder" value="@param, @return, @throws, @exception, @see, @since, @serial, @serialField, @serialData, @deprecated"/>
+            <property name="target" value="CLASS_DEF, INTERFACE_DEF, ENUM_DEF, METHOD_DEF, CTOR_DEF, VARIABLE_DEF"/>
         </module>
     </module>
 </module>

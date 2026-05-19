@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026-2026. All rights reserved.
+ */
+
 package com.huawei.hicampus.mate.matecampusclaw.tui.component;
 
 import java.util.ArrayList;
@@ -25,6 +29,9 @@ import com.huawei.hicampus.mate.matecampusclaw.tui.ansi.AnsiUtils;
  * </ul>
  *
  * @param <T> the item type
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 public class SelectList<T> implements Component, Focusable {
 
@@ -99,18 +106,32 @@ public class SelectList<T> implements Component, Focusable {
     // Public API
     // -------------------------------------------------------------------
 
-    /** Returns the currently selected item, or null if the list is empty. */
+    /**
+     * Returns the currently selected item, or null if the list is empty.
+     *
+     * @return the selected item, or {@code null} when the list is empty
+     */
     public T getSelectedItem() {
-        if (items.isEmpty()) return null;
+        if (items.isEmpty()) {
+            return null;
+        }
         return items.get(selectedIndex);
     }
 
-    /** Returns the current selected index. */
+    /**
+     * Returns the current selected index.
+     *
+     * @return zero-based index of the currently selected item
+     */
     public int getSelectedIndex() {
         return selectedIndex;
     }
 
-    /** Sets the selected index, clamped to valid range. */
+    /**
+     * Sets the selected index, clamped to valid range.
+     *
+     * @param index requested index; clamped into the item range
+     */
     public void setSelectedIndex(int index) {
         if (items.isEmpty()) {
             selectedIndex = 0;
@@ -120,46 +141,78 @@ public class SelectList<T> implements Component, Focusable {
         invalidate();
     }
 
-    /** Replaces the item list and resets the selection to 0. */
+    /**
+     * Replaces the item list and resets the selection to 0.
+     *
+     * @param items new items; {@code null} resets to an empty list
+     */
     public void setItems(List<T> items) {
         this.items = items != null ? new ArrayList<>(items) : new ArrayList<>();
         this.selectedIndex = 0;
         invalidate();
     }
 
-    /** Returns the current item list (unmodifiable view). */
+    /**
+     * Returns the current item list (unmodifiable view).
+     *
+     * @return an unmodifiable view of the current items
+     */
     public List<T> getItems() {
         return Collections.unmodifiableList(items);
     }
 
-    /** Sets the maximum number of visible items. */
+    /**
+     * Sets the maximum number of visible items.
+     *
+     * @param maxHeight cap on visible rows; non-positive values disable the cap
+     */
     public void setMaxHeight(int maxHeight) {
         this.maxHeight = maxHeight > 0 ? maxHeight : Integer.MAX_VALUE;
         invalidate();
     }
 
-    /** Returns the current maxHeight. */
+    /**
+     * Returns the current maxHeight.
+     *
+     * @return current visible-row cap
+     */
     public int getMaxHeight() {
         return maxHeight;
     }
 
-    /** Sets the theme. */
+    /**
+     * Sets the theme.
+     *
+     * @param theme new theme; {@code null} reverts to the default
+     */
     public void setTheme(SelectListTheme theme) {
         this.theme = theme != null ? theme : SelectListTheme.defaultTheme();
         invalidate();
     }
 
-    /** Sets the callback invoked when Enter is pressed. */
+    /**
+     * Sets the callback invoked when Enter is pressed.
+     *
+     * @param onSelect callback receiving the selected item
+     */
     public void setOnSelect(Consumer<T> onSelect) {
         this.onSelect = onSelect;
     }
 
-    /** Sets the callback invoked when Escape or Ctrl+C is pressed. */
+    /**
+     * Sets the callback invoked when Escape or Ctrl+C is pressed.
+     *
+     * @param onCancel callback invoked on cancellation
+     */
     public void setOnCancel(Runnable onCancel) {
         this.onCancel = onCancel;
     }
 
-    /** Sets the callback invoked when the selection changes via navigation. */
+    /**
+     * Sets the callback invoked when the selection changes via navigation.
+     *
+     * @param onSelectionChange callback receiving the newly selected item
+     */
     public void setOnSelectionChange(Consumer<T> onSelectionChange) {
         this.onSelectionChange = onSelectionChange;
     }
@@ -197,7 +250,9 @@ public class SelectList<T> implements Component, Focusable {
 
     @Override
     public void handleInput(String data) {
-        if (items.isEmpty()) return;
+        if (items.isEmpty()) {
+            return;
+        }
 
         // Up arrow — wrap to bottom when at top
         if (KEY_UP.equals(data)) {
@@ -280,12 +335,18 @@ public class SelectList<T> implements Component, Focusable {
 
     /**
      * Calculates the start index of the visible window, centering the selected item.
+     *
+     * @param visibleCount number of rows that fit in the viewport
+     * @return the zero-based first index of the visible window
      */
     private int calculateStartIndex(int visibleCount) {
-        if (visibleCount >= items.size()) return 0;
+        if (visibleCount >= items.size()) {
+            return 0;
+        }
 
         // Try to center the selected item in the visible window
         int start = selectedIndex - visibleCount / 2;
+
         // Clamp to valid range
         start = Math.max(0, Math.min(start, items.size() - visibleCount));
         return start;
@@ -293,6 +354,11 @@ public class SelectList<T> implements Component, Focusable {
 
     /**
      * Renders a single item line with prefix, label, and selection styling.
+     *
+     * @param label item label
+     * @param isSelected whether this row is the selected one
+     * @param width target visual width
+     * @return the styled, width-capped line
      */
     private String renderItemLine(String label, boolean isSelected, int width) {
         String prefix;
@@ -314,11 +380,19 @@ public class SelectList<T> implements Component, Focusable {
 
     /**
      * Truncates a string to fit within maxWidth visible columns.
+     *
+     * @param text source text
+     * @param maxWidth maximum visible columns
+     * @return text truncated to fit, or original if already within the cap
      */
     private static String truncateToWidth(String text, int maxWidth) {
-        if (text == null || text.isEmpty()) return "";
+        if (text == null || text.isEmpty()) {
+            return "";
+        }
         int visWidth = AnsiUtils.visibleWidth(text);
-        if (visWidth <= maxWidth) return text;
+        if (visWidth <= maxWidth) {
+            return text;
+        }
 
         // Truncate by visible characters — strip ANSI, iterate, and rebuild
         // For simplicity, use sliceByColumn which handles ANSI correctly

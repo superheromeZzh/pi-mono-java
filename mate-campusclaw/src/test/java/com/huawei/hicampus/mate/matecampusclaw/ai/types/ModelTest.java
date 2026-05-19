@@ -1,11 +1,15 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026-2026. All rights reserved.
+ */
+
 package com.huawei.hicampus.mate.matecampusclaw.ai.types;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
 import java.util.Map;
@@ -101,8 +105,7 @@ class ModelTest {
 
         @Test
         void deserialization() throws JsonProcessingException {
-            assertEquals(Api.BEDROCK_CONVERSE_STREAM,
-                mapper.readValue("\"bedrock-converse-stream\"", Api.class));
+            assertEquals(Api.BEDROCK_CONVERSE_STREAM, mapper.readValue("\"bedrock-converse-stream\"", Api.class));
         }
     }
 
@@ -164,14 +167,19 @@ class ModelTest {
 
         private Model createSample() {
             return new Model(
-                "claude-opus-4-6", "Claude Opus 4",
-                Api.ANTHROPIC_MESSAGES, Provider.ANTHROPIC,
-                "https://api.anthropic.com", true,
-                List.of(InputModality.TEXT, InputModality.IMAGE),
-                new ModelCost(15.0, 75.0, 1.5, 18.75),
-                200000, 32000, null, null,
-                null
-            );
+                    "claude-opus-4-6",
+                    "Claude Opus 4",
+                    Api.ANTHROPIC_MESSAGES,
+                    Provider.ANTHROPIC,
+                    "https://api.anthropic.com",
+                    true,
+                    List.of(InputModality.TEXT, InputModality.IMAGE),
+                    new ModelCost(15.0, 75.0, 1.5, 18.75),
+                    200000,
+                    32000,
+                    null,
+                    null,
+                    null);
         }
 
         @Test
@@ -191,16 +199,19 @@ class ModelTest {
         @Test
         void creationWithHeaders() {
             var model = new Model(
-                "gpt-4o", "GPT-4o",
-                Api.OPENAI_RESPONSES, Provider.OPENAI,
-                "https://api.openai.com", false,
-                List.of(InputModality.TEXT, InputModality.IMAGE),
-                new ModelCost(2.5, 10.0, 0.0, 0.0),
-                128000, 16384,
-                Map.of("X-Custom", "value"),
-                null,
-                null
-            );
+                    "gpt-4o",
+                    "GPT-4o",
+                    Api.OPENAI_RESPONSES,
+                    Provider.OPENAI,
+                    "https://api.openai.com",
+                    false,
+                    List.of(InputModality.TEXT, InputModality.IMAGE),
+                    new ModelCost(2.5, 10.0, 0.0, 0.0),
+                    128000,
+                    16384,
+                    Map.of("X-Custom", "value"),
+                    null,
+                    null);
             assertNotNull(model.headers());
             assertEquals("value", model.headers().get("X-Custom"));
         }
@@ -225,7 +236,8 @@ class ModelTest {
 
         @Test
         void deserialization() throws JsonProcessingException {
-            var json = """
+            var json =
+                    """
                 {
                   "id": "gpt-4o",
                   "name": "GPT-4o",
@@ -250,7 +262,8 @@ class ModelTest {
 
         @Test
         void deserializationWithoutOptionals() throws JsonProcessingException {
-            var json = """
+            var json =
+                    """
                 {
                   "id": "mistral-large",
                   "name": "Mistral Large",

@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026-2026. All rights reserved.
+ */
+
 package com.huawei.hicampus.mate.matecampusclaw.codingagent.guard;
 
 import java.io.OutputStream;
@@ -14,6 +18,9 @@ import org.slf4j.LoggerFactory;
  * output from tools, libraries, or System.out.println() calls would
  * break the protocol. OutputGuard captures these and redirects them
  * to stderr or a log file.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 public class OutputGuard implements AutoCloseable {
 
@@ -64,6 +71,8 @@ public class OutputGuard implements AutoCloseable {
 
     /**
      * Returns whether the guard is currently active.
+     *
+     * @return the result
      */
     public boolean isActive() {
         return active;
@@ -72,6 +81,8 @@ public class OutputGuard implements AutoCloseable {
     /**
      * Returns the original stdout for protocol output.
      * Use this stream for JSONL protocol messages even when the guard is active.
+     *
+     * @return the result
      */
     public PrintStream getProtocolStream() {
         return originalStdout;

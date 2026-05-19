@@ -1,10 +1,22 @@
-package com.huawei.hicampus.mate.matecampusclaw.assistant.channel;
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026-2026. All rights reserved.
+ */
 
-import org.springframework.stereotype.Service;
+package com.huawei.hicampus.mate.matecampusclaw.assistant.channel;
 
 import java.util.Collection;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.springframework.stereotype.Service;
+
+/**
+ * Thread-safe in-memory registry of active {@link Channel} instances keyed by name.
+ * Also tracks the most recently registered channel so callers without a specific target
+ * can fall back to the latest connection.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/13]
+ * @since [br_eCampusCore 25.1.0_Next]
+ */
 @Service
 public class ChannelRegistry {
 

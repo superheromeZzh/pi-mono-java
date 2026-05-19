@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026-2026. All rights reserved.
+ */
+
 package com.campusclaw.codingagent.skill;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
@@ -37,7 +41,8 @@ class SkillLoaderTest {
 
         @Test
         void parsesValidFrontmatter() {
-            String content = """
+            String content =
+                    """
                     ---
                     name: my-skill
                     description: A test skill
@@ -127,39 +132,33 @@ class SkillLoaderTest {
 
         @Test
         void rejectsUppercaseLetters() {
-            assertThrows(SkillLoadException.class,
-                    () -> SkillLoader.validateName("MySkill", Path.of("/test")));
+            assertThrows(SkillLoadException.class, () -> SkillLoader.validateName("MySkill", Path.of("/test")));
         }
 
         @Test
         void rejectsUnderscores() {
-            assertThrows(SkillLoadException.class,
-                    () -> SkillLoader.validateName("my_skill", Path.of("/test")));
+            assertThrows(SkillLoadException.class, () -> SkillLoader.validateName("my_skill", Path.of("/test")));
         }
 
         @Test
         void rejectsSpaces() {
-            assertThrows(SkillLoadException.class,
-                    () -> SkillLoader.validateName("my skill", Path.of("/test")));
+            assertThrows(SkillLoadException.class, () -> SkillLoader.validateName("my skill", Path.of("/test")));
         }
 
         @Test
         void rejectsEmptyName() {
-            assertThrows(SkillLoadException.class,
-                    () -> SkillLoader.validateName("", Path.of("/test")));
+            assertThrows(SkillLoadException.class, () -> SkillLoader.validateName("", Path.of("/test")));
         }
 
         @Test
         void rejectsNullName() {
-            assertThrows(SkillLoadException.class,
-                    () -> SkillLoader.validateName(null, Path.of("/test")));
+            assertThrows(SkillLoadException.class, () -> SkillLoader.validateName(null, Path.of("/test")));
         }
 
         @Test
         void rejectsNameExceeding64Characters() {
             String longName = "a".repeat(65);
-            assertThrows(SkillLoadException.class,
-                    () -> SkillLoader.validateName(longName, Path.of("/test")));
+            assertThrows(SkillLoadException.class, () -> SkillLoader.validateName(longName, Path.of("/test")));
         }
 
         @Test
@@ -181,7 +180,9 @@ class SkillLoaderTest {
             Path skillDir = tempDir.resolve("my-skill");
             Files.createDirectories(skillDir);
             Path skillFile = skillDir.resolve("SKILL.md");
-            Files.writeString(skillFile, """
+            Files.writeString(
+                    skillFile,
+                    """
                     ---
                     name: my-skill
                     description: A test skill
@@ -204,7 +205,9 @@ class SkillLoaderTest {
             Path skillDir = tempDir.resolve("commit");
             Files.createDirectories(skillDir);
             Path skillFile = skillDir.resolve("SKILL.md");
-            Files.writeString(skillFile, """
+            Files.writeString(
+                    skillFile,
+                    """
                     ---
                     description: Create commits
                     ---
@@ -221,7 +224,9 @@ class SkillLoaderTest {
             Path skillDir = tempDir.resolve("hidden-skill");
             Files.createDirectories(skillDir);
             Path skillFile = skillDir.resolve("SKILL.md");
-            Files.writeString(skillFile, """
+            Files.writeString(
+                    skillFile,
+                    """
                     ---
                     name: hidden-skill
                     description: A hidden skill
@@ -240,15 +245,16 @@ class SkillLoaderTest {
             Path skillDir = tempDir.resolve("no-desc");
             Files.createDirectories(skillDir);
             Path skillFile = skillDir.resolve("SKILL.md");
-            Files.writeString(skillFile, """
+            Files.writeString(
+                    skillFile,
+                    """
                     ---
                     name: no-desc
                     ---
                     Body without description.
                     """);
 
-            assertThrows(SkillLoadException.class,
-                    () -> loader.loadFromFile(skillFile, "project"));
+            assertThrows(SkillLoadException.class, () -> loader.loadFromFile(skillFile, "project"));
         }
 
         @Test
@@ -256,11 +262,9 @@ class SkillLoaderTest {
             Path skillDir = tempDir.resolve("long-desc");
             Files.createDirectories(skillDir);
             Path skillFile = skillDir.resolve("SKILL.md");
-            Files.writeString(skillFile, "---\nname: long-desc\ndescription: " +
-                    "x".repeat(1025) + "\n---\nBody.");
+            Files.writeString(skillFile, "---\nname: long-desc\ndescription: " + "x".repeat(1025) + "\n---\nBody.");
 
-            assertThrows(SkillLoadException.class,
-                    () -> loader.loadFromFile(skillFile, "project"));
+            assertThrows(SkillLoadException.class, () -> loader.loadFromFile(skillFile, "project"));
         }
 
         @Test
@@ -268,20 +272,22 @@ class SkillLoaderTest {
             Path skillDir = tempDir.resolve("INVALID");
             Files.createDirectories(skillDir);
             Path skillFile = skillDir.resolve("SKILL.md");
-            Files.writeString(skillFile, """
+            Files.writeString(
+                    skillFile,
+                    """
                     ---
                     description: Has invalid name from directory
                     ---
                     Body.
                     """);
 
-            assertThrows(SkillLoadException.class,
-                    () -> loader.loadFromFile(skillFile, "project"));
+            assertThrows(SkillLoadException.class, () -> loader.loadFromFile(skillFile, "project"));
         }
 
         @Test
         void throwsForNonexistentFile() {
-            assertThrows(SkillLoadException.class,
+            assertThrows(
+                    SkillLoadException.class,
                     () -> loader.loadFromFile(tempDir.resolve("nonexistent/SKILL.md"), "project"));
         }
     }
@@ -297,7 +303,9 @@ class SkillLoaderTest {
         void findsSkillInDirectSubdirectory() throws IOException {
             Path skillDir = tempDir.resolve("my-skill");
             Files.createDirectories(skillDir);
-            Files.writeString(skillDir.resolve("SKILL.md"), """
+            Files.writeString(
+                    skillDir.resolve("SKILL.md"),
+                    """
                     ---
                     name: my-skill
                     description: Test skill
@@ -316,13 +324,16 @@ class SkillLoaderTest {
             for (String name : List.of("skill-a", "skill-b", "skill-c")) {
                 Path dir = tempDir.resolve(name);
                 Files.createDirectories(dir);
-                Files.writeString(dir.resolve("SKILL.md"), """
+                Files.writeString(
+                        dir.resolve("SKILL.md"),
+                        """
                         ---
                         name: %s
                         description: Skill %s
                         ---
                         Body.
-                        """.formatted(name, name));
+                        """
+                                .formatted(name, name));
             }
 
             List<Skill> skills = loader.loadFromDirectory(tempDir, "user");
@@ -334,7 +345,9 @@ class SkillLoaderTest {
         void findsSkillInNestedDirectory() throws IOException {
             Path nested = tempDir.resolve("group").resolve("my-skill");
             Files.createDirectories(nested);
-            Files.writeString(nested.resolve("SKILL.md"), """
+            Files.writeString(
+                    nested.resolve("SKILL.md"),
+                    """
                     ---
                     name: my-skill
                     description: Nested skill
@@ -353,7 +366,9 @@ class SkillLoaderTest {
             // my-skill has SKILL.md — it's a skill root
             Path skillDir = tempDir.resolve("my-skill");
             Files.createDirectories(skillDir);
-            Files.writeString(skillDir.resolve("SKILL.md"), """
+            Files.writeString(
+                    skillDir.resolve("SKILL.md"),
+                    """
                     ---
                     name: my-skill
                     description: Root skill
@@ -364,7 +379,9 @@ class SkillLoaderTest {
             // Nested child should be ignored
             Path childDir = skillDir.resolve("child-skill");
             Files.createDirectories(childDir);
-            Files.writeString(childDir.resolve("SKILL.md"), """
+            Files.writeString(
+                    childDir.resolve("SKILL.md"),
+                    """
                     ---
                     name: child-skill
                     description: Should be ignored
@@ -395,7 +412,9 @@ class SkillLoaderTest {
             // Valid skill
             Path validDir = tempDir.resolve("valid-skill");
             Files.createDirectories(validDir);
-            Files.writeString(validDir.resolve("SKILL.md"), """
+            Files.writeString(
+                    validDir.resolve("SKILL.md"),
+                    """
                     ---
                     name: valid-skill
                     description: A valid skill
@@ -406,7 +425,9 @@ class SkillLoaderTest {
             // Invalid skill (missing description)
             Path invalidDir = tempDir.resolve("invalid-skill");
             Files.createDirectories(invalidDir);
-            Files.writeString(invalidDir.resolve("SKILL.md"), """
+            Files.writeString(
+                    invalidDir.resolve("SKILL.md"),
+                    """
                     ---
                     name: invalid-skill
                     ---
@@ -423,7 +444,9 @@ class SkillLoaderTest {
         void skipsDotDirectories() throws IOException {
             Path dotDir = tempDir.resolve(".hidden");
             Files.createDirectories(dotDir);
-            Files.writeString(dotDir.resolve("SKILL.md"), """
+            Files.writeString(
+                    dotDir.resolve("SKILL.md"),
+                    """
                     ---
                     name: hidden
                     description: Hidden skill

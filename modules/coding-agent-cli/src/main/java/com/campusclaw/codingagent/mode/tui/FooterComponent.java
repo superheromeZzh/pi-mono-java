@@ -1,8 +1,13 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026-2026. All rights reserved.
+ */
+
 package com.campusclaw.codingagent.mode.tui;
 
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 import com.campusclaw.codingagent.util.GitUtils;
 import com.campusclaw.tui.Component;
@@ -13,6 +18,9 @@ import com.campusclaw.tui.Component;
  *   ~/path (branch)
  *   ↑1.5k ↓200 R832 $0.001 0.7%/200k (auto)           (zai) glm-5 • medium
  * </pre>
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 public class FooterComponent implements Component {
 
@@ -39,7 +47,7 @@ public class FooterComponent implements Component {
     // Git branch cache
     private String cachedBranch;
     private long branchCacheTime;
-    private static final long BRANCH_CACHE_TTL_MS = 10_000; // 10s
+    private static final long BRANCH_CACHE_TTL_MS = 10_000L; // 10s
 
     public void setModel(String provider, String model, int contextWindow, boolean supportsReasoning) {
         this.providerName = provider != null ? provider : "";
@@ -54,6 +62,7 @@ public class FooterComponent implements Component {
 
     public void setCwd(String cwd) {
         this.cwd = cwd != null ? cwd : "";
+
         // Invalidate branch cache on cwd change
         this.cachedBranch = null;
         this.branchCacheTime = 0;
@@ -84,11 +93,13 @@ public class FooterComponent implements Component {
     }
 
     @Override
-    public void invalidate() { }
+    public void invalidate() {}
 
     @Override
     public List<String> render(int width) {
-        if (width <= 0) { return List.of(); }
+        if (width <= 0) {
+            return List.of();
+        }
 
         var lines = new ArrayList<String>();
 
@@ -133,53 +144,70 @@ public class FooterComponent implements Component {
 
     private String buildLeft() {
         var sb = new StringBuilder();
-        if (inputTokens > 0) {
-            sb.append("↑").append(formatTokens(inputTokens));
-        }
-        if (outputTokens > 0) {
-            if (sb.length() > 0) { sb.append(" "); }
-            sb.append("↓").append(formatTokens(outputTokens));
-        }
-        if (cacheRead > 0) {
-            if (sb.length() > 0) { sb.append(" "); }
-            sb.append("R").append(formatTokens(cacheRead));
-        }
-        if (cacheWrite > 0) {
-            if (sb.length() > 0) { sb.append(" "); }
-            sb.append("W").append(formatTokens(cacheWrite));
-        }
+        appendTokenIfPositive(sb, "↑", inputTokens);
+        appendTokenIfPositive(sb, "↓", outputTokens);
+        appendTokenIfPositive(sb, "R", cacheRead);
+        appendTokenIfPositive(sb, "W", cacheWrite);
         if (totalCost > 0) {
-            if (sb.length() > 0) { sb.append(" "); }
-            sb.append("$").append(String.format("%.3f", totalCost));
+            appendSeparator(sb);
+            sb.append("$").append(String.format(Locale.ROOT, "%.3f", totalCost));
         }
         if (contextWindow > 0) {
-            int totalIn = inputTokens + cacheRead;
-            double pct = totalIn * 100.0 / contextWindow;
-            // Color-code context percentage
-            String pctStr = String.format("%.1f%%", pct);
-            if (sb.length() > 0) { sb.append(" "); }
-            if (pct > 90) {
-                sb.append(ANSI_RESET).append(ANSI_RED).append(pctStr).append(ANSI_RESET).append(ANSI_DIM);
-            } else if (pct > 70) {
-                sb.append(ANSI_RESET).append(ANSI_YELLOW).append(pctStr).append(ANSI_RESET).append(ANSI_DIM);
-            } else {
-                sb.append(pctStr);
-            }
-            sb.append("/").append(formatTokens(contextWindow));
-            if (autoCompactEnabled) {
-                sb.append(" (auto)");
-            }
+            appendContextUsage(sb);
         }
         return sb.toString();
     }
 
+    private void appendTokenIfPositive(StringBuilder sb, String prefix, int value) {
+        if (value <= 0) {
+            return;
+        }
+        appendSeparator(sb);
+        sb.append(prefix).append(formatTokens(value));
+    }
+
+    private static void appendSeparator(StringBuilder sb) {
+        if (sb.length() > 0) {
+            sb.append(" ");
+        }
+    }
+
+    private void appendContextUsage(StringBuilder sb) {
+        int totalIn = inputTokens + cacheRead;
+        double pct = totalIn * 100.0 / contextWindow;
+        String pctStr = String.format(Locale.ROOT, "%.1f%%", pct);
+        appendSeparator(sb);
+        if (pct > 90) {
+            sb.append(ANSI_RESET)
+                    .append(ANSI_RED)
+                    .append(pctStr)
+                    .append(ANSI_RESET)
+                    .append(ANSI_DIM);
+        } else if (pct > 70) {
+            sb.append(ANSI_RESET)
+                    .append(ANSI_YELLOW)
+                    .append(pctStr)
+                    .append(ANSI_RESET)
+                    .append(ANSI_DIM);
+        } else {
+            sb.append(pctStr);
+        }
+        sb.append("/").append(formatTokens(contextWindow));
+        if (autoCompactEnabled) {
+            sb.append(" (auto)");
+        }
+    }
+
     private String buildRight() {
-        if (modelName.isEmpty()) { return ""; }
+        if (modelName.isEmpty()) {
+            return "";
+        }
         var sb = new StringBuilder();
         if (!providerName.isEmpty()) {
             sb.append("(").append(providerName).append(") ");
         }
         sb.append(modelName);
+
         // Show thinking level only if model supports reasoning (matching campusclaw behavior)
         if (modelSupportsReasoning) {
             String level = thinkingLevel.isEmpty() ? "off" : thinkingLevel;
@@ -205,10 +233,18 @@ public class FooterComponent implements Component {
     }
 
     public static String formatTokens(int tokens) {
-        if (tokens >= 10_000_000) { return String.format("%.0fM", tokens / 1_000_000.0); }
-        if (tokens >= 1_000_000) { return String.format("%.1fM", tokens / 1_000_000.0); }
-        if (tokens >= 10_000) { return String.format("%.0fk", tokens / 1000.0); }
-        if (tokens >= 1000) { return String.format("%.1fk", tokens / 1000.0); }
+        if (tokens >= 10_000_000) {
+            return String.format(Locale.ROOT, "%.0fM", tokens / 1_000_000.0);
+        }
+        if (tokens >= 1_000_000) {
+            return String.format(Locale.ROOT, "%.1fM", tokens / 1_000_000.0);
+        }
+        if (tokens >= 10_000) {
+            return String.format(Locale.ROOT, "%.0fk", tokens / 1000.0);
+        }
+        if (tokens >= 1000) {
+            return String.format(Locale.ROOT, "%.1fk", tokens / 1000.0);
+        }
         return String.valueOf(tokens);
     }
 
@@ -218,7 +254,9 @@ public class FooterComponent implements Component {
 
     private static String truncate(String s, int maxLen) {
         String stripped = stripAnsi(s);
-        if (stripped.length() <= maxLen) { return s; }
+        if (stripped.length() <= maxLen) {
+            return s;
+        }
         return s.substring(0, Math.max(0, maxLen - 3)) + "...";
     }
 }

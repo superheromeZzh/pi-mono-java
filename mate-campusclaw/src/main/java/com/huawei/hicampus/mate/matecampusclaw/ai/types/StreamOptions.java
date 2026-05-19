@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026-2026. All rights reserved.
+ */
+
 package com.huawei.hicampus.mate.matecampusclaw.ai.types;
 
 import java.util.Map;
@@ -20,43 +24,58 @@ import jakarta.annotation.Nullable;
  * @param headers         additional HTTP headers for the request
  * @param maxRetryDelayMs maximum retry delay in milliseconds
  * @param metadata        arbitrary metadata to attach to the request
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 public record StreamOptions(
-    @JsonProperty("temperature") @Nullable Double temperature,
-    @JsonProperty("maxTokens") @Nullable Integer maxTokens,
-    @JsonProperty("apiKey") @Nullable String apiKey,
-    @JsonProperty("transport") @Nullable Transport transport,
-    @JsonProperty("cacheRetention") @Nullable CacheRetention cacheRetention,
-    @JsonProperty("sessionId") @Nullable String sessionId,
-    @JsonProperty("headers") @Nullable Map<String, String> headers,
-    @JsonProperty("maxRetryDelayMs") @Nullable Long maxRetryDelayMs,
-    @JsonProperty("metadata") @Nullable Map<String, Object> metadata
-) {
+        @JsonProperty("temperature") @Nullable Double temperature,
+        @JsonProperty("maxTokens") @Nullable Integer maxTokens,
+        @JsonProperty("apiKey") @Nullable String apiKey,
+        @JsonProperty("transport") @Nullable Transport transport,
+        @JsonProperty("cacheRetention") @Nullable CacheRetention cacheRetention,
+        @JsonProperty("sessionId") @Nullable String sessionId,
+        @JsonProperty("headers") @Nullable Map<String, String> headers,
+        @JsonProperty("maxRetryDelayMs") @Nullable Long maxRetryDelayMs,
+        @JsonProperty("metadata") @Nullable Map<String, Object> metadata) {
 
-    /** Returns a StreamOptions with all fields null. */
+    /**
+     * Returns a {@link StreamOptions} with every field set to {@code null}.
+     *
+     * @return a fully-null {@link StreamOptions} instance
+     */
     public static StreamOptions empty() {
         return new StreamOptions(null, null, null, null, null, null, null, null, null);
     }
 
-    /** Returns a new {@link Builder} initialized with default (null) values. */
+    /**
+     * Returns a new {@link Builder} initialized with default (null) values.
+     *
+     * @return a fresh empty {@link Builder}
+     */
     public static Builder builder() {
         return new Builder();
     }
 
-    /** Returns a new {@link Builder} pre-populated from this instance. */
+    /**
+     * Returns a new {@link Builder} pre-populated from this instance.
+     *
+     * @return a {@link Builder} pre-filled with this record's field values
+     */
     public Builder toBuilder() {
         return new Builder()
-            .temperature(temperature)
-            .maxTokens(maxTokens)
-            .apiKey(apiKey)
-            .transport(transport)
-            .cacheRetention(cacheRetention)
-            .sessionId(sessionId)
-            .headers(headers)
-            .maxRetryDelayMs(maxRetryDelayMs)
-            .metadata(metadata);
+                .temperature(temperature)
+                .maxTokens(maxTokens)
+                .apiKey(apiKey)
+                .transport(transport)
+                .cacheRetention(cacheRetention)
+                .sessionId(sessionId)
+                .headers(headers)
+                .maxRetryDelayMs(maxRetryDelayMs)
+                .metadata(metadata);
     }
 
+    @SuppressWarnings("checkstyle:top_class_comment")
     public static final class Builder {
         private Double temperature;
         private Integer maxTokens;
@@ -117,9 +136,15 @@ public record StreamOptions(
 
         public StreamOptions build() {
             return new StreamOptions(
-                temperature, maxTokens, apiKey, transport, cacheRetention,
-                sessionId, headers, maxRetryDelayMs, metadata
-            );
+                    temperature,
+                    maxTokens,
+                    apiKey,
+                    transport,
+                    cacheRetention,
+                    sessionId,
+                    headers,
+                    maxRetryDelayMs,
+                    metadata);
         }
     }
 }

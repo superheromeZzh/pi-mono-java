@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026-2026. All rights reserved.
+ */
+
 package com.campusclaw.ai.provider;
 
 import java.util.ArrayList;
@@ -24,6 +28,9 @@ import org.springframework.stereotype.Service;
  * dynamic extension and bulk unregistration.
  *
  * <p>Thread-safe: all mutation methods synchronize on the internal lock.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 @Service
 public class ApiProviderRegistry {
@@ -34,10 +41,14 @@ public class ApiProviderRegistry {
 
     private final Object lock = new Object();
 
-    /** Primary index: Api -> provider (last registration wins). */
+    /**
+     * Primary index: Api -> provider (last registration wins).
+     */
     private final Map<Api, ApiProvider> providersByApi = new ConcurrentHashMap<>();
 
-    /** Tracks which sourceId registered which providers, for bulk unregister. */
+    /**
+     * Tracks which sourceId registered which providers, for bulk unregister.
+     */
     private final Map<String, List<ApiProvider>> providersBySource = new ConcurrentHashMap<>();
 
     /**
@@ -52,9 +63,10 @@ public class ApiProviderRegistry {
             for (var provider : springProviders) {
                 doRegister(provider, SPRING_SOURCE_ID);
             }
-            log.info("Registered {} Spring-managed ApiProvider(s): {}",
-                springProviders.size(),
-                springProviders.stream().map(p -> p.getApi().value()).toList());
+            log.info(
+                    "Registered {} Spring-managed ApiProvider(s): {}",
+                    springProviders.size(),
+                    springProviders.stream().map(p -> p.getApi().value()).toList());
         }
     }
 
@@ -93,7 +105,10 @@ public class ApiProviderRegistry {
         Objects.requireNonNull(provider, "provider must not be null");
         Objects.requireNonNull(sourceId, "sourceId must not be null");
         doRegister(provider, sourceId);
-        log.debug("Registered provider for api={} from source={}", provider.getApi().value(), sourceId);
+        log.debug(
+                "Registered provider for api={} from source={}",
+                provider.getApi().value(),
+                sourceId);
     }
 
     /**

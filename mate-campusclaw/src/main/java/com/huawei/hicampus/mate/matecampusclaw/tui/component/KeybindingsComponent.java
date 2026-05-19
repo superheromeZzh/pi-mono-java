@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026-2026. All rights reserved.
+ */
+
 package com.huawei.hicampus.mate.matecampusclaw.tui.component;
 
 import java.util.ArrayList;
@@ -15,14 +19,16 @@ import com.huawei.hicampus.mate.matecampusclaw.tui.Component;
  * When keybindings don't fit on a single line, they wrap to additional lines.
  * <p>
  * Example output: {@code  Ctrl+C Exit  |  Tab Complete  |  Enter Submit}
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 public class KeybindingsComponent implements Component {
 
     /**
      * A single keybinding entry: a key combination and its description.
      */
-    public record Keybinding(String key, String description) {
-    }
+    public record Keybinding(String key, String description) {}
 
     private List<Keybinding> keybindings;
     private String separator;
@@ -44,13 +50,16 @@ public class KeybindingsComponent implements Component {
 
     /**
      * Creates a KeybindingsComponent with the given keybindings and default styling.
+     *
+     * @param keybindings initial bindings to display; may be {@code null}
      */
     public KeybindingsComponent(List<Keybinding> keybindings) {
         this.keybindings = keybindings != null ? new ArrayList<>(keybindings) : new ArrayList<>();
         this.separator = "  |  ";
+
         // Default styling: bold keys, dim descriptions, dim separator
-        this.keyStyleFn = text -> "\033[1m" + text + "\033[0m";       // bold
-        this.descStyleFn = text -> "\033[2m" + text + "\033[0m";      // dim
+        this.keyStyleFn = text -> "\033[1m" + text + "\033[0m"; // bold
+        this.descStyleFn = text -> "\033[2m" + text + "\033[0m"; // dim
         this.separatorStyleFn = text -> "\033[2m" + text + "\033[0m"; // dim
     }
 
@@ -101,9 +110,7 @@ public class KeybindingsComponent implements Component {
     @Override
     public List<String> render(int width) {
         // Cache hit
-        if (cachedLines != null
-                && cachedWidth == width
-                && keybindings.equals(cachedKeybindings)) {
+        if (cachedLines != null && cachedWidth == width && keybindings.equals(cachedKeybindings)) {
             return cachedLines;
         }
 
@@ -133,6 +140,7 @@ public class KeybindingsComponent implements Component {
             String styledDesc = descStyleFn != null ? descStyleFn.apply(kb.description()) : kb.description();
             String segment = styledKey + " " + styledDesc;
             segments.add(segment);
+
             // Visible width: key + space + description
             segmentWidths.add(kb.key().length() + 1 + kb.description().length());
         }

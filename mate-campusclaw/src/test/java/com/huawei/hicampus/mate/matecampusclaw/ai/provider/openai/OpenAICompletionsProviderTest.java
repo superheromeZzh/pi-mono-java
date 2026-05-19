@@ -1,15 +1,37 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026-2026. All rights reserved.
+ */
+
 package com.huawei.hicampus.mate.matecampusclaw.ai.provider.openai;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
 import java.util.Map;
 
 import com.huawei.hicampus.mate.matecampusclaw.ai.stream.AssistantMessageEventStream;
-import com.huawei.hicampus.mate.matecampusclaw.ai.types.*;
+import com.huawei.hicampus.mate.matecampusclaw.ai.types.Api;
+import com.huawei.hicampus.mate.matecampusclaw.ai.types.AssistantMessage;
+import com.huawei.hicampus.mate.matecampusclaw.ai.types.Context;
+import com.huawei.hicampus.mate.matecampusclaw.ai.types.Cost;
+import com.huawei.hicampus.mate.matecampusclaw.ai.types.InputModality;
+import com.huawei.hicampus.mate.matecampusclaw.ai.types.Message;
+import com.huawei.hicampus.mate.matecampusclaw.ai.types.Model;
+import com.huawei.hicampus.mate.matecampusclaw.ai.types.ModelCost;
+import com.huawei.hicampus.mate.matecampusclaw.ai.types.Provider;
+import com.huawei.hicampus.mate.matecampusclaw.ai.types.SimpleStreamOptions;
+import com.huawei.hicampus.mate.matecampusclaw.ai.types.StopReason;
+import com.huawei.hicampus.mate.matecampusclaw.ai.types.StreamOptions;
+import com.huawei.hicampus.mate.matecampusclaw.ai.types.TextContent;
+import com.huawei.hicampus.mate.matecampusclaw.ai.types.ThinkingContent;
+import com.huawei.hicampus.mate.matecampusclaw.ai.types.Tool;
+import com.huawei.hicampus.mate.matecampusclaw.ai.types.ToolCall;
+import com.huawei.hicampus.mate.matecampusclaw.ai.types.ToolResultMessage;
+import com.huawei.hicampus.mate.matecampusclaw.ai.types.Usage;
+import com.huawei.hicampus.mate.matecampusclaw.ai.types.UserMessage;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
@@ -20,18 +42,24 @@ class OpenAICompletionsProviderTest {
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
-    OpenAICompletionsProvider provider = new OpenAICompletionsProvider();
+    OpenAICompletionsProvider provider = new OpenAICompletionsProvider(
+            new com.huawei.hicampus.mate.matecampusclaw.ai.env.EnvProviderConfigResolver(new com.huawei.hicampus.mate.matecampusclaw.ai.env.EnvApiKeyResolver()));
 
     private Model testModel() {
         return new Model(
-                "gpt-4o", "GPT-4o",
-                Api.OPENAI_COMPLETIONS, Provider.OPENAI,
-                "https://api.openai.com/v1", false,
+                "gpt-4o",
+                "GPT-4o",
+                Api.OPENAI_COMPLETIONS,
+                Provider.OPENAI,
+                "https://api.openai.com/v1",
+                false,
                 List.of(InputModality.TEXT, InputModality.IMAGE),
                 new ModelCost(2.5, 10.0, 1.25, 0.0),
-                128000, 16384, null, null,
-                null
-        );
+                128000,
+                16384,
+                null,
+                null,
+                null);
     }
 
     // -------------------------------------------------------------------
@@ -67,8 +95,14 @@ class OpenAICompletionsProviderTest {
         void convertsAssistantMessage() {
             var am = new AssistantMessage(
                     List.of(new TextContent("Hi there", null)),
-                    "openai-completions", "openai", "gpt-4o",
-                    null, Usage.empty(), StopReason.STOP, null, 1L);
+                    "openai-completions",
+                    "openai",
+                    "gpt-4o",
+                    null,
+                    Usage.empty(),
+                    StopReason.STOP,
+                    null,
+                    1L);
             var result = OpenAICompletionsProvider.convertMessages(List.of(am));
 
             assertEquals(1, result.size());
@@ -80,11 +114,15 @@ class OpenAICompletionsProviderTest {
             var am = new AssistantMessage(
                     List.of(
                             new TextContent("Let me check", null),
-                            new ToolCall("call_123", "bash",
-                                    Map.of("command", "ls"), null)
-                    ),
-                    "openai-completions", "openai", "gpt-4o",
-                    null, Usage.empty(), StopReason.TOOL_USE, null, 1L);
+                            new ToolCall("call_123", "bash", Map.of("command", "ls"), null)),
+                    "openai-completions",
+                    "openai",
+                    "gpt-4o",
+                    null,
+                    Usage.empty(),
+                    StopReason.TOOL_USE,
+                    null,
+                    1L);
             var result = OpenAICompletionsProvider.convertMessages(List.of(am));
 
             assertEquals(1, result.size());
@@ -96,8 +134,8 @@ class OpenAICompletionsProviderTest {
 
         @Test
         void convertsToolResultMessage() {
-            var tr = new ToolResultMessage("call_123", "bash",
-                    List.of(new TextContent("file1.txt\nfile2.txt")), null, false, 1L);
+            var tr = new ToolResultMessage(
+                    "call_123", "bash", List.of(new TextContent("file1.txt\nfile2.txt")), null, false, 1L);
             var result = OpenAICompletionsProvider.convertMessages(List.of(tr));
 
             assertEquals(1, result.size());
@@ -110,10 +148,15 @@ class OpenAICompletionsProviderTest {
                     new UserMessage("Hello", 1L),
                     new AssistantMessage(
                             List.of(new TextContent("Hi")),
-                            "openai-completions", "openai", "gpt-4o",
-                            null, Usage.empty(), StopReason.STOP, null, 2L),
-                    new UserMessage("How?", 3L)
-            );
+                            "openai-completions",
+                            "openai",
+                            "gpt-4o",
+                            null,
+                            Usage.empty(),
+                            StopReason.STOP,
+                            null,
+                            2L),
+                    new UserMessage("How?", 3L));
             var result = OpenAICompletionsProvider.convertMessages(messages);
 
             assertEquals(3, result.size());
@@ -131,16 +174,20 @@ class OpenAICompletionsProviderTest {
         @Test
         void dropsThinkingContentFromAssistantMessage() {
             var am = new AssistantMessage(
-                    List.of(
-                            new ThinkingContent("thinking...", null, false),
-                            new TextContent("Answer", null)
-                    ),
-                    "openai-completions", "openai", "gpt-4o",
-                    null, Usage.empty(), StopReason.STOP, null, 1L);
+                    List.of(new ThinkingContent("thinking...", null, false), new TextContent("Answer", null)),
+                    "openai-completions",
+                    "openai",
+                    "gpt-4o",
+                    null,
+                    Usage.empty(),
+                    StopReason.STOP,
+                    null,
+                    1L);
             var result = OpenAICompletionsProvider.convertMessages(List.of(am));
 
             assertEquals(1, result.size());
             assertTrue(result.get(0).isAssistant());
+
             // ThinkingContent is silently dropped; only text sent as string
             var assistantParam = result.get(0).asAssistant();
             assertTrue(assistantParam.content().isPresent());
@@ -172,10 +219,7 @@ class OpenAICompletionsProviderTest {
         @Test
         void convertsMultipleTools() {
             ObjectNode params = MAPPER.createObjectNode();
-            var tools = List.of(
-                    new Tool("read", "Read file", params),
-                    new Tool("write", "Write file", params)
-            );
+            var tools = List.of(new Tool("read", "Read file", params), new Tool("write", "Write file", params));
             var result = OpenAICompletionsProvider.convertTools(tools);
 
             assertEquals(2, result.size());
@@ -197,50 +241,42 @@ class OpenAICompletionsProviderTest {
 
         @Test
         void mapsStopToStop() {
-            assertEquals(StopReason.STOP,
-                    OpenAICompletionsProvider.mapFinishReason("stop"));
+            assertEquals(StopReason.STOP, OpenAICompletionsProvider.mapFinishReason("stop"));
         }
 
         @Test
         void mapsEndToStop() {
-            assertEquals(StopReason.STOP,
-                    OpenAICompletionsProvider.mapFinishReason("end"));
+            assertEquals(StopReason.STOP, OpenAICompletionsProvider.mapFinishReason("end"));
         }
 
         @Test
         void mapsLengthToLength() {
-            assertEquals(StopReason.LENGTH,
-                    OpenAICompletionsProvider.mapFinishReason("length"));
+            assertEquals(StopReason.LENGTH, OpenAICompletionsProvider.mapFinishReason("length"));
         }
 
         @Test
         void mapsToolCallsToToolUse() {
-            assertEquals(StopReason.TOOL_USE,
-                    OpenAICompletionsProvider.mapFinishReason("tool_calls"));
+            assertEquals(StopReason.TOOL_USE, OpenAICompletionsProvider.mapFinishReason("tool_calls"));
         }
 
         @Test
         void mapsFunctionCallToToolUse() {
-            assertEquals(StopReason.TOOL_USE,
-                    OpenAICompletionsProvider.mapFinishReason("function_call"));
+            assertEquals(StopReason.TOOL_USE, OpenAICompletionsProvider.mapFinishReason("function_call"));
         }
 
         @Test
         void mapsContentFilterToError() {
-            assertEquals(StopReason.ERROR,
-                    OpenAICompletionsProvider.mapFinishReason("content_filter"));
+            assertEquals(StopReason.ERROR, OpenAICompletionsProvider.mapFinishReason("content_filter"));
         }
 
         @Test
         void mapsNullToStop() {
-            assertEquals(StopReason.STOP,
-                    OpenAICompletionsProvider.mapFinishReason(null));
+            assertEquals(StopReason.STOP, OpenAICompletionsProvider.mapFinishReason(null));
         }
 
         @Test
         void mapsUnknownToStop() {
-            assertEquals(StopReason.STOP,
-                    OpenAICompletionsProvider.mapFinishReason("something_else"));
+            assertEquals(StopReason.STOP, OpenAICompletionsProvider.mapFinishReason("something_else"));
         }
     }
 
@@ -271,8 +307,7 @@ class OpenAICompletionsProviderTest {
 
             Cost cost = OpenAICompletionsProvider.computeCost(modelCost, usage);
 
-            assertEquals(cost.input() + cost.output() + cost.cacheRead() + cost.cacheWrite(),
-                    cost.total(), 0.0001);
+            assertEquals(cost.input() + cost.output() + cost.cacheRead() + cost.cacheWrite(), cost.total(), 0.0001);
         }
 
         @Test
@@ -295,59 +330,54 @@ class OpenAICompletionsProviderTest {
 
         @Test
         void buildsBasicParams() {
-            var context = new Context(null,
-                    List.of(new UserMessage("Hello", 1L)), null);
+            var context = new Context(null, List.of(new UserMessage("Hello", 1L)), null);
 
-            var params = provider.buildParams(
-                    testModel(), context, null, null, null);
+            var params = provider.buildParams(testModel(), context, null, null, null);
 
-            assertNotNull(params);
+            // Without overrides: model id propagates, maxCompletionTokens defaults to min(model.maxTokens, 32000)
+            assertEquals("gpt-4o", params.model().asString());
+            assertEquals(16384L, params.maxCompletionTokens().orElseThrow());
+            assertTrue(params.temperature().isEmpty());
+            assertTrue(params.tools().isEmpty());
         }
 
         @Test
         void usesProvidedMaxTokens() {
-            var context = new Context(null,
-                    List.of(new UserMessage("Hello", 1L)), null);
+            var context = new Context(null, List.of(new UserMessage("Hello", 1L)), null);
 
-            var params = provider.buildParams(
-                    testModel(), context, 4096, null, null);
+            var params = provider.buildParams(testModel(), context, 4096, null, null);
 
-            assertNotNull(params);
+            assertEquals(4096L, params.maxCompletionTokens().orElseThrow());
         }
 
         @Test
         void capsMaxTokensAt32000() {
-            // Model has maxTokens=16384 which is < 32000, so use model's value
-            var context = new Context(null,
-                    List.of(new UserMessage("Hello", 1L)), null);
+            // Model has maxTokens=16384 which is < 32000, so use model's value (no cap engaged)
+            var context = new Context(null, List.of(new UserMessage("Hello", 1L)), null);
 
-            var params = provider.buildParams(
-                    testModel(), context, null, null, null);
-            assertNotNull(params);
+            var params = provider.buildParams(testModel(), context, null, null, null);
+
+            assertEquals(16384L, params.maxCompletionTokens().orElseThrow());
         }
 
         @Test
         void setsTemperature() {
-            var context = new Context(null,
-                    List.of(new UserMessage("Hello", 1L)), null);
+            var context = new Context(null, List.of(new UserMessage("Hello", 1L)), null);
 
-            var params = provider.buildParams(
-                    testModel(), context, null, 0.7, null);
+            var params = provider.buildParams(testModel(), context, null, 0.7, null);
 
-            assertNotNull(params);
+            assertEquals(0.7, params.temperature().orElseThrow(), 0.0001);
         }
 
         @Test
         void setsToolsWhenPresent() {
             ObjectNode toolParams = MAPPER.createObjectNode();
             var tools = List.of(new Tool("bash", "Run commands", toolParams));
-            var context = new Context(null,
-                    List.of(new UserMessage("Hello", 1L)), tools);
+            var context = new Context(null, List.of(new UserMessage("Hello", 1L)), tools);
 
-            var params = provider.buildParams(
-                    testModel(), context, null, null, null);
+            var params = provider.buildParams(testModel(), context, null, null, null);
 
-            assertNotNull(params);
+            assertEquals(1, params.tools().orElseThrow().size());
         }
     }
 
@@ -360,13 +390,11 @@ class OpenAICompletionsProviderTest {
 
         @Test
         void errorsWhenNoApiKey() {
-            var context = new Context(null,
-                    List.of(new UserMessage("Hello", 1L)), null);
+            var context = new Context(null, List.of(new UserMessage("Hello", 1L)), null);
             var eventStream = new AssistantMessageEventStream();
 
             // executeStream with null apiKey and no env var
-            provider.executeStream(testModel(), context,
-                    null, null, null, null, eventStream);
+            provider.executeStream(testModel(), context, null, null, null, null, eventStream);
 
             // The stream should have an error
             assertThrows(Exception.class, () -> eventStream.result().block());
@@ -382,25 +410,24 @@ class OpenAICompletionsProviderTest {
 
         @Test
         void streamReturnsEventStream() {
-            var context = new Context(null,
-                    List.of(new UserMessage("Hello", 1L)), null);
+            var context = new Context(null, List.of(new UserMessage("Hello", 1L)), null);
             var options = StreamOptions.builder().apiKey("test-key").build();
 
-            // This will fail to connect but should return a stream
+            // Provider hands back a constructed stream synchronously; actual HTTP fires on subscription.
+            // asFlux() returns a stable, multicast view of the same Sink.
             var stream = provider.stream(testModel(), context, options);
-            assertNotNull(stream);
-            assertNotNull(stream.asFlux());
+
+            assertSame(stream.asFlux(), stream.asFlux());
         }
 
         @Test
         void streamSimpleReturnsEventStream() {
-            var context = new Context(null,
-                    List.of(new UserMessage("Hello", 1L)), null);
+            var context = new Context(null, List.of(new UserMessage("Hello", 1L)), null);
             var options = SimpleStreamOptions.builder().apiKey("test-key").build();
 
             var stream = provider.streamSimple(testModel(), context, options);
-            assertNotNull(stream);
-            assertNotNull(stream.asFlux());
+
+            assertSame(stream.asFlux(), stream.asFlux());
         }
     }
 }

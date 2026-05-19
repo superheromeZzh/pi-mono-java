@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026-2026. All rights reserved.
+ */
+
 package com.huawei.hicampus.mate.matecampusclaw.codingagent.command.builtin;
 
 import java.io.BufferedWriter;
@@ -17,11 +21,13 @@ import com.fasterxml.jackson.databind.SerializationFeature;
  * Exports conversation history as JSONL (one JSON object per line).
  * Usage: /export [filename]
  * Default filename: pi-export-{timestamp}.jsonl
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 public class ExportCommand implements SlashCommand {
 
-    private static final ObjectMapper MAPPER = new ObjectMapper()
-            .disable(SerializationFeature.INDENT_OUTPUT);
+    private static final ObjectMapper MAPPER = new ObjectMapper().disable(SerializationFeature.INDENT_OUTPUT);
 
     @Override
     public String name() {
@@ -43,8 +49,8 @@ public class ExportCommand implements SlashCommand {
 
         String filename = arguments != null && !arguments.isBlank()
                 ? arguments.trim()
-                : "campusclaw-export-" + LocalDateTime.now().format(
-                        DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss")) + ".jsonl";
+                : "campusclaw-export-" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss"))
+                        + ".jsonl";
 
         Path outputPath = Path.of(System.getProperty("user.dir")).resolve(filename);
 

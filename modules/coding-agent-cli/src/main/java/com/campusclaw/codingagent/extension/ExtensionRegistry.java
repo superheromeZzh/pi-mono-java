@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026-2026. All rights reserved.
+ */
+
 package com.campusclaw.codingagent.extension;
 
 import java.util.ArrayList;
@@ -20,6 +24,9 @@ import org.slf4j.LoggerFactory;
  *
  * <p>Extensions are registered by id and can be queried for their contributions
  * to various extension points.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 public class ExtensionRegistry {
 
@@ -29,6 +36,8 @@ public class ExtensionRegistry {
 
     /**
      * Registers an extension. Replaces any existing extension with the same id.
+     *
+     * @param extension the extension
      */
     public void register(Extension extension) {
         var prev = extensions.put(extension.id(), extension);
@@ -42,6 +51,8 @@ public class ExtensionRegistry {
 
     /**
      * Unregisters an extension by id.
+     *
+     * @param extensionId the extensionId
      */
     public void unregister(String extensionId) {
         var ext = extensions.remove(extensionId);
@@ -53,6 +64,9 @@ public class ExtensionRegistry {
 
     /**
      * Returns an extension by id.
+     *
+     * @param extensionId the extensionId
+     * @return the result
      */
     public Optional<Extension> get(String extensionId) {
         return Optional.ofNullable(extensions.get(extensionId));
@@ -60,6 +74,8 @@ public class ExtensionRegistry {
 
     /**
      * Returns all registered extensions.
+     *
+     * @return the result
      */
     public List<Extension> getAll() {
         return List.copyOf(extensions.values());
@@ -67,6 +83,8 @@ public class ExtensionRegistry {
 
     /**
      * Returns all tools contributed by all extensions.
+     *
+     * @return the result
      */
     public List<AgentTool> getAllTools() {
         var tools = new ArrayList<AgentTool>();
@@ -78,6 +96,8 @@ public class ExtensionRegistry {
 
     /**
      * Returns all slash commands contributed by all extensions.
+     *
+     * @return the result
      */
     public List<SlashCommand> getAllCommands() {
         var commands = new ArrayList<SlashCommand>();
@@ -89,6 +109,8 @@ public class ExtensionRegistry {
 
     /**
      * Returns all before-tool-call handlers from all extensions.
+     *
+     * @return the result
      */
     public List<BeforeToolCallHandler> getAllBeforeToolCallHandlers() {
         var handlers = new ArrayList<BeforeToolCallHandler>();
@@ -100,6 +122,8 @@ public class ExtensionRegistry {
 
     /**
      * Returns all after-tool-call handlers from all extensions.
+     *
+     * @return the result
      */
     public List<AfterToolCallHandler> getAllAfterToolCallHandlers() {
         var handlers = new ArrayList<AfterToolCallHandler>();
@@ -111,6 +135,8 @@ public class ExtensionRegistry {
 
     /**
      * Returns all event listeners from all extensions.
+     *
+     * @return the result
      */
     public List<AgentEventListener> getAllEventListeners() {
         var listeners = new ArrayList<AgentEventListener>();

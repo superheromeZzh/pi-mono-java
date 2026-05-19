@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026-2026. All rights reserved.
+ */
+
 package com.huawei.hicampus.mate.matecampusclaw.agent.queue;
 
 import java.util.ArrayDeque;
@@ -10,9 +14,13 @@ import com.huawei.hicampus.mate.matecampusclaw.ai.types.Message;
 
 /**
  * Thread-safe queue for steering and follow-up messages.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 public class MessageQueue {
 
+    @SuppressWarnings("checkstyle:top_class_comment")
     public enum DeliveryMode {
         ALL,
         ONE_AT_A_TIME
@@ -44,6 +52,8 @@ public class MessageQueue {
 
     /**
      * Drains messages using the currently configured delivery mode.
+     *
+     * @return the drained messages in delivery order
      */
     public List<Message> drain() {
         lock.lock();

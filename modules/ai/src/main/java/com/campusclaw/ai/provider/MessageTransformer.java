@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026-2026. All rights reserved.
+ */
+
 package com.campusclaw.ai.provider;
 
 import java.util.ArrayList;
@@ -23,6 +27,9 @@ import com.campusclaw.ai.types.UserMessage;
  * and orphaned tool call result synthesis.
  *
  * <p>Aligned with TypeScript campusclaw transform-messages.ts.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 public class MessageTransformer {
 
@@ -50,101 +57,123 @@ public class MessageTransformer {
      * @return transformed messages
      */
     public static List<Message> transform(
-            List<Message> messages, Api targetApi,
-            String targetProvider, String targetModelId) {
-
-        // First pass: transform content blocks
+            List<Message> messages, Api targetApi, String targetProvider, String targetModelId) {
         var transformed = new ArrayList<Message>(messages.size());
         for (Message msg : messages) {
-            if (msg instanceof UserMessage) {
-                transformed.add(msg);
-            } else if (msg instanceof ToolResultMessage tr) {
-                String normalizedId = normalizeToolCallId(tr.toolCallId());
-                if (!normalizedId.equals(tr.toolCallId())) {
-                    transformed.add(new ToolResultMessage(normalizedId, tr.toolName(),
-                        tr.content(), tr.details(), tr.isError(), tr.timestamp()));
-                } else {
-                    transformed.add(msg);
-                }
-            } else if (msg instanceof AssistantMessage am) {
-                boolean isSameModel = targetProvider.equals(am.provider())
-                    && targetApi.value().equals(am.api())
-                    && targetModelId.equals(am.model());
+            transformOneMessage(msg, targetApi, targetProvider, targetModelId, transformed);
+        }
+        return fillOrphanToolResults(transformed);
+    }
 
-                var transformedContent = new ArrayList<ContentBlock>();
-                for (ContentBlock cb : am.content()) {
-                    if (cb instanceof ThinkingContent tc) {
-                        // Redacted thinking: only valid for same model
-                        if (tc.redacted()) {
-                            if (isSameModel) { transformedContent.add(cb); }
-                            continue;
-                        }
-                        // Same model with signature: keep for replay
-                        if (isSameModel && tc.thinkingSignature() != null
-                                && !tc.thinkingSignature().isEmpty()) {
-                            transformedContent.add(cb);
-                            continue;
-                        }
-                        // Skip empty thinking blocks
-                        if (tc.thinking() == null || tc.thinking().isBlank()) { continue; }
-                        // Same model: keep as-is
-                        if (isSameModel) {
-                            transformedContent.add(cb);
-                            continue;
-                        }
-                        // Cross-model: convert thinking to plain text
-                        transformedContent.add(new TextContent(tc.thinking()));
-                    } else if (cb instanceof ToolCall tc) {
-                        String normalizedId = normalizeToolCallId(tc.id());
-                        // Remove thoughtSignature when switching models
-                        String sig = isSameModel ? tc.thoughtSignature() : null;
-                        if (!normalizedId.equals(tc.id()) || sig != tc.thoughtSignature()) {
-                            transformedContent.add(new ToolCall(normalizedId, tc.name(), tc.arguments(), sig));
-                        } else {
-                            transformedContent.add(cb);
-                        }
-                    } else if (cb instanceof TextContent tc) {
-                        // Strip textSignature when switching models
-                        if (!isSameModel && tc.textSignature() != null) {
-                            transformedContent.add(new TextContent(tc.text()));
-                        } else {
-                            transformedContent.add(cb);
-                        }
-                    } else {
-                        transformedContent.add(cb);
-                    }
-                }
-
-                // Ensure assistant messages are never empty after filtering
-                if (transformedContent.isEmpty()) {
-                    transformedContent.add(new TextContent(""));
-                }
-
-                // Skip errored/aborted assistant messages
-                if (am.stopReason() == StopReason.ERROR || am.stopReason() == StopReason.ABORTED) {
-                    continue;
-                }
-
-                transformed.add(new AssistantMessage(
-                    transformedContent, am.api(), am.provider(), am.model(),
-                    am.responseId(), am.usage(), am.stopReason(), am.errorMessage(), am.timestamp()
-                ));
+    private static void transformOneMessage(
+            Message msg, Api targetApi, String targetProvider, String targetModelId, List<Message> sink) {
+        if (msg instanceof UserMessage) {
+            sink.add(msg);
+        } else if (msg instanceof ToolResultMessage tr) {
+            String normalizedId = normalizeToolCallId(tr.toolCallId());
+            if (!normalizedId.equals(tr.toolCallId())) {
+                sink.add(new ToolResultMessage(
+                        normalizedId, tr.toolName(), tr.content(), tr.details(), tr.isError(), tr.timestamp()));
+            } else {
+                sink.add(msg);
             }
+        } else if (msg instanceof AssistantMessage am) {
+            transformAssistantMessage(am, targetApi, targetProvider, targetModelId, sink);
+        }
+    }
+
+    private static void transformAssistantMessage(
+            AssistantMessage am, Api targetApi, String targetProvider, String targetModelId, List<Message> sink) {
+        // Skip errored/aborted assistant messages — they cannot be replayed.
+        if (am.stopReason() == StopReason.ERROR || am.stopReason() == StopReason.ABORTED) {
+            return;
+        }
+        boolean isSameModel = targetProvider.equals(am.provider())
+                && targetApi.value().equals(am.api())
+                && targetModelId.equals(am.model());
+        var transformedContent = new ArrayList<ContentBlock>();
+        for (ContentBlock cb : am.content()) {
+            transformContentBlock(cb, isSameModel, transformedContent);
         }
 
-        // Second pass: insert synthetic results for orphaned tool calls
+        // Ensure assistant messages are never empty after filtering.
+        if (transformedContent.isEmpty()) {
+            transformedContent.add(new TextContent(""));
+        }
+        sink.add(new AssistantMessage(
+                transformedContent,
+                am.api(),
+                am.provider(),
+                am.model(),
+                am.responseId(),
+                am.usage(),
+                am.stopReason(),
+                am.errorMessage(),
+                am.timestamp()));
+    }
+
+    private static void transformContentBlock(ContentBlock cb, boolean isSameModel, List<ContentBlock> sink) {
+        if (cb instanceof ThinkingContent tc) {
+            transformThinkingBlock(tc, isSameModel, sink);
+        } else if (cb instanceof ToolCall tc) {
+            String normalizedId = normalizeToolCallId(tc.id());
+            String sig = isSameModel ? tc.thoughtSignature() : null;
+            if (!normalizedId.equals(tc.id()) || sig != tc.thoughtSignature()) {
+                sink.add(new ToolCall(normalizedId, tc.name(), tc.arguments(), sig));
+            } else {
+                sink.add(cb);
+            }
+        } else if (cb instanceof TextContent tc) {
+            // Strip textSignature when switching models.
+            if (!isSameModel && tc.textSignature() != null) {
+                sink.add(new TextContent(tc.text()));
+            } else {
+                sink.add(cb);
+            }
+        } else {
+            sink.add(cb);
+        }
+    }
+
+    private static void transformThinkingBlock(ThinkingContent tc, boolean isSameModel, List<ContentBlock> sink) {
+        // Redacted thinking: only valid for same model.
+        if (tc.redacted()) {
+            if (isSameModel) {
+                sink.add(tc);
+            }
+            return;
+        }
+
+        // Same model with signature: keep for replay verbatim.
+        if (isSameModel
+                && tc.thinkingSignature() != null
+                && !tc.thinkingSignature().isEmpty()) {
+            sink.add(tc);
+            return;
+        }
+        if (tc.thinking() == null || tc.thinking().isBlank()) {
+            return;
+        }
+        if (isSameModel) {
+            sink.add(tc);
+            return;
+        }
+
+        // Cross-model: convert thinking to plain text so the target API sees something.
+        sink.add(new TextContent(tc.thinking()));
+    }
+
+    // Second-pass: insert synthetic results for tool calls that lack a result message,
+    // so providers that require strict tool-call/tool-result pairing accept the history.
+    private static List<Message> fillOrphanToolResults(List<Message> transformed) {
         List<Message> result = new ArrayList<>();
         var pendingToolCalls = new ArrayList<ToolCall>();
         var existingToolResultIds = new HashSet<String>();
-
         for (Message msg : transformed) {
             if (msg instanceof AssistantMessage am) {
-                // Insert synthetic results for orphans from previous assistant
                 insertSyntheticResults(result, pendingToolCalls, existingToolResultIds);
                 pendingToolCalls.clear();
                 existingToolResultIds.clear();
-
-                // Track tool calls
                 for (ContentBlock cb : am.content()) {
                     if (cb instanceof ToolCall tc) {
                         pendingToolCalls.add(tc);
@@ -155,7 +184,7 @@ public class MessageTransformer {
                 existingToolResultIds.add(tr.toolCallId());
                 result.add(msg);
             } else if (msg instanceof UserMessage) {
-                // User message interrupts tool flow
+                // User message interrupts tool flow — flush pending synthetics.
                 insertSyntheticResults(result, pendingToolCalls, existingToolResultIds);
                 pendingToolCalls.clear();
                 existingToolResultIds.clear();
@@ -164,31 +193,32 @@ public class MessageTransformer {
                 result.add(msg);
             }
         }
-
         return result;
     }
 
     /**
      * Legacy overload for backward compatibility.
+     *
+     * @param messages the messages to transform
+     * @param targetApi target API style
+     * @param sourceApi source API style
+     * @return the transformed messages
      */
     public static List<Message> transform(List<Message> messages, Api targetApi, Api sourceApi) {
         return transform(messages, targetApi, "", "");
     }
 
     private static void insertSyntheticResults(
-            List<Message> result,
-            List<ToolCall> pendingToolCalls,
-            Set<String> existingToolResultIds) {
+            List<Message> result, List<ToolCall> pendingToolCalls, Set<String> existingToolResultIds) {
         for (ToolCall tc : pendingToolCalls) {
             if (!existingToolResultIds.contains(tc.id())) {
                 result.add(new ToolResultMessage(
-                    tc.id(),
-                    tc.name(),
-                    List.of(new TextContent("No result provided")),
-                    null,
-                    true, // isError = true, matching TS behavior
-                    System.currentTimeMillis()
-                ));
+                        tc.id(),
+                        tc.name(),
+                        List.of(new TextContent("No result provided")),
+                        null,
+                        true, // isError = true, matching TS behavior
+                        System.currentTimeMillis()));
             }
         }
     }
@@ -196,6 +226,9 @@ public class MessageTransformer {
     /**
      * Normalize tool call ID to fit within provider constraints.
      * OpenAI generates very long IDs; Anthropic requires < 64 chars.
+     *
+     * @param id raw tool call id, may be {@code null}
+     * @return id truncated to {@link #MAX_TOOL_CALL_ID_LENGTH}, or the original when short enough
      */
     static String normalizeToolCallId(String id) {
         if (id == null || id.length() <= MAX_TOOL_CALL_ID_LENGTH) {

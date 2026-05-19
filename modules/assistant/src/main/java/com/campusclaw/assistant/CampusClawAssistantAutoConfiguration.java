@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026-2026. All rights reserved.
+ */
+
 package com.campusclaw.assistant;
 
 import com.campusclaw.assistant.channel.gateway.WebSocketGatewayProperties;
@@ -15,13 +19,19 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 
+/**
+ * Spring Boot auto-configuration for the assistant module. Registers the default
+ * {@link ObjectMapper} (JSR-310 aware, ISO-8601 dates), the MyBatis-backed
+ * {@link ChatMemoryRepository}/{@link com.campusclaw.assistant.memory.ChatMemoryStore} beans,
+ * and enables component plus mapper scanning under {@code com.campusclaw.assistant.*}.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/13]
+ * @since [br_eCampusCore 25.1.0_Next]
+ */
 @AutoConfiguration
 @ComponentScan
 @MapperScan("com.campusclaw.assistant.mapper")
-@EnableConfigurationProperties({
-    AssistantProperties.class,
-    WebSocketGatewayProperties.class
-})
+@EnableConfigurationProperties({AssistantProperties.class, WebSocketGatewayProperties.class})
 public class CampusClawAssistantAutoConfiguration {
 
     @Bean

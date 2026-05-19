@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026-2026. All rights reserved.
+ */
+
 package com.campusclaw.ai.utils;
 
 /**
@@ -10,6 +14,9 @@ package com.campusclaw.ai.utils;
  *
  * <p>Valid emoji and other characters outside the Basic Multilingual Plane
  * use properly paired surrogates and are NOT affected.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 public final class SurrogateSanitizer {
 
@@ -22,7 +29,9 @@ public final class SurrogateSanitizer {
      * @return sanitized text with unpaired surrogates removed, or null if input is null
      */
     public static String sanitize(String text) {
-        if (text == null) { return null; }
+        if (text == null) {
+            return null;
+        }
 
         int len = text.length();
         StringBuilder sb = null; // Lazily initialized only if surrogates found

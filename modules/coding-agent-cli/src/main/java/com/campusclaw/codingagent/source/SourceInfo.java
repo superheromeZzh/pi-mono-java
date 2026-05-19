@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026-2026. All rights reserved.
+ */
+
 package com.campusclaw.codingagent.source;
 
 import java.nio.file.Path;
@@ -8,6 +12,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -17,27 +22,32 @@ import jakarta.annotation.Nullable;
 /**
  * Tracks the origin and provenance of resources (skills, tools, commands, settings).
  * Enables users to understand where a resource came from and diagnose conflicts.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 public class SourceInfo {
 
+    @SuppressWarnings("checkstyle:top_class_comment")
     public enum SourceType {
-        BUILTIN,       // Shipped with the application
+        BUILTIN, // Shipped with the application
         GLOBAL_CONFIG, // From ~/.campusclaw/agent/ directory
-        PROJECT_CONFIG,// From .campusclaw/ in current project
-        PACKAGE,       // From an installed package
-        EXTENSION,     // From extension system
-        CUSTOM         // User-provided custom resource
+        PROJECT_CONFIG, // From .campusclaw/ in current project
+        PACKAGE, // From an installed package
+        EXTENSION, // From extension system
+        CUSTOM // User-provided custom resource
     }
 
+    @SuppressWarnings("checkstyle:top_class_comment")
     public record ResourceSource(
-        String resourceId,
-        String resourceType,   // "skill", "tool", "command", "setting", "keybinding"
-        SourceType sourceType,
-        @Nullable String packageName,
-        @Nullable Path filePath,
-        @Nullable Instant loadedAt,
-        int priority           // Higher priority overrides lower
-    ) implements Comparable<ResourceSource> {
+            String resourceId,
+            String resourceType, // "skill", "tool", "command", "setting", "keybinding"
+            SourceType sourceType,
+            @Nullable String packageName,
+            @Nullable Path filePath,
+            @Nullable Instant loadedAt,
+            int priority // Higher priority overrides lower
+            ) implements Comparable<ResourceSource> {
         @Override
         public int compareTo(ResourceSource other) {
             return Integer.compare(other.priority, this.priority); // Higher first
@@ -46,40 +56,68 @@ public class SourceInfo {
 
     private final Map<String, List<ResourceSource>> registry = new LinkedHashMap<>();
 
-    /** Register a resource source. */
+    /**
+     * Register a resource source.
+     *
+     * @param source the source
+     */
     public void register(ResourceSource source) {
-        registry.computeIfAbsent(source.resourceId(), k -> new ArrayList<>())
-            .add(source);
+        registry.computeIfAbsent(source.resourceId(), k -> new ArrayList<>()).add(source);
     }
 
-    /** Get the effective source (highest priority) for a resource. */
+    /**
+     * Get the effective source (highest priority) for a resource.
+     *
+     * @param resourceId the resourceId
+     * @return the result
+     */
     public Optional<ResourceSource> getEffective(String resourceId) {
         List<ResourceSource> sources = registry.get(resourceId);
-        if (sources == null || sources.isEmpty()) { return Optional.empty(); }
+        if (sources == null || sources.isEmpty()) {
+            return Optional.empty();
+        }
         return sources.stream().min(Comparator.naturalOrder()); // highest priority first
     }
 
-    /** Get all sources for a resource (shows overrides). */
+    /**
+     * Get all sources for a resource (shows overrides).
+     *
+     * @param resourceId the resourceId
+     * @return the result
+     */
     public List<ResourceSource> getSources(String resourceId) {
         List<ResourceSource> sources = registry.getOrDefault(resourceId, List.of());
         return sources.stream().sorted().toList();
     }
 
-    /** Get all registered resource IDs. */
+    /**
+     * Get all registered resource IDs.
+     *
+     * @return the result
+     */
     public Set<String> getResourceIds() {
         return Collections.unmodifiableSet(registry.keySet());
     }
 
-    /** Get all resources of a given type. */
+    /**
+     * Get all resources of a given type.
+     *
+     * @param resourceType the resourceType
+     * @return the result
+     */
     public List<ResourceSource> getByType(String resourceType) {
         return registry.values().stream()
-            .flatMap(Collection::stream)
-            .filter(s -> s.resourceType().equals(resourceType))
-            .sorted()
-            .toList();
+                .flatMap(Collection::stream)
+                .filter(s -> s.resourceType().equals(resourceType))
+                .sorted()
+                .toList();
     }
 
-    /** Detect conflicts (multiple sources for same resource). */
+    /**
+     * Detect conflicts (multiple sources for same resource).
+     *
+     * @return the result
+     */
     public Map<String, List<ResourceSource>> getConflicts() {
         Map<String, List<ResourceSource>> conflicts = new LinkedHashMap<>();
         for (var entry : registry.entrySet()) {
@@ -90,11 +128,20 @@ public class SourceInfo {
         return conflicts;
     }
 
-    /** Format a resource source for display. */
+    /**
+     * Format a resource source for display.
+     *
+     * @param source the source
+     * @return the result
+     */
     public static String format(ResourceSource source) {
         StringBuilder sb = new StringBuilder();
-        sb.append(source.resourceId()).append(" (").append(source.resourceType()).append(")");
-        sb.append(" from ").append(source.sourceType().name().toLowerCase().replace('_', ' '));
+        sb.append(source.resourceId())
+                .append(" (")
+                .append(source.resourceType())
+                .append(")");
+        sb.append(" from ")
+                .append(source.sourceType().name().toLowerCase(Locale.ROOT).replace('_', ' '));
         if (source.packageName() != null) {
             sb.append(" [").append(source.packageName()).append("]");
         }
@@ -104,7 +151,9 @@ public class SourceInfo {
         return sb.toString();
     }
 
-    /** Clear all registered sources. */
+    /**
+     * Clear all registered sources.
+     */
     public void clear() {
         registry.clear();
     }

@@ -1,8 +1,11 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026-2026. All rights reserved.
+ */
+
 package com.huawei.hicampus.mate.matecampusclaw.tui.terminal;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -81,8 +84,11 @@ class JLineTerminalTest {
             Attributes original = dumbTerminal.getAttributes();
             terminal.enterRawMode();
             terminal.exitRawMode();
-            // Attributes should be restored (dumb terminal may not change them)
-            assertNotNull(dumbTerminal.getAttributes());
+
+            // After a full enterRawMode + exitRawMode round-trip, attributes must equal what they were
+            // before (round-trip restoration). Attributes lacks .equals(), so compare its toString,
+            // which serializes the full flag set.
+            assertEquals(original.toString(), dumbTerminal.getAttributes().toString());
         }
     }
 
@@ -104,6 +110,7 @@ class JLineTerminalTest {
             List<Consumer> listeners = new ArrayList<>();
             terminal.onInput(data -> listeners.add(null));
             terminal.onInput(data -> listeners.add(null));
+
             // No exception means both were registered
             assertEquals(0, listeners.size()); // Not triggered yet
         }
@@ -120,6 +127,7 @@ class JLineTerminalTest {
         @Test
         void doubleCloseDoesNotThrow() {
             terminal.close();
+
             // Second close on a dumb terminal should handle gracefully
             assertDoesNotThrow(() -> {
                 try {
@@ -132,6 +140,5 @@ class JLineTerminalTest {
     }
 
     // Simple placeholder to avoid compile error for List<Consumer>
-    interface Consumer {
-    }
+    interface Consumer {}
 }

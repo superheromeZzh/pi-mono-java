@@ -1,9 +1,12 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026-2026. All rights reserved.
+ */
+
 package com.campusclaw.ai.types;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -105,6 +108,7 @@ class ContentBlockTest {
             var json = mapper.readTree(mapper.writeValueAsString(tc));
             assertEquals("text", json.get("type").asText());
             assertEquals("hello", json.get("text").asText());
+
             // null field is present but null-valued; that's fine for Jackson default
             assertTrue(json.has("textSignature"));
         }
@@ -178,7 +182,8 @@ class ContentBlockTest {
 
         @Test
         void thinkingContentFromJson() throws JsonProcessingException {
-            var json = """
+            var json =
+                    """
                 {"type":"thinking","thinking":"hmm","thinkingSignature":"sig","redacted":false}""";
             var block = mapper.readValue(json, ContentBlock.class);
             assertInstanceOf(ThinkingContent.class, block);
@@ -199,7 +204,8 @@ class ContentBlockTest {
 
         @Test
         void toolCallFromJson() throws JsonProcessingException {
-            var json = """
+            var json =
+                    """
                 {"type":"toolCall","id":"c1","name":"search","arguments":{"q":"test"},"thoughtSignature":"ts"}""";
             var block = mapper.readValue(json, ContentBlock.class);
             assertInstanceOf(ToolCall.class, block);
@@ -225,10 +231,9 @@ class ContentBlockTest {
     @Test
     void polymorphicListRoundTrip() throws JsonProcessingException {
         List<ContentBlock> blocks = List.of(
-            new TextContent("hello"),
-            new ThinkingContent("thinking..."),
-            new ToolCall("c1", "search", Map.of("q", "test"))
-        );
+                new TextContent("hello"),
+                new ThinkingContent("thinking..."),
+                new ToolCall("c1", "search", Map.of("q", "test")));
 
         var json = mapper.writerFor(new TypeReference<List<ContentBlock>>() {}).writeValueAsString(blocks);
         List<ContentBlock> deserialized = mapper.readValue(json, new TypeReference<>() {});
@@ -249,15 +254,17 @@ class ContentBlockTest {
         ContentBlock thinking = new ThinkingContent("b");
         ContentBlock tool = new ToolCall("id", "name", Map.of());
 
-        // Pattern matching switch (Java 21) - verifies sealed permits
-        for (var block : List.of(text, image, thinking, tool)) {
-            var label = switch (block) {
-                case TextContent t -> "text";
-                case ImageContent i -> "image";
-                case ThinkingContent th -> "thinking";
-                case ToolCall tc -> "toolCall";
-            };
-            assertNotNull(label);
-        }
+        // Pattern matching switch (Java 21) — verifies sealed permits cover every variant by
+        // returning the expected discriminator for each.
+        List<String> labels = List.of(text, image, thinking, tool).stream()
+                .map(block -> switch (block) {
+                    case TextContent t -> "text";
+                    case ImageContent i -> "image";
+                    case ThinkingContent th -> "thinking";
+                    case ToolCall tc -> "toolCall";
+                })
+                .toList();
+
+        assertEquals(List.of("text", "image", "thinking", "toolCall"), labels);
     }
 }

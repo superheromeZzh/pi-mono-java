@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026-2026. All rights reserved.
+ */
+
 package com.campusclaw.codingagent.util;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -56,6 +60,7 @@ class TruncationUtilsTest {
             var result = TruncationUtils.truncateHead("abcde\nfghij\nklmno", 10, 11);
             assertTrue(result.truncated());
             assertEquals("bytes", result.truncatedBy());
+
             // Should keep the last lines that fit in 11 bytes: "fghij\nklmno" = 11 bytes
             assertEquals(2, result.outputLines());
         }
@@ -135,6 +140,7 @@ class TruncationUtilsTest {
             var result = TruncationUtils.truncateTail("abcde\nfghij\nklmno", 10, 11);
             assertTrue(result.truncated());
             assertEquals("bytes", result.truncatedBy());
+
             // Should keep first lines that fit: "abcde\nfghij" = 11 bytes
             assertEquals(2, result.outputLines());
         }
@@ -167,6 +173,7 @@ class TruncationUtilsTest {
             var result = TruncationUtils.truncateTail("aa\nbb\ncc", 10, 5);
             assertTrue(result.truncated());
             assertEquals("bytes", result.truncatedBy());
+
             // "aa\nbb" = 5 bytes
             assertEquals(2, result.outputLines());
         }
@@ -340,6 +347,7 @@ class TruncationUtilsTest {
             // Lines truncation happens first, then bytes checked
             var result = TruncationUtils.truncateTail("aa\nbb\ncc\ndd\nee", 2, 3);
             assertTrue(result.truncated());
+
             // After line truncation: "aa\nbb" = 5 bytes > 3 maxBytes
             // After byte truncation: "aa" = 2 bytes
             assertEquals("bytes", result.truncatedBy());

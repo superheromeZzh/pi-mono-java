@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026-2026. All rights reserved.
+ */
+
 package com.campusclaw.cron.model;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -52,9 +56,11 @@ class CronScheduleTest {
 
     @Test
     void cronJobRoundTrip() throws Exception {
-        var job = CronJob.create("test-job", "A test job",
-            new CronSchedule.Every(5000L),
-            new CronPayload.AgentPrompt("do something", null, null, null));
+        var job = CronJob.create(
+                "test-job",
+                "A test job",
+                new CronSchedule.Every(5000L),
+                new CronPayload.AgentPrompt("do something", null, null, null));
 
         String json = mapper.writeValueAsString(job);
         CronJob deserialized = mapper.readValue(json, CronJob.class);
@@ -69,7 +75,7 @@ class CronScheduleTest {
     @Test
     void cronPayloadRoundTrip() throws Exception {
         var payload = new CronPayload.AgentPrompt(
-            "run tests", "You are a tester", "claude-sonnet-4", java.util.List.of("bash", "read"));
+                "run tests", "You are a tester", "claude-sonnet-4", java.util.List.of("bash", "read"));
         String json = mapper.writeValueAsString(payload);
         assertTrue(json.contains("\"type\":\"agent_prompt\""));
         CronPayload deserialized = mapper.readValue(json, CronPayload.class);

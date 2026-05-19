@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026-2026. All rights reserved.
+ */
+
 package com.campusclaw.agent;
 
 import java.util.List;
@@ -37,15 +41,20 @@ import com.campusclaw.ai.types.SimpleStreamOptions;
 import com.campusclaw.ai.types.ThinkingLevel;
 import com.campusclaw.ai.types.UserMessage;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 /**
  * Facade for configuring and running the phase-4 agent runtime.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 @Service
 public class Agent {
 
-    private static final Executor VIRTUAL_THREAD_EXECUTOR = command -> Thread.ofVirtual().start(command);
+    private static final Executor VIRTUAL_THREAD_EXECUTOR =
+            command -> Thread.ofVirtual().start(command);
 
     private final CampusClawAiService piAiService;
     private final AgentState state;
@@ -62,31 +71,30 @@ public class Agent {
     private volatile CompletableFuture<Void> currentExecution = CompletableFuture.completedFuture(null);
     private volatile CancellationToken currentSignal;
 
+    @Autowired
     public Agent(CampusClawAiService piAiService) {
         this(
-            piAiService,
-            new AgentState(),
-            new DefaultMessageConverter(),
-            null,
-            new ToolExecutionPipeline(),
-            ToolExecutionMode.SEQUENTIAL,
-            new MessageQueue(),
-            new MessageQueue(),
-            SimpleStreamOptions.empty()
-        );
+                piAiService,
+                new AgentState(),
+                new DefaultMessageConverter(),
+                null,
+                new ToolExecutionPipeline(),
+                ToolExecutionMode.SEQUENTIAL,
+                new MessageQueue(),
+                new MessageQueue(),
+                SimpleStreamOptions.empty());
     }
 
     Agent(
-        CampusClawAiService piAiService,
-        AgentState state,
-        MessageConverter messageConverter,
-        ContextTransformer contextTransformer,
-        ToolExecutionPipeline toolPipeline,
-        ToolExecutionMode toolExecutionMode,
-        MessageQueue steeringQueue,
-        MessageQueue followUpQueue,
-        SimpleStreamOptions baseStreamOptions
-    ) {
+            CampusClawAiService piAiService,
+            AgentState state,
+            MessageConverter messageConverter,
+            ContextTransformer contextTransformer,
+            ToolExecutionPipeline toolPipeline,
+            ToolExecutionMode toolExecutionMode,
+            MessageQueue steeringQueue,
+            MessageQueue followUpQueue,
+            SimpleStreamOptions baseStreamOptions) {
         this.piAiService = Objects.requireNonNull(piAiService, "piAiService");
         this.state = Objects.requireNonNull(state, "state");
         this.messageConverter = messageConverter != null ? messageConverter : new DefaultMessageConverter();
@@ -220,34 +228,36 @@ public class Agent {
 
             var context = new AgentContext(state);
             var loop = new AgentLoop(new AgentLoopConfig(
-                piAiService,
-                model,
-                messageConverter,
-                contextTransformer,
-                toolPipeline,
-                toolExecutionMode,
-                steeringQueue,
-                followUpQueue,
-                buildStreamOptions()
-            ));
+                    piAiService,
+                    model,
+                    messageConverter,
+                    contextTransformer,
+                    toolPipeline,
+                    toolExecutionMode,
+                    steeringQueue,
+                    followUpQueue,
+                    buildStreamOptions()));
 
-            var execution = CompletableFuture.runAsync(() -> {
-                if (continueOnly) {
-                    loop.continueLoop(context, this::emit, signal);
-                } else {
-                    loop.run(messages, context, this::emit, signal);
-                }
-            }, VIRTUAL_THREAD_EXECUTOR).whenComplete((unused, throwable) -> {
-                state.setStreaming(false);
-                state.setStreamMessage(null);
-                state.clearPendingToolCalls();
-                synchronized (executionLock) {
-                    currentSignal = null;
-                }
-                if (throwable != null) {
-                    state.setError(formatError(throwable));
-                }
-            });
+            var execution = CompletableFuture.runAsync(
+                            () -> {
+                                if (continueOnly) {
+                                    loop.continueLoop(context, this::emit, signal);
+                                } else {
+                                    loop.run(messages, context, this::emit, signal);
+                                }
+                            },
+                            VIRTUAL_THREAD_EXECUTOR)
+                    .whenComplete((unused, throwable) -> {
+                        state.setStreaming(false);
+                        state.setStreamMessage(null);
+                        state.clearPendingToolCalls();
+                        synchronized (executionLock) {
+                            currentSignal = null;
+                        }
+                        if (throwable != null) {
+                            state.setError(formatError(throwable));
+                        }
+                    });
 
             currentExecution = execution;
             return execution;
@@ -255,9 +265,7 @@ public class Agent {
     }
 
     private SimpleStreamOptions buildStreamOptions() {
-        return baseStreamOptions.toBuilder()
-            .reasoning(state.getThinkingLevel())
-            .build();
+        return baseStreamOptions.toBuilder().reasoning(state.getThinkingLevel()).build();
     }
 
     private void emit(AgentEvent event) {
@@ -301,28 +309,32 @@ public class Agent {
             }
             case ToolExecutionStartEvent e -> state.addPendingToolCall(e.toolCallId());
             case ToolExecutionEndEvent e -> state.removePendingToolCall(e.toolCallId());
-            default -> {
-            }
+            default -> {}
         }
     }
 
     public static String formatError(Throwable throwable) {
         var current = throwable;
+
         // Unwrap standard wrapper exceptions
         while (current.getCause() != null
-            && (current instanceof java.util.concurrent.CompletionException
-            || current instanceof java.util.concurrent.ExecutionException)) {
+                && (current instanceof java.util.concurrent.CompletionException
+                        || current instanceof java.util.concurrent.ExecutionException)) {
             current = current.getCause();
         }
+
         // Build message including cause chain so the real error is visible
         // (e.g. "Request failed" from SDK wrapping an actual IOException)
-        String message = current.getMessage() != null ? current.getMessage() : current.getClass().getSimpleName();
+        String message = current.getMessage() != null
+                ? current.getMessage()
+                : current.getClass().getSimpleName();
         var cause = current.getCause();
         if (cause != null && cause != current) {
             String causeMsg = cause.getMessage();
             if (causeMsg != null && !causeMsg.isBlank() && !message.contains(causeMsg)) {
                 message = message + ": " + causeMsg;
             }
+
             // One more level for deeply nested causes (e.g. SSLHandshakeException -> PKIX)
             var rootCause = cause.getCause();
             if (rootCause != null && rootCause != cause) {
@@ -332,6 +344,7 @@ public class Agent {
                 }
             }
         }
+
         // Append proxy hint for connection failures
         if (isConnectionError(current)) {
             message += "\n  提示: 如需使用代理，请添加 --proxy http://127.0.0.1:<端口号> 或设置环境变量 HTTPS_PROXY";
@@ -342,13 +355,11 @@ public class Agent {
     private static boolean isConnectionError(Throwable t) {
         for (var c = t; c != null; c = c.getCause()) {
             if (c instanceof java.net.ConnectException
-                || c instanceof java.net.SocketTimeoutException
-                || (c.getMessage() != null && c.getMessage().contains("timed out"))) {
+                    || c instanceof java.net.SocketTimeoutException
+                    || (c.getMessage() != null && c.getMessage().contains("timed out"))) {
                 return true;
             }
         }
         return false;
     }
-
-
 }

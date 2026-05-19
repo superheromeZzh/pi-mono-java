@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026-2026. All rights reserved.
+ */
+
 package com.huawei.hicampus.mate.matecampusclaw.tui.component;
 
 import java.util.List;
@@ -9,6 +13,9 @@ import com.huawei.hicampus.mate.matecampusclaw.tui.Component;
  *
  * <p>Displays an animated spinner with an optional message.
  * The spinner cycles through a set of frames on each render.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 public class Loader implements Component {
 
@@ -36,6 +43,8 @@ public class Loader implements Component {
 
     /**
      * Creates a loader with the given message and default spinner style.
+     *
+     * @param message text shown next to the spinner
      */
     public Loader(String message) {
         this(message, Style.SPINNER);
@@ -43,6 +52,9 @@ public class Loader implements Component {
 
     /**
      * Creates a loader with the given message and animation style.
+     *
+     * @param message text shown next to the spinner
+     * @param style animation variant (spinner/dots/etc.)
      */
     public Loader(String message, Style style) {
         this.message = message != null ? message : "";
@@ -52,6 +64,8 @@ public class Loader implements Component {
 
     /**
      * Updates the loader message.
+     *
+     * @param message new spinner message
      */
     public void setMessage(String message) {
         this.message = message != null ? message : "";
@@ -59,6 +73,8 @@ public class Loader implements Component {
 
     /**
      * Returns the current message.
+     *
+     * @return the current spinner message
      */
     public String getMessage() {
         return message;
@@ -66,6 +82,8 @@ public class Loader implements Component {
 
     /**
      * Sets whether the loader is visible.
+     *
+     * @param visible {@code true} to render, {@code false} to hide
      */
     public void setVisible(boolean visible) {
         this.visible = visible;
@@ -80,7 +98,9 @@ public class Loader implements Component {
 
     @Override
     public List<String> render(int width) {
-        if (!visible) return List.of();
+        if (!visible) {
+            return List.of();
+        }
 
         tick();
         String frame = style.frames[frameIndex];

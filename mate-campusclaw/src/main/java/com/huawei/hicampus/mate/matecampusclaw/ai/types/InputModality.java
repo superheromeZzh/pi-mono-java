@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026-2026. All rights reserved.
+ */
+
 package com.huawei.hicampus.mate.matecampusclaw.ai.types;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -5,9 +9,11 @@ import com.fasterxml.jackson.annotation.JsonValue;
 
 /**
  * Input modality supported by a model.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 public enum InputModality {
-
     TEXT("text"),
     IMAGE("image");
 

@@ -1,11 +1,15 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026-2026. All rights reserved.
+ */
+
 package com.huawei.hicampus.mate.matecampusclaw.codingagent.tool.ops;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -15,6 +19,7 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 
 import com.huawei.hicampus.mate.matecampusclaw.agent.tool.CancellationToken;
+import com.huawei.hicampus.mate.matecampusclaw.agent.util.LoggingUncaughtExceptionHandler;
 
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -39,8 +44,9 @@ class LocalBashOperationsTest {
             var collected = new AtomicReference<String>("");
             var options = new BashExecOptions(
                     data -> collected.updateAndGet(prev -> prev + new String(data, StandardCharsets.UTF_8)),
-                    null, Duration.ofSeconds(10), null
-            );
+                    null,
+                    Duration.ofSeconds(10),
+                    null);
 
             BashResult result = ops.exec("echo hello", tempDir, options);
 
@@ -59,8 +65,9 @@ class LocalBashOperationsTest {
             var collected = new AtomicReference<String>("");
             var options = new BashExecOptions(
                     data -> collected.updateAndGet(prev -> prev + new String(data, StandardCharsets.UTF_8)),
-                    null, Duration.ofSeconds(10), null
-            );
+                    null,
+                    Duration.ofSeconds(10),
+                    null);
 
             ops.exec("pwd", tempDir, options);
 
@@ -74,9 +81,9 @@ class LocalBashOperationsTest {
             var collected = new AtomicReference<String>("");
             var options = new BashExecOptions(
                     data -> collected.updateAndGet(prev -> prev + new String(data, StandardCharsets.UTF_8)),
-                    null, Duration.ofSeconds(10),
-                    Map.of("MY_TEST_VAR", "test_value_123")
-            );
+                    null,
+                    Duration.ofSeconds(10),
+                    Map.of("MY_TEST_VAR", "test_value_123"));
 
             ops.exec("echo $MY_TEST_VAR", tempDir, options);
             assertTrue(collected.get().trim().contains("test_value_123"));
@@ -84,8 +91,9 @@ class LocalBashOperationsTest {
 
         @Test
         void timeoutKillsLongRunningProcess() throws IOException {
-            BashResult result = ops.exec("sleep 60", tempDir,
-                    new BashExecOptions(null, null, Duration.ofMillis(500), null));
+            BashResult result =
+                    ops.exec("sleep 60", tempDir, new BashExecOptions(null, null, Duration.ofMillis(500), null));
+
             // Timeout should kill the process, returning null exit code
             assertNull(result.exitCode());
         }
@@ -95,17 +103,19 @@ class LocalBashOperationsTest {
             var token = new CancellationToken();
 
             // Cancel after a short delay in a separate thread
-            new Thread(() -> {
+            Thread canceller = new Thread(() -> {
                 try {
                     Thread.sleep(300);
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
                 }
                 token.cancel();
-            }).start();
+            });
+            canceller.setUncaughtExceptionHandler(LoggingUncaughtExceptionHandler.INSTANCE);
+            canceller.start();
 
-            BashResult result = ops.exec("sleep 60", tempDir,
-                    new BashExecOptions(null, token, Duration.ofSeconds(30), null));
+            BashResult result =
+                    ops.exec("sleep 60", tempDir, new BashExecOptions(null, token, Duration.ofSeconds(30), null));
 
             // Process should have been killed; exit code is non-zero or null
             // destroyForcibly returns 137 (SIGKILL) on most Unix systems
@@ -117,8 +127,9 @@ class LocalBashOperationsTest {
             var collected = new AtomicReference<String>("");
             var options = new BashExecOptions(
                     data -> collected.updateAndGet(prev -> prev + new String(data, StandardCharsets.UTF_8)),
-                    null, Duration.ofSeconds(10), null
-            );
+                    null,
+                    Duration.ofSeconds(10),
+                    null);
 
             ops.exec("echo error_msg >&2", tempDir, options);
             assertTrue(collected.get().contains("error_msg"));
@@ -153,8 +164,8 @@ class LocalBashOperationsTest {
             assertFalse(options.env().containsKey("KEY2"));
 
             // Record's map should be immutable
-            assertThrows(UnsupportedOperationException.class, () ->
-                    options.env().put("NEW", "VALUE"));
+            assertThrows(
+                    UnsupportedOperationException.class, () -> options.env().put("NEW", "VALUE"));
         }
     }
 

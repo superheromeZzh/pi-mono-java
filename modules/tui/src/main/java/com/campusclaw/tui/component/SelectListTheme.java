@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026-2026. All rights reserved.
+ */
+
 package com.campusclaw.tui.component;
 
 import java.util.function.UnaryOperator;
@@ -7,6 +11,9 @@ import java.util.function.UnaryOperator;
  * <p>
  * Use {@link #builder()} for fluent configuration, or {@link #defaultTheme()} / {@link #plainTheme()}
  * for preset themes.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 public class SelectListTheme {
 
@@ -16,11 +23,12 @@ public class SelectListTheme {
     private final UnaryOperator<String> scrollInfo;
     private final UnaryOperator<String> noMatch;
 
-    private SelectListTheme(UnaryOperator<String> selectedPrefix,
-                            UnaryOperator<String> selectedText,
-                            UnaryOperator<String> description,
-                            UnaryOperator<String> scrollInfo,
-                            UnaryOperator<String> noMatch) {
+    private SelectListTheme(
+            UnaryOperator<String> selectedPrefix,
+            UnaryOperator<String> selectedText,
+            UnaryOperator<String> description,
+            UnaryOperator<String> scrollInfo,
+            UnaryOperator<String> noMatch) {
         this.selectedPrefix = selectedPrefix;
         this.selectedText = selectedText;
         this.description = description;
@@ -30,46 +38,79 @@ public class SelectListTheme {
 
     // --- Styling accessors ---
 
-    /** Styles the arrow prefix ("→") for the selected item. */
+    /**
+     * Styles the arrow prefix ("→") for the selected item.
+     *
+     * @param text raw prefix text
+     * @return styled prefix
+     */
     public String selectedPrefix(String text) {
         return selectedPrefix.apply(text);
     }
 
-    /** Styles the entire line of the selected item. */
+    /**
+     * Styles the entire line of the selected item.
+     *
+     * @param text raw line text
+     * @return styled line
+     */
     public String selectedText(String text) {
         return selectedText.apply(text);
     }
 
-    /** Styles description text. */
+    /**
+     * Styles description text.
+     *
+     * @param text raw description text
+     * @return styled description
+     */
     public String description(String text) {
         return description.apply(text);
     }
 
-    /** Styles the scroll indicator (e.g. "(3/10)"). */
+    /**
+     * Styles the scroll indicator (e.g. "(3/10)").
+     *
+     * @param text raw indicator text
+     * @return styled indicator
+     */
     public String scrollInfo(String text) {
         return scrollInfo.apply(text);
     }
 
-    /** Styles the "no matching items" message. */
+    /**
+     * Styles the "no matching items" message.
+     *
+     * @param text raw message text
+     * @return styled message
+     */
     public String noMatch(String text) {
         return noMatch.apply(text);
     }
 
     // --- Presets ---
 
-    /** Plain theme — identity functions, no ANSI styling. Useful for testing. */
+    /**
+     * Plain theme — identity functions, no ANSI styling. Useful for testing.
+     *
+     * @return a theme that applies no styling
+     */
     public static SelectListTheme plainTheme() {
         return builder().build();
     }
 
-    /** Default theme with ANSI colors: blue prefix, bold selection, dim descriptions. */
+    /**
+     * Default theme with ANSI colors: blue prefix, bold selection, dim descriptions.
+     *
+     * @return the styled default theme
+     */
     public static SelectListTheme defaultTheme() {
         return builder()
-                .selectedPrefix(text -> "\033[34m" + text + "\033[0m")   // blue
-                .selectedText(text -> "\033[1m" + text + "\033[0m")      // bold
-                .description(text -> "\033[2m" + text + "\033[0m")       // dim
-                .scrollInfo(text -> "\033[2m" + text + "\033[0m")        // dim
-                .noMatch(text -> "\033[2m" + text + "\033[0m")           // dim
+                .selectedPrefix(text -> "\033[34m" + text + "\033[0m") // blue
+                .selectedText(text -> "\033[1m" + text + "\033[0m") // bold
+                .description(text -> "\033[2m" + text + "\033[0m") // dim
+                .scrollInfo(text -> "\033[2m" + text + "\033[0m") // dim
+                .noMatch(text -> "\033[2m" + text + "\033[0m") // dim
                 .build();
     }
 
@@ -79,6 +120,7 @@ public class SelectListTheme {
         return new Builder();
     }
 
+    @SuppressWarnings("checkstyle:top_class_comment")
     public static class Builder {
         private UnaryOperator<String> selectedPrefix = UnaryOperator.identity();
         private UnaryOperator<String> selectedText = UnaryOperator.identity();

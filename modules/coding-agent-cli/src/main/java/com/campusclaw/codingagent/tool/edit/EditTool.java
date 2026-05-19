@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026-2026. All rights reserved.
+ */
+
 package com.campusclaw.codingagent.tool.edit;
 
 import java.nio.charset.StandardCharsets;
@@ -26,6 +30,9 @@ import org.springframework.stereotype.Component;
  * Agent tool that performs exact text replacement in files.
  * Falls back to fuzzy matching when exact match fails.
  * Uses {@link FileMutationQueue} to serialize concurrent edits to the same file.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 @Component
 @ConditionalOnProperty(name = "tool.execution.hybrid-enabled", havingValue = "false", matchIfMissing = true)
@@ -66,32 +73,44 @@ public class EditTool implements AgentTool {
     @Override
     public JsonNode parameters() {
         ObjectNode props = MAPPER.createObjectNode();
-        props.set("path", MAPPER.createObjectNode()
-                .put("type", "string")
-                .put("description", "The file path to edit"));
-        props.set("oldText", MAPPER.createObjectNode()
-                .put("type", "string")
-                .put("description", "The exact text to find and replace (single-replacement mode)"));
-        props.set("newText", MAPPER.createObjectNode()
-                .put("type", "string")
-                .put("description", "The replacement text (single-replacement mode)"));
+        props.set("path", MAPPER.createObjectNode().put("type", "string").put("description", "The file path to edit"));
+        props.set(
+                "oldText",
+                MAPPER.createObjectNode()
+                        .put("type", "string")
+                        .put("description", "The exact text to find and replace (single-replacement mode)"));
+        props.set(
+                "newText",
+                MAPPER.createObjectNode()
+                        .put("type", "string")
+                        .put("description", "The replacement text (single-replacement mode)"));
 
         // Multi-edit schema
         ObjectNode editItemProps = MAPPER.createObjectNode();
-        editItemProps.set("oldText", MAPPER.createObjectNode()
-                .put("type", "string")
-                .put("description", "Exact text for one targeted replacement. Must be unique and non-overlapping."));
-        editItemProps.set("newText", MAPPER.createObjectNode()
-                .put("type", "string")
-                .put("description", "Replacement text for this targeted edit."));
+        editItemProps.set(
+                "oldText",
+                MAPPER.createObjectNode()
+                        .put("type", "string")
+                        .put(
+                                "description",
+                                "Exact text for one targeted replacement. Must be unique and non-overlapping."));
+        editItemProps.set(
+                "newText",
+                MAPPER.createObjectNode()
+                        .put("type", "string")
+                        .put("description", "Replacement text for this targeted edit."));
         ObjectNode editItemSchema = MAPPER.createObjectNode()
                 .put("type", "object")
                 .<ObjectNode>set("properties", editItemProps)
                 .set("required", MAPPER.createArrayNode().add("oldText").add("newText"));
-        props.set("edits", MAPPER.createObjectNode()
-                .put("type", "array")
-                .<ObjectNode>set("items", editItemSchema)
-                .put("description", "Multiple disjoint edits. Each matched against original, not incrementally. Do not overlap."));
+        props.set(
+                "edits",
+                MAPPER.createObjectNode()
+                        .put("type", "array")
+                        .<ObjectNode>set("items", editItemSchema)
+                        .put(
+                                "description",
+                                "Multiple disjoint edits. Each matched against original, not incrementally. Do not overlap."));
 
         return MAPPER.createObjectNode()
                 .put("type", "object")
@@ -102,11 +121,8 @@ public class EditTool implements AgentTool {
     @Override
     @SuppressWarnings("unchecked")
     public AgentToolResult execute(
-            String toolCallId,
-            Map<String, Object> params,
-            CancellationToken signal,
-            AgentToolUpdateCallback onUpdate
-    ) throws Exception {
+            String toolCallId, Map<String, Object> params, CancellationToken signal, AgentToolUpdateCallback onUpdate)
+            throws Exception {
         String pathInput = (String) params.get("path");
 
         if (pathInput == null || pathInput.isBlank()) {
@@ -130,8 +146,9 @@ public class EditTool implements AgentTool {
             if (params.containsKey("oldText") || params.containsKey("newText")) {
                 return errorResult("Error: use either edits[] or oldText/newText, not both");
             }
-            return mutationQueue.withLock(resolvedPath, () ->
-                    performMultiEdit(resolvedPath, pathInput, (List<Map<String, Object>>) editsList));
+            return mutationQueue.withLock(
+                    resolvedPath,
+                    () -> performMultiEdit(resolvedPath, pathInput, (List<Map<String, Object>>) editsList));
         }
 
         // Single-edit mode: oldText + newText
@@ -155,8 +172,8 @@ public class EditTool implements AgentTool {
         // Check for multiple exact occurrences
         int occurrences = FuzzyMatch.countOccurrences(content, oldText);
         if (occurrences > 1) {
-            return errorResult("Error: oldText matches " + occurrences
-                    + " occurrences in " + pathInput + ". Provide a more specific match.");
+            return errorResult("Error: oldText matches " + occurrences + " occurrences in " + pathInput
+                    + ". Provide a more specific match.");
         }
 
         String updatedContent;
@@ -183,23 +200,25 @@ public class EditTool implements AgentTool {
         Integer firstChangedLine = DiffUtils.findFirstChangedLine(content, updatedContent);
         var details = new EditToolDetails(diff, firstChangedLine);
 
-        String message = fuzzyUsed
-                ? "Applied edit to " + pathInput + " (fuzzy match)"
-                : "Applied edit to " + pathInput;
+        String message = fuzzyUsed ? "Applied edit to " + pathInput + " (fuzzy match)" : "Applied edit to " + pathInput;
 
-        return new AgentToolResult(
-                List.<ContentBlock>of(new TextContent(message)),
-                details
-        );
+        return new AgentToolResult(List.<ContentBlock>of(new TextContent(message)), details);
     }
 
     /**
      * Performs multiple disjoint edits against the original file content.
      * All edits are matched against the original (not incrementally).
      * Matching campusclaw's multi-edit behavior.
+     *
+     * @param path the path
+     * @param pathInput the pathInput
+     * @param editsList the editsList
+     * @return the result
+     *
+     * @throws Exception if the operation fails
      */
-    private AgentToolResult performMultiEdit(Path path, String pathInput,
-                                              List<Map<String, Object>> editsList) throws Exception {
+    private AgentToolResult performMultiEdit(Path path, String pathInput, List<Map<String, Object>> editsList)
+            throws Exception {
         byte[] rawBytes = editOperations.readFile(path);
         String original = new String(rawBytes, StandardCharsets.UTF_8);
         String content = original;
@@ -254,16 +273,11 @@ public class EditTool implements AgentTool {
         var details = new EditToolDetails(diff, firstChangedLine);
 
         return new AgentToolResult(
-                List.<ContentBlock>of(new TextContent(
-                        "Applied " + entries.size() + " edits to " + pathInput)),
-                details
-        );
+                List.<ContentBlock>of(new TextContent("Applied " + entries.size() + " edits to " + pathInput)),
+                details);
     }
 
     private static AgentToolResult errorResult(String message) {
-        return new AgentToolResult(
-                List.<ContentBlock>of(new TextContent(message)),
-                null
-        );
+        return new AgentToolResult(List.<ContentBlock>of(new TextContent(message)), null);
     }
 }

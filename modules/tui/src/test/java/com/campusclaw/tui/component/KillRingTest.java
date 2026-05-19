@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026-2026. All rights reserved.
+ */
+
 package com.campusclaw.tui.component;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -89,8 +93,10 @@ class KillRingTest {
             ring.push("a", false, false);
             ring.push("b", false, false);
             ring.push("c", false, false);
+
             // Ring: [a, b, c] → peek = c
             ring.rotate();
+
             // Ring: [c, a, b] → peek = b
             assertEquals("b", ring.peek());
         }

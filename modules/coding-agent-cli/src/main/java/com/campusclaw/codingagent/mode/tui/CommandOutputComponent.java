@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026-2026. All rights reserved.
+ */
+
 package com.campusclaw.codingagent.mode.tui;
 
 import java.util.ArrayList;
@@ -9,6 +13,9 @@ import com.campusclaw.tui.ansi.AnsiUtils;
 /**
  * Renders slash command output with dim styling and vertical spacing,
  * visually distinct from assistant messages.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 public class CommandOutputComponent implements Component {
 
@@ -28,7 +35,9 @@ public class CommandOutputComponent implements Component {
 
     @Override
     public List<String> render(int width) {
-        if (cachedLines != null && cachedWidth == width) { return cachedLines; }
+        if (cachedLines != null && cachedWidth == width) {
+            return cachedLines;
+        }
 
         var lines = new ArrayList<String>();
         lines.add(""); // spacer before

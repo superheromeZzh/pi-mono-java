@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026-2026. All rights reserved.
+ */
+
 package com.huawei.hicampus.mate.matecampusclaw.codingagent.tool.read;
 
 import java.io.IOException;
@@ -5,6 +9,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.Base64;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 import com.huawei.hicampus.mate.matecampusclaw.agent.tool.AgentTool;
@@ -29,12 +34,15 @@ import org.springframework.stereotype.Component;
  * Agent tool that reads file contents with optional line offset and limit.
  * Detects image files and returns them as {@link ImageContent}.
  * Text files are returned with line numbers and truncated if they exceed limits.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 @Component
 @ConditionalOnProperty(name = "tool.execution.hybrid-enabled", havingValue = "false", matchIfMissing = true)
 public class ReadTool implements AgentTool {
 
-    static final int DEFAULT_MAX_BYTES = 32_768;  // 32KB
+    static final int DEFAULT_MAX_BYTES = 32_768; // 32KB
     static final int DEFAULT_MAX_LINES = 500;
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
@@ -70,15 +78,21 @@ public class ReadTool implements AgentTool {
     @Override
     public JsonNode parameters() {
         ObjectNode props = MAPPER.createObjectNode();
-        props.set("path", MAPPER.createObjectNode()
-                .put("type", "string")
-                .put("description", "The file path to read (relative or absolute)"));
-        props.set("offset", MAPPER.createObjectNode()
-                .put("type", "integer")
-                .put("description", "Starting line number, 1-indexed (optional)"));
-        props.set("limit", MAPPER.createObjectNode()
-                .put("type", "integer")
-                .put("description", "Maximum number of lines to read (optional)"));
+        props.set(
+                "path",
+                MAPPER.createObjectNode()
+                        .put("type", "string")
+                        .put("description", "The file path to read (relative or absolute)"));
+        props.set(
+                "offset",
+                MAPPER.createObjectNode()
+                        .put("type", "integer")
+                        .put("description", "Starting line number, 1-indexed (optional)"));
+        props.set(
+                "limit",
+                MAPPER.createObjectNode()
+                        .put("type", "integer")
+                        .put("description", "Maximum number of lines to read (optional)"));
 
         return MAPPER.createObjectNode()
                 .put("type", "object")
@@ -88,11 +102,8 @@ public class ReadTool implements AgentTool {
 
     @Override
     public AgentToolResult execute(
-            String toolCallId,
-            Map<String, Object> params,
-            CancellationToken signal,
-            AgentToolUpdateCallback onUpdate
-    ) throws Exception {
+            String toolCallId, Map<String, Object> params, CancellationToken signal, AgentToolUpdateCallback onUpdate)
+            throws Exception {
         String pathInput = (String) params.get("path");
         if (pathInput == null || pathInput.isBlank()) {
             return errorResult("Error: path is required");
@@ -127,10 +138,7 @@ public class ReadTool implements AgentTool {
     private AgentToolResult readImage(Path path, String mimeType) throws IOException {
         byte[] data = readOperations.readFile(path);
         String base64 = Base64.getEncoder().encodeToString(data);
-        return new AgentToolResult(
-                List.<ContentBlock>of(new ImageContent(base64, mimeType)),
-                null
-        );
+        return new AgentToolResult(List.<ContentBlock>of(new ImageContent(base64, mimeType)), null);
     }
 
     private AgentToolResult readText(Path path, Map<String, Object> params) throws IOException {
@@ -138,6 +146,7 @@ public class ReadTool implements AgentTool {
         String content = new String(rawBytes, StandardCharsets.UTF_8);
 
         String[] allLines = content.split("\n", -1);
+
         // Remove trailing empty line from split if content ends with newline
         int totalLines = allLines.length;
         if (content.endsWith("\n") && totalLines > 0) {
@@ -159,22 +168,17 @@ public class ReadTool implements AgentTool {
 
         // Apply offset and limit to select a window of lines
         int startIdx = offset - 1; // convert to 0-indexed
-        int endIdx = limit != null
-                ? Math.min(startIdx + limit, totalLines)
-                : totalLines;
+        int endIdx = limit != null ? Math.min(startIdx + limit, totalLines) : totalLines;
 
         if (startIdx >= totalLines) {
-            return new AgentToolResult(
-                    List.<ContentBlock>of(new TextContent("")),
-                    new ReadToolDetails(null)
-            );
+            return new AgentToolResult(List.<ContentBlock>of(new TextContent("")), new ReadToolDetails(null));
         }
 
         // Build numbered output
         var sb = new StringBuilder();
         for (int i = startIdx; i < endIdx; i++) {
             int lineNum = i + 1;
-            sb.append(String.format("%6d\t%s", lineNum, allLines[i]));
+            sb.append(String.format(Locale.ROOT, "%6d\t%s", lineNum, allLines[i]));
             if (i < endIdx - 1) {
                 sb.append('\n');
             }
@@ -192,14 +196,9 @@ public class ReadTool implements AgentTool {
             displayText = numberedOutput;
         }
 
-        var details = new ReadToolDetails(
-                truncationResult.truncated() ? truncationResult : null
-        );
+        var details = new ReadToolDetails(truncationResult.truncated() ? truncationResult : null);
 
-        return new AgentToolResult(
-                List.<ContentBlock>of(new TextContent(displayText)),
-                details
-        );
+        return new AgentToolResult(List.<ContentBlock>of(new TextContent(displayText)), details);
     }
 
     private static String truncateFirstNLines(String text, int maxLines) {
@@ -209,16 +208,15 @@ public class ReadTool implements AgentTool {
         }
         var sb = new StringBuilder();
         for (int i = 0; i < maxLines; i++) {
-            if (i > 0) sb.append('\n');
+            if (i > 0) {
+                sb.append('\n');
+            }
             sb.append(lines[i]);
         }
         return sb.toString();
     }
 
     private static AgentToolResult errorResult(String message) {
-        return new AgentToolResult(
-                List.<ContentBlock>of(new TextContent(message)),
-                null
-        );
+        return new AgentToolResult(List.<ContentBlock>of(new TextContent(message)), null);
     }
 }

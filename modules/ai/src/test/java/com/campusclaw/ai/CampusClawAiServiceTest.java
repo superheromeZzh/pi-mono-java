@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026-2026. All rights reserved.
+ */
+
 package com.campusclaw.ai;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -15,7 +19,21 @@ import com.campusclaw.ai.provider.ApiProviderRegistry;
 import com.campusclaw.ai.provider.MockApiProvider;
 import com.campusclaw.ai.stream.AssistantMessageEvent;
 import com.campusclaw.ai.stream.AssistantMessageEventStream;
-import com.campusclaw.ai.types.*;
+import com.campusclaw.ai.types.Api;
+import com.campusclaw.ai.types.AssistantMessage;
+import com.campusclaw.ai.types.Context;
+import com.campusclaw.ai.types.Cost;
+import com.campusclaw.ai.types.InputModality;
+import com.campusclaw.ai.types.Model;
+import com.campusclaw.ai.types.ModelCost;
+import com.campusclaw.ai.types.Provider;
+import com.campusclaw.ai.types.SimpleStreamOptions;
+import com.campusclaw.ai.types.StopReason;
+import com.campusclaw.ai.types.StreamOptions;
+import com.campusclaw.ai.types.TextContent;
+import com.campusclaw.ai.types.ThinkingLevel;
+import com.campusclaw.ai.types.Usage;
+import com.campusclaw.ai.types.UserMessage;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -26,24 +44,34 @@ import reactor.test.StepVerifier;
 class CampusClawAiServiceTest {
 
     private static final Model ANTHROPIC_MODEL = new Model(
-        "claude-sonnet-4-20250514", "Claude Sonnet 4",
-        Api.ANTHROPIC_MESSAGES, Provider.ANTHROPIC,
-        "https://api.anthropic.com", true,
-        List.of(InputModality.TEXT, InputModality.IMAGE),
-        new ModelCost(3.0, 15.0, 0.3, 3.75),
-        200000, 16000, null, null,
-        null
-    );
+            "claude-sonnet-4-20250514",
+            "Claude Sonnet 4",
+            Api.ANTHROPIC_MESSAGES,
+            Provider.ANTHROPIC,
+            "https://api.anthropic.com",
+            true,
+            List.of(InputModality.TEXT, InputModality.IMAGE),
+            new ModelCost(3.0, 15.0, 0.3, 3.75),
+            200000,
+            16000,
+            null,
+            null,
+            null);
 
     private static final Model OPENAI_MODEL = new Model(
-        "gpt-4o", "GPT-4o",
-        Api.OPENAI_RESPONSES, Provider.OPENAI,
-        "https://api.openai.com", false,
-        List.of(InputModality.TEXT, InputModality.IMAGE),
-        new ModelCost(2.5, 10.0, 1.25, 2.5),
-        128000, 16384, null, null,
-        null
-    );
+            "gpt-4o",
+            "GPT-4o",
+            Api.OPENAI_RESPONSES,
+            Provider.OPENAI,
+            "https://api.openai.com",
+            false,
+            List.of(InputModality.TEXT, InputModality.IMAGE),
+            new ModelCost(2.5, 10.0, 1.25, 2.5),
+            128000,
+            16384,
+            null,
+            null,
+            null);
 
     private ApiProviderRegistry providerRegistry;
     private ModelRegistry modelRegistry;
@@ -63,14 +91,12 @@ class CampusClawAiServiceTest {
 
         @Test
         void rejectsNullProviderRegistry() {
-            assertThrows(NullPointerException.class,
-                () -> new CampusClawAiService(null, modelRegistry));
+            assertThrows(NullPointerException.class, () -> new CampusClawAiService(null, modelRegistry));
         }
 
         @Test
         void rejectsNullModelRegistry() {
-            assertThrows(NullPointerException.class,
-                () -> new CampusClawAiService(providerRegistry, null));
+            assertThrows(NullPointerException.class, () -> new CampusClawAiService(providerRegistry, null));
         }
 
         @Test
@@ -93,39 +119,40 @@ class CampusClawAiServiceTest {
             var context = new Context(null, List.of(new UserMessage("hi", 1)), null);
             var eventStream = service.stream(ANTHROPIC_MODEL, context, null);
 
-            assertNotNull(eventStream);
-
             StepVerifier.create(eventStream.asFlux())
-                .expectNextMatches(e -> e instanceof AssistantMessageEvent.StartEvent)
-                .expectNextMatches(e -> e instanceof AssistantMessageEvent.TextStartEvent)
-                .expectNextMatches(e -> e instanceof AssistantMessageEvent.TextDeltaEvent)
-                .expectNextMatches(e -> e instanceof AssistantMessageEvent.TextEndEvent)
-                .expectNextMatches(e -> e instanceof AssistantMessageEvent.DoneEvent)
-                .verifyComplete();
+                    .expectNextMatches(e -> e instanceof AssistantMessageEvent.StartEvent)
+                    .expectNextMatches(e -> e instanceof AssistantMessageEvent.TextStartEvent)
+                    .expectNextMatches(e -> e instanceof AssistantMessageEvent.TextDeltaEvent)
+                    .expectNextMatches(e -> e instanceof AssistantMessageEvent.TextEndEvent)
+                    .expectNextMatches(e -> e instanceof AssistantMessageEvent.DoneEvent)
+                    .verifyComplete();
         }
 
         @Test
         void throwsWhenNoProviderRegistered() {
             var context = new Context(null, List.of(new UserMessage("hi", 1)), null);
 
-            var ex = assertThrows(IllegalArgumentException.class,
-                () -> service.stream(ANTHROPIC_MODEL, context, null));
+            var ex = assertThrows(IllegalArgumentException.class, () -> service.stream(ANTHROPIC_MODEL, context, null));
             assertTrue(ex.getMessage().contains("anthropic-messages"));
         }
 
         @Test
         void rejectsNullModel() {
-            assertThrows(NullPointerException.class,
-                () -> service.stream(null, new Context(null, List.of(), null), null));
+            assertThrows(
+                    NullPointerException.class, () -> service.stream(null, new Context(null, List.of(), null), null));
         }
 
         @Test
         void passesOptionsToProvider() {
             // Use a custom provider that captures the options
-            var capturedOptions = new Object() { StreamOptions value; };
+            var capturedOptions = new Object() {
+                StreamOptions value;
+            };
             var provider = new ApiProvider() {
                 @Override
-                public Api getApi() { return Api.ANTHROPIC_MESSAGES; }
+                public Api getApi() {
+                    return Api.ANTHROPIC_MESSAGES;
+                }
 
                 @Override
                 public AssistantMessageEventStream stream(Model model, Context context, StreamOptions options) {
@@ -134,13 +161,15 @@ class CampusClawAiServiceTest {
                 }
 
                 @Override
-                public AssistantMessageEventStream streamSimple(Model model, Context context, SimpleStreamOptions options) {
+                public AssistantMessageEventStream streamSimple(
+                        Model model, Context context, SimpleStreamOptions options) {
                     return new MockApiProvider(Api.ANTHROPIC_MESSAGES).streamSimple(model, context, options);
                 }
             };
             providerRegistry.register(provider, "test");
 
-            var options = StreamOptions.builder().temperature(0.7).maxTokens(100).build();
+            var options =
+                    StreamOptions.builder().temperature(0.7).maxTokens(100).build();
             var context = new Context(null, List.of(new UserMessage("hi", 1)), null);
             service.stream(ANTHROPIC_MODEL, context, options);
 
@@ -161,31 +190,32 @@ class CampusClawAiServiceTest {
             var context = new Context(null, List.of(new UserMessage("hi", 1)), null);
             var eventStream = service.streamSimple(ANTHROPIC_MODEL, context, null);
 
-            assertNotNull(eventStream);
-
             StepVerifier.create(eventStream.asFlux())
-                .expectNextMatches(e -> e instanceof AssistantMessageEvent.StartEvent)
-                .expectNextMatches(e -> e instanceof AssistantMessageEvent.TextStartEvent)
-                .expectNextMatches(e -> e instanceof AssistantMessageEvent.TextDeltaEvent)
-                .expectNextMatches(e -> e instanceof AssistantMessageEvent.TextEndEvent)
-                .expectNextMatches(e -> e instanceof AssistantMessageEvent.DoneEvent)
-                .verifyComplete();
+                    .expectNextMatches(e -> e instanceof AssistantMessageEvent.StartEvent)
+                    .expectNextMatches(e -> e instanceof AssistantMessageEvent.TextStartEvent)
+                    .expectNextMatches(e -> e instanceof AssistantMessageEvent.TextDeltaEvent)
+                    .expectNextMatches(e -> e instanceof AssistantMessageEvent.TextEndEvent)
+                    .expectNextMatches(e -> e instanceof AssistantMessageEvent.DoneEvent)
+                    .verifyComplete();
         }
 
         @Test
         void throwsWhenNoProviderRegistered() {
             var context = new Context(null, List.of(new UserMessage("hi", 1)), null);
 
-            assertThrows(IllegalArgumentException.class,
-                () -> service.streamSimple(ANTHROPIC_MODEL, context, null));
+            assertThrows(IllegalArgumentException.class, () -> service.streamSimple(ANTHROPIC_MODEL, context, null));
         }
 
         @Test
         void passesSimpleOptionsToProvider() {
-            var capturedOptions = new Object() { SimpleStreamOptions value; };
+            var capturedOptions = new Object() {
+                SimpleStreamOptions value;
+            };
             var provider = new ApiProvider() {
                 @Override
-                public Api getApi() { return Api.ANTHROPIC_MESSAGES; }
+                public Api getApi() {
+                    return Api.ANTHROPIC_MESSAGES;
+                }
 
                 @Override
                 public AssistantMessageEventStream stream(Model model, Context context, StreamOptions options) {
@@ -193,7 +223,8 @@ class CampusClawAiServiceTest {
                 }
 
                 @Override
-                public AssistantMessageEventStream streamSimple(Model model, Context context, SimpleStreamOptions options) {
+                public AssistantMessageEventStream streamSimple(
+                        Model model, Context context, SimpleStreamOptions options) {
                     capturedOptions.value = options;
                     return new MockApiProvider(Api.ANTHROPIC_MESSAGES).streamSimple(model, context, options);
                 }
@@ -201,9 +232,9 @@ class CampusClawAiServiceTest {
             providerRegistry.register(provider, "test");
 
             var options = SimpleStreamOptions.builder()
-                .temperature(0.5)
-                .reasoning(ThinkingLevel.HIGH)
-                .build();
+                    .temperature(0.5)
+                    .reasoning(ThinkingLevel.HIGH)
+                    .build();
             var context = new Context(null, List.of(new UserMessage("hi", 1)), null);
             service.streamSimple(ANTHROPIC_MODEL, context, options);
 
@@ -224,35 +255,33 @@ class CampusClawAiServiceTest {
             var context = new Context(null, List.of(new UserMessage("hi", 1)), null);
 
             StepVerifier.create(service.complete(ANTHROPIC_MODEL, context, null))
-                .assertNext(msg -> {
-                    assertNotNull(msg);
-                    assertEquals(StopReason.STOP, msg.stopReason());
-                    assertFalse(msg.content().isEmpty());
-                })
-                .verifyComplete();
+                    .assertNext(msg -> {
+                        assertNotNull(msg);
+                        assertEquals(StopReason.STOP, msg.stopReason());
+                        assertFalse(msg.content().isEmpty());
+                    })
+                    .verifyComplete();
         }
 
         @Test
         void completeWithCustomEvents() {
             var finalMessage = new AssistantMessage(
-                List.of(new TextContent("custom response")),
-                Api.ANTHROPIC_MESSAGES.value(),
-                Provider.ANTHROPIC.value(),
-                "claude-sonnet-4-20250514",
-                null,
-                new Usage(10, 20, 0, 0, 30, Cost.empty()),
-                StopReason.STOP,
-                null,
-                System.currentTimeMillis()
-            );
+                    List.of(new TextContent("custom response")),
+                    Api.ANTHROPIC_MESSAGES.value(),
+                    Provider.ANTHROPIC.value(),
+                    "claude-sonnet-4-20250514",
+                    null,
+                    new Usage(10, 20, 0, 0, 30, Cost.empty()),
+                    StopReason.STOP,
+                    null,
+                    System.currentTimeMillis());
 
             var events = List.<AssistantMessageEvent>of(
-                new AssistantMessageEvent.StartEvent(finalMessage),
-                new AssistantMessageEvent.TextStartEvent(0, finalMessage),
-                new AssistantMessageEvent.TextDeltaEvent(0, "custom response", finalMessage),
-                new AssistantMessageEvent.TextEndEvent(0, "custom response", finalMessage),
-                new AssistantMessageEvent.DoneEvent(StopReason.STOP, finalMessage)
-            );
+                    new AssistantMessageEvent.StartEvent(finalMessage),
+                    new AssistantMessageEvent.TextStartEvent(0, finalMessage),
+                    new AssistantMessageEvent.TextDeltaEvent(0, "custom response", finalMessage),
+                    new AssistantMessageEvent.TextEndEvent(0, "custom response", finalMessage),
+                    new AssistantMessageEvent.DoneEvent(StopReason.STOP, finalMessage));
 
             var mockProvider = new MockApiProvider(Api.ANTHROPIC_MESSAGES, events);
             providerRegistry.register(mockProvider, "test");
@@ -260,21 +289,20 @@ class CampusClawAiServiceTest {
             var context = new Context(null, List.of(new UserMessage("hi", 1)), null);
 
             StepVerifier.create(service.complete(ANTHROPIC_MODEL, context, null))
-                .assertNext(msg -> {
-                    assertEquals("custom response",
-                        ((TextContent) msg.content().get(0)).text());
-                    assertEquals(10, msg.usage().input());
-                    assertEquals(20, msg.usage().output());
-                })
-                .verifyComplete();
+                    .assertNext(msg -> {
+                        assertEquals(
+                                "custom response", ((TextContent) msg.content().get(0)).text());
+                        assertEquals(10, msg.usage().input());
+                        assertEquals(20, msg.usage().output());
+                    })
+                    .verifyComplete();
         }
 
         @Test
         void throwsWhenNoProviderRegistered() {
             var context = new Context(null, List.of(new UserMessage("hi", 1)), null);
 
-            assertThrows(IllegalArgumentException.class,
-                () -> service.complete(ANTHROPIC_MODEL, context, null));
+            assertThrows(IllegalArgumentException.class, () -> service.complete(ANTHROPIC_MODEL, context, null));
         }
     }
 
@@ -291,11 +319,11 @@ class CampusClawAiServiceTest {
             var context = new Context(null, List.of(new UserMessage("hi", 1)), null);
 
             StepVerifier.create(service.completeSimple(ANTHROPIC_MODEL, context, null))
-                .assertNext(msg -> {
-                    assertNotNull(msg);
-                    assertEquals(StopReason.STOP, msg.stopReason());
-                })
-                .verifyComplete();
+                    .assertNext(msg -> {
+                        assertNotNull(msg);
+                        assertEquals(StopReason.STOP, msg.stopReason());
+                    })
+                    .verifyComplete();
         }
     }
 
@@ -310,19 +338,18 @@ class CampusClawAiServiceTest {
             providerRegistry.register(mockProvider, "test");
 
             StepVerifier.create(service.complete(ANTHROPIC_MODEL, "Hello, world!"))
-                .assertNext(msg -> {
-                    assertNotNull(msg);
-                    assertEquals(StopReason.STOP, msg.stopReason());
-                })
-                .verifyComplete();
+                    .assertNext(msg -> {
+                        assertNotNull(msg);
+                        assertEquals(StopReason.STOP, msg.stopReason());
+                    })
+                    .verifyComplete();
         }
 
         @Test
         void rejectsNullUserMessage() {
             providerRegistry.register(new MockApiProvider(Api.ANTHROPIC_MESSAGES), "test");
 
-            assertThrows(NullPointerException.class,
-                () -> service.complete(ANTHROPIC_MODEL, (String) null));
+            assertThrows(NullPointerException.class, () -> service.complete(ANTHROPIC_MODEL, (String) null));
         }
     }
 
@@ -341,12 +368,21 @@ class CampusClawAiServiceTest {
 
             var context = new Context(null, List.of(new UserMessage("hi", 1)), null);
 
-            // Both should work and route correctly
+            // Each stream's first event should carry the api value of the provider that produced it,
+            // proving registry-by-api dispatch worked.
             var anthropicStream = service.stream(ANTHROPIC_MODEL, context, null);
-            assertNotNull(anthropicStream);
+            StepVerifier.create(anthropicStream.asFlux())
+                    .expectNextMatches(e -> e instanceof AssistantMessageEvent.StartEvent s
+                            && Api.ANTHROPIC_MESSAGES.value().equals(s.partial().api()))
+                    .thenCancel()
+                    .verify();
 
             var openaiStream = service.stream(OPENAI_MODEL, context, null);
-            assertNotNull(openaiStream);
+            StepVerifier.create(openaiStream.asFlux())
+                    .expectNextMatches(e -> e instanceof AssistantMessageEvent.StartEvent s
+                            && Api.OPENAI_RESPONSES.value().equals(s.partial().api()))
+                    .thenCancel()
+                    .verify();
         }
     }
 
@@ -358,21 +394,19 @@ class CampusClawAiServiceTest {
         @Test
         void completeReturnsErrorMessage() {
             var errorMessage = new AssistantMessage(
-                List.of(),
-                Api.ANTHROPIC_MESSAGES.value(),
-                Provider.ANTHROPIC.value(),
-                "claude-sonnet-4-20250514",
-                null,
-                Usage.empty(),
-                StopReason.ERROR,
-                "Something went wrong",
-                System.currentTimeMillis()
-            );
+                    List.of(),
+                    Api.ANTHROPIC_MESSAGES.value(),
+                    Provider.ANTHROPIC.value(),
+                    "claude-sonnet-4-20250514",
+                    null,
+                    Usage.empty(),
+                    StopReason.ERROR,
+                    "Something went wrong",
+                    System.currentTimeMillis());
 
             var events = List.<AssistantMessageEvent>of(
-                new AssistantMessageEvent.StartEvent(errorMessage),
-                new AssistantMessageEvent.ErrorEvent("error", errorMessage)
-            );
+                    new AssistantMessageEvent.StartEvent(errorMessage),
+                    new AssistantMessageEvent.ErrorEvent("error", errorMessage));
 
             var mockProvider = new MockApiProvider(Api.ANTHROPIC_MESSAGES, events);
             providerRegistry.register(mockProvider, "test");
@@ -380,11 +414,11 @@ class CampusClawAiServiceTest {
             var context = new Context(null, List.of(new UserMessage("hi", 1)), null);
 
             StepVerifier.create(service.complete(ANTHROPIC_MODEL, context, null))
-                .assertNext(msg -> {
-                    assertEquals(StopReason.ERROR, msg.stopReason());
-                    assertEquals("Something went wrong", msg.errorMessage());
-                })
-                .verifyComplete();
+                    .assertNext(msg -> {
+                        assertEquals(StopReason.ERROR, msg.stopReason());
+                        assertEquals("Something went wrong", msg.errorMessage());
+                    })
+                    .verifyComplete();
         }
     }
 }

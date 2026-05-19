@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026-2026. All rights reserved.
+ */
+
 package com.campusclaw.codingagent.tool.edit;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -100,9 +104,8 @@ class EditToolTest {
         void replacesExactMatch() throws Exception {
             stubFile("test.txt", "hello world\n");
 
-            var result = editTool.execute("c1",
-                    Map.of("path", "test.txt", "oldText", "hello", "newText", "goodbye"),
-                    null, null);
+            var result = editTool.execute(
+                    "c1", Map.of("path", "test.txt", "oldText", "hello", "newText", "goodbye"), null, null);
 
             String text = extractText(result);
             assertTrue(text.contains("Applied edit"));
@@ -115,9 +118,8 @@ class EditToolTest {
         void replacesMultiLineExactMatch() throws Exception {
             stubFile("multi.txt", "line1\nline2\nline3\n");
 
-            var result = editTool.execute("c2",
-                    Map.of("path", "multi.txt", "oldText", "line1\nline2", "newText", "replaced"),
-                    null, null);
+            var result = editTool.execute(
+                    "c2", Map.of("path", "multi.txt", "oldText", "line1\nline2", "newText", "replaced"), null, null);
 
             assertTrue(extractText(result).contains("Applied edit"));
             verify(editOperations).writeFile(any(), eq("replaced\nline3\n"));
@@ -127,9 +129,8 @@ class EditToolTest {
         void includesDiffInDetails() throws Exception {
             stubFile("diff.txt", "aaa\nbbb\nccc\n");
 
-            var result = editTool.execute("c3",
-                    Map.of("path", "diff.txt", "oldText", "bbb", "newText", "xxx"),
-                    null, null);
+            var result =
+                    editTool.execute("c3", Map.of("path", "diff.txt", "oldText", "bbb", "newText", "xxx"), null, null);
 
             var details = (EditToolDetails) result.details();
             assertNotNull(details.diff());
@@ -141,9 +142,8 @@ class EditToolTest {
         void includesFirstChangedLineInDetails() throws Exception {
             stubFile("line.txt", "aaa\nbbb\nccc\n");
 
-            var result = editTool.execute("c4",
-                    Map.of("path", "line.txt", "oldText", "bbb", "newText", "xxx"),
-                    null, null);
+            var result =
+                    editTool.execute("c4", Map.of("path", "line.txt", "oldText", "bbb", "newText", "xxx"), null, null);
 
             var details = (EditToolDetails) result.details();
             assertEquals(2, details.firstChangedLine());
@@ -161,9 +161,8 @@ class EditToolTest {
         void rejectsMultipleMatches() throws Exception {
             stubFile("dup.txt", "foo bar foo baz foo\n");
 
-            var result = editTool.execute("c5",
-                    Map.of("path", "dup.txt", "oldText", "foo", "newText", "qux"),
-                    null, null);
+            var result =
+                    editTool.execute("c5", Map.of("path", "dup.txt", "oldText", "foo", "newText", "qux"), null, null);
 
             String text = extractText(result);
             assertTrue(text.contains("3 occurrences"));
@@ -174,9 +173,8 @@ class EditToolTest {
         void rejectsTwoOccurrences() throws Exception {
             stubFile("two.txt", "abc\nabc\n");
 
-            var result = editTool.execute("c6",
-                    Map.of("path", "two.txt", "oldText", "abc", "newText", "xyz"),
-                    null, null);
+            var result =
+                    editTool.execute("c6", Map.of("path", "two.txt", "oldText", "abc", "newText", "xyz"), null, null);
 
             assertTrue(extractText(result).contains("2 occurrences"));
         }
@@ -193,9 +191,8 @@ class EditToolTest {
         void fallsBackToFuzzyOnWhitespaceDifference() throws Exception {
             stubFile("fuzzy.txt", "  hello   world  \n");
 
-            var result = editTool.execute("c7",
-                    Map.of("path", "fuzzy.txt", "oldText", "hello world", "newText", "goodbye"),
-                    null, null);
+            var result = editTool.execute(
+                    "c7", Map.of("path", "fuzzy.txt", "oldText", "hello world", "newText", "goodbye"), null, null);
 
             String text = extractText(result);
             assertTrue(text.contains("fuzzy match"));
@@ -206,9 +203,11 @@ class EditToolTest {
         void fuzzyMatchesMultiLineWithWhitespace() throws Exception {
             stubFile("fuzzy-multi.txt", "  line1  \n  line2  \nline3\n");
 
-            var result = editTool.execute("c8",
+            var result = editTool.execute(
+                    "c8",
                     Map.of("path", "fuzzy-multi.txt", "oldText", "line1\nline2", "newText", "replaced"),
-                    null, null);
+                    null,
+                    null);
 
             assertTrue(extractText(result).contains("fuzzy match"));
             verify(editOperations).writeFile(any(), eq("replaced\nline3\n"));
@@ -218,9 +217,8 @@ class EditToolTest {
         void returnsErrorWhenNoFuzzyMatchFound() throws Exception {
             stubFile("nomatch.txt", "hello world\n");
 
-            var result = editTool.execute("c9",
-                    Map.of("path", "nomatch.txt", "oldText", "completely different", "newText", "x"),
-                    null, null);
+            var result = editTool.execute(
+                    "c9", Map.of("path", "nomatch.txt", "oldText", "completely different", "newText", "x"), null, null);
 
             assertTrue(extractText(result).contains("not found"));
             verify(editOperations, never()).writeFile(any(), any());
@@ -236,8 +234,7 @@ class EditToolTest {
 
         @Test
         void missingPathReturnsError() throws Exception {
-            var result = editTool.execute("c10",
-                    Map.of("oldText", "a", "newText", "b"), null, null);
+            var result = editTool.execute("c10", Map.of("oldText", "a", "newText", "b"), null, null);
             assertTrue(extractText(result).contains("Error"));
         }
 
@@ -245,29 +242,27 @@ class EditToolTest {
         void fileNotFoundReturnsError() throws Exception {
             when(editOperations.exists(any())).thenReturn(false);
 
-            var result = editTool.execute("c11",
-                    Map.of("path", "missing.txt", "oldText", "a", "newText", "b"), null, null);
+            var result =
+                    editTool.execute("c11", Map.of("path", "missing.txt", "oldText", "a", "newText", "b"), null, null);
             assertTrue(extractText(result).contains("not found"));
         }
 
         @Test
         void pathTraversalReturnsError() throws Exception {
-            var result = editTool.execute("c12",
-                    Map.of("path", "../../etc/passwd", "oldText", "a", "newText", "b"), null, null);
+            var result = editTool.execute(
+                    "c12", Map.of("path", "../../etc/passwd", "oldText", "a", "newText", "b"), null, null);
             assertTrue(extractText(result).contains("Error"));
         }
 
         @Test
         void missingOldTextReturnsError() throws Exception {
-            var result = editTool.execute("c13",
-                    Map.of("path", "test.txt", "newText", "b"), null, null);
+            var result = editTool.execute("c13", Map.of("path", "test.txt", "newText", "b"), null, null);
             assertTrue(extractText(result).contains("Error"));
         }
 
         @Test
         void missingNewTextReturnsError() throws Exception {
-            var result = editTool.execute("c14",
-                    Map.of("path", "test.txt", "oldText", "a"), null, null);
+            var result = editTool.execute("c14", Map.of("path", "test.txt", "oldText", "a"), null, null);
             assertTrue(extractText(result).contains("Error"));
         }
     }
@@ -283,9 +278,8 @@ class EditToolTest {
         void usesFileMutationQueue() throws Exception {
             stubFile("queued.txt", "content\n");
 
-            editTool.execute("c15",
-                    Map.of("path", "queued.txt", "oldText", "content", "newText", "updated"),
-                    null, null);
+            editTool.execute(
+                    "c15", Map.of("path", "queued.txt", "oldText", "content", "newText", "updated"), null, null);
 
             // Verify the write happened (proves the mutation queue executed the action)
             verify(editOperations).writeFile(eq(tempDir.resolve("queued.txt")), eq("updated\n"));

@@ -1,8 +1,18 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026-2026. All rights reserved.
+ */
+
 package com.huawei.hicampus.mate.matecampusclaw.codingagent.tool.execution;
 
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Optional;
+import java.util.regex.Pattern;
+
 import com.huawei.hicampus.mate.matecampusclaw.agent.tool.AgentToolResult;
-import com.huawei.hicampus.mate.matecampusclaw.agent.tool.CancellationToken;
 import com.huawei.hicampus.mate.matecampusclaw.agent.tool.AgentToolUpdateCallback;
+import com.huawei.hicampus.mate.matecampusclaw.agent.tool.CancellationToken;
 import com.huawei.hicampus.mate.matecampusclaw.codingagent.config.ToolExecutionProperties;
 import com.huawei.hicampus.mate.matecampusclaw.codingagent.tool.bash.BashTool;
 import com.huawei.hicampus.mate.matecampusclaw.codingagent.tool.edit.EditTool;
@@ -14,20 +24,17 @@ import com.huawei.hicampus.mate.matecampusclaw.codingagent.tool.sandbox.Resource
 import com.huawei.hicampus.mate.matecampusclaw.codingagent.tool.sandbox.SandboxResult;
 import com.huawei.hicampus.mate.matecampusclaw.codingagent.tool.sandbox.SandboxSecurityPolicy;
 import com.huawei.hicampus.mate.matecampusclaw.codingagent.tool.write.WriteTool;
-import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.regex.Pattern;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * 执行路由器 - 根据配置和策略路由到本地或沙箱执行
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 @Slf4j
 @Component
@@ -74,24 +81,33 @@ public class ExecutionRouter {
 
         // 预编译正则
         this.sandboxPatterns = properties.getSandboxRequiredPatterns().stream()
-            .map(Pattern::compile)
-            .toList();
+                .map(Pattern::compile)
+                .toList();
         this.protectedPathPatterns = properties.getProtectedPathPatterns().stream()
-            .map(Pattern::compile)
-            .toList();
+                .map(Pattern::compile)
+                .toList();
 
         log.info("ExecutionRouter initialized with default mode: {}", properties.getDefaultMode());
     }
 
     /**
-     * 路由执行请求
+     * 路由执行请求.
+     *
+     * @param toolName 工具名
+     * @param params 工具参数
+     * @param explicitMode 显式模式覆盖，null 表示自动判定
+     * @param signal 取消信号
+     * @param onUpdate 进度回调
+     * @return 工具执行结果
+     * @throws Exception 工具执行抛出的任意异常
      */
     public AgentToolResult route(
             String toolName,
             Map<String, Object> params,
             ExecutionMode explicitMode,
             CancellationToken signal,
-            AgentToolUpdateCallback onUpdate) throws Exception {
+            AgentToolUpdateCallback onUpdate)
+            throws Exception {
 
         ExecutionMode mode = determineMode(toolName, params, explicitMode);
 
@@ -107,11 +123,20 @@ public class ExecutionRouter {
     }
 
     /**
-     * 本地执行
+     * 本地执行.
+     *
+     * @param toolName 工具名
+     * @param params 工具参数
+     * @param signal 取消信号
+     * @param onUpdate 进度回调
+     * @return 工具执行结果
+     * @throws IllegalStateException 本地执行被关闭，或工具在本地不可用且沙箱也不可用
+     * @throws UnsupportedOperationException 当 {@code toolName} 不在已知本地工具集合内
+     * @throws Exception 底层工具执行抛出的任意异常
      */
-    private AgentToolResult executeLocal(String toolName, Map<String, Object> params,
-                                          CancellationToken signal,
-                                          AgentToolUpdateCallback onUpdate) throws Exception {
+    private AgentToolResult executeLocal(
+            String toolName, Map<String, Object> params, CancellationToken signal, AgentToolUpdateCallback onUpdate)
+            throws Exception {
         if (!properties.isLocalExecutionEnabled()) {
             throw new IllegalStateException("Local execution is disabled");
         }
@@ -119,15 +144,16 @@ public class ExecutionRouter {
         String callId = "local-" + System.currentTimeMillis();
 
         // 检查本地工具是否可用，不可用则回退到沙箱
-        Optional<?> tool = switch (toolName) {
-            case "read" -> localReadTool.map(t -> t);
-            case "write" -> localWriteTool.map(t -> t);
-            case "edit" -> localEditTool.map(t -> t);
-            case "bash" -> localBashTool.map(t -> t);
-            case "glob" -> localGlobTool.map(t -> t);
-            case "grep" -> localGrepTool.map(t -> t);
-            default -> Optional.empty();
-        };
+        Optional<?> tool =
+                switch (toolName) {
+                    case "read" -> localReadTool.map(t -> t);
+                    case "write" -> localWriteTool.map(t -> t);
+                    case "edit" -> localEditTool.map(t -> t);
+                    case "bash" -> localBashTool.map(t -> t);
+                    case "glob" -> localGlobTool.map(t -> t);
+                    case "grep" -> localGrepTool.map(t -> t);
+                    default -> Optional.empty();
+                };
 
         if (tool.isEmpty()) {
             log.warn("Local tool {} not available, falling back to sandbox", toolName);
@@ -149,11 +175,19 @@ public class ExecutionRouter {
     }
 
     /**
-     * 沙箱执行
+     * 沙箱执行.
+     *
+     * @param toolName 工具名
+     * @param params 工具参数
+     * @param signal 取消信号
+     * @param onUpdate 进度回调
+     * @return 工具执行结果
+     * @throws IllegalStateException 沙箱执行被关闭
+     * @throws Exception 底层工具执行抛出的任意异常
      */
-    private AgentToolResult executeSandbox(String toolName, Map<String, Object> params,
-                                            CancellationToken signal,
-                                            AgentToolUpdateCallback onUpdate) throws Exception {
+    private AgentToolResult executeSandbox(
+            String toolName, Map<String, Object> params, CancellationToken signal, AgentToolUpdateCallback onUpdate)
+            throws Exception {
         if (!properties.isSandboxExecutionEnabled()) {
             throw new IllegalStateException("Sandbox execution is disabled");
         }
@@ -174,11 +208,18 @@ public class ExecutionRouter {
     }
 
     /**
-     * 自动模式执行
+     * 自动模式执行.
+     *
+     * @param toolName 工具名
+     * @param params 工具参数
+     * @param signal 取消信号
+     * @param onUpdate 进度回调
+     * @return 工具执行结果
+     * @throws Exception 底层工具执行抛出的任意异常
      */
-    private AgentToolResult executeAuto(String toolName, Map<String, Object> params,
-                                         CancellationToken signal,
-                                         AgentToolUpdateCallback onUpdate) throws Exception {
+    private AgentToolResult executeAuto(
+            String toolName, Map<String, Object> params, CancellationToken signal, AgentToolUpdateCallback onUpdate)
+            throws Exception {
         RiskLevel risk = assessRisk(toolName, params);
 
         if (properties.isExecutionLoggingEnabled()) {
@@ -192,6 +233,7 @@ public class ExecutionRouter {
                 return executeSandbox(toolName, params, signal, onUpdate);
             } else {
                 log.warn("High risk operation but sandbox unavailable: {}", toolName);
+
                 // 安全检查
                 performSafetyCheck(toolName, params);
             }
@@ -213,6 +255,12 @@ public class ExecutionRouter {
 
     /**
      * 构建沙箱命令
+     *
+     * @param toolName the toolName
+     * @param params the params
+     * @return the result
+     *
+     * @throws UnsupportedOperationException if the operation fails
      */
     private List<String> buildSandboxCommand(String toolName, Map<String, Object> params) {
         return switch (toolName) {
@@ -247,13 +295,12 @@ public class ExecutionRouter {
         String content = (String) params.get("content");
 
         String fullPath = "/workspace/" + path;
-        String parentDir = fullPath.contains("/") ?
-            fullPath.substring(0, fullPath.lastIndexOf('/')) : "/workspace";
+        String parentDir = fullPath.contains("/") ? fullPath.substring(0, fullPath.lastIndexOf('/')) : "/workspace";
 
         // 使用 printf 写入，处理特殊字符
         String escaped = content.replace("'", "'\\''");
-        return List.of("sh", "-c",
-            "mkdir -p '" + parentDir + "' && printf '%s' '" + escaped + "' > '" + fullPath + "'");
+        return List.of(
+                "sh", "-c", "mkdir -p '" + parentDir + "' && printf '%s' '" + escaped + "' > '" + fullPath + "'");
     }
 
     private List<String> buildEditCommand(Map<String, Object> params) {
@@ -272,6 +319,7 @@ public class ExecutionRouter {
 
     private List<String> buildBashCommand(Map<String, Object> params) {
         String command = (String) params.get("command");
+
         // Use 'sh' which is available in all Alpine containers (busybox ash)
         // This avoids the need to install bash separately
         return List.of("sh", "-c", command);
@@ -280,19 +328,25 @@ public class ExecutionRouter {
     private List<String> buildGlobCommand(Map<String, Object> params) {
         String pattern = (String) params.get("pattern");
         String path = (String) params.getOrDefault("path", ".");
-        return List.of("sh", "-c",
-            "cd /workspace/" + path + " && find . -type f -name '" + pattern + "' 2>/dev/null | head -1000");
+        return List.of(
+                "sh",
+                "-c",
+                "cd /workspace/" + path + " && find . -type f -name '" + pattern + "' 2>/dev/null | head -1000");
     }
 
     private List<String> buildGrepCommand(Map<String, Object> params) {
         String pattern = (String) params.get("pattern");
         String path = (String) params.getOrDefault("path", ".");
-        return List.of("sh", "-c",
-            "cd /workspace/" + path + " && grep -r -n '" + pattern + "' . 2>/dev/null | head -500");
+        return List.of(
+                "sh", "-c", "cd /workspace/" + path + " && grep -r -n '" + pattern + "' . 2>/dev/null | head -500");
     }
 
     /**
      * 确定资源限制
+     *
+     * @param toolName the toolName
+     * @param params the params
+     * @return the result
      */
     private ResourceLimits determineResourceLimits(String toolName, Map<String, Object> params) {
         return switch (toolName) {
@@ -304,6 +358,10 @@ public class ExecutionRouter {
 
     /**
      * 风险评估
+     *
+     * @param toolName the toolName
+     * @param params the params
+     * @return the result
      */
     private RiskLevel assessRisk(String toolName, Map<String, Object> params) {
         // 检查命令内容
@@ -314,7 +372,7 @@ public class ExecutionRouter {
                 return RiskLevel.CRITICAL;
             }
 
-            String baseCmd = command.trim().split("\\s+")[0].toLowerCase();
+            String baseCmd = command.trim().split("\\s+")[0].toLowerCase(Locale.ROOT);
             if (!properties.getLocalSafeCommands().contains(baseCmd)) {
                 return RiskLevel.MEDIUM;
             }
@@ -339,6 +397,9 @@ public class ExecutionRouter {
 
     /**
      * 安全检查（本地执行时）
+     *
+     * @param toolName the toolName
+     * @param params the params
      */
     private void performSafetyCheck(String toolName, Map<String, Object> params) {
         if (params.containsKey("command")) {
@@ -353,9 +414,13 @@ public class ExecutionRouter {
 
     /**
      * 确定最终执行模式
+     *
+     * @param toolName the toolName
+     * @param params the params
+     * @param explicitMode the explicitMode
+     * @return the result
      */
-    private ExecutionMode determineMode(String toolName, Map<String, Object> params,
-                                        ExecutionMode explicitMode) {
+    private ExecutionMode determineMode(String toolName, Map<String, Object> params, ExecutionMode explicitMode) {
         // 1. 优先使用显式指定的模式
         if (explicitMode != null && explicitMode != ExecutionMode.AUTO) {
             return explicitMode;
@@ -365,7 +430,7 @@ public class ExecutionRouter {
         Object modeParam = params.get("_executionMode");
         if (modeParam != null) {
             try {
-                return ExecutionMode.valueOf(modeParam.toString().toUpperCase());
+                return ExecutionMode.valueOf(modeParam.toString().toUpperCase(Locale.ROOT));
             } catch (IllegalArgumentException e) {
                 log.warn("Invalid execution mode: {}", modeParam);
             }
@@ -377,6 +442,10 @@ public class ExecutionRouter {
 
     /**
      * 转换沙箱结果为工具结果
+     *
+     * @param result the result
+     * @param toolName the toolName
+     * @return the result
      */
     private AgentToolResult convertToToolResult(SandboxResult result, String toolName) {
         String output = result.getStdout();
@@ -390,16 +459,13 @@ public class ExecutionRouter {
             output = "Error: " + result.getErrorMessage() + "\n" + output;
         }
 
-        return new AgentToolResult(
-            List.of(new com.huawei.hicampus.mate.matecampusclaw.ai.types.TextContent(output)),
-            null
-        );
+        return new AgentToolResult(List.of(new com.huawei.hicampus.mate.matecampusclaw.ai.types.TextContent(output)), null);
     }
 
     private enum RiskLevel {
-        LOW,        // 低风险：读取操作
-        MEDIUM,     // 中风险：写入操作、未知命令
-        HIGH,       // 高风险：系统路径、网络操作
-        CRITICAL    // 极高风险：匹配危险模式
+        LOW, // 低风险：读取操作
+        MEDIUM, // 中风险：写入操作、未知命令
+        HIGH, // 高风险：系统路径、网络操作
+        CRITICAL // 极高风险：匹配危险模式
     }
 }

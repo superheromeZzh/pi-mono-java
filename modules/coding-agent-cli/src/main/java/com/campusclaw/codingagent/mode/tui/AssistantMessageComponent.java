@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026-2026. All rights reserved.
+ */
+
 package com.campusclaw.codingagent.mode.tui;
 
 import java.util.ArrayList;
@@ -10,12 +14,16 @@ import com.campusclaw.tui.component.MarkdownComponent;
 /**
  * Renders an assistant message with optional thinking block and markdown-formatted text.
  * Updated incrementally during streaming.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 public class AssistantMessageComponent implements Component {
 
     // Thinking style: italic + gray #808080 (matching campusclaw thinkingText color)
     private static final String ANSI_ITALIC = "\033[3m";
     private static final String ANSI_THINKING_COLOR = "\033[38;2;128;128;128m";
+
     // Spinner colors matching campusclaw: accent for spinner, muted for text
     private static final String ANSI_ACCENT = "\033[38;2;138;190;183m";
     private static final String ANSI_MUTED = "\033[38;2;128;128;128m";
@@ -83,7 +91,9 @@ public class AssistantMessageComponent implements Component {
 
         // Don't cache when showing animated spinner
         boolean showingSpinner = !complete && text.isEmpty() && thinking.isEmpty();
-        if (!showingSpinner && cachedLines != null && cachedWidth == width
+        if (!showingSpinner
+                && cachedLines != null
+                && cachedWidth == width
                 && cachedComplete == complete
                 && thinking.equals(cachedThinking)
                 && text.equals(cachedText)) {
@@ -118,7 +128,8 @@ public class AssistantMessageComponent implements Component {
         if (!complete && text.isEmpty() && thinking.isEmpty()) {
             String frame = SPINNER_FRAMES[spinnerFrame % SPINNER_FRAMES.length];
             spinnerFrame++;
-            lines.add(" " + ANSI_ACCENT + frame + ANSI_RESET + " " + ANSI_MUTED + "Working... (escape to interrupt)" + ANSI_RESET);
+            lines.add(" " + ANSI_ACCENT + frame + ANSI_RESET + " " + ANSI_MUTED + "Working... (escape to interrupt)"
+                    + ANSI_RESET);
         }
 
         cachedThinking = thinking;

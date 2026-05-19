@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026-2026. All rights reserved.
+ */
+
 package com.campusclaw.tui.component;
 
 import java.util.ArrayList;
@@ -19,6 +23,9 @@ import com.campusclaw.tui.ansi.AnsiUtils;
  * and Escape/Ctrl+C to cancel.
  *
  * @param <T> the type of value in each setting entry
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 public class SettingsList<T> implements Component, Focusable {
 
@@ -41,6 +48,9 @@ public class SettingsList<T> implements Component, Focusable {
 
         /**
          * Creates an entry using {@code value.toString()} as the display value.
+         *
+         * @param key the entry label
+         * @param value the entry value
          */
         public Entry(String key, T value) {
             this(key, value, value != null ? value.toString() : "");
@@ -70,14 +80,17 @@ public class SettingsList<T> implements Component, Focusable {
 
     /**
      * Creates a SettingsList with the given entries and default styling.
+     *
+     * @param entries initial settings entries; may be {@code null}
      */
     public SettingsList(List<Entry<T>> entries) {
         this.entries = entries != null ? new ArrayList<>(entries) : new ArrayList<>();
         this.selectedIndex = 0;
+
         // Default styling: dim keys, bold selected line
-        this.keyStyleFn = text -> "\033[2m" + text + "\033[0m";       // dim
+        this.keyStyleFn = text -> "\033[2m" + text + "\033[0m"; // dim
         this.valueStyleFn = UnaryOperator.identity();
-        this.selectedStyleFn = text -> "\033[1m" + text + "\033[0m";  // bold
+        this.selectedStyleFn = text -> "\033[1m" + text + "\033[0m"; // bold
         this.separatorStyleFn = text -> "\033[2m" + text + "\033[0m"; // dim
     }
 
@@ -109,7 +122,9 @@ public class SettingsList<T> implements Component, Focusable {
     }
 
     public Entry<T> getSelectedEntry() {
-        if (entries.isEmpty()) { return null; }
+        if (entries.isEmpty()) {
+            return null;
+        }
         return entries.get(selectedIndex);
     }
 
@@ -178,7 +193,9 @@ public class SettingsList<T> implements Component, Focusable {
 
     @Override
     public void handleInput(String data) {
-        if (entries.isEmpty()) { return; }
+        if (entries.isEmpty()) {
+            return;
+        }
 
         if (KEY_UP.equals(data)) {
             selectedIndex = selectedIndex == 0 ? entries.size() - 1 : selectedIndex - 1;

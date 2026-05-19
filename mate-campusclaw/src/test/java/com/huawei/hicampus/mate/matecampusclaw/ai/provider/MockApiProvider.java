@@ -1,10 +1,22 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026-2026. All rights reserved.
+ */
+
 package com.huawei.hicampus.mate.matecampusclaw.ai.provider;
 
 import java.util.List;
 
 import com.huawei.hicampus.mate.matecampusclaw.ai.stream.AssistantMessageEvent;
 import com.huawei.hicampus.mate.matecampusclaw.ai.stream.AssistantMessageEventStream;
-import com.huawei.hicampus.mate.matecampusclaw.ai.types.*;
+import com.huawei.hicampus.mate.matecampusclaw.ai.types.Api;
+import com.huawei.hicampus.mate.matecampusclaw.ai.types.AssistantMessage;
+import com.huawei.hicampus.mate.matecampusclaw.ai.types.Context;
+import com.huawei.hicampus.mate.matecampusclaw.ai.types.Model;
+import com.huawei.hicampus.mate.matecampusclaw.ai.types.SimpleStreamOptions;
+import com.huawei.hicampus.mate.matecampusclaw.ai.types.StopReason;
+import com.huawei.hicampus.mate.matecampusclaw.ai.types.StreamOptions;
+import com.huawei.hicampus.mate.matecampusclaw.ai.types.TextContent;
+import com.huawei.hicampus.mate.matecampusclaw.ai.types.Usage;
 
 import jakarta.annotation.Nullable;
 
@@ -15,6 +27,9 @@ import jakarta.annotation.Nullable;
  * <p>By default, produces a simple text response: start -> text_start ->
  * text_delta -> text_end -> done. Custom event sequences can be supplied
  * via the constructor.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 public class MockApiProvider implements ApiProvider {
 
@@ -52,7 +67,8 @@ public class MockApiProvider implements ApiProvider {
     }
 
     @Override
-    public AssistantMessageEventStream streamSimple(Model model, Context context, @Nullable SimpleStreamOptions options) {
+    public AssistantMessageEventStream streamSimple(
+            Model model, Context context, @Nullable SimpleStreamOptions options) {
         return buildStream();
     }
 
@@ -76,29 +92,27 @@ public class MockApiProvider implements ApiProvider {
 
     private AssistantMessage defaultPartialMessage() {
         return new AssistantMessage(
-            List.of(new TextContent("Hello from mock")),
-            api.value(),
-            "mock",
-            "mock-model",
-            null,
-            Usage.empty(),
-            StopReason.STOP,
-            null,
-            System.currentTimeMillis()
-        );
+                List.of(new TextContent("Hello from mock")),
+                api.value(),
+                "mock",
+                "mock-model",
+                null,
+                Usage.empty(),
+                StopReason.STOP,
+                null,
+                System.currentTimeMillis());
     }
 
     private AssistantMessage defaultFinalMessage() {
         return new AssistantMessage(
-            List.of(new TextContent("Hello from mock")),
-            api.value(),
-            "mock",
-            "mock-model",
-            null,
-            Usage.empty(),
-            StopReason.STOP,
-            null,
-            System.currentTimeMillis()
-        );
+                List.of(new TextContent("Hello from mock")),
+                api.value(),
+                "mock",
+                "mock-model",
+                null,
+                Usage.empty(),
+                StopReason.STOP,
+                null,
+                System.currentTimeMillis());
     }
 }

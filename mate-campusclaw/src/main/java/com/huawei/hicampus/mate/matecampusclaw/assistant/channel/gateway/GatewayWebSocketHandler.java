@@ -1,22 +1,47 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026-2026. All rights reserved.
+ */
+
 package com.huawei.hicampus.mate.matecampusclaw.assistant.channel.gateway;
 
-import com.huawei.hicampus.mate.matecampusclaw.assistant.channel.gateway.protocol.*;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+
+import com.huawei.hicampus.mate.matecampusclaw.agent.util.LoggingUncaughtExceptionHandler;
+import com.huawei.hicampus.mate.matecampusclaw.assistant.channel.gateway.protocol.ChatEventPayload;
+import com.huawei.hicampus.mate.matecampusclaw.assistant.channel.gateway.protocol.ConnectParams;
+import com.huawei.hicampus.mate.matecampusclaw.assistant.channel.gateway.protocol.ErrorBody;
+import com.huawei.hicampus.mate.matecampusclaw.assistant.channel.gateway.protocol.FeaturesInfo;
+import com.huawei.hicampus.mate.matecampusclaw.assistant.channel.gateway.protocol.GatewayFrame;
+import com.huawei.hicampus.mate.matecampusclaw.assistant.channel.gateway.protocol.HelloOkPayload;
+import com.huawei.hicampus.mate.matecampusclaw.assistant.channel.gateway.protocol.PolicyInfo;
+import com.huawei.hicampus.mate.matecampusclaw.assistant.channel.gateway.protocol.ServerInfo;
+import com.huawei.hicampus.mate.matecampusclaw.assistant.channel.gateway.protocol.SessionsSendParams;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.WebSocketServerProtocolHandler;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.util.*;
-import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Handles WebSocket messages from connected chat clients.
  * Implements OpenClaw protocol for message framing.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 public class GatewayWebSocketHandler extends SimpleChannelInboundHandler<TextWebSocketFrame> {
 
@@ -34,11 +59,12 @@ public class GatewayWebSocketHandler extends SimpleChannelInboundHandler<TextWeb
     private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor(r -> {
         Thread t = new Thread(r, "gateway-tick");
         t.setDaemon(true);
+        t.setUncaughtExceptionHandler(LoggingUncaughtExceptionHandler.INSTANCE);
         return t;
     });
 
-    public GatewayWebSocketHandler(WebSocketGatewayProperties properties, GatewayChannel gatewayChannel,
-                                   ObjectMapper objectMapper) {
+    public GatewayWebSocketHandler(
+            WebSocketGatewayProperties properties, GatewayChannel gatewayChannel, ObjectMapper objectMapper) {
         this.properties = properties;
         this.gatewayChannel = gatewayChannel;
         this.objectMapper = objectMapper;
@@ -48,16 +74,16 @@ public class GatewayWebSocketHandler extends SimpleChannelInboundHandler<TextWeb
     public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {
         if (evt instanceof WebSocketServerProtocolHandler.HandshakeComplete) {
             String channelId = ctx.channel().id().asShortText();
+
             // Send connect.challenge immediately after handshake
             sendChallenge(ctx);
 
             // Start periodic tick event
             ScheduledFuture<?> tickFuture = scheduler.scheduleAtFixedRate(
-                () -> sendTickEvent(ctx),
-                properties.getTickIntervalMs(),
-                properties.getTickIntervalMs(),
-                TimeUnit.MILLISECONDS
-            );
+                    () -> sendTickEvent(ctx),
+                    properties.getTickIntervalMs(),
+                    properties.getTickIntervalMs(),
+                    TimeUnit.MILLISECONDS);
             tickFutures.put(channelId, tickFuture);
         }
         super.userEventTriggered(ctx, evt);
@@ -121,7 +147,9 @@ public class GatewayWebSocketHandler extends SimpleChannelInboundHandler<TextWeb
         String channelId = ctx.channel().id().asShortText();
         String nonce = UUID.randomUUID().toString();
         long ts = System.currentTimeMillis();
-        int seq = sessionSeqCounters.computeIfAbsent(channelId, k -> new AtomicInteger(0)).getAndIncrement();
+        int seq = sessionSeqCounters
+                .computeIfAbsent(channelId, k -> new AtomicInteger(0))
+                .getAndIncrement();
 
         Map<String, Object> payload = Map.of("nonce", nonce, "ts", ts);
         Map<String, Object> frame = new LinkedHashMap<>();
@@ -167,8 +195,8 @@ public class GatewayWebSocketHandler extends SimpleChannelInboundHandler<TextWeb
         String reqId = frame.id();
 
         try {
-            ConnectParams params = objectMapper.treeToValue(
-                objectMapper.valueToTree(frame.params()), ConnectParams.class);
+            ConnectParams params =
+                    objectMapper.treeToValue(objectMapper.valueToTree(frame.params()), ConnectParams.class);
 
             // Validate token
             String token = params.auth() != null ? params.auth().token() : null;
@@ -189,7 +217,11 @@ public class GatewayWebSocketHandler extends SimpleChannelInboundHandler<TextWeb
             sendHelloOk(ctx, reqId);
         } catch (Exception e) {
             log.error("Error handling connect: {}", e.getMessage(), e);
-            sendError(ctx, reqId, "connectError", e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName());
+            sendError(
+                    ctx,
+                    reqId,
+                    "connectError",
+                    e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName());
         }
     }
 
@@ -198,8 +230,8 @@ public class GatewayWebSocketHandler extends SimpleChannelInboundHandler<TextWeb
         String reqId = frame.id();
 
         try {
-            SessionsSendParams params = objectMapper.treeToValue(
-                objectMapper.valueToTree(frame.params()), SessionsSendParams.class);
+            SessionsSendParams params =
+                    objectMapper.treeToValue(objectMapper.valueToTree(frame.params()), SessionsSendParams.class);
 
             if (params.key() == null) {
                 sendError(ctx, reqId, "invalidParams", "Missing required field: key");
@@ -240,54 +272,39 @@ public class GatewayWebSocketHandler extends SimpleChannelInboundHandler<TextWeb
         String channelId = ctx.channel().id().asShortText();
 
         HelloOkPayload payload = new HelloOkPayload(
-            "hello-ok",
-            properties.getProtocolVersion(),
-            new ServerInfo(properties.getServerVersion(), channelId),
-            new FeaturesInfo(
-                List.of("sessions.send", "chat.send", "sessions.list", "policy.tick"),
-                List.of("chat", "tick", "connect.challenge")
-            ),
-            new LinkedHashMap<>(Map.of(
-                "presence", List.of(),
-                "uptimeMs", System.currentTimeMillis()
-            )) {{
-                put("health", null);
-            }},
-            new PolicyInfo(
-                properties.getMaxPayload(),
-                properties.getMaxBufferedBytes(),
-                properties.getTickIntervalMs()
-            )
-        );
+                "hello-ok",
+                properties.getProtocolVersion(),
+                new ServerInfo(properties.getServerVersion(), channelId),
+                new FeaturesInfo(
+                        List.of("sessions.send", "chat.send", "sessions.list", "policy.tick"),
+                        List.of("chat", "tick", "connect.challenge")),
+                new LinkedHashMap<>(Map.of(
+                        "presence", List.of(),
+                        "uptimeMs", System.currentTimeMillis())) {
+                    {
+                        put("health", null);
+                    }
+                },
+                new PolicyInfo(
+                        properties.getMaxPayload(), properties.getMaxBufferedBytes(), properties.getTickIntervalMs()));
 
-        writeFrame(ctx, Map.of(
-            "type", "res",
-            "id", reqId,
-            "ok", true,
-            "payload", payload
-        ));
+        writeFrame(ctx, Map.of("type", "res", "id", reqId, "ok", true, "payload", payload));
     }
 
     private void sendResponse(ChannelHandlerContext ctx, String reqId, Object payload) {
-        writeFrame(ctx, Map.of(
-            "type", "res",
-            "id", reqId,
-            "ok", true,
-            "payload", payload
-        ));
+        writeFrame(ctx, Map.of("type", "res", "id", reqId, "ok", true, "payload", payload));
     }
 
     /**
      * Send a response frame with the given id and payload.
      * Called by GatewayChannel to complete pending sessions.send requests.
+     *
+     * @param ctx Netty context to write the frame on
+     * @param reqId original request id to echo back
+     * @param payload response payload body
      */
     public void sendResponseFrame(ChannelHandlerContext ctx, String reqId, Object payload) {
-        writeFrame(ctx, Map.of(
-            "type", "res",
-            "id", reqId,
-            "ok", true,
-            "payload", payload
-        ));
+        writeFrame(ctx, Map.of("type", "res", "id", reqId, "ok", true, "payload", payload));
     }
 
     private void sendError(ChannelHandlerContext ctx, String reqId, String code, String message) {
@@ -305,27 +322,38 @@ public class GatewayWebSocketHandler extends SimpleChannelInboundHandler<TextWeb
 
     /**
      * Send a chat event with proper OpenClaw framing including seq.
+     *
+     * @param ctx Netty context to write the frame on
+     * @param event event name (e.g. {@code chat})
+     * @param runId opaque run id correlating deltas with their final
+     * @param sessionKey assistant session key
+     * @param state event state such as {@code delta} or {@code final}
+     * @param content message body for this event
      */
-    public void sendEvent(ChannelHandlerContext ctx, String event, String runId, String sessionKey,
-                          String state, String content) {
+    public void sendEvent(
+            ChannelHandlerContext ctx, String event, String runId, String sessionKey, String state, String content) {
         String channelId = ctx.channel().id().asShortText();
-        int seq = sessionSeqCounters.computeIfAbsent(channelId, k -> new AtomicInteger(0)).getAndIncrement();
+        int seq = sessionSeqCounters
+                .computeIfAbsent(channelId, k -> new AtomicInteger(0))
+                .getAndIncrement();
 
         ChatEventPayload payload = new ChatEventPayload(
-            runId,
-            sessionKey,
-            seq,
-            state,
-            Map.of(
-                "id", UUID.randomUUID().toString(),
-                "content", content,
-                "role", "assistant",
-                "timestamp", System.currentTimeMillis()
-            ),
-            null,
-            null,
-            "final".equals(state) ? "endTurn" : null
-        );
+                runId,
+                sessionKey,
+                seq,
+                state,
+                Map.of(
+                        "id",
+                        UUID.randomUUID().toString(),
+                        "content",
+                        content,
+                        "role",
+                        "assistant",
+                        "timestamp",
+                        System.currentTimeMillis()),
+                null,
+                null,
+                "final".equals(state) ? "endTurn" : null);
 
         Map<String, Object> frame = new LinkedHashMap<>();
         frame.put("type", "event");
@@ -337,10 +365,14 @@ public class GatewayWebSocketHandler extends SimpleChannelInboundHandler<TextWeb
     }
 
     private void sendTickEvent(ChannelHandlerContext ctx) {
-        if (!ctx.channel().isActive()) return;
+        if (!ctx.channel().isActive()) {
+            return;
+        }
 
         String channelId = ctx.channel().id().asShortText();
-        int seq = sessionSeqCounters.computeIfAbsent(channelId, k -> new AtomicInteger(0)).getAndIncrement();
+        int seq = sessionSeqCounters
+                .computeIfAbsent(channelId, k -> new AtomicInteger(0))
+                .getAndIncrement();
 
         Map<String, Object> frame = new LinkedHashMap<>();
         frame.put("type", "event");
@@ -364,6 +396,9 @@ public class GatewayWebSocketHandler extends SimpleChannelInboundHandler<TextWeb
 
     /**
      * Get session by channel ID.
+     *
+     * @param channelId channel id to look up
+     * @return the registered context, or {@code null} when none is found
      */
     public ChannelHandlerContext getSession(String channelId) {
         return sessions.get(channelId);

@@ -1,12 +1,16 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026-2026. All rights reserved.
+ */
+
 package com.huawei.hicampus.mate.matecampusclaw.agent.state;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -42,7 +46,7 @@ class AgentStateTest {
 
         assertNull(state.getSystemPrompt());
         assertNull(state.getModel());
-        assertEquals(ThinkingLevel.OFF, state.getThinkingLevel());
+        assertEquals(ThinkingLevel.MEDIUM, state.getThinkingLevel());
         assertTrue(state.getTools().isEmpty());
         assertTrue(state.getMessages().isEmpty());
         assertFalse(state.isStreaming());
@@ -114,12 +118,11 @@ class AgentStateTest {
         assertEquals(Set.of("call-1"), snapshot.pendingToolCalls());
         assertEquals("initial", snapshot.error());
 
-        assertThrows(UnsupportedOperationException.class,
-            () -> snapshot.tools().add(new MockAgentTool("fail")));
-        assertThrows(UnsupportedOperationException.class,
-            () -> snapshot.messages().add(new UserMessage("fail", 3L)));
-        assertThrows(UnsupportedOperationException.class,
-            () -> snapshot.pendingToolCalls().add("fail"));
+        assertThrows(UnsupportedOperationException.class, () -> snapshot.tools().add(new MockAgentTool("fail")));
+        assertThrows(
+                UnsupportedOperationException.class, () -> snapshot.messages().add(new UserMessage("fail", 3L)));
+        assertThrows(UnsupportedOperationException.class, () -> snapshot.pendingToolCalls()
+                .add("fail"));
     }
 
     @Test
@@ -133,8 +136,10 @@ class AgentStateTest {
         state.addPendingToolCall("call-1");
 
         assertThrows(UnsupportedOperationException.class, () -> state.getTools().add(tool));
-        assertThrows(UnsupportedOperationException.class, () -> state.getMessages().add(message));
-        assertThrows(UnsupportedOperationException.class, () -> state.getPendingToolCalls().add("call-2"));
+        assertThrows(
+                UnsupportedOperationException.class, () -> state.getMessages().add(message));
+        assertThrows(UnsupportedOperationException.class, () -> state.getPendingToolCalls()
+                .add("call-2"));
     }
 
     @Test
@@ -236,20 +241,19 @@ class AgentStateTest {
 
     private Model sampleModel() {
         return new Model(
-            "model-1",
-            "Model 1",
-            Api.ANTHROPIC_MESSAGES,
-            Provider.ANTHROPIC,
-            "https://example.com",
-            true,
-            List.of(InputModality.TEXT),
-            new ModelCost(1.0, 2.0, 0.5, 0.25),
-            200_000,
-            4_096,
-            Map.of("x-test", "1"),
-            null,
-            null
-        );
+                "model-1",
+                "Model 1",
+                Api.ANTHROPIC_MESSAGES,
+                Provider.ANTHROPIC,
+                "https://example.com",
+                true,
+                List.of(InputModality.TEXT),
+                new ModelCost(1.0, 2.0, 0.5, 0.25),
+                200_000,
+                4_096,
+                Map.of("x-test", "1"),
+                null,
+                null);
     }
 
     private static final class MockAgentTool implements AgentTool {
@@ -283,11 +287,10 @@ class AgentStateTest {
 
         @Override
         public AgentToolResult execute(
-            String toolCallId,
-            Map<String, Object> params,
-            CancellationToken signal,
-            AgentToolUpdateCallback onUpdate
-        ) {
+                String toolCallId,
+                Map<String, Object> params,
+                CancellationToken signal,
+                AgentToolUpdateCallback onUpdate) {
             return new AgentToolResult(List.<ContentBlock>of(new TextContent("ok")), null);
         }
     }

@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026-2026. All rights reserved.
+ */
+
 package com.campusclaw.codingagent.compaction;
 
 import java.util.ArrayList;
@@ -21,11 +25,15 @@ import org.slf4j.LoggerFactory;
 /**
  * Handles context compaction when conversations exceed token limits.
  * Summarizes old messages via LLM and retains only recent context.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 public class Compactor {
     private static final Logger log = LoggerFactory.getLogger(Compactor.class);
 
-    private static final String SUMMARIZATION_PROMPT = """
+    private static final String SUMMARIZATION_PROMPT =
+            """
         You are a conversation summarizer. Summarize the conversation so far in a way that preserves:
         1. All important decisions and their rationale
         2. Current state of the task being worked on
@@ -36,23 +44,43 @@ public class Compactor {
         Be concise but thorough. Focus on information that would be needed to continue the conversation.
         """;
 
+    /**
+     * Agent role name used to look up {@code settings.agent.<name>.model} overrides.
+     */
+    public static final String AGENT_NAME = "summarizer";
+
     private final CampusClawAiService aiService;
     private final CompactionConfig config;
+    private final com.campusclaw.codingagent.resolver.AgentModelResolver agentModelResolver;
 
-    public Compactor(CampusClawAiService aiService, CompactionConfig config) {
+    public Compactor(
+            CampusClawAiService aiService,
+            CompactionConfig config,
+            com.campusclaw.codingagent.resolver.AgentModelResolver agentModelResolver) {
         this.aiService = aiService;
         this.config = config;
+        this.agentModelResolver = agentModelResolver;
+    }
+
+    public Compactor(CampusClawAiService aiService, CompactionConfig config) {
+        this(aiService, config, null);
     }
 
     public Compactor(CampusClawAiService aiService) {
-        this(aiService, CompactionConfig.defaults());
+        this(aiService, CompactionConfig.defaults(), null);
     }
 
     /**
      * Check if compaction is needed based on estimated token count.
+     *
+     * @param messages the messages
+     * @param contextWindow the contextWindow
+     * @return the result
      */
     public boolean needsCompaction(List<Message> messages, int contextWindow) {
-        if (!config.enabled()) { return false; }
+        if (!config.enabled()) {
+            return false;
+        }
         int estimatedTokens = estimateTokens(messages);
         int threshold = contextWindow - config.reserveTokens();
         return estimatedTokens > threshold;
@@ -60,6 +88,10 @@ public class Compactor {
 
     /**
      * Compact the conversation by summarizing old messages and keeping recent ones.
+     *
+     * @param messages the messages
+     * @param model the model
+     * @return the result
      */
     public CompactionResult compact(List<Message> messages, Model model) {
         // Extract file operations before compaction
@@ -89,11 +121,18 @@ public class Compactor {
             return new CompactionResult("", recentMessages, fileOps.filesRead(), fileOps.filesModified());
         }
 
-        // Generate summary of old messages
-        String summary = generateSummary(oldMessages, fileOps, model);
+        // Per-agent override: settings.agent.summarizer.model can route compaction
+        // to a cheaper / faster model than the foreground chat.
+        Model summarizationModel = agentModelResolver != null ? agentModelResolver.resolve(AGENT_NAME, model) : model;
 
-        log.info("Compacted {} messages into summary ({} chars), keeping {} recent messages",
-            oldMessages.size(), summary.length(), recentMessages.size());
+        // Generate summary of old messages
+        String summary = generateSummary(oldMessages, fileOps, summarizationModel);
+
+        log.info(
+                "Compacted {} messages into summary ({} chars), keeping {} recent messages",
+                oldMessages.size(),
+                summary.length(),
+                recentMessages.size());
 
         return new CompactionResult(summary, recentMessages, fileOps.filesRead(), fileOps.filesModified());
     }
@@ -102,7 +141,9 @@ public class Compactor {
         // Serialize messages to text for summarization
         var sb = new StringBuilder();
         sb.append("Files read: ").append(String.join(", ", fileOps.filesRead())).append("\n");
-        sb.append("Files modified: ").append(String.join(", ", fileOps.filesModified())).append("\n\n");
+        sb.append("Files modified: ")
+                .append(String.join(", ", fileOps.filesModified()))
+                .append("\n\n");
         sb.append("Conversation to summarize:\n\n");
 
         for (Message msg : messages) {
@@ -111,10 +152,7 @@ public class Compactor {
 
         try {
             var context = new Context(
-                SUMMARIZATION_PROMPT,
-                List.of(new UserMessage(sb.toString(), System.currentTimeMillis())),
-                null
-            );
+                    SUMMARIZATION_PROMPT, List.of(new UserMessage(sb.toString(), System.currentTimeMillis())), null);
 
             var result = aiService.completeSimple(model, context, null).block();
             if (result != null) {
@@ -136,14 +174,19 @@ public class Compactor {
         if (msg instanceof UserMessage um) {
             var sb = new StringBuilder("User: ");
             for (var cb : um.content()) {
-                if (cb instanceof TextContent tc) { sb.append(tc.text()); }
+                if (cb instanceof TextContent tc) {
+                    sb.append(tc.text());
+                }
             }
             return sb.toString();
         } else if (msg instanceof AssistantMessage am) {
             var sb = new StringBuilder("Assistant: ");
             for (var cb : am.content()) {
-                if (cb instanceof TextContent tc) { sb.append(tc.text()); }
-                else if (cb instanceof ToolCall tc) { sb.append("[Tool: ").append(tc.name()).append("]"); }
+                if (cb instanceof TextContent tc) {
+                    sb.append(tc.text());
+                } else if (cb instanceof ToolCall tc) {
+                    sb.append("[Tool: ").append(tc.name()).append("]");
+                }
             }
             return sb.toString();
         } else if (msg instanceof ToolResultMessage tr) {
@@ -152,7 +195,9 @@ public class Compactor {
                 if (cb instanceof TextContent tc) {
                     String text = tc.text();
                     sb.append(text, 0, Math.min(text.length(), 200));
-                    if (text.length() > 200) { sb.append("..."); }
+                    if (text.length() > 200) {
+                        sb.append("...");
+                    }
                 }
             }
             return sb.toString();
@@ -160,7 +205,12 @@ public class Compactor {
         return "";
     }
 
-    /** Rough token estimate: ~4 chars per token. */
+    /**
+     * Rough token estimate: ~4 chars per token.
+     *
+     * @param messages the messages
+     * @return the result
+     */
     static int estimateTokens(List<Message> messages) {
         int total = 0;
         for (Message msg : messages) {
@@ -172,17 +222,26 @@ public class Compactor {
     static int estimateMessageTokens(Message msg) {
         int chars = 0;
         List<ContentBlock> content;
-        if (msg instanceof UserMessage um) { content = um.content(); }
-        else if (msg instanceof AssistantMessage am) { content = am.content(); }
-        else if (msg instanceof ToolResultMessage tr) { content = tr.content(); }
-        else { return 0; }
+        if (msg instanceof UserMessage um) {
+            content = um.content();
+        } else if (msg instanceof AssistantMessage am) {
+            content = am.content();
+        } else if (msg instanceof ToolResultMessage tr) {
+            content = tr.content();
+        } else {
+            return 0;
+        }
 
         for (ContentBlock cb : content) {
-            if (cb instanceof TextContent tc) { chars += tc.text().length(); }
-            else if (cb instanceof ThinkingContent tc) { chars += tc.thinking().length(); }
-            else if (cb instanceof ToolCall tc) {
+            if (cb instanceof TextContent tc) {
+                chars += tc.text().length();
+            } else if (cb instanceof ThinkingContent tc) {
+                chars += tc.thinking().length();
+            } else if (cb instanceof ToolCall tc) {
                 chars += tc.name().length();
-                if (tc.arguments() != null) { chars += tc.arguments().toString().length(); }
+                if (tc.arguments() != null) {
+                    chars += tc.arguments().toString().length();
+                }
             }
         }
         return Math.max(chars / 4, 1);

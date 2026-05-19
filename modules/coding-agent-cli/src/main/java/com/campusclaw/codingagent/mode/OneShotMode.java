@@ -1,8 +1,11 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026-2026. All rights reserved.
+ */
+
 package com.campusclaw.codingagent.mode;
 
 import java.io.PrintStream;
 import java.util.Objects;
-import java.util.concurrent.CompletableFuture;
 
 import com.campusclaw.agent.event.MessageUpdateEvent;
 import com.campusclaw.ai.stream.AssistantMessageEvent;
@@ -21,6 +24,9 @@ import com.campusclaw.codingagent.session.AgentSession;
  *   <li>0 — success</li>
  *   <li>1 — error (execution failed or assistant reported an error)</li>
  * </ul>
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 public class OneShotMode {
 
@@ -47,23 +53,17 @@ public class OneShotMode {
     public int run(AgentSession session, String prompt) {
         Objects.requireNonNull(session, "session");
         Objects.requireNonNull(prompt, "prompt");
-
-        // Subscribe for streaming output
-        var hasOutput = new boolean[]{false};
+        var hasOutput = new boolean[] {false};
         Runnable unsub = session.subscribe(event -> {
-            if (event instanceof MessageUpdateEvent e) {
-                if (e.assistantMessageEvent() instanceof AssistantMessageEvent.TextDeltaEvent delta) {
-                    out.print(delta.delta());
-                    out.flush();
-                    hasOutput[0] = true;
-                }
+            if (event instanceof MessageUpdateEvent e
+                    && e.assistantMessageEvent() instanceof AssistantMessageEvent.TextDeltaEvent delta) {
+                out.print(delta.delta());
+                out.flush();
+                hasOutput[0] = true;
             }
         });
-
-        CompletableFuture<Void> future = session.prompt(prompt);
-
         try {
-            future.join();
+            session.prompt(prompt).join();
         } catch (Exception e) {
             String error = session.getAgent().getState().getError();
             err.println("\nError: " + (error != null ? error : e.getMessage()));
@@ -71,38 +71,43 @@ public class OneShotMode {
         } finally {
             unsub.run();
         }
-
-        // Check for error state
         String error = session.getAgent().getState().getError();
         if (error != null) {
             err.println("\nError: " + error);
             return 1;
         }
-
-        // Check stop reason and print fallback if streaming didn't capture output
-        var history = session.getHistory();
-        for (int i = history.size() - 1; i >= 0; i--) {
-            if (history.get(i) instanceof AssistantMessage am) {
-                if (am.stopReason() == StopReason.ERROR) {
-                    String errorMsg = am.errorMessage();
-                    err.println("\nError: " + (errorMsg != null ? errorMsg : "agent stopped with error"));
-                    return 1;
-                }
-                // Fallback: if streaming didn't produce output, print text from final message
-                if (!hasOutput[0]) {
-                    for (ContentBlock block : am.content()) {
-                        if (block instanceof TextContent text) {
-                            out.print(text.text());
-                            hasOutput[0] = true;
-                        }
-                    }
-                }
-                break;
-            }
+        int rc = handleFinalMessage(session, hasOutput);
+        if (rc != 0) {
+            return rc;
         }
-
         if (hasOutput[0]) {
             out.println();
+        }
+        return 0;
+    }
+
+    // Look at the trailing assistant message: surface its error or, if streaming
+    // didn't produce any output, print the message text as a fallback.
+    private int handleFinalMessage(AgentSession session, boolean[] hasOutput) {
+        var history = session.getHistory();
+        for (int i = history.size() - 1; i >= 0; i--) {
+            if (!(history.get(i) instanceof AssistantMessage am)) {
+                continue;
+            }
+            if (am.stopReason() == StopReason.ERROR) {
+                String errorMsg = am.errorMessage();
+                err.println("\nError: " + (errorMsg != null ? errorMsg : "agent stopped with error"));
+                return 1;
+            }
+            if (!hasOutput[0]) {
+                for (ContentBlock block : am.content()) {
+                    if (block instanceof TextContent text) {
+                        out.print(text.text());
+                        hasOutput[0] = true;
+                    }
+                }
+            }
+            return 0;
         }
         return 0;
     }

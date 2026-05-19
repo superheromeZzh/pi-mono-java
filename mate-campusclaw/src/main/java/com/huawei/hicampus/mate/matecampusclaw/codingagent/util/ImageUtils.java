@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026-2026. All rights reserved.
+ */
+
 package com.huawei.hicampus.mate.matecampusclaw.codingagent.util;
 
 import java.awt.Graphics2D;
@@ -9,6 +13,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Base64;
 import java.util.Iterator;
+import java.util.Locale;
 import java.util.Optional;
 
 import javax.imageio.ImageIO;
@@ -20,22 +25,37 @@ import org.slf4j.LoggerFactory;
 
 /**
  * Image processing utilities: resize, EXIF handling, format conversion, and base64 encoding.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 public final class ImageUtils {
     private static final Logger log = LoggerFactory.getLogger(ImageUtils.class);
 
-    /** Maximum dimension for images sent to LLM (preserves aspect ratio). */
+    /**
+     * Maximum dimension for images sent to LLM (preserves aspect ratio).
+     */
     public static final int MAX_LLM_DIMENSION = 2048;
-    /** Maximum file size for images (5 MB). */
+    /**
+     * Maximum file size for images (5 MB).
+     */
     public static final long MAX_FILE_SIZE = 5 * 1024 * 1024;
 
     private ImageUtils() {}
 
-    /** Resize image to fit within maxDim x maxDim while preserving aspect ratio. */
+    /**
+     * Resize image to fit within maxDim x maxDim while preserving aspect ratio.
+     *
+     * @param source the source
+     * @param maxDim the maxDim
+     * @return the result
+     */
     public static BufferedImage resize(BufferedImage source, int maxDim) {
         int w = source.getWidth();
         int h = source.getHeight();
-        if (w <= maxDim && h <= maxDim) return source;
+        if (w <= maxDim && h <= maxDim) {
+            return source;
+        }
 
         double scale = Math.min((double) maxDim / w, (double) maxDim / h);
         int newW = (int) (w * scale);
@@ -50,21 +70,40 @@ public final class ImageUtils {
         return resized;
     }
 
-    /** Convert image to PNG bytes. */
+    /**
+     * Convert image to PNG bytes.
+     *
+     * @param image the image
+     * @return the result
+     *
+     * @throws IOException if the operation fails
+     */
     public static byte[] toPng(BufferedImage image) throws IOException {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         ImageIO.write(image, "png", baos);
         return baos.toByteArray();
     }
 
-    /** Convert image to JPEG bytes with default quality. */
+    /**
+     * Convert image to JPEG bytes with default quality.
+     *
+     * @param image the image
+     * @return the result
+     *
+     * @throws IOException if the operation fails
+     */
     public static byte[] toJpeg(BufferedImage image) throws IOException {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         ImageIO.write(image, "jpg", baos);
         return baos.toByteArray();
     }
 
-    /** Read image from file path. */
+    /**
+     * Read image from file path.
+     *
+     * @param path the path
+     * @return the result
+     */
     public static Optional<BufferedImage> readImage(Path path) {
         try {
             BufferedImage img = ImageIO.read(path.toFile());
@@ -75,12 +114,23 @@ public final class ImageUtils {
         }
     }
 
-    /** Encode image bytes as base64 data URI. */
+    /**
+     * Encode image bytes as base64 data URI.
+     *
+     * @param imageBytes the imageBytes
+     * @param mimeType the mimeType
+     * @return the result
+     */
     public static String toBase64DataUri(byte[] imageBytes, String mimeType) {
         return "data:" + mimeType + ";base64," + Base64.getEncoder().encodeToString(imageBytes);
     }
 
-    /** Encode file as base64 string. */
+    /**
+     * Encode file as base64 string.
+     *
+     * @param path the path
+     * @return the result
+     */
     public static Optional<String> fileToBase64(Path path) {
         try {
             byte[] bytes = Files.readAllBytes(path);
@@ -91,16 +141,25 @@ public final class ImageUtils {
         }
     }
 
-    /** Get image dimensions without fully loading the image. */
+    /**
+     * Get image dimensions without fully loading the image.
+     *
+     * @param path the path
+     * @return the result
+     */
     public static Optional<int[]> getImageDimensions(Path path) {
         try (ImageInputStream input = ImageIO.createImageInputStream(path.toFile())) {
-            if (input == null) return Optional.empty();
+            if (input == null) {
+                return Optional.empty();
+            }
             Iterator<ImageReader> readers = ImageIO.getImageReaders(input);
-            if (!readers.hasNext()) return Optional.empty();
+            if (!readers.hasNext()) {
+                return Optional.empty();
+            }
             ImageReader reader = readers.next();
             try {
                 reader.setInput(input);
-                return Optional.of(new int[]{reader.getWidth(0), reader.getHeight(0)});
+                return Optional.of(new int[] {reader.getWidth(0), reader.getHeight(0)});
             } finally {
                 reader.dispose();
             }
@@ -110,7 +169,12 @@ public final class ImageUtils {
         }
     }
 
-    /** Prepare an image for LLM: resize if needed, convert to PNG, encode as base64. */
+    /**
+     * Prepare an image for LLM: resize if needed, convert to PNG, encode as base64.
+     *
+     * @param path the path
+     * @return the result
+     */
     public static Optional<String> prepareForLlm(Path path) {
         return readImage(path).map(img -> {
             try {
@@ -124,11 +188,22 @@ public final class ImageUtils {
         });
     }
 
-    /** Check if file is likely an image based on extension. */
+    /**
+     * Check if file is likely an image based on extension.
+     *
+     * @param path the path
+     * @return the result
+     */
     public static boolean isImageFile(Path path) {
-        String name = path.getFileName().toString().toLowerCase();
-        return name.endsWith(".png") || name.endsWith(".jpg") || name.endsWith(".jpeg")
-            || name.endsWith(".gif") || name.endsWith(".webp") || name.endsWith(".bmp")
-            || name.endsWith(".svg") || name.endsWith(".ico") || name.endsWith(".tiff");
+        String name = path.getFileName().toString().toLowerCase(Locale.ROOT);
+        return name.endsWith(".png")
+                || name.endsWith(".jpg")
+                || name.endsWith(".jpeg")
+                || name.endsWith(".gif")
+                || name.endsWith(".webp")
+                || name.endsWith(".bmp")
+                || name.endsWith(".svg")
+                || name.endsWith(".ico")
+                || name.endsWith(".tiff");
     }
 }

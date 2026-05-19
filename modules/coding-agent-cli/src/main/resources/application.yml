@@ -26,11 +26,23 @@ pi:
       enabled: false
       token:
 
+# 服务器模式（--mode server）下 /api/ws/chat 与 /api/chat 的会话持久化
+# 开启后会把每个 conversation_id 的消息历史写入
+# ~/.campusclaw/agent/sessions/--<encoded-cwd>--/<id>.jsonl
+# 重连或进程重启后用同一个 conversation_id 可恢复历史
+server:
+  session:
+    persistence:
+      enabled: true
+
 logging:
   level:
     root: WARN
     com.campusclaw: WARN
     io.netty: ERROR
+    # Banner logger 独立级别，让 `pi --mode server` 启动 endpoint 列表无论 root/包级
+    # 怎么调都能打出来——这是面向操作者的启动反馈，不该被生产噪音过滤策略误伤。
+    CampusClawStartupBanner: INFO
 
 # 工具执行配置 - 沙箱模式
 tool:
@@ -72,3 +84,59 @@ tool:
     # 使用临时容器模式（不需要常驻 worker 容器）
     # 适用于无法拉取镜像的场景，每次执行创建新容器
     use-ephemeral-containers: false
+
+# 子 agent 后端配置 (spawn_agent 工具)
+# 主 agent 通过 spawn_agent 工具调用其它 coding agent；下方每个 entry 是一种后端。
+# type=acp: 走 ACP 协议 + stdio (Claude Code, Codex/Gemini 等)
+# type=http: 走自有 HTTP/ndJSON 协议 (URL + 鉴权)
+# type=a2a: 走华为 mate-service 包装的 A2A JSON-RPC (X-HW-ID + X-HW-APPKEY 双 header)
+# disabled=true 可临时关闭某条而不删整段
+subagent:
+  enabled: true
+  approval:
+    # 子代理工具调用权限策略：
+    #   allow - 全部 AUTO_ALLOW（子代理共用父代理信任域，开箱即用，默认值）
+    #   ask   - 只读工具 AUTO_ALLOW，其它走 ParentPermissionResolver；
+    #           默认 TimeoutDeniedResolver 直接拒，需自行实现 interactive resolver 才有意义
+    #   deny  - 全部拒绝（用于演练 / 沙盒测试）
+    default: allow
+  backends:
+    claude-code:
+      type: acp
+      disabled: false
+      command: claude-code-acp
+      args: []
+      prompt-timeout: PT15M
+      client-name: campusclaw-acp
+      client-version: 1.0.0
+    codex:
+      type: acp
+      disabled: true
+      command: codex-acp
+      args: []
+      prompt-timeout: PT15M
+    # 远端 HTTP agent 示例（默认禁用；启用时设置 url + auth-token）
+    remote-http:
+      type: http
+      disabled: true
+      url: https://agent.example.com/api
+      auth-type: bearer    # bearer | header | none
+      auth-token: ${CAMPUSCLAW_REMOTE_AGENT_TOKEN:}
+      connect-timeout: PT10S
+      request-timeout: PT30S
+      prompt-timeout: PT10M
+    # 华为 mate-service A2A agent 示例（默认禁用；启用时填入 hw-id + hw-app-key）
+    # url 是 mate-service 的 A2A request 入口，agent-name 会作为路径段拼到末尾
+    mate-kqa:
+      type: a2a
+      disabled: true
+      url: https://71.9.8.186:1433/mate-service/v1/a2a/request
+      agent-name: KnowledgeQAAgent
+      hw-id: ${HW_ID:a2a_test}
+      hw-app-key: ${HW_APPKEY:}
+      model: 100003         # 可选；spawn_agent 传 model 时覆盖此值
+      connect-timeout: PT10S
+      request-timeout: PT60S
+      # 仅当对端证书无法加入 JDK truststore（如 PoC 调内网自签 CA）时打开；
+      # 生产请把公司 CA 导入 cacerts 或用 -Djavax.net.ssl.trustStore 指定独立 keystore。
+      insecure-skip-verify: false

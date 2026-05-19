@@ -1,7 +1,10 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026-2026. All rights reserved.
+ */
+
 package com.huawei.hicampus.mate.matecampusclaw.codingagent.tool.glob;
 
 import java.io.IOException;
-import java.nio.file.FileSystem;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -32,6 +35,9 @@ import org.springframework.stereotype.Component;
 /**
  * Agent tool for finding files by glob pattern.
  * Results are sorted by modification time (most recent first).
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 @Component
 @ConditionalOnProperty(name = "tool.execution.hybrid-enabled", havingValue = "false", matchIfMissing = true)
@@ -40,13 +46,22 @@ public class GlobTool implements AgentTool {
     static final int MAX_RESULTS = 1000;
 
     static final Set<String> EXCLUDED_DIRS = Set.of(
-            ".git", ".svn", ".hg",
+            ".git",
+            ".svn",
+            ".hg",
             "node_modules",
-            "build", "dist", "out", "target",
-            ".gradle", ".idea", ".vscode",
-            "__pycache__", ".tox", ".mypy_cache",
-            "vendor", ".bundle"
-    );
+            "build",
+            "dist",
+            "out",
+            "target",
+            ".gradle",
+            ".idea",
+            ".vscode",
+            "__pycache__",
+            ".tox",
+            ".mypy_cache",
+            "vendor",
+            ".bundle");
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
@@ -79,12 +94,16 @@ public class GlobTool implements AgentTool {
     @Override
     public JsonNode parameters() {
         ObjectNode props = MAPPER.createObjectNode();
-        props.set("pattern", MAPPER.createObjectNode()
-                .put("type", "string")
-                .put("description", "Glob pattern to match files (e.g. \"**/*.java\")"));
-        props.set("path", MAPPER.createObjectNode()
-                .put("type", "string")
-                .put("description", "Starting directory (optional, defaults to cwd)"));
+        props.set(
+                "pattern",
+                MAPPER.createObjectNode()
+                        .put("type", "string")
+                        .put("description", "Glob pattern to match files (e.g. \"**/*.java\")"));
+        props.set(
+                "path",
+                MAPPER.createObjectNode()
+                        .put("type", "string")
+                        .put("description", "Starting directory (optional, defaults to cwd)"));
 
         return MAPPER.createObjectNode()
                 .put("type", "object")
@@ -94,103 +113,91 @@ public class GlobTool implements AgentTool {
 
     @Override
     public AgentToolResult execute(
-            String toolCallId,
-            Map<String, Object> params,
-            CancellationToken signal,
-            AgentToolUpdateCallback onUpdate
-    ) throws Exception {
+            String toolCallId, Map<String, Object> params, CancellationToken signal, AgentToolUpdateCallback onUpdate)
+            throws Exception {
         String pattern = (String) params.get("pattern");
         if (pattern == null || pattern.isEmpty()) {
             return errorResult("Error: pattern is required");
         }
-
-        String pathInput = (String) params.get("path");
         Path searchRoot;
-        if (pathInput != null && !pathInput.isBlank()) {
-            try {
-                searchRoot = PathUtils.resolveToCwd(pathInput, cwd);
-            } catch (SecurityException e) {
-                return errorResult("Error: " + e.getMessage());
-            }
-        } else {
-            searchRoot = cwd;
-        }
-
-        if (!Files.isDirectory(searchRoot)) {
-            return errorResult("Error: not a directory: " + pathInput);
-        }
-
-        FileSystem fs = searchRoot.getFileSystem();
-        PathMatcher matcher = fs.getPathMatcher("glob:" + pattern);
-
-        List<MatchedFile> matches = new ArrayList<>();
-
         try {
-            Files.walkFileTree(searchRoot, new SimpleFileVisitor<>() {
-                @Override
-                public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) {
-                    if (!dir.equals(searchRoot)) {
-                        String dirName = dir.getFileName().toString();
-                        if (EXCLUDED_DIRS.contains(dirName) || dirName.startsWith(".")) {
-                            return FileVisitResult.SKIP_SUBTREE;
-                        }
-                    }
-                    return matches.size() >= MAX_RESULTS
-                            ? FileVisitResult.TERMINATE
-                            : FileVisitResult.CONTINUE;
-                }
-
-                @Override
-                public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) {
-                    if (matches.size() >= MAX_RESULTS) {
-                        return FileVisitResult.TERMINATE;
-                    }
-                    Path relative = searchRoot.relativize(file);
-                    if (matcher.matches(relative)) {
-                        matches.add(new MatchedFile(relative, attrs.lastModifiedTime().toMillis()));
-                    }
-                    return FileVisitResult.CONTINUE;
-                }
-
-                @Override
-                public FileVisitResult visitFileFailed(Path file, IOException exc) {
-                    return FileVisitResult.CONTINUE;
-                }
-            });
+            searchRoot = resolveSearchRoot((String) params.get("path"));
+        } catch (SecurityException e) {
+            return errorResult("Error: " + e.getMessage());
+        }
+        if (!Files.isDirectory(searchRoot)) {
+            return errorResult("Error: not a directory: " + params.get("path"));
+        }
+        PathMatcher matcher = searchRoot.getFileSystem().getPathMatcher("glob:" + pattern);
+        List<MatchedFile> matches;
+        try {
+            matches = walkAndMatch(searchRoot, matcher);
         } catch (IOException e) {
             return errorResult("Error walking directory: " + e.getMessage());
         }
-
         if (matches.isEmpty()) {
             return textResult("No files matched.");
         }
-
-        // Sort by modification time, most recent first
         matches.sort(Comparator.comparingLong(MatchedFile::modifiedMillis).reversed());
-
         var sb = new StringBuilder();
         for (int i = 0; i < matches.size(); i++) {
-            if (i > 0) sb.append('\n');
+            if (i > 0) {
+                sb.append('\n');
+            }
             sb.append(matches.get(i).relativePath());
         }
-
         return textResult(sb.toString());
     }
 
-    private record MatchedFile(Path relativePath, long modifiedMillis) {
+    private Path resolveSearchRoot(String pathInput) {
+        if (pathInput == null || pathInput.isBlank()) {
+            return cwd;
+        }
+        return PathUtils.resolveToCwd(pathInput, cwd);
     }
 
+    private static List<MatchedFile> walkAndMatch(Path searchRoot, PathMatcher matcher) throws IOException {
+        List<MatchedFile> matches = new ArrayList<>();
+        Files.walkFileTree(searchRoot, new SimpleFileVisitor<>() {
+            @Override
+            public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) {
+                if (!dir.equals(searchRoot)) {
+                    String dirName = dir.getFileName().toString();
+                    if (EXCLUDED_DIRS.contains(dirName) || dirName.startsWith(".")) {
+                        return FileVisitResult.SKIP_SUBTREE;
+                    }
+                }
+                return matches.size() >= MAX_RESULTS ? FileVisitResult.TERMINATE : FileVisitResult.CONTINUE;
+            }
+
+            @Override
+            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) {
+                if (matches.size() >= MAX_RESULTS) {
+                    return FileVisitResult.TERMINATE;
+                }
+                Path relative = searchRoot.relativize(file);
+                if (matcher.matches(relative)) {
+                    matches.add(
+                            new MatchedFile(relative, attrs.lastModifiedTime().toMillis()));
+                }
+                return FileVisitResult.CONTINUE;
+            }
+
+            @Override
+            public FileVisitResult visitFileFailed(Path file, IOException exc) {
+                return FileVisitResult.CONTINUE;
+            }
+        });
+        return matches;
+    }
+
+    private record MatchedFile(Path relativePath, long modifiedMillis) {}
+
     private static AgentToolResult textResult(String text) {
-        return new AgentToolResult(
-                List.<ContentBlock>of(new TextContent(text)),
-                null
-        );
+        return new AgentToolResult(List.<ContentBlock>of(new TextContent(text)), null);
     }
 
     private static AgentToolResult errorResult(String message) {
-        return new AgentToolResult(
-                List.<ContentBlock>of(new TextContent(message)),
-                null
-        );
+        return new AgentToolResult(List.<ContentBlock>of(new TextContent(message)), null);
     }
 }

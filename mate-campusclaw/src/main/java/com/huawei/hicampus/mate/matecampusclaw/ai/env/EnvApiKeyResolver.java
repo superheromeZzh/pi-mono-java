@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026-2026. All rights reserved.
+ */
+
 package com.huawei.hicampus.mate.matecampusclaw.ai.env;
 
 import java.nio.file.Files;
@@ -11,6 +15,9 @@ import org.springframework.stereotype.Service;
 /**
  * Resolves API keys from environment variables for each provider.
  * Follows the same mapping as the TypeScript env-api-keys.ts.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 @Service
 public class EnvApiKeyResolver {
@@ -27,10 +34,8 @@ public class EnvApiKeyResolver {
         return switch (provider) {
             case ANTHROPIC -> firstEnv("ANTHROPIC_API_KEY", "ANTHROPIC_OAUTH_TOKEN");
             case OPENAI -> firstEnv("OPENAI_API_KEY");
-            case GOOGLE -> firstEnv("GOOGLE_API_KEY", "GOOGLE_CLOUD_API_KEY")
-                    .or(this::detectGoogleADC);
-            case GOOGLE_VERTEX -> firstEnv("GOOGLE_CLOUD_API_KEY")
-                    .or(this::detectGoogleADC);
+            case GOOGLE -> firstEnv("GOOGLE_API_KEY", "GOOGLE_CLOUD_API_KEY").or(this::detectGoogleADC);
+            case GOOGLE_VERTEX -> firstEnv("GOOGLE_CLOUD_API_KEY").or(this::detectGoogleADC);
             case AMAZON_BEDROCK -> detectBedrockCredentials();
             case AZURE_OPENAI -> firstEnv("AZURE_OPENAI_API_KEY");
             case MISTRAL -> firstEnv("MISTRAL_API_KEY");
@@ -54,6 +59,9 @@ public class EnvApiKeyResolver {
 
     /**
      * Returns the first non-null, non-blank value from the given env var names.
+     *
+     * @param names environment variable names to probe in order
+     * @return the first defined non-blank value, or empty when none match
      */
     private Optional<String> firstEnv(String... names) {
         for (String name : names) {
@@ -67,7 +75,8 @@ public class EnvApiKeyResolver {
 
     /**
      * Detects Google Application Default Credentials.
-     * Returns AUTHENTICATED sentinel if gcloud credentials exist.
+     *
+     * @return the {@code AUTHENTICATED} sentinel when gcloud credentials are present, or empty otherwise
      */
     private Optional<String> detectGoogleADC() {
         // Check GOOGLE_APPLICATION_CREDENTIALS
@@ -75,6 +84,7 @@ public class EnvApiKeyResolver {
         if (creds != null && !creds.isBlank()) {
             return Optional.of(AUTHENTICATED);
         }
+
         // Check for gcloud default credentials file
         String home = System.getProperty("user.home");
         if (home != null) {
@@ -88,20 +98,34 @@ public class EnvApiKeyResolver {
 
     /**
      * Detects AWS Bedrock credentials from various sources.
+     *
+     * @return the {@code AUTHENTICATED} sentinel when any supported credential source is set, or empty
      */
     private Optional<String> detectBedrockCredentials() {
         // AWS_PROFILE
-        if (envSet("AWS_PROFILE")) return Optional.of(AUTHENTICATED);
+        if (envSet("AWS_PROFILE")) {
+            return Optional.of(AUTHENTICATED);
+        }
+
         // IAM keys
-        if (envSet("AWS_ACCESS_KEY_ID") && envSet("AWS_SECRET_ACCESS_KEY"))
+        if (envSet("AWS_ACCESS_KEY_ID") && envSet("AWS_SECRET_ACCESS_KEY")) {
             return Optional.of(AUTHENTICATED);
+        }
+
         // Bearer token
-        if (envSet("AWS_BEARER_TOKEN_BEDROCK")) return Optional.of(AUTHENTICATED);
-        // Container credentials
-        if (envSet("AWS_CONTAINER_CREDENTIALS_FULL_URI") || envSet("AWS_CONTAINER_CREDENTIALS_RELATIVE_URI"))
+        if (envSet("AWS_BEARER_TOKEN_BEDROCK")) {
             return Optional.of(AUTHENTICATED);
+        }
+
+        // Container credentials
+        if (envSet("AWS_CONTAINER_CREDENTIALS_FULL_URI") || envSet("AWS_CONTAINER_CREDENTIALS_RELATIVE_URI")) {
+            return Optional.of(AUTHENTICATED);
+        }
+
         // Web identity (IRSA)
-        if (envSet("AWS_WEB_IDENTITY_TOKEN_FILE")) return Optional.of(AUTHENTICATED);
+        if (envSet("AWS_WEB_IDENTITY_TOKEN_FILE")) {
+            return Optional.of(AUTHENTICATED);
+        }
         return Optional.empty();
     }
 

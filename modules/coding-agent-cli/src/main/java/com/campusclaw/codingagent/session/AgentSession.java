@@ -1,8 +1,13 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026-2026. All rights reserved.
+ */
+
 package com.campusclaw.codingagent.session;
 
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
@@ -28,6 +33,7 @@ import com.campusclaw.codingagent.skill.Skill;
 import com.campusclaw.codingagent.skill.SkillExpander;
 import com.campusclaw.codingagent.skill.SkillLoader;
 import com.campusclaw.codingagent.skill.SkillRegistry;
+import com.campusclaw.codingagent.skill.SkillStateStore;
 
 /**
  * Manages a single agent session lifecycle: initialization, prompt handling,
@@ -36,6 +42,9 @@ import com.campusclaw.codingagent.skill.SkillRegistry;
  * <p>Coordinates {@link Agent}, {@link ModelRegistry}, {@link SkillLoader},
  * {@link SystemPromptBuilder}, and {@link SkillExpander} to provide a cohesive
  * session abstraction for the coding agent CLI.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 public class AgentSession {
 
@@ -58,6 +67,7 @@ public class AgentSession {
     private List<PromptTemplateEntry> promptTemplates = List.of();
     private Agent agent;
     private boolean initialized;
+    private com.campusclaw.agent.subagent.SubAgentRegistry subAgentRegistry;
 
     public AgentSession(
             CampusClawAiService piAiService,
@@ -65,8 +75,7 @@ public class AgentSession {
             SystemPromptBuilder promptBuilder,
             SkillLoader skillLoader,
             SkillExpander skillExpander,
-            List<AgentTool> tools
-    ) {
+            List<AgentTool> tools) {
         this.piAiService = Objects.requireNonNull(piAiService, "piAiService");
         this.modelRegistry = Objects.requireNonNull(modelRegistry, "modelRegistry");
         this.promptBuilder = Objects.requireNonNull(promptBuilder, "promptBuilder");
@@ -114,9 +123,14 @@ public class AgentSession {
         Map<String, String> env = buildEnvironmentMap();
 
         SystemPromptConfig promptConfig = new SystemPromptConfig(
-                tools, visibleSkills, cwd, config.customPrompt(), env,
-                contextFiles, systemPromptOverride, appendSystemPrompt
-        );
+                tools,
+                visibleSkills,
+                cwd,
+                config.customPrompt(),
+                env,
+                contextFiles,
+                systemPromptOverride,
+                appendSystemPrompt);
         String systemPrompt = promptBuilder.build(promptConfig);
 
         // 7. Create and configure Agent
@@ -142,6 +156,7 @@ public class AgentSession {
 
         // Expand prompt templates first (/templatename args...)
         String expanded = expandPromptTemplate(userInput);
+
         // Then expand skill commands (/skill:name args...)
         expanded = skillExpander.expand(expanded, skillRegistry);
         return agent.prompt(expanded);
@@ -155,6 +170,22 @@ public class AgentSession {
     public void abort() {
         requireInitialized();
         agent.abort();
+        var registry = subAgentRegistry;
+        if (registry != null) {
+            registry.cancelAll("parent-abort");
+        }
+    }
+
+    /**
+     * Attaches a {@link com.campusclaw.agent.subagent.SubAgentRegistry} so {@link #abort()} can
+     * cascade-cancel any open sub-agent sessions. Without this, sub-agent cancellation still
+     * happens through the per-tool {@code CancellationToken}, but stale sessions across edge cases
+     * (e.g. between turns) would be missed.
+     *
+     * @param registry the registry
+     */
+    public void setSubAgentRegistry(com.campusclaw.agent.subagent.SubAgentRegistry registry) {
+        this.subAgentRegistry = registry;
     }
 
     /**
@@ -181,6 +212,8 @@ public class AgentSession {
 
     /**
      * Returns the skill registry for this session.
+     *
+     * @return the result
      */
     public SkillRegistry getSkillRegistry() {
         return skillRegistry;
@@ -188,6 +221,8 @@ public class AgentSession {
 
     /**
      * Returns whether this session has been initialized.
+     *
+     * @return the result
      */
     public boolean isInitialized() {
         return initialized;
@@ -220,6 +255,7 @@ public class AgentSession {
     /**
      * Returns the current model ID, or {@code "unknown"} if no model is set.
      *
+     * @return the current model identifier, or {@code "unknown"} when unset
      * @throws IllegalStateException if the session is not initialized
      */
     public String getModelId() {
@@ -231,6 +267,7 @@ public class AgentSession {
     /**
      * Returns whether the agent is currently streaming a response.
      *
+     * @return {@code true} if a streaming response is in progress
      * @throws IllegalStateException if the session is not initialized
      */
     public boolean isStreaming() {
@@ -266,6 +303,8 @@ public class AgentSession {
 
     /**
      * Returns the loaded prompt templates for this session.
+     *
+     * @return the result
      */
     public List<PromptTemplateEntry> getPromptTemplates() {
         return promptTemplates;
@@ -273,6 +312,8 @@ public class AgentSession {
 
     /**
      * Sets the session manager for persistence. Must be called before initialize().
+     *
+     * @param sessionManager the sessionManager
      */
     public void setSessionManager(SessionManager sessionManager) {
         this.sessionManager = sessionManager;
@@ -280,6 +321,8 @@ public class AgentSession {
 
     /**
      * Returns the session manager, or null if not set.
+     *
+     * @return the result
      */
     public SessionManager getSessionManager() {
         return sessionManager;
@@ -310,23 +353,28 @@ public class AgentSession {
         Map<String, String> env = buildEnvironmentMap();
 
         SystemPromptConfig promptConfig = new SystemPromptConfig(
-                tools, visibleSkills, cwd, customPrompt, env,
-                contextFiles, systemPromptOverride, appendSystemPrompt
-        );
+                tools, visibleSkills, cwd, customPrompt, env, contextFiles, systemPromptOverride, appendSystemPrompt);
         String systemPrompt = promptBuilder.build(promptConfig);
         agent.setSystemPrompt(systemPrompt);
     }
 
-    /** Overload for backward compatibility. */
+    /**
+     * Overload for backward compatibility.
+     */
     public void reload() {
         reload(null);
     }
 
     /**
      * Expands a prompt template command like "/templatename arg1 arg2".
+     *
+     * @param input the input
+     * @return the result
      */
     String expandPromptTemplate(String input) {
-        if (!input.startsWith("/")) { return input; }
+        if (!input.startsWith("/")) {
+            return input;
+        }
 
         int spaceIdx = input.indexOf(' ');
         String name = spaceIdx >= 0 ? input.substring(1, spaceIdx) : input.substring(1);
@@ -384,6 +432,10 @@ public class AgentSession {
      * - Provider/ID: "zai/glm-5"
      * - Fuzzy substring: "sonnet" matches "claude-sonnet-4-20250514"
      * - Thinking suffix: "sonnet:high" (thinking level is stripped, not applied here)
+     *
+     * @param modelId the model pattern (id, provider/id, or fuzzy substring; may include a thinking suffix)
+     * @return the resolved {@link Model}
+     * @throws IllegalArgumentException when no model matches the given pattern
      */
     Model resolveModel(String modelId) {
         // Strip thinking level suffix (e.g., "sonnet:high" → "sonnet")
@@ -394,10 +446,10 @@ public class AgentSession {
         Provider targetProvider = null;
         if (pattern.contains("/")) {
             String[] parts = pattern.split("/", 2);
-            String providerStr = parts[0].toLowerCase();
+            String providerStr = parts[0].toLowerCase(Locale.ROOT);
             pattern = parts[1];
             for (Provider p : modelRegistry.getProviders()) {
-                if (p.value().toLowerCase().contains(providerStr)) {
+                if (p.value().toLowerCase(Locale.ROOT).contains(providerStr)) {
                     targetProvider = p;
                     break;
                 }
@@ -406,36 +458,48 @@ public class AgentSession {
 
         // 1. Exact match
         for (Provider provider : modelRegistry.getProviders()) {
-            if (targetProvider != null && provider != targetProvider) { continue; }
+            if (targetProvider != null && provider != targetProvider) {
+                continue;
+            }
             var model = modelRegistry.getModel(provider, pattern);
-            if (model.isPresent()) { return model.get(); }
+            if (model.isPresent()) {
+                return model.get();
+            }
         }
 
         // 2. Fuzzy substring match on id and name
-        String lowerPattern = pattern.toLowerCase();
+        String lowerPattern = pattern.toLowerCase(Locale.ROOT);
         Model bestMatch = null;
         for (Provider provider : modelRegistry.getProviders()) {
-            if (targetProvider != null && provider != targetProvider) { continue; }
+            if (targetProvider != null && provider != targetProvider) {
+                continue;
+            }
             for (Model m : modelRegistry.getModels(provider)) {
-                if (m.id().toLowerCase().contains(lowerPattern)
-                        || m.name().toLowerCase().contains(lowerPattern)) {
+                if (m.id().toLowerCase(Locale.ROOT).contains(lowerPattern)
+                        || m.name().toLowerCase(Locale.ROOT).contains(lowerPattern)) {
                     if (bestMatch == null || m.id().length() < bestMatch.id().length()) {
                         bestMatch = m; // Prefer shorter ID (more specific match)
                     }
                 }
             }
         }
-        if (bestMatch != null) { return bestMatch; }
+        if (bestMatch != null) {
+            return bestMatch;
+        }
 
-        throw new IllegalArgumentException("Unknown model: " + modelId
-                + ". Use --list-models to see available models.");
+        throw new IllegalArgumentException(
+                "Unknown model: " + modelId + ". Use --list-models to see available models.");
     }
 
     void loadSkills(Path cwd) {
         skillRegistry.clear();
 
         // User-level skills: ~/.campusclaw/agent/skills/
-        List<Skill> userSkills = skillLoader.loadFromDirectory(userSkillsDir(), "user");
+        // Filter out skills explicitly disabled via the REST API.
+        java.util.Set<String> disabled = new SkillStateStore(userSkillsDir()).loadDisabled();
+        List<Skill> userSkills = skillLoader.loadFromDirectory(userSkillsDir(), "user").stream()
+                .filter(s -> !disabled.contains(s.name()))
+                .toList();
         skillRegistry.registerAll(userSkills);
 
         // Project-level skills: {cwd}/.campusclaw/skills/

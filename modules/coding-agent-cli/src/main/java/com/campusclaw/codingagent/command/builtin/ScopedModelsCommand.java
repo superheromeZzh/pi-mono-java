@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026-2026. All rights reserved.
+ */
+
 package com.campusclaw.codingagent.command.builtin;
 
 import com.campusclaw.codingagent.command.SlashCommand;
@@ -6,14 +10,21 @@ import com.campusclaw.codingagent.command.SlashCommandContext;
 /**
  * Enable/disable models for Ctrl+P cycling.
  * In interactive mode, this is intercepted by InteractiveMode to show an overlay.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 public class ScopedModelsCommand implements SlashCommand {
 
     @Override
-    public String name() { return "scoped-models"; }
+    public String name() {
+        return "scoped-models";
+    }
 
     @Override
-    public String description() { return "Enable/disable models for Ctrl+P cycling"; }
+    public String description() {
+        return "Enable/disable models for Ctrl+P cycling";
+    }
 
     @Override
     public void execute(SlashCommandContext context, String arguments) {

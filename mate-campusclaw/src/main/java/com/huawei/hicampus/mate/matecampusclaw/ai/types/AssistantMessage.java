@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026-2026. All rights reserved.
+ */
+
 package com.huawei.hicampus.mate.matecampusclaw.ai.types;
 
 import java.util.List;
@@ -18,16 +22,18 @@ import jakarta.annotation.Nullable;
  * @param stopReason   reason the model stopped generating
  * @param errorMessage optional error message if stopReason is ERROR
  * @param timestamp    Unix timestamp in milliseconds
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 public record AssistantMessage(
-    @JsonProperty("content") List<ContentBlock> content,
-    @JsonProperty("api") String api,
-    @JsonProperty("provider") String provider,
-    @JsonProperty("model") String model,
-    @JsonProperty("responseId") @Nullable String responseId,
-    @JsonProperty("usage") Usage usage,
-    @JsonProperty("stopReason") StopReason stopReason,
-    @JsonProperty("errorMessage") @Nullable String errorMessage,
-    @JsonProperty("timestamp") long timestamp
-) implements Message {
-}
+        @JsonProperty("content") List<ContentBlock> content,
+        @JsonProperty("api") String api,
+        @JsonProperty("provider") String provider,
+        @JsonProperty("model") String model,
+        @JsonProperty("responseId") @Nullable String responseId,
+        @JsonProperty("usage") Usage usage,
+        @JsonProperty("stopReason") StopReason stopReason,
+        @JsonProperty("errorMessage") @Nullable String errorMessage,
+        @JsonProperty("timestamp") long timestamp)
+        implements Message {}

@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026-2026. All rights reserved.
+ */
+
 package com.huawei.hicampus.mate.matecampusclaw.codingagent.tool.editdiff;
 
 import java.nio.charset.StandardCharsets;
@@ -25,12 +29,16 @@ import org.slf4j.LoggerFactory;
  *
  * <p>Accepts a unified diff (similar to {@code git diff} output) and applies
  * the changes to the target file.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 public class EditDiffTool implements AgentTool {
 
     private static final Logger log = LoggerFactory.getLogger(EditDiffTool.class);
     private static final ObjectMapper MAPPER = new ObjectMapper();
-    private static final Pattern HUNK_HEADER = Pattern.compile("^@@\\s+-([0-9]+)(?:,([0-9]+))?\\s+\\+([0-9]+)(?:,([0-9]+))?\\s+@@");
+    private static final Pattern HUNK_HEADER =
+            Pattern.compile("^@@\\s+-([0-9]+)(?:,([0-9]+))?\\s+\\+([0-9]+)(?:,([0-9]+))?\\s+@@");
 
     private final EditOperations editOps;
     private final JsonNode parametersSchema;
@@ -62,11 +70,8 @@ public class EditDiffTool implements AgentTool {
 
     @Override
     public AgentToolResult execute(
-        String toolCallId,
-        Map<String, Object> params,
-        CancellationToken signal,
-        AgentToolUpdateCallback onUpdate
-    ) throws Exception {
+            String toolCallId, Map<String, Object> params, CancellationToken signal, AgentToolUpdateCallback onUpdate)
+            throws Exception {
         String filePath = (String) params.get("file_path");
         String diff = (String) params.get("diff");
 
@@ -94,7 +99,9 @@ public class EditDiffTool implements AgentTool {
         }
 
         String result = String.join("\n", lines);
-        if (original.endsWith("\n")) result += "\n";
+        if (original.endsWith("\n")) {
+            result += "\n";
+        }
 
         editOps.writeFile(path, result);
 
@@ -119,7 +126,9 @@ public class EditDiffTool implements AgentTool {
 
                 while (i < lines.size()) {
                     String l = lines.get(i);
-                    if (l.startsWith("@@") || l.startsWith("---") || l.startsWith("+++")) break;
+                    if (l.startsWith("@@") || l.startsWith("---") || l.startsWith("+++")) {
+                        break;
+                    }
                     if (l.startsWith("-")) {
                         removals.add(l.substring(1));
                     } else if (l.startsWith("+")) {
@@ -156,7 +165,8 @@ public class EditDiffTool implements AgentTool {
 
     private static JsonNode buildSchema() {
         try {
-            return MAPPER.readTree("""
+            return MAPPER.readTree(
+                    """
                 {
                     "type": "object",
                     "properties": {

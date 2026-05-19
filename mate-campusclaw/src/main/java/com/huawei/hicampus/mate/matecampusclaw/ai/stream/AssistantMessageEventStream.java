@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026-2026. All rights reserved.
+ */
+
 package com.huawei.hicampus.mate.matecampusclaw.ai.stream;
 
 import com.huawei.hicampus.mate.matecampusclaw.ai.types.AssistantMessage;
@@ -16,6 +20,9 @@ import reactor.core.publisher.Mono;
  *
  * <p>Provides convenience methods for pushing common event types without
  * manually constructing the event records.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 public class AssistantMessageEventStream {
 
@@ -25,24 +32,21 @@ public class AssistantMessageEventStream {
      * Creates a new AssistantMessageEventStream.
      */
     public AssistantMessageEventStream() {
-        this.delegate = new EventStream<>(
-            AssistantMessageEventStream::isTerminal,
-            AssistantMessageEventStream::extractMessage
-        );
+        this.delegate =
+                new EventStream<>(AssistantMessageEventStream::isTerminal, AssistantMessageEventStream::extractMessage);
     }
 
     private static boolean isTerminal(AssistantMessageEvent event) {
-        return event instanceof AssistantMessageEvent.DoneEvent
-            || event instanceof AssistantMessageEvent.ErrorEvent;
+        return event instanceof AssistantMessageEvent.DoneEvent || event instanceof AssistantMessageEvent.ErrorEvent;
     }
 
     private static AssistantMessage extractMessage(AssistantMessageEvent event) {
         return switch (event) {
             case AssistantMessageEvent.DoneEvent e -> e.message();
             case AssistantMessageEvent.ErrorEvent e -> e.error();
-            default -> throw new IllegalStateException(
-                "extractMessage called on non-terminal event: " + event.getClass().getSimpleName()
-            );
+            default ->
+                throw new IllegalStateException("extractMessage called on non-terminal event: "
+                        + event.getClass().getSimpleName());
         };
     }
 
@@ -106,6 +110,8 @@ public class AssistantMessageEventStream {
 
     /**
      * Returns the event stream as a {@link Flux}.
+     *
+     * @return the underlying event flux
      */
     public Flux<AssistantMessageEvent> asFlux() {
         return delegate.asFlux();
@@ -113,6 +119,8 @@ public class AssistantMessageEventStream {
 
     /**
      * Returns a {@link Mono} that resolves to the final {@link AssistantMessage}.
+     *
+     * @return the final-result mono
      */
     public Mono<AssistantMessage> result() {
         return delegate.result();

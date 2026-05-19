@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026-2026. All rights reserved.
+ */
+
 package com.huawei.hicampus.mate.matecampusclaw.tui.component;
 
 import java.text.BreakIterator;
@@ -31,6 +35,9 @@ import com.huawei.hicampus.mate.matecampusclaw.tui.ansi.AnsiUtils;
  *   <li>Alt+Left / Ctrl+Left — move word backward</li>
  *   <li>Alt+Right / Ctrl+Right — move word forward</li>
  * </ul>
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 public class Editor implements Component, Focusable {
 
@@ -42,7 +49,7 @@ public class Editor implements Component, Focusable {
     private static final String KEY_HOME = "\033[H";
     private static final String KEY_END = "\033[F";
     private static final String KEY_DELETE = "\033[3~";
-    private static final String KEY_BACKSPACE = "\177";  // DEL
+    private static final String KEY_BACKSPACE = "\177"; // DEL
     private static final String KEY_BACKSPACE_BS = "\010"; // BS
     private static final String KEY_ENTER = "\r";
     private static final String KEY_NEWLINE = "\n";
@@ -122,12 +129,20 @@ public class Editor implements Component, Focusable {
     // Public API
     // -------------------------------------------------------------------
 
-    /** Returns the full text content (lines joined with \n). */
+    /**
+     * Returns the full text content (lines joined with {@code \n}).
+     *
+     * @return the editor contents
+     */
     public String getText() {
         return String.join("\n", lines);
     }
 
-    /** Sets the text content, resetting cursor to the end. */
+    /**
+     * Sets the text content, resetting cursor to the end.
+     *
+     * @param text new editor contents; {@code null} is treated as empty
+     */
     public void setText(String text) {
         String normalized = normalizeText(text != null ? text : "");
         String[] split = normalized.split("\n", -1);
@@ -135,26 +150,41 @@ public class Editor implements Component, Focusable {
         for (String s : split) {
             lines.add(s);
         }
-        if (lines.isEmpty()) lines.add("");
+        if (lines.isEmpty()) {
+            lines.add("");
+        }
         cursorLine = lines.size() - 1;
         cursorCol = lines.get(cursorLine).length();
         preferredVisualCol = -1;
         lastAction = null;
     }
 
-    /** Returns the current cursor position as [line, column]. */
+    /**
+     * Returns the current cursor position as {@code [line, column]}.
+     *
+     * @return a two-element array containing the cursor's row and column
+     */
     public int[] getCursorPosition() {
-        return new int[]{cursorLine, cursorCol};
+        return new int[] {cursorLine, cursorCol};
     }
 
-    /** Sets the cursor position, clamped to valid range. */
+    /**
+     * Sets the cursor position, clamped to valid range.
+     *
+     * @param line target row
+     * @param col target column
+     */
     public void setCursorPosition(int line, int col) {
         cursorLine = Math.max(0, Math.min(line, lines.size() - 1));
         cursorCol = Math.max(0, Math.min(col, lines.get(cursorLine).length()));
         preferredVisualCol = -1;
     }
 
-    /** Returns the lines (defensive copy). */
+    /**
+     * Returns the lines (defensive copy).
+     *
+     * @return a defensive copy of the editor's current lines
+     */
     public List<String> getLines() {
         return new ArrayList<>(lines);
     }
@@ -167,7 +197,11 @@ public class Editor implements Component, Focusable {
         this.onSubmit = onSubmit;
     }
 
-    /** When true, Enter submits and Shift+Enter/Alt+Enter inserts newline. */
+    /**
+     * When true, Enter submits and Shift+Enter/Alt+Enter inserts newline.
+     *
+     * @param submitOnEnter whether Enter acts as submit
+     */
     public void setSubmitOnEnter(boolean submitOnEnter) {
         this.submitOnEnter = submitOnEnter;
     }
@@ -176,12 +210,22 @@ public class Editor implements Component, Focusable {
         this.placeholder = placeholder;
     }
 
-    /** Adds an entry to the command history. Deduplicates consecutive entries. */
+    /**
+     * Adds an entry to the command history. Deduplicates consecutive entries.
+     *
+     * @param text entry to record; blank or duplicate entries are ignored
+     */
     public void addToHistory(String text) {
-        if (text == null || text.isBlank()) return;
-        if (!history.isEmpty() && history.getLast().equals(text)) return;
+        if (text == null || text.isBlank()) {
+            return;
+        }
+        if (!history.isEmpty() && history.getLast().equals(text)) {
+            return;
+        }
         history.add(text);
-        if (history.size() > MAX_HISTORY) history.removeFirst();
+        if (history.size() > MAX_HISTORY) {
+            history.removeFirst();
+        }
         historyIndex = -1;
     }
 
@@ -218,8 +262,7 @@ public class Editor implements Component, Focusable {
 
             if (focused && ll.hasCursor && ll.cursorPos >= 0) {
                 String before = displayText.substring(0, Math.min(ll.cursorPos, displayText.length()));
-                String after = ll.cursorPos < displayText.length()
-                        ? displayText.substring(ll.cursorPos) : "";
+                String after = ll.cursorPos < displayText.length() ? displayText.substring(ll.cursorPos) : "";
 
                 if (!after.isEmpty()) {
                     // Cursor on a character — highlight it with inverse video
@@ -248,161 +291,128 @@ public class Editor implements Component, Focusable {
         return result;
     }
 
+    /**
+     * Keymap of exact-match key sequences to handler actions. Built lazily on
+     * first input — submitOnEnter affects only a handful of bindings (Enter,
+     * Up, Down, Shift/Alt+Enter), which are resolved inside {@link #handleInput}
+     * rather than via the map.
+     */
+    private java.util.Map<String, Runnable> keymap;
+
+    private java.util.Map<String, Runnable> keymap() {
+        if (keymap == null) {
+            var map = new java.util.HashMap<String, Runnable>();
+            map.put(KEY_CTRL_Z, this::undo);
+            map.put(KEY_CTRL_K, this::deleteToEndOfLine);
+            map.put(KEY_CTRL_U, this::deleteToStartOfLine);
+            map.put(KEY_CTRL_W, this::deleteWordBackward);
+            map.put(KEY_ALT_D, this::deleteWordForward);
+            map.put(KEY_CTRL_Y, this::yank);
+            map.put(KEY_ALT_Y, this::yankPop);
+            for (String k : new String[] {KEY_LEFT, KEY_CTRL_B}) {
+                map.put(k, this::moveCursorLeft);
+            }
+            for (String k : new String[] {KEY_RIGHT, KEY_CTRL_F}) {
+                map.put(k, this::moveCursorRight);
+            }
+            for (String k : new String[] {KEY_HOME, KEY_CTRL_A}) {
+                map.put(k, this::moveToLineStart);
+            }
+            for (String k : new String[] {KEY_END, KEY_CTRL_E}) {
+                map.put(k, this::moveToLineEnd);
+            }
+            for (String k : new String[] {KEY_ALT_LEFT, KEY_CTRL_LEFT, KEY_ALT_B}) {
+                map.put(k, this::moveWordBackward);
+            }
+            for (String k : new String[] {KEY_ALT_RIGHT, KEY_CTRL_RIGHT, KEY_ALT_F}) {
+                map.put(k, this::moveWordForward);
+            }
+            for (String k : new String[] {KEY_BACKSPACE, KEY_BACKSPACE_BS}) {
+                map.put(k, this::handleBackspace);
+            }
+            map.put(KEY_DELETE, this::handleDelete);
+            keymap = map;
+        }
+        return keymap;
+    }
+
     @Override
     public void handleInput(String data) {
-        // --- Undo ---
-        if (KEY_CTRL_Z.equals(data)) {
-            undo();
+        Runnable bound = keymap().get(data);
+        if (bound != null) {
+            bound.run();
             return;
         }
-
-        // --- Kill ring: Ctrl+K (delete to line end) ---
-        if (KEY_CTRL_K.equals(data)) {
-            deleteToEndOfLine();
+        if (submitOnEnter
+                && (KEY_SHIFT_ENTER_KITTY.equals(data) || KEY_ALT_ENTER.equals(data) || KEY_ALT_NEWLINE.equals(data))) {
+            addNewLine();
             return;
         }
-
-        // --- Kill ring: Ctrl+U (delete to line start) ---
-        if (KEY_CTRL_U.equals(data)) {
-            deleteToStartOfLine();
+        if (KEY_ENTER.equals(data) || KEY_NEWLINE.equals(data)) {
+            handleEnter();
             return;
         }
-
-        // --- Kill ring: Ctrl+W (delete word backward) ---
-        if (KEY_CTRL_W.equals(data)) {
-            deleteWordBackward();
+        if (KEY_UP.equals(data)) {
+            handleArrowVertical(-1);
             return;
         }
-
-        // --- Kill ring: Alt+D (delete word forward) ---
-        if (KEY_ALT_D.equals(data)) {
-            deleteWordForward();
+        if (KEY_DOWN.equals(data)) {
+            handleArrowVertical(1);
             return;
         }
-
-        // --- Yank: Ctrl+Y ---
-        if (KEY_CTRL_Y.equals(data)) {
-            yank();
+        if (data.startsWith("\033[200~")) {
+            handleBracketedPaste(data);
             return;
         }
-
-        // --- Yank-pop: Alt+Y ---
-        if (KEY_ALT_Y.equals(data)) {
-            yankPop();
-            return;
+        if (!data.isEmpty() && data.charAt(0) >= 32 && !data.startsWith("\033")) {
+            insertCharacter(data);
         }
+    }
 
-        // --- Newline in submit mode: Shift+Enter or Alt+Enter ---
-        if (submitOnEnter && (KEY_SHIFT_ENTER_KITTY.equals(data)
-                || KEY_ALT_ENTER.equals(data) || KEY_ALT_NEWLINE.equals(data))) {
+    private void handleEnter() {
+        if (!submitOnEnter) {
             addNewLine();
             return;
         }
 
-        // --- Enter handling ---
-        if (KEY_ENTER.equals(data) || KEY_NEWLINE.equals(data)) {
-            if (submitOnEnter) {
-                // Backslash+Enter workaround: if char before cursor is \, delete it and insert newline
-                String line = lines.get(cursorLine);
-                if (cursorCol > 0 && line.charAt(cursorCol - 1) == '\\') {
-                    pushUndoSnapshot();
-                    lines.set(cursorLine, line.substring(0, cursorCol - 1) + line.substring(cursorCol));
-                    cursorCol--;
-                    addNewLine();
-                    return;
-                }
-                // Submit
-                if (onSubmit != null) {
-                    String text = getText();
-                    onSubmit.accept(text);
-                }
-            } else {
-                addNewLine();
-            }
+        // Backslash+Enter workaround: char before cursor is \, delete it and add newline.
+        String line = lines.get(cursorLine);
+        if (cursorCol > 0 && line.charAt(cursorCol - 1) == '\\') {
+            pushUndoSnapshot();
+            lines.set(cursorLine, line.substring(0, cursorCol - 1) + line.substring(cursorCol));
+            cursorCol--;
+            addNewLine();
             return;
         }
+        if (onSubmit != null) {
+            onSubmit.accept(getText());
+        }
+    }
 
-        // --- Cursor movement ---
-        if (KEY_UP.equals(data)) {
-            if (submitOnEnter && cursorLine == 0) {
-                // Navigate history when at first line
-                navigateHistory(-1);
-                return;
-            }
-            moveCursorVertical(-1);
+    private void handleArrowVertical(int delta) {
+        boolean atEdge = (delta < 0 && cursorLine == 0) || (delta > 0 && cursorLine == lines.size() - 1);
+        if (submitOnEnter && atEdge) {
+            navigateHistory(delta);
             return;
         }
-        if (KEY_DOWN.equals(data)) {
-            if (submitOnEnter && cursorLine == lines.size() - 1) {
-                // Navigate history when at last line
-                navigateHistory(1);
-                return;
-            }
-            moveCursorVertical(1);
-            return;
-        }
-        if (KEY_LEFT.equals(data) || KEY_CTRL_B.equals(data)) {
-            moveCursorLeft();
-            return;
-        }
-        if (KEY_RIGHT.equals(data) || KEY_CTRL_F.equals(data)) {
-            moveCursorRight();
-            return;
-        }
-        if (KEY_HOME.equals(data) || KEY_CTRL_A.equals(data)) {
-            moveToLineStart();
-            return;
-        }
-        if (KEY_END.equals(data) || KEY_CTRL_E.equals(data)) {
-            moveToLineEnd();
-            return;
-        }
+        moveCursorVertical(delta);
+    }
 
-        // --- Word movement ---
-        if (KEY_ALT_LEFT.equals(data) || KEY_CTRL_LEFT.equals(data) || KEY_ALT_B.equals(data)) {
-            moveWordBackward();
+    private void handleBracketedPaste(String data) {
+        String pasteContent = data;
+        if (pasteContent.startsWith("\033[200~")) {
+            pasteContent = pasteContent.substring(6);
+        }
+        if (pasteContent.endsWith("\033[201~")) {
+            pasteContent = pasteContent.substring(0, pasteContent.length() - 6);
+        }
+        if (pasteContent.isEmpty()) {
             return;
         }
-        if (KEY_ALT_RIGHT.equals(data) || KEY_CTRL_RIGHT.equals(data) || KEY_ALT_F.equals(data)) {
-            moveWordForward();
-            return;
-        }
-
-        // --- Backspace ---
-        if (KEY_BACKSPACE.equals(data) || KEY_BACKSPACE_BS.equals(data)) {
-            handleBackspace();
-            return;
-        }
-
-        // --- Delete forward ---
-        if (KEY_DELETE.equals(data)) {
-            handleDelete();
-            return;
-        }
-
-        // --- Bracketed paste ---
-        if (data.startsWith("\033[200~")) {
-            String pasteContent = data;
-            // Strip paste markers
-            if (pasteContent.startsWith("\033[200~")) {
-                pasteContent = pasteContent.substring(6);
-            }
-            if (pasteContent.endsWith("\033[201~")) {
-                pasteContent = pasteContent.substring(0, pasteContent.length() - 6);
-            }
-            if (!pasteContent.isEmpty()) {
-                pushUndoSnapshot();
-                insertTextInternal(pasteContent);
-                lastAction = null;
-                fireOnChange();
-            }
-            return;
-        }
-
-        // --- Regular character input ---
-        if (!data.isEmpty() && data.charAt(0) >= 32 && !data.startsWith("\033")) {
-            insertCharacter(data);
-        }
+        pushUndoSnapshot();
+        insertTextInternal(pasteContent);
+        lastAction = null;
+        fireOnChange();
     }
 
     // -------------------------------------------------------------------
@@ -424,7 +434,9 @@ public class Editor implements Component, Focusable {
     // -------------------------------------------------------------------
 
     private void navigateHistory(int direction) {
-        if (history.isEmpty()) return;
+        if (history.isEmpty()) {
+            return;
+        }
 
         if (historyIndex == -1) {
             // Starting to browse history — save current text
@@ -436,7 +448,9 @@ public class Editor implements Component, Focusable {
             }
         } else {
             int newIndex = historyIndex + direction;
-            if (newIndex < 0) return; // Already at oldest
+            if (newIndex < 0) {
+                return;
+            } // Already at oldest
             if (newIndex >= history.size()) {
                 // Return to current text
                 historyIndex = -1;
@@ -553,7 +567,9 @@ public class Editor implements Component, Focusable {
     }
 
     private void deleteToStartOfLine() {
-        if (cursorCol == 0) return;
+        if (cursorCol == 0) {
+            return;
+        }
 
         pushUndoSnapshot();
         String line = lines.get(cursorLine);
@@ -567,7 +583,9 @@ public class Editor implements Component, Focusable {
     }
 
     private void deleteWordBackward() {
-        if (cursorCol == 0 && cursorLine == 0) return;
+        if (cursorCol == 0 && cursorLine == 0) {
+            return;
+        }
 
         boolean wasKill = "kill".equals(lastAction);
         pushUndoSnapshot();
@@ -590,8 +608,10 @@ public class Editor implements Component, Focusable {
             cursorCol = newCol;
         } else {
             // Cross-line delete: merge
-            deleted = lines.get(newLine).substring(newCol) + "\n" + lines.get(oldLine).substring(0, oldCol);
-            String merged = lines.get(newLine).substring(0, newCol) + lines.get(oldLine).substring(oldCol);
+            deleted = lines.get(newLine).substring(newCol) + "\n"
+                    + lines.get(oldLine).substring(0, oldCol);
+            String merged =
+                    lines.get(newLine).substring(0, newCol) + lines.get(oldLine).substring(oldCol);
             lines.set(newLine, merged);
             lines.remove(oldLine);
             cursorLine = newLine;
@@ -606,7 +626,9 @@ public class Editor implements Component, Focusable {
 
     private void deleteWordForward() {
         String line = lines.get(cursorLine);
-        if (cursorCol >= line.length() && cursorLine >= lines.size() - 1) return;
+        if (cursorCol >= line.length() && cursorLine >= lines.size() - 1) {
+            return;
+        }
 
         boolean wasKill = "kill".equals(lastAction);
         pushUndoSnapshot();
@@ -642,7 +664,9 @@ public class Editor implements Component, Focusable {
 
     private void yank() {
         String text = killRing.peek();
-        if (text == null) return;
+        if (text == null) {
+            return;
+        }
 
         pushUndoSnapshot();
         insertTextInternal(text);
@@ -651,7 +675,9 @@ public class Editor implements Component, Focusable {
     }
 
     private void yankPop() {
-        if (!"yank".equals(lastAction) || killRing.size() <= 1) return;
+        if (!"yank".equals(lastAction) || killRing.size() <= 1) {
+            return;
+        }
 
         pushUndoSnapshot();
 
@@ -677,7 +703,9 @@ public class Editor implements Component, Focusable {
 
     private void undo() {
         EditorSnapshot snapshot = undoStack.pop();
-        if (snapshot == null) return;
+        if (snapshot == null) {
+            return;
+        }
         lines = snapshot.lines;
         cursorLine = snapshot.cursorLine;
         cursorCol = snapshot.cursorCol;
@@ -727,9 +755,12 @@ public class Editor implements Component, Focusable {
         }
 
         int newLine = cursorLine + direction;
-        if (newLine < 0 || newLine >= lines.size()) return;
+        if (newLine < 0 || newLine >= lines.size()) {
+            return;
+        }
 
         cursorLine = newLine;
+
         // Attempt to place cursor at the preferred visual column
         cursorCol = colFromVisualWidth(lines.get(cursorLine), preferredVisualCol);
     }
@@ -794,7 +825,9 @@ public class Editor implements Component, Focusable {
             idx--;
         }
 
-        if (idx < 0) return;
+        if (idx < 0) {
+            return;
+        }
 
         // Determine character type
         boolean isPunct = isPunctuation(graphemes.get(idx));
@@ -802,7 +835,9 @@ public class Editor implements Component, Focusable {
         // Skip run of same type
         while (idx >= 0) {
             String g = graphemes.get(idx);
-            if (isWhitespace(g) || (isPunct != isPunctuation(g))) break;
+            if (isWhitespace(g) || (isPunct != isPunctuation(g))) {
+                break;
+            }
             cursorCol -= g.length();
             idx--;
         }
@@ -845,7 +880,9 @@ public class Editor implements Component, Focusable {
             idx++;
         }
 
-        if (idx >= graphemes.size()) return;
+        if (idx >= graphemes.size()) {
+            return;
+        }
 
         // Determine character type
         boolean isPunct = isPunctuation(graphemes.get(idx));
@@ -853,7 +890,9 @@ public class Editor implements Component, Focusable {
         // Skip run of same type
         while (idx < graphemes.size()) {
             String g = graphemes.get(idx);
-            if (isWhitespace(g) || (isPunct != isPunctuation(g))) break;
+            if (isWhitespace(g) || (isPunct != isPunctuation(g))) {
+                break;
+            }
             cursorCol += g.length();
             idx++;
         }
@@ -863,8 +902,7 @@ public class Editor implements Component, Focusable {
     // Layout (word wrap for rendering)
     // -------------------------------------------------------------------
 
-    private record LayoutLine(String text, boolean hasCursor, int cursorPos) {
-    }
+    private record LayoutLine(String text, boolean hasCursor, int cursorPos) {}
 
     private List<LayoutLine> layoutText(int contentWidth) {
         List<LayoutLine> result = new ArrayList<>();
@@ -921,91 +959,88 @@ public class Editor implements Component, Focusable {
         return result;
     }
 
-    /** Text chunk for word wrapping — tracks text and position in original line. */
-    private record TextChunk(String text, int startIndex, int endIndex) {
-    }
+    /**
+     * Text chunk for word wrapping — tracks text and position in original line.
+     */
+    private record TextChunk(String text, int startIndex, int endIndex) {}
 
     /**
      * Word-wrap a single line into chunks.
      * Wraps at word boundaries when possible, falls back to character-level breaks.
+     *
+     * @param line the source line
+     * @param maxWidth max visual width per chunk
+     * @return chunks covering the line in display order
      */
     private List<TextChunk> wordWrapLine(String line, int maxWidth) {
         if (line == null || line.isEmpty() || maxWidth <= 0) {
             return List.of(new TextChunk("", 0, 0));
         }
-
-        int lineWidth = AnsiUtils.visibleWidth(line);
-        if (lineWidth <= maxWidth) {
+        if (AnsiUtils.visibleWidth(line) <= maxWidth) {
             return List.of(new TextChunk(line, 0, line.length()));
         }
-
+        List<int[]> boundaries = collectGraphemeBoundaries(line);
         List<TextChunk> chunks = new ArrayList<>();
-        BreakIterator bi = BreakIterator.getCharacterInstance();
-        bi.setText(line);
-
-        // Collect grapheme boundaries and their properties
-        List<int[]> boundaries = new ArrayList<>(); // [start, end]
-        int start = bi.first();
-        int end = bi.next();
-        while (end != BreakIterator.DONE) {
-            boundaries.add(new int[]{start, end});
-            start = end;
-            end = bi.next();
-        }
-
         int currentWidth = 0;
         int chunkStart = 0;
-        int wrapOppIndex = -1; // character index of last wrap opportunity
+        int wrapOppIndex = -1;
         int wrapOppWidth = 0;
-
         for (int i = 0; i < boundaries.size(); i++) {
             int[] seg = boundaries.get(i);
             String grapheme = line.substring(seg[0], seg[1]);
             int gWidth = AnsiUtils.visibleWidth(grapheme);
-            boolean isWs = isWhitespace(grapheme);
-
-            // Overflow check
             if (currentWidth + gWidth > maxWidth) {
                 if (wrapOppIndex >= 0 && currentWidth - wrapOppWidth + gWidth <= maxWidth) {
-                    // Backtrack to wrap opportunity
                     chunks.add(new TextChunk(line.substring(chunkStart, wrapOppIndex), chunkStart, wrapOppIndex));
                     chunkStart = wrapOppIndex;
                     currentWidth -= wrapOppWidth;
                 } else if (chunkStart < seg[0]) {
-                    // Force break at current position
                     chunks.add(new TextChunk(line.substring(chunkStart, seg[0]), chunkStart, seg[0]));
                     chunkStart = seg[0];
                     currentWidth = 0;
                 }
                 wrapOppIndex = -1;
             }
-
             currentWidth += gWidth;
-
-            // Record wrap opportunity: whitespace followed by non-whitespace
-            if (isWs && i + 1 < boundaries.size()) {
+            if (isWhitespace(grapheme) && i + 1 < boundaries.size()) {
                 int[] next = boundaries.get(i + 1);
-                String nextGrapheme = line.substring(next[0], next[1]);
-                if (!isWhitespace(nextGrapheme)) {
+                if (!isWhitespace(line.substring(next[0], next[1]))) {
                     wrapOppIndex = next[0];
                     wrapOppWidth = currentWidth;
                 }
             }
         }
-
-        // Final chunk
         chunks.add(new TextChunk(line.substring(chunkStart), chunkStart, line.length()));
-
         return chunks;
+    }
+
+    private static List<int[]> collectGraphemeBoundaries(String line) {
+        List<int[]> boundaries = new ArrayList<>();
+        BreakIterator bi = BreakIterator.getCharacterInstance();
+        bi.setText(line);
+        int start = bi.first();
+        int end = bi.next();
+        while (end != BreakIterator.DONE) {
+            boundaries.add(new int[] {start, end});
+            start = end;
+            end = bi.next();
+        }
+        return boundaries;
     }
 
     // -------------------------------------------------------------------
     // Helpers
     // -------------------------------------------------------------------
 
-    /** Insert text at cursor position (may be multi-line). Does NOT push undo snapshot. */
+    /**
+     * Insert text at cursor position (may be multi-line). Does NOT push undo snapshot.
+     *
+     * @param text text to insert; {@code null} or empty is a no-op
+     */
     private void insertTextInternal(String text) {
-        if (text == null || text.isEmpty()) return;
+        if (text == null || text.isEmpty()) {
+            return;
+        }
 
         String normalized = normalizeText(text);
         String[] insertedLines = normalized.split("\n", -1);
@@ -1031,7 +1066,11 @@ public class Editor implements Component, Focusable {
         preferredVisualCol = -1;
     }
 
-    /** Delete n characters backward from cursor. */
+    /**
+     * Delete n characters backward from cursor.
+     *
+     * @param count number of characters to remove (may merge across line breaks)
+     */
     private void deleteBackward(int count) {
         int remaining = count;
         while (remaining > 0) {
@@ -1055,9 +1094,16 @@ public class Editor implements Component, Focusable {
         preferredVisualCol = -1;
     }
 
-    /** Returns the first grapheme of a string, or the first char if BreakIterator fails. */
+    /**
+     * Returns the first grapheme of a string, or the first char if BreakIterator fails.
+     *
+     * @param text source text
+     * @return the leading grapheme cluster, or empty string when input is empty
+     */
     private static String firstGrapheme(String text) {
-        if (text == null || text.isEmpty()) return "";
+        if (text == null || text.isEmpty()) {
+            return "";
+        }
         BreakIterator bi = BreakIterator.getCharacterInstance();
         bi.setText(text);
         bi.first();
@@ -1065,9 +1111,16 @@ public class Editor implements Component, Focusable {
         return end == BreakIterator.DONE ? text.substring(0, 1) : text.substring(0, end);
     }
 
-    /** Returns the length of the last grapheme in text. */
+    /**
+     * Returns the length of the last grapheme in text.
+     *
+     * @param text source text
+     * @return the trailing grapheme's char length, or 0 when input is empty
+     */
     private static int lastGraphemeLength(String text) {
-        if (text == null || text.isEmpty()) return 0;
+        if (text == null || text.isEmpty()) {
+            return 0;
+        }
         BreakIterator bi = BreakIterator.getCharacterInstance();
         bi.setText(text);
         int last = bi.last();
@@ -1075,9 +1128,17 @@ public class Editor implements Component, Focusable {
         return prev == BreakIterator.DONE ? text.length() : last - prev;
     }
 
-    /** Find the column offset corresponding to a given visual width target. */
+    /**
+     * Find the column offset corresponding to a given visual width target.
+     *
+     * @param line source line
+     * @param targetVisualWidth desired visual column
+     * @return the closest char-column offset matching the target visual width
+     */
     private static int colFromVisualWidth(String line, int targetVisualWidth) {
-        if (line.isEmpty()) return 0;
+        if (line.isEmpty()) {
+            return 0;
+        }
         BreakIterator bi = BreakIterator.getCharacterInstance();
         bi.setText(line);
         int col = 0;
@@ -1087,7 +1148,9 @@ public class Editor implements Component, Focusable {
         while (end != BreakIterator.DONE) {
             String grapheme = line.substring(start, end);
             int gw = AnsiUtils.visibleWidth(grapheme);
-            if (width + gw > targetVisualWidth) break;
+            if (width + gw > targetVisualWidth) {
+                break;
+            }
             width += gw;
             col = end;
             start = end;
@@ -1097,12 +1160,16 @@ public class Editor implements Component, Focusable {
     }
 
     private static boolean isWhitespace(String s) {
-        if (s == null || s.isEmpty()) return false;
+        if (s == null || s.isEmpty()) {
+            return false;
+        }
         return Character.isWhitespace(s.codePointAt(0));
     }
 
     private static boolean isPunctuation(String s) {
-        if (s == null || s.isEmpty()) return false;
+        if (s == null || s.isEmpty()) {
+            return false;
+        }
         int type = Character.getType(s.codePointAt(0));
         return type == Character.CONNECTOR_PUNCTUATION
                 || type == Character.DASH_PUNCTUATION
@@ -1128,8 +1195,7 @@ public class Editor implements Component, Focusable {
     // Snapshot for undo
     // -------------------------------------------------------------------
 
-    private record EditorSnapshot(List<String> lines, int cursorLine, int cursorCol) {
-    }
+    private record EditorSnapshot(List<String> lines, int cursorLine, int cursorCol) {}
 
     private EditorSnapshot cloneSnapshot(EditorSnapshot snapshot) {
         return new EditorSnapshot(new ArrayList<>(snapshot.lines), snapshot.cursorLine, snapshot.cursorCol);

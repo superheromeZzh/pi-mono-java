@@ -19,7 +19,8 @@ build/
 Thumbs.db
 
 # Claude
-.claude/
+.claude/*
+!.claude/settings.json
 
 # Project specific
 .pi-dev/

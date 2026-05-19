@@ -1,23 +1,20 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026-2026. All rights reserved.
+ */
+
 package com.huawei.hicampus.mate.matecampusclaw.codingagent.tool.bash;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.when;
-import static org.mockito.Mockito.thenReturn;
-import static org.mockito.Mockito.thenThrow;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.eq;
-import static org.mockito.Mockito.contains;
-import static org.mockito.Mockito.Mock;
-import static org.mockito.Mockito.BeforeEach;
-import static org.mockito.Mockito.Test;
-import static org.mockito.Mockito.ExtendWith;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -104,8 +101,7 @@ class BashToolTest {
 
         @Test
         void combinesStdoutAndStderr() throws Exception {
-            when(bashExecutor.execute(any(), any(), any()))
-                    .thenReturn(new BashExecutionResult(0, "out\n", "err\n"));
+            when(bashExecutor.execute(any(), any(), any())).thenReturn(new BashExecutionResult(0, "out\n", "err\n"));
 
             var result = bashTool.execute("call-2", Map.of("command", "cmd"), null, null);
 
@@ -116,8 +112,7 @@ class BashToolTest {
 
         @Test
         void delegatesToBashExecutorWithCorrectCwd() throws Exception {
-            when(bashExecutor.execute(any(), any(), any()))
-                    .thenReturn(new BashExecutionResult(0, "", ""));
+            when(bashExecutor.execute(any(), any(), any())).thenReturn(new BashExecutionResult(0, "", ""));
 
             bashTool.execute("call-3", Map.of("command", "test"), null, null);
 
@@ -126,8 +121,7 @@ class BashToolTest {
 
         @Test
         void passesDefaultTimeout() throws Exception {
-            when(bashExecutor.execute(any(), any(), any()))
-                    .thenReturn(new BashExecutionResult(0, "", ""));
+            when(bashExecutor.execute(any(), any(), any())).thenReturn(new BashExecutionResult(0, "", ""));
 
             bashTool.execute("call-4", Map.of("command", "test"), null, null);
 
@@ -138,8 +132,7 @@ class BashToolTest {
 
         @Test
         void passesCustomTimeout() throws Exception {
-            when(bashExecutor.execute(any(), any(), any()))
-                    .thenReturn(new BashExecutionResult(0, "", ""));
+            when(bashExecutor.execute(any(), any(), any())).thenReturn(new BashExecutionResult(0, "", ""));
 
             bashTool.execute("call-5", Map.of("command", "test", "timeout", 30), null, null);
 
@@ -151,8 +144,7 @@ class BashToolTest {
         @Test
         void passesCancellationToken() throws Exception {
             var token = new CancellationToken();
-            when(bashExecutor.execute(any(), any(), any()))
-                    .thenReturn(new BashExecutionResult(0, "", ""));
+            when(bashExecutor.execute(any(), any(), any())).thenReturn(new BashExecutionResult(0, "", ""));
 
             bashTool.execute("call-6", Map.of("command", "test"), token, null);
 
@@ -171,8 +163,7 @@ class BashToolTest {
 
         @Test
         void includesExitCodeInOutput() throws Exception {
-            when(bashExecutor.execute(any(), any(), any()))
-                    .thenReturn(new BashExecutionResult(1, "output\n", ""));
+            when(bashExecutor.execute(any(), any(), any())).thenReturn(new BashExecutionResult(1, "output\n", ""));
 
             var result = bashTool.execute("call-7", Map.of("command", "false"), null, null);
 
@@ -183,8 +174,7 @@ class BashToolTest {
 
         @Test
         void includesStderrAndExitCode() throws Exception {
-            when(bashExecutor.execute(any(), any(), any()))
-                    .thenReturn(new BashExecutionResult(2, "", "error msg\n"));
+            when(bashExecutor.execute(any(), any(), any())).thenReturn(new BashExecutionResult(2, "", "error msg\n"));
 
             var result = bashTool.execute("call-8", Map.of("command", "bad"), null, null);
 
@@ -203,8 +193,7 @@ class BashToolTest {
 
         @Test
         void timeoutShowsMessage() throws Exception {
-            when(bashExecutor.execute(any(), any(), any()))
-                    .thenReturn(new BashExecutionResult(null, "partial\n", ""));
+            when(bashExecutor.execute(any(), any(), any())).thenReturn(new BashExecutionResult(null, "partial\n", ""));
 
             var result = bashTool.execute("call-9", Map.of("command", "sleep 999"), null, null);
 
@@ -228,8 +217,7 @@ class BashToolTest {
             for (int i = 0; i < BashTool.MAX_OUTPUT_LINES + 500; i++) {
                 sb.append("line ").append(i).append('\n');
             }
-            when(bashExecutor.execute(any(), any(), any()))
-                    .thenReturn(new BashExecutionResult(0, sb.toString(), ""));
+            when(bashExecutor.execute(any(), any(), any())).thenReturn(new BashExecutionResult(0, sb.toString(), ""));
 
             var result = bashTool.execute("call-10", Map.of("command", "gen"), null, null);
 
@@ -246,8 +234,7 @@ class BashToolTest {
 
         @Test
         void smallOutputIsNotTruncated() throws Exception {
-            when(bashExecutor.execute(any(), any(), any()))
-                    .thenReturn(new BashExecutionResult(0, "small\n", ""));
+            when(bashExecutor.execute(any(), any(), any())).thenReturn(new BashExecutionResult(0, "small\n", ""));
 
             var result = bashTool.execute("call-11", Map.of("command", "echo small"), null, null);
 
@@ -278,8 +265,7 @@ class BashToolTest {
 
         @Test
         void ioExceptionReturnsError() throws Exception {
-            when(bashExecutor.execute(any(), any(), any()))
-                    .thenThrow(new IOException("process failed"));
+            when(bashExecutor.execute(any(), any(), any())).thenThrow(new IOException("process failed"));
 
             var result = bashTool.execute("call-14", Map.of("command", "bad"), null, null);
             assertTrue(extractText(result).contains("Error executing command"));

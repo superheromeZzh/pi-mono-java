@@ -1,5 +1,10 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026-2026. All rights reserved.
+ */
+
 package com.campusclaw.codingagent.skill;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -82,8 +87,7 @@ class SkillManagerTest {
 
             assertEquals("my-local-skill", name);
             assertTrue(Files.isSymbolicLink(skillsDir.resolve(name)));
-            assertEquals(source.toAbsolutePath().normalize(),
-                    Files.readSymbolicLink(skillsDir.resolve(name)));
+            assertEquals(source.toAbsolutePath().normalize(), Files.readSymbolicLink(skillsDir.resolve(name)));
         }
 
         @Test
@@ -96,7 +100,9 @@ class SkillManagerTest {
             assertEquals(1, manifest.size());
             assertEquals("link-test", manifest.get(0).name());
             assertEquals(InstalledSkillRecord.SOURCE_LINK, manifest.get(0).sourceType());
-            assertEquals(source.toAbsolutePath().normalize().toString(), manifest.get(0).localPath());
+            assertEquals(
+                    source.toAbsolutePath().normalize().toString(),
+                    manifest.get(0).localPath());
         }
 
         @Test
@@ -196,6 +202,7 @@ class SkillManagerTest {
             manager.remove("linked-to-remove");
 
             assertFalse(Files.exists(skillsDir.resolve("linked-to-remove")));
+
             // Original directory should still exist
             assertTrue(Files.exists(source));
         }
@@ -234,11 +241,9 @@ class SkillManagerTest {
         void saveAndLoadRoundTrip() throws Exception {
             Files.createDirectories(skillsDir);
             var records = List.of(
-                    new InstalledSkillRecord("skill-a", "git",
-                            "https://github.com/user/skill-a", null, "2026-01-01T00:00:00Z"),
-                    new InstalledSkillRecord("skill-b", "link",
-                            null, "/tmp/skill-b", "2026-01-02T00:00:00Z")
-            );
+                    new InstalledSkillRecord(
+                            "skill-a", "git", "https://github.com/user/skill-a", null, "2026-01-01T00:00:00Z"),
+                    new InstalledSkillRecord("skill-b", "link", null, "/tmp/skill-b", "2026-01-02T00:00:00Z"));
 
             manager.saveManifest(records);
             List<InstalledSkillRecord> loaded = manager.loadManifest();
@@ -281,14 +286,12 @@ class SkillManagerTest {
 
         @Test
         void handlesNonExistentPath() {
-            // Should not throw
-            SkillManager.deleteRecursively(tempDir.resolve("does-not-exist"));
+            assertDoesNotThrow(() -> SkillManager.deleteRecursively(tempDir.resolve("does-not-exist")));
         }
 
         @Test
         void handlesNull() {
-            // Should not throw
-            SkillManager.deleteRecursively(null);
+            assertDoesNotThrow(() -> SkillManager.deleteRecursively(null));
         }
     }
 
@@ -298,12 +301,15 @@ class SkillManagerTest {
 
     private Path createSkillDir(Path dir, String description) throws IOException {
         Files.createDirectories(dir);
-        Files.writeString(dir.resolve("SKILL.md"), """
+        Files.writeString(
+                dir.resolve("SKILL.md"),
+                """
                 ---
                 description: %s
                 ---
                 Skill content here.
-                """.formatted(description));
+                """
+                        .formatted(description));
         return dir;
     }
 }

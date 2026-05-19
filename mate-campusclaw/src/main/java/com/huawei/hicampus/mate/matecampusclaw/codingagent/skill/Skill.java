@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026-2026. All rights reserved.
+ */
+
 package com.huawei.hicampus.mate.matecampusclaw.codingagent.skill;
 
 import java.nio.file.Path;
@@ -12,21 +16,24 @@ import java.nio.file.Path;
  * @param baseDir                 directory containing the SKILL.md file
  * @param source                  origin: "user" or "project"
  * @param disableModelInvocation  if true, skill is not shown in system prompt
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 public record Skill(
-        String name,
-        String description,
-        Path filePath,
-        Path baseDir,
-        String source,
-        boolean disableModelInvocation
-) {
-    /** Maximum allowed length for skill names. */
+        String name, String description, Path filePath, Path baseDir, String source, boolean disableModelInvocation) {
+    /**
+     * Maximum allowed length for skill names.
+     */
     public static final int MAX_NAME_LENGTH = 64;
 
-    /** Maximum allowed length for skill descriptions. */
+    /**
+     * Maximum allowed length for skill descriptions.
+     */
     public static final int MAX_DESCRIPTION_LENGTH = 1024;
 
-    /** Pattern that valid skill names must match. */
+    /**
+     * Pattern that valid skill names must match.
+     */
     public static final String NAME_PATTERN = "^[a-z0-9-]+$";
 }

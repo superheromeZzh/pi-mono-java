@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026-2026. All rights reserved.
+ */
+
 package com.huawei.hicampus.mate.matecampusclaw.tui.image;
 
 import java.io.IOException;
@@ -10,6 +14,9 @@ import com.huawei.hicampus.mate.matecampusclaw.tui.Component;
 /**
  * TUI component that displays an image inline in the terminal.
  * Falls back to a text placeholder if the terminal doesn't support images.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 public class ImageComponent implements Component {
     private byte[] imageData;
@@ -25,7 +32,12 @@ public class ImageComponent implements Component {
         this.altText = altText;
     }
 
-    /** Load image from file path. */
+    /**
+     * Load image from file path.
+     *
+     * @param path image file path
+     * @return {@code true} when loading succeeded, {@code false} when the file could not be read
+     */
     public boolean loadFromFile(Path path) {
         try {
             this.imageData = Files.readAllBytes(path);
@@ -39,14 +51,24 @@ public class ImageComponent implements Component {
         }
     }
 
-    /** Set image from raw bytes. */
+    /**
+     * Set image from raw bytes.
+     *
+     * @param data raw image bytes
+     * @param alt alternate text shown when inline images are unsupported
+     */
     public void setImageData(byte[] data, String alt) {
         this.imageData = data;
         this.altText = alt;
         invalidate();
     }
 
-    /** Set maximum display dimensions in terminal cells. */
+    /**
+     * Set maximum display dimensions in terminal cells.
+     *
+     * @param widthCells max width in cells
+     * @param heightCells max height in cells
+     */
     public void setMaxDimensions(int widthCells, int heightCells) {
         this.maxWidthCells = widthCells;
         this.maxHeightCells = heightCells;
@@ -55,7 +77,9 @@ public class ImageComponent implements Component {
 
     @Override
     public List<String> render(int width) {
-        if (cachedRender != null) return cachedRender;
+        if (cachedRender != null) {
+            return cachedRender;
+        }
 
         int displayWidth = Math.min(width, maxWidthCells);
 
@@ -83,8 +107,12 @@ public class ImageComponent implements Component {
     }
 
     private static String truncate(String s, int max) {
-        if (max <= 0) return "";
-        if (s.length() <= max) return s;
+        if (max <= 0) {
+            return "";
+        }
+        if (s.length() <= max) {
+            return s;
+        }
         return s.substring(0, max - 1) + "…";
     }
 }

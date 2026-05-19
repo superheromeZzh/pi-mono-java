@@ -1,8 +1,12 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026-2026. All rights reserved.
+ */
+
 package com.huawei.hicampus.mate.matecampusclaw.agent.tool;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import java.util.ArrayList;
@@ -37,7 +41,9 @@ class AgentToolTest {
             assertEquals("Mock Tool", tool.label());
             assertEquals("A mock tool used for AgentTool unit tests.", tool.description());
             assertEquals("object", tool.parameters().get("type").asText());
-            assertEquals("string", tool.parameters().get("properties").get("query").get("type").asText());
+            assertEquals(
+                    "string",
+                    tool.parameters().get("properties").get("query").get("type").asText());
         }
 
         @Test
@@ -45,26 +51,21 @@ class AgentToolTest {
             var tool = new MockAgentTool();
             var updates = new ArrayList<AgentToolResult>();
 
-            var result = tool.execute(
-                "call-123",
-                Map.of("query", "java"),
-                new CancellationToken(),
-                updates::add
-            );
+            var result = tool.execute("call-123", Map.of("query", "java"), new CancellationToken(), updates::add);
 
             assertEquals(1, updates.size());
-            assertEquals("Working on java", ((TextContent) updates.getFirst().content().getFirst()).text());
             assertEquals(
-                Map.of("stage", "partial", "toolCallId", "call-123", "params", Map.of("query", "java")),
-                updates.getFirst().details()
-            );
+                    "Working on java",
+                    ((TextContent) updates.getFirst().content().getFirst()).text());
+            assertEquals(
+                    Map.of("stage", "partial", "toolCallId", "call-123", "params", Map.of("query", "java")),
+                    updates.getFirst().details());
 
             assertEquals(1, result.content().size());
             assertEquals("Finished java", ((TextContent) result.content().getFirst()).text());
             assertEquals(
-                Map.of("stage", "final", "toolCallId", "call-123", "params", Map.of("query", "java")),
-                result.details()
-            );
+                    Map.of("stage", "final", "toolCallId", "call-123", "params", Map.of("query", "java")),
+                    result.details());
         }
 
         @Test
@@ -73,7 +74,8 @@ class AgentToolTest {
             var token = new CancellationToken();
             token.cancel();
 
-            var result = tool.execute("call-456", Map.of("query", "java"), token, partial -> fail("No update expected"));
+            var result =
+                    tool.execute("call-456", Map.of("query", "java"), token, partial -> fail("No update expected"));
 
             assertEquals("Cancelled", ((TextContent) result.content().getFirst()).text());
             assertEquals(Map.of("cancelled", true, "toolCallId", "call-456"), result.details());
@@ -156,36 +158,32 @@ class AgentToolTest {
         @Override
         public com.fasterxml.jackson.databind.JsonNode parameters() {
             return mapper.createObjectNode()
-                .put("type", "object")
-                .<com.fasterxml.jackson.databind.node.ObjectNode>set("properties",
-                    mapper.createObjectNode()
-                        .set("query", mapper.createObjectNode().put("type", "string")))
-                .set("required", mapper.createArrayNode().add("query"));
+                    .put("type", "object")
+                    .<com.fasterxml.jackson.databind.node.ObjectNode>set(
+                            "properties",
+                            mapper.createObjectNode()
+                                    .set("query", mapper.createObjectNode().put("type", "string")))
+                    .set("required", mapper.createArrayNode().add("query"));
         }
 
         @Override
         public AgentToolResult execute(
-            String toolCallId,
-            Map<String, Object> params,
-            CancellationToken signal,
-            AgentToolUpdateCallback onUpdate
-        ) {
+                String toolCallId,
+                Map<String, Object> params,
+                CancellationToken signal,
+                AgentToolUpdateCallback onUpdate) {
             if (signal.isCancelled()) {
                 return new AgentToolResult(
-                    List.of(new TextContent("Cancelled")),
-                    Map.of("cancelled", true, "toolCallId", toolCallId)
-                );
+                        List.of(new TextContent("Cancelled")), Map.of("cancelled", true, "toolCallId", toolCallId));
             }
 
             onUpdate.onUpdate(new AgentToolResult(
-                List.of(new TextContent("Working on " + params.get("query"))),
-                Map.of("stage", "partial", "toolCallId", toolCallId, "params", params)
-            ));
+                    List.of(new TextContent("Working on " + params.get("query"))),
+                    Map.of("stage", "partial", "toolCallId", toolCallId, "params", params)));
 
             return new AgentToolResult(
-                List.of(new TextContent("Finished " + params.get("query"))),
-                Map.of("stage", "final", "toolCallId", toolCallId, "params", params)
-            );
+                    List.of(new TextContent("Finished " + params.get("query"))),
+                    Map.of("stage", "final", "toolCallId", toolCallId, "params", params));
         }
     }
 }

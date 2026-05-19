@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026-2026. All rights reserved.
+ */
+
 package com.campusclaw.codingagent.tool.ops;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -17,6 +21,8 @@ class EditOperationsTest {
 
     /**
      * Verifies that a class implementing EditOperations gets both read and write capabilities.
+     *
+     * @throws IOException if the operation fails
      */
     @Test
     void editOperationsCombinesReadAndWrite() throws IOException {

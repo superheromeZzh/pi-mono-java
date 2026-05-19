@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026-2026. All rights reserved.
+ */
+
 package com.huawei.hicampus.mate.matecampusclaw.codingagent.cli;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -19,7 +23,8 @@ import picocli.CommandLine;
 class CampusClawCommandTest {
 
     private CampusClawCommand parse(String... args) {
-        CampusClawCommand cmd = new CampusClawCommand(null, null, null, null, null, null, null, null, null, null, null);
+        CampusClawCommand cmd = new CampusClawCommand(
+                null, null, null, null, null, null, null, null, null, null, null, null, null, null);
         new CommandLine(cmd).parseArgs(args);
         return cmd;
     }
@@ -274,8 +279,7 @@ class CampusClawCommandTest {
                     "--cwd", "/tmp/work",
                     "--system-prompt", "Use Java 21",
                     "--thinking", "high",
-                    "--tools", "read,bash"
-            );
+                    "--tools", "read,bash");
 
             assertEquals("claude-sonnet-4-20250514", cmd.getModel());
             assertEquals("refactor auth", cmd.getPrompt());
@@ -336,14 +340,16 @@ class CampusClawCommandTest {
 
         @Test
         void helpExitsWithZero() {
-            CampusClawCommand cmd = new CampusClawCommand(null, null, null, null, null, null, null, null, null, null, null);
+            CampusClawCommand cmd = new CampusClawCommand(
+                    null, null, null, null, null, null, null, null, null, null, null, null, null, null);
             int exitCode = new CommandLine(cmd).execute("--help");
             assertEquals(0, exitCode);
         }
 
         @Test
         void versionExitsWithZero() {
-            CampusClawCommand cmd = new CampusClawCommand(null, null, null, null, null, null, null, null, null, null, null);
+            CampusClawCommand cmd = new CampusClawCommand(
+                    null, null, null, null, null, null, null, null, null, null, null, null, null, null);
             int exitCode = new CommandLine(cmd).execute("--version");
             assertEquals(0, exitCode);
         }

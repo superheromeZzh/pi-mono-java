@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026-2026. All rights reserved.
+ */
+
 package com.campusclaw.tui;
 
 import java.util.List;
@@ -6,6 +10,9 @@ import java.util.List;
  * Core TUI component interface. Components render themselves as an array of terminal lines
  * (strings containing ANSI escape codes). Components only care about available width;
  * vertical positioning is managed by their parent or the TUI renderer.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 public interface Component {
 
@@ -23,12 +30,13 @@ public interface Component {
      *
      * @param data the raw input data (key sequence)
      */
-    default void handleInput(String data) {
-    }
+    default void handleInput(String data) {}
 
     /**
      * Whether this component wants to receive key release events (Kitty keyboard protocol).
      * Default is false — release events are filtered out.
+     *
+     * @return {@code true} if release events should be forwarded to {@link #handleInput(String)}
      */
     default boolean wantsKeyRelease() {
         return false;

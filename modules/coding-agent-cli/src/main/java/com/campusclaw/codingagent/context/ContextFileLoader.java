@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026-2026. All rights reserved.
+ */
+
 package com.campusclaw.codingagent.context;
 
 import java.io.IOException;
@@ -22,6 +26,9 @@ import org.slf4j.LoggerFactory;
  * </ol>
  *
  * <p>In each directory, AGENTS.md is preferred over CLAUDE.md.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 public class ContextFileLoader {
 
@@ -60,9 +67,13 @@ public class ContextFileLoader {
                     seen.add(normalized);
                 }
             }
-            if (current.equals(root)) { break; }
+            if (current.equals(root)) {
+                break;
+            }
             Path parent = current.getParent();
-            if (parent == null || parent.equals(current)) { break; }
+            if (parent == null || parent.equals(current)) {
+                break;
+            }
             current = parent;
         }
 
@@ -79,9 +90,12 @@ public class ContextFileLoader {
      */
     public String loadSystemPrompt(Path cwd, Path agentDir) {
         // Project-level first
-        Path projectPath = cwd.resolve(com.campusclaw.codingagent.config.AppPaths.CONFIG_DIR_NAME).resolve("SYSTEM.md");
+        Path projectPath = cwd.resolve(com.campusclaw.codingagent.config.AppPaths.CONFIG_DIR_NAME)
+                .resolve("SYSTEM.md");
         String content = readIfExists(projectPath);
-        if (content != null) { return content; }
+        if (content != null) {
+            return content;
+        }
 
         // Global
         Path globalPath = agentDir.resolve("SYSTEM.md");
@@ -96,16 +110,21 @@ public class ContextFileLoader {
      * @return the content of APPEND_SYSTEM.md, or null if not found
      */
     public String loadAppendSystemPrompt(Path cwd, Path agentDir) {
-        Path projectPath = cwd.resolve(com.campusclaw.codingagent.config.AppPaths.CONFIG_DIR_NAME).resolve("APPEND_SYSTEM.md");
+        Path projectPath = cwd.resolve(com.campusclaw.codingagent.config.AppPaths.CONFIG_DIR_NAME)
+                .resolve("APPEND_SYSTEM.md");
         String content = readIfExists(projectPath);
-        if (content != null) { return content; }
+        if (content != null) {
+            return content;
+        }
 
         Path globalPath = agentDir.resolve("APPEND_SYSTEM.md");
         return readIfExists(globalPath);
     }
 
     private ContextFile loadFromDir(Path dir) {
-        if (dir == null || !Files.isDirectory(dir)) { return null; }
+        if (dir == null || !Files.isDirectory(dir)) {
+            return null;
+        }
         for (String candidate : CANDIDATES) {
             Path filePath = dir.resolve(candidate);
             if (Files.isRegularFile(filePath)) {

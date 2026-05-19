@@ -1,11 +1,15 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026-2026. All rights reserved.
+ */
+
 package com.huawei.hicampus.mate.matecampusclaw.codingagent.tool.read;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
@@ -119,8 +123,9 @@ class ReadToolTest {
             var result = readTool.execute("c3", Map.of("path", "empty.txt"), null, null);
 
             String text = extractText(result);
-            // Empty file still has one "line"
-            assertNotNull(text);
+
+            // Empty file still gets formatted as a single empty numbered line
+            assertEquals("     1\t", text);
         }
 
         @Test
@@ -145,8 +150,7 @@ class ReadToolTest {
         void offsetSkipsLines() throws Exception {
             stubFile("offset.txt", "line1\nline2\nline3\nline4\nline5\n");
 
-            var result = readTool.execute("c5",
-                    Map.of("path", "offset.txt", "offset", 3), null, null);
+            var result = readTool.execute("c5", Map.of("path", "offset.txt", "offset", 3), null, null);
 
             String text = extractText(result);
             assertFalse(text.contains("1\tline1"));
@@ -160,8 +164,7 @@ class ReadToolTest {
         void limitRestrictsLines() throws Exception {
             stubFile("limit.txt", "line1\nline2\nline3\nline4\nline5\n");
 
-            var result = readTool.execute("c6",
-                    Map.of("path", "limit.txt", "limit", 2), null, null);
+            var result = readTool.execute("c6", Map.of("path", "limit.txt", "limit", 2), null, null);
 
             String text = extractText(result);
             assertTrue(text.contains("1\tline1"));
@@ -173,8 +176,7 @@ class ReadToolTest {
         void offsetAndLimitCombined() throws Exception {
             stubFile("combo.txt", "line1\nline2\nline3\nline4\nline5\n");
 
-            var result = readTool.execute("c7",
-                    Map.of("path", "combo.txt", "offset", 2, "limit", 2), null, null);
+            var result = readTool.execute("c7", Map.of("path", "combo.txt", "offset", 2, "limit", 2), null, null);
 
             String text = extractText(result);
             assertFalse(text.contains("1\tline1"));
@@ -187,8 +189,7 @@ class ReadToolTest {
         void offsetBeyondFileReturnsEmpty() throws Exception {
             stubFile("short.txt", "line1\nline2\n");
 
-            var result = readTool.execute("c8",
-                    Map.of("path", "short.txt", "offset", 100), null, null);
+            var result = readTool.execute("c8", Map.of("path", "short.txt", "offset", 100), null, null);
 
             assertEquals("", extractText(result));
         }
@@ -197,8 +198,7 @@ class ReadToolTest {
         void offsetAtZeroTreatedAsOne() throws Exception {
             stubFile("zero.txt", "line1\nline2\n");
 
-            var result = readTool.execute("c9",
-                    Map.of("path", "zero.txt", "offset", 0), null, null);
+            var result = readTool.execute("c9", Map.of("path", "zero.txt", "offset", 0), null, null);
 
             String text = extractText(result);
             assertTrue(text.contains("1\tline1"));

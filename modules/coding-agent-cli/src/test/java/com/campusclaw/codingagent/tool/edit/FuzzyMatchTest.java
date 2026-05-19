@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026-2026. All rights reserved.
+ */
+
 package com.campusclaw.codingagent.tool.edit;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -49,8 +53,12 @@ class FuzzyMatchTest {
 
         @Test
         void matchesWithDifferentIndentation() {
-            var result = FuzzyMatch.fuzzyFindText("    indented\n    line", "indented\nline");
-            assertNotNull(result);
+            String haystack = "    indented\n    line";
+            var result = FuzzyMatch.fuzzyFindText(haystack, "indented\nline");
+
+            // Whitespace-normalized fuzzy match returns the haystack range that maps to the needle,
+            // including the differently-indented prefix that was normalized away.
+            assertEquals(haystack, haystack.substring(result.start(), result.end()));
         }
 
         @Test
@@ -58,6 +66,7 @@ class FuzzyMatchTest {
             String haystack = "  line1  \n  line2  \nline3";
             var result = FuzzyMatch.fuzzyFindText(haystack, "line1\nline2");
             assertNotNull(result);
+
             // Should match the first two lines
             assertEquals("  line1  \n  line2  ", haystack.substring(result.start(), result.end()));
         }

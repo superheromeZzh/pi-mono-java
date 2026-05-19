@@ -1,9 +1,16 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026-2026. All rights reserved.
+ */
+
 package com.huawei.hicampus.mate.matecampusclaw.codingagent.command.builtin;
 
 import com.huawei.hicampus.mate.matecampusclaw.ai.CampusClawAiService;
+import com.huawei.hicampus.mate.matecampusclaw.ai.model.ModelRegistry;
+import com.huawei.hicampus.mate.matecampusclaw.codingagent.auth.AuthStore;
 import com.huawei.hicampus.mate.matecampusclaw.codingagent.command.SlashCommandRegistry;
 import com.huawei.hicampus.mate.matecampusclaw.codingagent.compaction.Compactor;
 import com.huawei.hicampus.mate.matecampusclaw.codingagent.loop.LoopManager;
+import com.huawei.hicampus.mate.matecampusclaw.codingagent.resolver.AgentModelResolver;
 import com.huawei.hicampus.mate.matecampusclaw.codingagent.settings.SettingsManager;
 
 import org.slf4j.Logger;
@@ -13,6 +20,14 @@ import org.springframework.stereotype.Component;
 
 import jakarta.annotation.PostConstruct;
 
+/**
+ * Spring-managed registrar that populates {@link SlashCommandRegistry} with the built-in
+ * command set on startup. Registers help, model, compaction, session, auth, providers, loop,
+ * cron and the remaining shell commands; eagerly initialized via {@code @Lazy(false)}.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/13]
+ * @since [br_eCampusCore 25.1.0_Next]
+ */
 @Component
 @Lazy(false)
 public class BuiltinCommandRegistrar {
@@ -23,20 +38,34 @@ public class BuiltinCommandRegistrar {
     private final CampusClawAiService piAiService;
     private final SettingsManager settingsManager;
     private final LoopManager loopManager;
+    private final AuthStore authStore;
+    private final AgentModelResolver agentModelResolver;
+    private final ModelRegistry modelRegistry;
 
-    public BuiltinCommandRegistrar(SlashCommandRegistry registry, CampusClawAiService piAiService,
-                                   SettingsManager settingsManager, LoopManager loopManager) {
+    public BuiltinCommandRegistrar(
+            SlashCommandRegistry registry,
+            CampusClawAiService piAiService,
+            SettingsManager settingsManager,
+            LoopManager loopManager,
+            AuthStore authStore,
+            AgentModelResolver agentModelResolver,
+            ModelRegistry modelRegistry) {
         this.registry = registry;
         this.piAiService = piAiService;
         this.settingsManager = settingsManager;
         this.loopManager = loopManager;
+        this.authStore = authStore;
+        this.agentModelResolver = agentModelResolver;
+        this.modelRegistry = modelRegistry;
     }
 
     @PostConstruct
     void registerBuiltins() {
         registry.register(new HelpCommand(registry));
-        registry.register(new ModelCommand());
-        registry.register(new CompactCommand(new Compactor(piAiService)));
+        registry.register(new ModelCommand("model"));
+        registry.register(new ModelCommand("models"));
+        registry.register(new CompactCommand(new Compactor(
+                piAiService, com.huawei.hicampus.mate.matecampusclaw.codingagent.compaction.CompactionConfig.defaults(), agentModelResolver)));
         registry.register(new NewCommand());
         registry.register(new QuitCommand());
         registry.register(new SettingsCommand(settingsManager));
@@ -54,8 +83,10 @@ public class BuiltinCommandRegistrar {
         registry.register(new ShareCommand());
         registry.register(new TreeCommand());
         registry.register(new ScopedModelsCommand());
-        registry.register(new LoginCommand());
-        registry.register(new LogoutCommand());
+        registry.register(new LoginCommand(authStore));
+        registry.register(new LogoutCommand(authStore));
+        registry.register(new AuthCommand(authStore));
+        registry.register(new ProvidersCommand(modelRegistry, settingsManager, authStore));
         registry.register(new LoopCommand(loopManager));
         registry.register(new CronCommand());
     }

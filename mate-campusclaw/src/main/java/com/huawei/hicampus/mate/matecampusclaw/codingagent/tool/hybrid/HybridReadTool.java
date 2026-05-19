@@ -1,4 +1,11 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026-2026. All rights reserved.
+ */
+
 package com.huawei.hicampus.mate.matecampusclaw.codingagent.tool.hybrid;
+
+import java.util.Locale;
+import java.util.Map;
 
 import com.huawei.hicampus.mate.matecampusclaw.agent.tool.AgentTool;
 import com.huawei.hicampus.mate.matecampusclaw.agent.tool.AgentToolResult;
@@ -10,15 +17,16 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
-import java.util.List;
-import java.util.Map;
-
 /**
  * 混合模式 Read 工具 - 统一入口，智能路由
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 @Component
 @ConditionalOnProperty(name = "tool.execution.hybrid-enabled", havingValue = "true", matchIfMissing = false)
@@ -44,42 +52,48 @@ public class HybridReadTool implements AgentTool {
 
     @Override
     public String description() {
-        return "Read file contents. Automatically chooses local or sandbox execution based on security policy. " +
-               "Use _executionMode parameter to force specific mode (local/sandbox/auto).";
+        return "Read file contents. Automatically chooses local or sandbox execution based on security policy. "
+                + "Use _executionMode parameter to force specific mode (local/sandbox/auto).";
     }
 
     @Override
     public JsonNode parameters() {
         ObjectNode props = mapper.createObjectNode();
-        props.set("path", mapper.createObjectNode()
-            .put("type", "string")
-            .put("description", "File path to read (relative or absolute)"));
-        props.set("offset", mapper.createObjectNode()
-            .put("type", "integer")
-            .put("description", "Starting line number (1-indexed, optional)"));
-        props.set("limit", mapper.createObjectNode()
-            .put("type", "integer")
-            .put("description", "Maximum number of lines to read (optional)"));
+        props.set(
+                "path",
+                mapper.createObjectNode()
+                        .put("type", "string")
+                        .put("description", "File path to read (relative or absolute)"));
+        props.set(
+                "offset",
+                mapper.createObjectNode()
+                        .put("type", "integer")
+                        .put("description", "Starting line number (1-indexed, optional)"));
+        props.set(
+                "limit",
+                mapper.createObjectNode()
+                        .put("type", "integer")
+                        .put("description", "Maximum number of lines to read (optional)"));
         ArrayNode enumValues = mapper.createArrayNode();
         enumValues.add("local");
         enumValues.add("sandbox");
         enumValues.add("auto");
-        ObjectNode execModeNode = mapper.createObjectNode()
-            .put("type", "string");
+        ObjectNode execModeNode = mapper.createObjectNode().put("type", "string");
         execModeNode.set("enum", enumValues);
-        execModeNode.put("description", "Override execution mode: local (fast), sandbox (safe), auto (smart). Default: auto");
+        execModeNode.put(
+                "description", "Override execution mode: local (fast), sandbox (safe), auto (smart). Default: auto");
         props.set("_executionMode", execModeNode);
 
         return mapper.createObjectNode()
-            .put("type", "object")
-            .<ObjectNode>set("properties", props)
-            .set("required", mapper.createArrayNode().add("path"));
+                .put("type", "object")
+                .<ObjectNode>set("properties", props)
+                .set("required", mapper.createArrayNode().add("path"));
     }
 
     @Override
-    public AgentToolResult execute(String toolCallId, Map<String, Object> params,
-                                    CancellationToken signal,
-                                    AgentToolUpdateCallback onUpdate) throws Exception {
+    public AgentToolResult execute(
+            String toolCallId, Map<String, Object> params, CancellationToken signal, AgentToolUpdateCallback onUpdate)
+            throws Exception {
         ExecutionMode explicitMode = extractMode(params);
         return router.route(name(), params, explicitMode, signal, onUpdate);
     }
@@ -88,7 +102,7 @@ public class HybridReadTool implements AgentTool {
         Object mode = params.get("_executionMode");
         if (mode != null) {
             try {
-                return ExecutionMode.valueOf(mode.toString().toUpperCase());
+                return ExecutionMode.valueOf(mode.toString().toUpperCase(Locale.ROOT));
             } catch (IllegalArgumentException e) {
                 // 忽略无效值，使用默认
             }

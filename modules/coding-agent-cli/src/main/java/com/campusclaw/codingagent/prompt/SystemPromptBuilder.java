@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026-2026. All rights reserved.
+ */
+
 package com.campusclaw.codingagent.prompt;
 
 import java.time.LocalDate;
@@ -16,11 +20,15 @@ import org.springframework.stereotype.Service;
  *
  * <p>Generates conditional guidelines based on available tools,
  * matching the campusclaw TS system prompt builder.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 @Service
 public class SystemPromptBuilder {
 
-    static final String BASE_PROMPT = """
+    static final String BASE_PROMPT =
+            """
             你是 "CampusClaw"，一个智能园区管理助手。你帮助用户管理园区的人、物和事， \
             提供园区设施管理、人员管理、事务处理等智能化服务。
 
@@ -52,7 +60,8 @@ public class SystemPromptBuilder {
         var sb = new StringBuilder();
 
         // 1. Base role definition (or SYSTEM.md override)
-        if (config.systemPromptOverride() != null && !config.systemPromptOverride().isBlank()) {
+        if (config.systemPromptOverride() != null
+                && !config.systemPromptOverride().isBlank()) {
             sb.append(config.systemPromptOverride());
         } else {
             sb.append(BASE_PROMPT);
@@ -68,7 +77,11 @@ public class SystemPromptBuilder {
         if (!config.tools().isEmpty()) {
             sb.append("\n\n可用工具:\n");
             for (AgentTool tool : config.tools()) {
-                sb.append("- ").append(tool.name()).append(": ").append(tool.description()).append('\n');
+                sb.append("- ")
+                        .append(tool.name())
+                        .append(": ")
+                        .append(tool.description())
+                        .append('\n');
             }
         }
 
@@ -115,6 +128,9 @@ public class SystemPromptBuilder {
     /**
      * Generates conditional guidelines based on which tools are available.
      * Matches campusclaw TS conditional guideline generation.
+     *
+     * @param config the config
+     * @return the result
      */
     String buildConditionalGuidelines(SystemPromptConfig config) {
         Set<String> toolNames = new LinkedHashSet<>();
@@ -164,8 +180,7 @@ public class SystemPromptBuilder {
             sb.append("- Git 分支: ").append(gitBranch).append('\n');
         }
 
-        String javaVersion = config.env().getOrDefault("JAVA_VERSION",
-                System.getProperty("java.version", "unknown"));
+        String javaVersion = config.env().getOrDefault("JAVA_VERSION", System.getProperty("java.version", "unknown"));
         sb.append("- Java 版本: ").append(javaVersion).append('\n');
 
         String shell = System.getenv("SHELL");

@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026-2026. All rights reserved.
+ */
+
 package com.huawei.hicampus.mate.matecampusclaw.agent.tool;
 
 import java.util.List;
@@ -9,6 +13,9 @@ import com.huawei.hicampus.mate.matecampusclaw.ai.types.Message;
 
 /**
  * Mutable agent context shared across loop execution and tool hooks.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 public class AgentContext {
 
@@ -33,11 +40,7 @@ public class AgentContext {
     }
 
     public AgentContext(
-        String systemPrompt,
-        List<AgentTool> tools,
-        List<Message> messages,
-        AssistantMessage assistantMessage
-    ) {
+            String systemPrompt, List<AgentTool> tools, List<Message> messages, AssistantMessage assistantMessage) {
         this.state = new AgentState();
         this.state.setSystemPrompt(systemPrompt);
         this.state.setTools(tools);

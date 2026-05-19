@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026-2026. All rights reserved.
+ */
+
 package com.huawei.hicampus.mate.matecampusclaw.ai;
 
 import java.util.List;
@@ -8,31 +12,11 @@ import com.huawei.hicampus.mate.matecampusclaw.ai.provider.ApiProvider;
 import com.huawei.hicampus.mate.matecampusclaw.ai.provider.ApiProviderRegistry;
 import com.huawei.hicampus.mate.matecampusclaw.ai.stream.AssistantMessageEvent;
 import com.huawei.hicampus.mate.matecampusclaw.ai.stream.AssistantMessageEventStream;
-import com.huawei.hicampus.mate.matecampusclaw.ai.types.Api;
 import com.huawei.hicampus.mate.matecampusclaw.ai.types.AssistantMessage;
-import com.huawei.hicampus.mate.matecampusclaw.ai.types.CacheRetention;
-import com.huawei.hicampus.mate.matecampusclaw.ai.types.ContentBlock;
 import com.huawei.hicampus.mate.matecampusclaw.ai.types.Context;
-import com.huawei.hicampus.mate.matecampusclaw.ai.types.Cost;
-import com.huawei.hicampus.mate.matecampusclaw.ai.types.ImageContent;
-import com.huawei.hicampus.mate.matecampusclaw.ai.types.InputModality;
-import com.huawei.hicampus.mate.matecampusclaw.ai.types.Message;
 import com.huawei.hicampus.mate.matecampusclaw.ai.types.Model;
-import com.huawei.hicampus.mate.matecampusclaw.ai.types.ModelCost;
-import com.huawei.hicampus.mate.matecampusclaw.ai.types.Provider;
 import com.huawei.hicampus.mate.matecampusclaw.ai.types.SimpleStreamOptions;
-import com.huawei.hicampus.mate.matecampusclaw.ai.types.SimpleStreamOptionsFactory;
-import com.huawei.hicampus.mate.matecampusclaw.ai.types.StopReason;
 import com.huawei.hicampus.mate.matecampusclaw.ai.types.StreamOptions;
-import com.huawei.hicampus.mate.matecampusclaw.ai.types.TextContent;
-import com.huawei.hicampus.mate.matecampusclaw.ai.types.ThinkingBudgets;
-import com.huawei.hicampus.mate.matecampusclaw.ai.types.ThinkingContent;
-import com.huawei.hicampus.mate.matecampusclaw.ai.types.ThinkingLevel;
-import com.huawei.hicampus.mate.matecampusclaw.ai.types.Tool;
-import com.huawei.hicampus.mate.matecampusclaw.ai.types.ToolCall;
-import com.huawei.hicampus.mate.matecampusclaw.ai.types.ToolResultMessage;
-import com.huawei.hicampus.mate.matecampusclaw.ai.types.Transport;
-import com.huawei.hicampus.mate.matecampusclaw.ai.types.Usage;
 import com.huawei.hicampus.mate.matecampusclaw.ai.types.UserMessage;
 
 import org.springframework.stereotype.Service;
@@ -50,6 +34,9 @@ import reactor.core.publisher.Mono;
  *
  * <p>Corresponds to the top-level {@code stream()} / {@code complete()} functions
  * in the TypeScript campusclaw-ai module (section 1.10 of the architecture doc).
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 @Service
 public class CampusClawAiService {
@@ -86,7 +73,8 @@ public class CampusClawAiService {
      * @return an event stream of assistant message events
      * @throws IllegalArgumentException if no provider is registered for the model's API
      */
-    public AssistantMessageEventStream streamSimple(Model model, Context context, @Nullable SimpleStreamOptions options) {
+    public AssistantMessageEventStream streamSimple(
+            Model model, Context context, @Nullable SimpleStreamOptions options) {
         var provider = resolveProvider(model);
         return provider.streamSimple(model, context, options);
     }
@@ -128,16 +116,14 @@ public class CampusClawAiService {
      */
     public Mono<AssistantMessage> complete(Model model, String userMessage) {
         Objects.requireNonNull(userMessage, "userMessage must not be null");
-        var context = new Context(
-            null,
-            List.of(new UserMessage(userMessage, System.currentTimeMillis())),
-            null
-        );
+        var context = new Context(null, List.of(new UserMessage(userMessage, System.currentTimeMillis())), null);
         return complete(model, context, null);
     }
 
     /**
      * Returns the provider registry used by this service.
+     *
+     * @return the active {@link ApiProviderRegistry}
      */
     public ApiProviderRegistry getProviderRegistry() {
         return providerRegistry;
@@ -145,6 +131,8 @@ public class CampusClawAiService {
 
     /**
      * Returns the model registry used by this service.
+     *
+     * @return the active {@link ModelRegistry}
      */
     public ModelRegistry getModelRegistry() {
         return modelRegistry;
@@ -152,8 +140,9 @@ public class CampusClawAiService {
 
     private ApiProvider resolveProvider(Model model) {
         Objects.requireNonNull(model, "model must not be null");
-        return providerRegistry.getProvider(model.api())
-            .orElseThrow(() -> new IllegalArgumentException(
-                "No ApiProvider registered for API: " + model.api().value()));
+        return providerRegistry
+                .getProvider(model.api())
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "No ApiProvider registered for API: " + model.api().value()));
     }
 }

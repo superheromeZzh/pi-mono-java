@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026-2026. All rights reserved.
+ */
+
 package com.campusclaw.codingagent.command.builtin;
 
 import java.nio.file.Files;
@@ -9,14 +13,21 @@ import com.campusclaw.codingagent.command.SlashCommandContext;
 
 /**
  * Import and resume a session from a JSONL file.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 public class ImportCommand implements SlashCommand {
 
     @Override
-    public String name() { return "import"; }
+    public String name() {
+        return "import";
+    }
 
     @Override
-    public String description() { return "Import and resume a session from a JSONL file"; }
+    public String description() {
+        return "Import and resume a session from a JSONL file";
+    }
 
     @Override
     public void execute(SlashCommandContext context, String arguments) {
@@ -49,7 +60,6 @@ public class ImportCommand implements SlashCommand {
             context.session().getAgent().getState().appendMessage(msg);
         }
 
-        context.output().println("Imported session " + sm.getSessionId()
-                + " with " + messages.size() + " messages.");
+        context.output().println("Imported session " + sm.getSessionId() + " with " + messages.size() + " messages.");
     }
 }

@@ -1,17 +1,26 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026-2026. All rights reserved.
+ */
+
 package com.huawei.hicampus.mate.matecampusclaw.codingagent.config;
 
+import java.util.List;
+import java.util.Locale;
+import java.util.Set;
+
 import com.huawei.hicampus.mate.matecampusclaw.codingagent.tool.execution.ExecutionMode;
+
+import org.springframework.boot.context.properties.ConfigurationProperties;
+
 import jakarta.annotation.PostConstruct;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.stereotype.Component;
-
-import java.util.List;
-import java.util.Set;
 
 /**
  * 工具执行配置属性
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 @Slf4j
 @Data
@@ -24,12 +33,14 @@ public class ToolExecutionProperties {
         String modeOverride = System.getProperty("TOOL_EXECUTION_DEFAULT_MODE");
         if (modeOverride != null && !modeOverride.isEmpty()) {
             try {
-                ExecutionMode mode = ExecutionMode.valueOf(modeOverride.toUpperCase());
+                ExecutionMode mode = ExecutionMode.valueOf(modeOverride.toUpperCase(Locale.ROOT));
                 this.defaultMode = mode;
                 log.info("Tool execution mode overridden by system property: {}", mode);
             } catch (IllegalArgumentException e) {
-                log.warn("Invalid execution mode in system property '{}', using default: {}",
-                        modeOverride, this.defaultMode);
+                log.warn(
+                        "Invalid execution mode in system property '{}', using default: {}",
+                        modeOverride,
+                        this.defaultMode);
             }
         }
     }
@@ -79,38 +90,45 @@ public class ToolExecutionProperties {
      * 强制使用沙箱的命令模式（正则）
      */
     private List<String> sandboxRequiredPatterns = List.of(
-        "rm\\s+-rf\\s+/",
-        "mkfs\\.",
-        "dd\\s+if=/dev/zero",
-        ":\\(\\)\\{\\s*:|:&\\s*\\};:",
-        "curl\\s+.*\\|.*sh",
-        "wget\\s+.*\\|.*sh",
-        "eval\\s+.*\\$"
-    );
+            "rm\\s+-rf\\s+/",
+            "mkfs\\.",
+            "dd\\s+if=/dev/zero",
+            ":\\(\\)\\{\\s*:|:&\\s*\\};:",
+            "curl\\s+.*\\|.*sh",
+            "wget\\s+.*\\|.*sh",
+            "eval\\s+.*\\$");
 
     /**
      * 强制使用沙箱的文件路径模式
      */
-    private List<String> protectedPathPatterns = List.of(
-        "/etc/.*",
-        "/usr/.*",
-        "/bin/.*",
-        "/sbin/.*",
-        "\\.\\./.*",
-        "/root/.*",
-        "/sys/.*",
-        "/proc/.*"
-    );
+    private List<String> protectedPathPatterns =
+            List.of("/etc/.*", "/usr/.*", "/bin/.*", "/sbin/.*", "\\.\\./.*", "/root/.*", "/sys/.*", "/proc/.*");
 
     /**
      * 本地执行的命令白名单（当 mode=AUTO 时）
      */
     private Set<String> localSafeCommands = Set.of(
-        "cat", "head", "tail", "grep", "awk", "sed",
-        "ls", "pwd", "echo", "wc", "sort", "uniq",
-        "find", "which", "whoami", "id",
-        "git", "git-status", "git-log", "git-diff", "git-show"
-    );
+            "cat",
+            "head",
+            "tail",
+            "grep",
+            "awk",
+            "sed",
+            "ls",
+            "pwd",
+            "echo",
+            "wc",
+            "sort",
+            "uniq",
+            "find",
+            "which",
+            "whoami",
+            "id",
+            "git",
+            "git-status",
+            "git-log",
+            "git-diff",
+            "git-show");
 
     /**
      * 文件操作大小阈值（超过则使用本地执行更高效）

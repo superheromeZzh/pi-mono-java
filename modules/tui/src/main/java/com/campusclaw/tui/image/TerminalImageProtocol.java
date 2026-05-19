@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026-2026. All rights reserved.
+ */
+
 package com.campusclaw.tui.image;
 
 import java.util.Base64;
@@ -5,32 +9,54 @@ import java.util.Base64;
 /**
  * Terminal image display protocols (Kitty Graphics Protocol, iTerm2 inline images).
  * Generates escape sequences to display images inline in supported terminals.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 public final class TerminalImageProtocol {
     private TerminalImageProtocol() {}
 
-    public enum Protocol { KITTY, ITERM2, SIXEL, NONE }
+    @SuppressWarnings("checkstyle:top_class_comment")
+    public enum Protocol {
+        KITTY,
+        ITERM2,
+        SIXEL,
+        NONE
+    }
 
-    /** Detect the best available image protocol for the current terminal. */
+    /**
+     * Detect the best available image protocol for the current terminal.
+     *
+     * @return the inferred {@link Protocol} based on env vars and terminal hints
+     */
     public static Protocol detect() {
         String term = System.getenv("TERM");
         String termProgram = System.getenv("TERM_PROGRAM");
         String kittyId = System.getenv("KITTY_WINDOW_ID");
 
-        if (kittyId != null) { return Protocol.KITTY; }
-        if ("iTerm.app".equals(termProgram) || "iTerm2".equals(termProgram)) { return Protocol.ITERM2; }
-        if ("WezTerm".equals(termProgram)) { return Protocol.ITERM2; } // WezTerm supports iTerm2 protocol
-        if (term != null && term.contains("sixel")) { return Protocol.SIXEL; }
+        if (kittyId != null) {
+            return Protocol.KITTY;
+        }
+        if ("iTerm.app".equals(termProgram) || "iTerm2".equals(termProgram)) {
+            return Protocol.ITERM2;
+        }
+        if ("WezTerm".equals(termProgram)) {
+            return Protocol.ITERM2;
+        } // WezTerm supports iTerm2 protocol
+        if (term != null && term.contains("sixel")) {
+            return Protocol.SIXEL;
+        }
         return Protocol.NONE;
     }
 
     /**
      * Generate Kitty Graphics Protocol escape sequence.
-     * Format: ESC_G <key=value,...> ; <base64-data> ESC \
+     * Format: ESC_G {@code <key=value,...>} ; {@code <base64-data>} ESC \
      *
      * @param imageBytes PNG image data
      * @param width      display width in cells (0 = auto)
      * @param height     display height in cells (0 = auto)
+     * @return the Kitty graphics escape sequence
      */
     public static String kittyImage(byte[] imageBytes, int width, int height) {
         String b64 = Base64.getEncoder().encodeToString(imageBytes);
@@ -49,8 +75,12 @@ public final class TerminalImageProtocol {
             sb.append("\033_G");
             if (first) {
                 sb.append("a=T,f=100"); // action=transmit, format=PNG
-                if (width > 0) { sb.append(",c=").append(width); }
-                if (height > 0) { sb.append(",r=").append(height); }
+                if (width > 0) {
+                    sb.append(",c=").append(width);
+                }
+                if (height > 0) {
+                    sb.append(",r=").append(height);
+                }
                 first = false;
             }
             sb.append(more ? ",m=1" : ",m=0");
@@ -70,14 +100,19 @@ public final class TerminalImageProtocol {
      * @param width       display width (e.g. "auto", "50px", "10")
      * @param height      display height (e.g. "auto", "50px", "5")
      * @param preserveAR  preserve aspect ratio
+     * @return the iTerm2 inline-image escape sequence
      */
     public static String iterm2Image(byte[] imageBytes, String width, String height, boolean preserveAR) {
         String b64 = Base64.getEncoder().encodeToString(imageBytes);
         StringBuilder sb = new StringBuilder();
         sb.append("\033]1337;File=inline=1");
         sb.append(";size=").append(imageBytes.length);
-        if (width != null) { sb.append(";width=").append(width); }
-        if (height != null) { sb.append(";height=").append(height); }
+        if (width != null) {
+            sb.append(";width=").append(width);
+        }
+        if (height != null) {
+            sb.append(";height=").append(height);
+        }
         sb.append(";preserveAspectRatio=").append(preserveAR ? "1" : "0");
         sb.append(":").append(b64);
         sb.append("\007"); // BEL terminator
@@ -96,15 +131,21 @@ public final class TerminalImageProtocol {
         Protocol protocol = detect();
         return switch (protocol) {
             case KITTY -> kittyImage(imageBytes, widthCells, heightCells);
-            case ITERM2 -> iterm2Image(imageBytes,
-                widthCells > 0 ? String.valueOf(widthCells) : "auto",
-                heightCells > 0 ? String.valueOf(heightCells) : "auto",
-                true);
+            case ITERM2 ->
+                iterm2Image(
+                        imageBytes,
+                        widthCells > 0 ? String.valueOf(widthCells) : "auto",
+                        heightCells > 0 ? String.valueOf(heightCells) : "auto",
+                        true);
             case SIXEL, NONE -> null;
         };
     }
 
-    /** Check if the current terminal supports inline images. */
+    /**
+     * Check if the current terminal supports inline images.
+     *
+     * @return {@code true} when at least one supported protocol is available
+     */
     public static boolean isSupported() {
         return detect() != Protocol.NONE;
     }

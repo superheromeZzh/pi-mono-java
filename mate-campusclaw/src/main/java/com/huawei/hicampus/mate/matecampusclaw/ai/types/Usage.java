@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026-2026. All rights reserved.
+ */
+
 package com.huawei.hicampus.mate.matecampusclaw.ai.types;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -11,17 +15,23 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  * @param cacheWrite  number of prompt-cache write tokens
  * @param totalTokens total number of tokens consumed
  * @param cost        monetary cost breakdown in USD
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 public record Usage(
-    @JsonProperty("input") int input,
-    @JsonProperty("output") int output,
-    @JsonProperty("cacheRead") int cacheRead,
-    @JsonProperty("cacheWrite") int cacheWrite,
-    @JsonProperty("totalTokens") int totalTokens,
-    @JsonProperty("cost") Cost cost
-) {
+        @JsonProperty("input") int input,
+        @JsonProperty("output") int output,
+        @JsonProperty("cacheRead") int cacheRead,
+        @JsonProperty("cacheWrite") int cacheWrite,
+        @JsonProperty("totalTokens") int totalTokens,
+        @JsonProperty("cost") Cost cost) {
 
-    /** Returns a zero-valued Usage instance with an empty Cost. */
+    /**
+     * Returns a zero-valued {@link Usage} instance with an empty {@link Cost}.
+     *
+     * @return a {@link Usage} with all token counts set to {@code 0} and an empty {@link Cost}
+     */
     public static Usage empty() {
         return new Usage(0, 0, 0, 0, 0, Cost.empty());
     }

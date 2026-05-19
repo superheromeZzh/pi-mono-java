@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026-2026. All rights reserved.
+ */
+
 package com.huawei.hicampus.mate.matecampusclaw.codingagent.command.builtin;
 
 import com.huawei.hicampus.mate.matecampusclaw.codingagent.command.SlashCommand;
@@ -7,14 +11,21 @@ import com.huawei.hicampus.mate.matecampusclaw.codingagent.util.Changelog;
 
 /**
  * Show changelog entries.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 public class ChangelogCommand implements SlashCommand {
 
     @Override
-    public String name() { return "changelog"; }
+    public String name() {
+        return "changelog";
+    }
 
     @Override
-    public String description() { return "Show changelog entries"; }
+    public String description() {
+        return "Show changelog entries";
+    }
 
     @Override
     public void execute(SlashCommandContext context, String arguments) {

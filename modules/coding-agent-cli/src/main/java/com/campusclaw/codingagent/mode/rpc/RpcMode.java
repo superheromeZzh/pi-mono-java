@@ -1,7 +1,12 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026-2026. All rights reserved.
+ */
+
 package com.campusclaw.codingagent.mode.rpc;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
 import com.campusclaw.agent.event.AgentEndEvent;
@@ -19,6 +24,9 @@ import org.slf4j.LoggerFactory;
 /**
  * RPC mode: reads JSONL commands from stdin, writes JSONL events to stdout.
  * Designed for headless operation and external process integration.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 public class RpcMode {
     private static final Logger log = LoggerFactory.getLogger(RpcMode.class);
@@ -52,11 +60,13 @@ public class RpcMode {
         });
 
         // Read commands from stdin
-        try (var reader = new BufferedReader(new InputStreamReader(System.in))) {
+        try (var reader = new BufferedReader(new InputStreamReader(System.in, StandardCharsets.UTF_8))) {
             String line;
             while ((line = reader.readLine()) != null) {
                 line = line.trim();
-                if (line.isEmpty()) { continue; }
+                if (line.isEmpty()) {
+                    continue;
+                }
                 try {
                     var cmd = MAPPER.readValue(line, RpcCommand.class);
                     handleCommand(cmd);
@@ -89,10 +99,12 @@ public class RpcMode {
                     emit(RpcEvent.response(cmd.id(), "ack", null));
                 }
                 case "get_state" -> {
-                    emit(RpcEvent.response(cmd.id(), "state", Map.of(
-                        "model", session.getModelId(),
-                        "isStreaming", session.isStreaming()
-                    )));
+                    emit(RpcEvent.response(
+                            cmd.id(),
+                            "state",
+                            Map.of(
+                                    "model", session.getModelId(),
+                                    "isStreaming", session.isStreaming())));
                 }
                 case "set_model" -> {
                     if (cmd.model() != null) {
@@ -111,6 +123,12 @@ public class RpcMode {
         }
     }
 
+    /*
+     * RPC mode's contract is "newline-delimited JSON events on stdout". External
+     * processes parse this stream line-by-line, so events must go through System.out,
+     * never a logger.
+     */
+    @SuppressWarnings("checkstyle:no_system_out_err")
     private void emit(RpcEvent event) {
         try {
             System.out.println(MAPPER.writeValueAsString(event));

@@ -1,8 +1,12 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026-2026. All rights reserved.
+ */
+
 package com.huawei.hicampus.mate.matecampusclaw.codingagent.tool.grep;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
@@ -38,6 +42,7 @@ class GrepToolTest {
     @BeforeEach
     void setUp() {
         grepTool = new GrepTool(bashExecutor, tempDir);
+
         // Force Java fallback for deterministic tests
         grepTool.setRgAvailable(false);
     }
@@ -149,8 +154,7 @@ class GrepToolTest {
             createFile("a.txt", "match here\n");
             createFile("b.txt", "match here too\n");
 
-            var result = grepTool.execute("c6",
-                    Map.of("pattern", "match", "path", "a.txt"), null, null);
+            var result = grepTool.execute("c6", Map.of("pattern", "match", "path", "a.txt"), null, null);
 
             String text = extractText(result);
             assertTrue(text.contains("a.txt"));
@@ -170,8 +174,7 @@ class GrepToolTest {
             createFile("code.java", "public class Foo {}\n");
             createFile("code.txt", "public class Foo {}\n");
 
-            var result = grepTool.execute("c7",
-                    Map.of("pattern", "class", "glob", "*.java"), null, null);
+            var result = grepTool.execute("c7", Map.of("pattern", "class", "glob", "*.java"), null, null);
 
             String text = extractText(result);
             assertTrue(text.contains("code.java"));
@@ -191,8 +194,7 @@ class GrepToolTest {
             createFile("Main.java", "public static void main\n");
             createFile("script.py", "def main():\n");
 
-            var result = grepTool.execute("c8",
-                    Map.of("pattern", "main", "type", "java"), null, null);
+            var result = grepTool.execute("c8", Map.of("pattern", "main", "type", "java"), null, null);
 
             String text = extractText(result);
             assertTrue(text.contains("Main.java"));
@@ -201,8 +203,7 @@ class GrepToolTest {
 
         @Test
         void unknownTypeReturnsError() throws Exception {
-            var result = grepTool.execute("c9",
-                    Map.of("pattern", "test", "type", "unknown_lang"), null, null);
+            var result = grepTool.execute("c9", Map.of("pattern", "test", "type", "unknown_lang"), null, null);
 
             assertTrue(extractText(result).contains("unknown file type"));
         }
@@ -235,8 +236,7 @@ class GrepToolTest {
 
         @Test
         void pathTraversalReturnsError() throws Exception {
-            var result = grepTool.execute("c13",
-                    Map.of("pattern", "test", "path", "../../etc"), null, null);
+            var result = grepTool.execute("c13", Map.of("pattern", "test", "path", "../../etc"), null, null);
             assertTrue(extractText(result).contains("Error"));
         }
     }
@@ -262,8 +262,7 @@ class GrepToolTest {
         @Test
         void rgNoMatchesReturnsMessage() throws Exception {
             grepTool.setRgAvailable(true);
-            when(bashExecutor.execute(any(), any(), any()))
-                    .thenReturn(new BashExecutionResult(1, "", ""));
+            when(bashExecutor.execute(any(), any(), any())).thenReturn(new BashExecutionResult(1, "", ""));
 
             var result = grepTool.execute("c15", Map.of("pattern", "nope"), null, null);
 

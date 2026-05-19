@@ -99,6 +99,7 @@ export type ClientCommand =
   | { type: 'abort'; id?: string }
   | { type: 'new_session'; id?: string }
   | { type: 'set_model'; id?: string; model: string }
+  | { type: 'list_models'; id?: string; all?: boolean }
   | { type: 'set_thinking_level'; id?: string; level: ThinkingLevel }
   | { type: 'get_state'; id?: string }
   | { type: 'get_history'; id?: string }
@@ -128,6 +129,37 @@ export interface GetStateData {
   model: string;
   thinkingLevel: ThinkingLevel;
   messageCount: number;
+}
+
+/** Per-model entry returned by `list_models`. Mirrors `ModelInfo` in chat-ws.yaml. */
+export interface ModelInfo {
+  id: string;
+  name: string;
+  provider: string;
+  contextWindow: number;
+  maxTokens: number;
+  reasoning: boolean;
+  /**
+   * True when the server can resolve an API key for this model. Frontends
+   * should disable / annotate options where this is false. Optional for
+   * back-compat — older servers may omit it (treat absence as true).
+   */
+  hasCredentials?: boolean;
+  cost?: {
+    input?: number;
+    output?: number;
+    cacheRead?: number;
+    cacheWrite?: number;
+  };
+}
+
+/** Data shape for `response` to `list_models`. */
+export interface ListModelsData {
+  /** Currently active model id, or null before initialization. */
+  current: string | null;
+  /** True when settings.enabledModels filtered the result. */
+  filtered: boolean;
+  models: ModelInfo[];
 }
 
 // Event frames (asynchronous, pushed during an agent turn)
@@ -160,7 +192,15 @@ export type UiMessage =
   | { kind: 'user'; text: string; timestamp: number }
   | { kind: 'assistant'; message: AssistantMessage }
   | { kind: 'meta'; label: string; text: string }
+  | { kind: 'system'; label: string; text: string }
   | { kind: 'error'; text: string };
+
+/** Data shape for `response` to `list_skills` / `get_prompt_templates`. */
+export interface NamedEntry {
+  name: string;
+  description: string;
+  source: string;
+}
 
 export interface ToolState {
   toolCallId: string;
@@ -176,4 +216,17 @@ export interface LogEntry {
   dir: 'in' | 'out' | 'err' | 'info';
   text: string;
   ts: number;
+}
+
+/**
+ * Persisted conversation summary returned by `GET /api/conversations`.
+ * Mirrors the {@code ConversationSummary} schema in
+ * {@code docs/openapi/campusclaw-api.yaml}.
+ */
+export interface ConversationSummary {
+  id: string;
+  title: string;
+  messageCount: number;
+  createdAt: string;
+  updatedAt: string;
 }

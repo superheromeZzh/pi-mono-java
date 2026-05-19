@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026-2026. All rights reserved.
+ */
+
 package com.campusclaw.tui.component;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -95,6 +99,7 @@ class TextTest {
             var text = new Text("a\tb");
             List<String> lines = text.render(20);
             assertEquals(1, lines.size());
+
             // Tab replaced with 3 spaces: "a   b"
             assertTrue(lines.get(0).contains("a   b"));
         }
@@ -108,6 +113,7 @@ class TextTest {
             var text = new Text("hi", 2, 0);
             List<String> lines = text.render(20);
             assertEquals(1, lines.size());
+
             // Should start with 2 spaces (left padding)
             assertTrue(lines.get(0).startsWith("  "));
         }
@@ -116,6 +122,7 @@ class TextTest {
         void verticalPaddingAddsEmptyLines() {
             var text = new Text("hi", 0, 2);
             List<String> lines = text.render(20);
+
             // 2 top + 1 content + 2 bottom = 5
             assertEquals(5, lines.size());
         }
@@ -124,8 +131,10 @@ class TextTest {
         void bothPaddings() {
             var text = new Text("hi", 3, 1);
             List<String> lines = text.render(20);
+
             // 1 top + 1 content + 1 bottom = 3
             assertEquals(3, lines.size());
+
             // Content line starts with 3 spaces
             assertTrue(lines.get(1).startsWith("   "));
         }
@@ -134,6 +143,7 @@ class TextTest {
         void largePaddingClampsContentWidth() {
             var text = new Text("hello world", 15, 0);
             List<String> lines = text.render(20);
+
             // contentWidth = max(1, 20 - 30) = 1, so heavy wrapping
             assertTrue(lines.size() > 1);
         }
@@ -156,6 +166,7 @@ class TextTest {
             UnaryOperator<String> bg = s -> BG_BLUE + s + RESET;
             var text = new Text("hi", 0, 1, bg);
             List<String> lines = text.render(10);
+
             // All lines (top pad, content, bottom pad) should have background
             for (String line : lines) {
                 assertTrue(line.contains(BG_BLUE), "Line missing background: " + line);

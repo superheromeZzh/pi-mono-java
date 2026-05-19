@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026-2026. All rights reserved.
+ */
+
 package com.campusclaw.codingagent.mode.server;
 
 import java.util.List;
@@ -7,6 +11,7 @@ import com.campusclaw.agent.tool.AgentTool;
 import com.campusclaw.ai.CampusClawAiService;
 import com.campusclaw.ai.model.ModelRegistry;
 import com.campusclaw.codingagent.config.AppPaths;
+import com.campusclaw.codingagent.model.ModelCatalogService;
 import com.campusclaw.codingagent.prompt.SystemPromptBuilder;
 import com.campusclaw.codingagent.session.SessionConfig;
 import com.campusclaw.codingagent.skill.SandboxSkillParser;
@@ -21,6 +26,7 @@ import org.springframework.web.reactive.function.server.RouterFunctions;
 import org.springframework.web.reactive.function.server.ServerResponse;
 
 import reactor.netty.http.server.HttpServer;
+import reactor.netty.http.server.HttpServerResponse;
 
 /**
  * HTTP server mode: starts a Reactor Netty server exposing REST + SSE endpoints.
@@ -33,11 +39,25 @@ import reactor.netty.http.server.HttpServer;
  *   <li>POST   /api/skills                — upload skill archive</li>
  *   <li>GET    /api/skills                — list installed skills</li>
  *   <li>DELETE /api/skills/{name}         — remove a skill</li>
+ *   <li>POST   /api/skills/{name}/enable  — enable a skill</li>
+ *   <li>POST   /api/skills/{name}/disable — disable a skill</li>
  * </ul>
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 public class ServerMode {
 
     private static final Logger log = LoggerFactory.getLogger(ServerMode.class);
+
+    /*
+     * Dedicated logger for the startup banner. The category name is decoupled from
+     * the class's package so its level can be configured independently of
+     * `logging.level.com.campusclaw` (which we keep at WARN to avoid runtime noise).
+     * Pinned to INFO via application.yml so `pi --mode server` always shows the
+     * endpoint list to the operator who launched it.
+     */
+    private static final Logger banner = LoggerFactory.getLogger("CampusClawStartupBanner");
 
     private final CampusClawAiService aiService;
     private final ModelRegistry modelRegistry;
@@ -48,6 +68,8 @@ public class ServerMode {
     private final String host;
     private final SandboxSkillParser sandboxParser;
     private final boolean useSandbox;
+    private final ModelCatalogService modelCatalog;
+    private final boolean sessionPersistenceEnabled;
 
     public ServerMode(
             CampusClawAiService aiService,
@@ -55,9 +77,8 @@ public class ServerMode {
             SystemPromptBuilder promptBuilder,
             List<AgentTool> tools,
             SessionConfig baseConfig,
-            int port
-    ) {
-        this(aiService, modelRegistry, promptBuilder, tools, baseConfig, port, "localhost", null, false);
+            int port) {
+        this(aiService, modelRegistry, promptBuilder, tools, baseConfig, port, "localhost", null, false, null, true);
     }
 
     public ServerMode(
@@ -69,8 +90,34 @@ public class ServerMode {
             int port,
             String host,
             SandboxSkillParser sandboxParser,
-            boolean useSandbox
-    ) {
+            boolean useSandbox,
+            ModelCatalogService modelCatalog) {
+        this(
+                aiService,
+                modelRegistry,
+                promptBuilder,
+                tools,
+                baseConfig,
+                port,
+                host,
+                sandboxParser,
+                useSandbox,
+                modelCatalog,
+                true);
+    }
+
+    public ServerMode(
+            CampusClawAiService aiService,
+            ModelRegistry modelRegistry,
+            SystemPromptBuilder promptBuilder,
+            List<AgentTool> tools,
+            SessionConfig baseConfig,
+            int port,
+            String host,
+            SandboxSkillParser sandboxParser,
+            boolean useSandbox,
+            ModelCatalogService modelCatalog,
+            boolean sessionPersistenceEnabled) {
         this.aiService = aiService;
         this.modelRegistry = modelRegistry;
         this.promptBuilder = promptBuilder;
@@ -80,67 +127,128 @@ public class ServerMode {
         this.host = host;
         this.sandboxParser = sandboxParser;
         this.useSandbox = useSandbox;
+        this.modelCatalog = modelCatalog;
+        this.sessionPersistenceEnabled = sessionPersistenceEnabled;
     }
 
     public void run() {
-        var sessionPool = new SessionPool(aiService, modelRegistry, promptBuilder, tools, baseConfig, sandboxParser, useSandbox);
+        var sessionPool = new SessionPool(
+                aiService,
+                modelRegistry,
+                promptBuilder,
+                tools,
+                baseConfig,
+                sandboxParser,
+                useSandbox,
+                sessionPersistenceEnabled);
         var chatHandler = new ChatHandler(sessionPool);
-        var wsHandler = new ChatWebSocketHandler(sessionPool);
-
+        var wsHandler = new ChatWebSocketHandler(sessionPool, modelCatalog);
         var skillHandler = new SkillHandler(
                 new SkillManager(AppPaths.USER_SKILLS_DIR, sandboxParser, useSandbox),
                 new SkillLoader(sandboxParser, useSandbox));
+        RouterFunction<ServerResponse> routes = buildRoutes(chatHandler, skillHandler, sessionPool);
+        var adapter = new ReactorHttpHandlerAdapter(RouterFunctions.toHttpHandler(routes));
+        var server = HttpServer.create()
+                .host(host)
+                .port(port)
+                .route(r -> wireServerRoutes(r, wsHandler, adapter))
+                .bindNow();
+        logStartupBanner();
+        server.onDispose().block();
+        sessionPool.shutdown();
+    }
 
-        RouterFunction<ServerResponse> routes = RouterFunctions.route()
-                .GET("/api/health", req ->
-                        ServerResponse.ok().bodyValue(Map.of("status", "ok")))
+    private RouterFunction<ServerResponse> buildRoutes(
+            ChatHandler chatHandler, SkillHandler skillHandler, SessionPool sessionPool) {
+        var conversationLister = new com.campusclaw.codingagent.session.ConversationLister();
+        return RouterFunctions.route()
+                .GET("/api/health", req -> ServerResponse.ok().bodyValue(Map.of("status", "ok")))
                 .POST("/api/chat", chatHandler::chat)
+                .GET("/api/conversations", req -> ServerResponse.ok()
+                        .bodyValue(Map.of(
+                                "conversations",
+                                com.campusclaw.codingagent.session.ConversationLister.toWireFormat(
+                                        conversationLister.listForServer()))))
                 .DELETE("/api/conversations/{id}", req -> {
                     String id = req.pathVariable("id");
                     boolean removed = sessionPool.remove(id);
                     if (removed) {
                         return ServerResponse.ok().bodyValue(Map.of("message", "Removed conversation: " + id));
                     }
-                    return ServerResponse.status(404)
-                            .bodyValue(Map.of("error", "Conversation not found: " + id));
+                    return ServerResponse.status(404).bodyValue(Map.of("error", "Conversation not found: " + id));
                 })
                 .POST("/api/skills", skillHandler::upload)
                 .GET("/api/skills", skillHandler::list)
                 .DELETE("/api/skills/{name}", skillHandler::delete)
+                .POST("/api/skills/{name}/enable", skillHandler::enable)
+                .POST("/api/skills/{name}/disable", skillHandler::disable)
                 .build();
+    }
 
-        var httpHandler = RouterFunctions.toHttpHandler(routes);
-        var adapter = new ReactorHttpHandlerAdapter(httpHandler);
+    private static void wireServerRoutes(
+            reactor.netty.http.server.HttpServerRoutes routes,
+            ChatWebSocketHandler wsHandler,
+            ReactorHttpHandlerAdapter adapter) {
+        // CORS preflight — `fetch()` from the Vite dev server (a different
+        // origin than the API) sends OPTIONS for any non-simple request.
+        // Reply 204 with the allow headers; browsers cache for 1h.
+        routes.options("/api/**", (req, res) -> {
+            applyCorsHeaders(res);
+            return res.status(204).send();
+        });
+        routes.get("/api/ws/chat", (req, res) -> {
+            String convId = extractQueryParam(req.uri(), "conversation_id");
+            return res.sendWebsocket((in, out) -> wsHandler.handle(in, out, convId));
+        });
 
-        var server = HttpServer.create()
-                .host(host)
-                .port(port)
-                .route(r -> r
-                        .get("/api/ws/chat", (req, res) -> {
-                            String convId = extractQueryParam(req.uri(), "conversation_id");
-                            return res.sendWebsocket((in, out) -> wsHandler.handle(in, out, convId));
-                        })
-                        .route(req -> true, adapter))
-                .bindNow();
+        // All other routes (the WebFlux RouterFunctions adapter) go through
+        // here. We pre-stamp CORS headers on the response so even simple GETs
+        // from the browser pass the same-origin check.
+        routes.route(req -> true, (req, res) -> {
+            applyCorsHeaders(res);
+            return adapter.apply(req, res);
+        });
+    }
 
+    private void logStartupBanner() {
         log.info("CampusClaw API server started on {}:{}", host, port);
-        System.out.println("CampusClaw API server started on http://" + host + ":" + port);
-        System.out.println("Endpoints:");
-        System.out.println("  GET    /api/health");
-        System.out.println("  POST   /api/chat");
-        System.out.println("  DELETE /api/conversations/{id}");
-        System.out.println("  POST   /api/skills");
-        System.out.println("  GET    /api/skills");
-        System.out.println("  DELETE /api/skills/{name}");
-        System.out.println("  WS     /api/ws/chat");
+        banner.info("CampusClaw API server started on http://{}:{}", host, port);
+        banner.info("Endpoints:");
+        banner.info("  GET    /api/health");
+        banner.info("  POST   /api/chat");
+        banner.info("  DELETE /api/conversations/{id}");
+        banner.info("  POST   /api/skills");
+        banner.info("  GET    /api/skills");
+        banner.info("  DELETE /api/skills/{name}");
+        banner.info("  POST   /api/skills/{name}/enable");
+        banner.info("  POST   /api/skills/{name}/disable");
+        banner.info("  WS     /api/ws/chat");
+    }
 
-        server.onDispose().block();
-        sessionPool.shutdown();
+    /**
+     * Stamps the response with permissive CORS headers so the Vite dev server
+     * (a different origin than the API) can call the REST endpoints from JS.
+     *
+     * <p>Origin is wide-open ({@code *}) because the server is meant to be run
+     * on the developer's own machine; tightening this should be done by an
+     * operator deploying the server publicly.
+     *
+     * @param res the res
+     */
+    static void applyCorsHeaders(HttpServerResponse res) {
+        res.header("Access-Control-Allow-Origin", "*")
+                .header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+                .header("Access-Control-Allow-Headers", "Content-Type, Authorization, Accept")
+                .header("Access-Control-Max-Age", "3600");
     }
 
     /**
      * Extracts a query parameter value from a request URI.
      * Returns null if the parameter is absent or empty.
+     *
+     * @param uri the uri
+     * @param name the name
+     * @return the result
      */
     static String extractQueryParam(String uri, String name) {
         if (uri == null) {

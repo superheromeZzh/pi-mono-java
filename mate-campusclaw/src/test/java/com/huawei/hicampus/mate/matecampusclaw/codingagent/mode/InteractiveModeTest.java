@@ -1,26 +1,27 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026-2026. All rights reserved.
+ */
+
 package com.huawei.hicampus.mate.matecampusclaw.codingagent.mode;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.when;
-import static org.mockito.Mockito.thenReturn;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.contains;
-import static org.mockito.Mockito.Mock;
-import static org.mockito.Mockito.BeforeEach;
-import static org.mockito.Mockito.Test;
-import static org.mockito.Mockito.ExtendWith;
+import static org.mockito.Mockito.when;
 
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 import com.huawei.hicampus.mate.matecampusclaw.agent.Agent;
-import com.huawei.hicampus.mate.matecampusclaw.agent.event.*;
+import com.huawei.hicampus.mate.matecampusclaw.agent.event.MessageUpdateEvent;
 import com.huawei.hicampus.mate.matecampusclaw.agent.state.AgentState;
+import com.huawei.hicampus.mate.matecampusclaw.agent.util.LoggingUncaughtExceptionHandler;
 import com.huawei.hicampus.mate.matecampusclaw.ai.stream.AssistantMessageEvent;
-import com.huawei.hicampus.mate.matecampusclaw.ai.types.*;
+import com.huawei.hicampus.mate.matecampusclaw.ai.types.AssistantMessage;
+import com.huawei.hicampus.mate.matecampusclaw.ai.types.TextContent;
+import com.huawei.hicampus.mate.matecampusclaw.ai.types.Usage;
 import com.huawei.hicampus.mate.matecampusclaw.codingagent.command.SlashCommandRegistry;
 import com.huawei.hicampus.mate.matecampusclaw.codingagent.command.builtin.HelpCommand;
 import com.huawei.hicampus.mate.matecampusclaw.codingagent.command.builtin.QuitCommand;
@@ -42,9 +43,14 @@ import org.mockito.quality.Strictness;
 @MockitoSettings(strictness = Strictness.LENIENT)
 class InteractiveModeTest {
 
-    @Mock AgentSession session;
-    @Mock Agent agent;
-    @Mock BashExecutor bashExecutor;
+    @Mock
+    AgentSession session;
+
+    @Mock
+    Agent agent;
+
+    @Mock
+    BashExecutor bashExecutor;
 
     TestTerminal terminal;
     AgentState state;
@@ -77,9 +83,14 @@ class InteractiveModeTest {
         void textDeltaUpdatesAssistantComponent() {
             var partial = new AssistantMessage(
                     List.of(new TextContent("Hello", null)),
-                    "messages", "anthropic", "model",
-                    null, Usage.empty(), null, null, 1L
-            );
+                    "messages",
+                    "anthropic",
+                    "model",
+                    null,
+                    Usage.empty(),
+                    null,
+                    null,
+                    1L);
             var delta = new AssistantMessageEvent.TextDeltaEvent(0, "Hello", partial);
             var event = new MessageUpdateEvent(partial, delta);
 
@@ -107,12 +118,14 @@ class InteractiveModeTest {
             var tool = new com.huawei.hicampus.mate.matecampusclaw.codingagent.mode.tui.ToolStatusComponent("bash");
             var running = tool.render(80);
             String runningOutput = String.join("", running);
+
             // Tool shows bold name on pending bg
             assertTrue(runningOutput.contains("bash"));
 
             tool.setComplete(false);
             var done = tool.render(80);
             String doneOutput = String.join("", done);
+
             // Tool shows bold name on success bg
             assertTrue(doneOutput.contains("bash"));
         }
@@ -123,6 +136,7 @@ class InteractiveModeTest {
             tool.setComplete(true);
             var lines = tool.render(80);
             String output = String.join("", lines);
+
             // Tool shows bold name on error bg
             assertTrue(output.contains("bash"));
             assertTrue(output.contains("\033[48;2;60;40;40m")); // error bg
@@ -163,7 +177,7 @@ class InteractiveModeTest {
         void rendersPwdAndStatsLines() {
             var footer = new com.huawei.hicampus.mate.matecampusclaw.codingagent.mode.tui.FooterComponent();
             footer.setModel("zai", "glm-5", 200000, false);
-            footer.setCwd("/Users/z/project");
+            footer.setCwd(System.getProperty("user.home") + "/project");
             var lines = footer.render(80);
             assertEquals(2, lines.size()); // pwd + stats
             assertTrue(lines.get(0).contains("~")); // pwd with ~ substitution
@@ -173,6 +187,7 @@ class InteractiveModeTest {
         void contextPercentageColorCoding() {
             var footer = new com.huawei.hicampus.mate.matecampusclaw.codingagent.mode.tui.FooterComponent();
             footer.setModel("zai", "glm-5", 1000, false);
+
             // 95% usage — should be red
             footer.updateUsage(950, 0, 0, 0, 0);
             var lines = footer.render(120);
@@ -233,6 +248,7 @@ class InteractiveModeTest {
             var comp = new com.huawei.hicampus.mate.matecampusclaw.codingagent.mode.tui.BashExecutionComponent("sleep 10", false);
             var lines = comp.render(80);
             String output = String.join("\n", lines);
+
             // BashExecutionComponent shows "running..." in gray when incomplete
             String stripped = output.replaceAll("\033\\[[;\\d]*[a-zA-Z]", "");
             assertTrue(stripped.contains("running..."));
@@ -252,6 +268,7 @@ class InteractiveModeTest {
                 sleep(200);
                 terminal.simulateInput("\u0004");
             });
+            thread.setUncaughtExceptionHandler(LoggingUncaughtExceptionHandler.INSTANCE);
             thread.start();
 
             mode.run(session, terminal);
@@ -264,9 +281,11 @@ class InteractiveModeTest {
                 sleep(200);
                 terminal.simulateInput("\u0004");
             });
+            thread.setUncaughtExceptionHandler(LoggingUncaughtExceptionHandler.INSTANCE);
             thread.start();
 
             mode.run(session, terminal);
+
             // Welcome text may scroll off in small terminal; check for content that's visible
             String output = terminal.getFullOutput();
             assertTrue(output.contains("CampusClaw can explain") || output.contains("v0.1.0"));
@@ -278,6 +297,7 @@ class InteractiveModeTest {
                 sleep(200);
                 terminal.simulateInput("\u0004");
             });
+            thread.setUncaughtExceptionHandler(LoggingUncaughtExceptionHandler.INSTANCE);
             thread.start();
 
             mode.run(session, terminal);
@@ -294,6 +314,7 @@ class InteractiveModeTest {
                 sleep(200);
                 terminal.simulateInput("\u0004");
             });
+            thread.setUncaughtExceptionHandler(LoggingUncaughtExceptionHandler.INSTANCE);
             thread.start();
 
             mode.run(session, terminal);
@@ -302,8 +323,7 @@ class InteractiveModeTest {
 
         @Test
         void promptIsSentToSession() {
-            when(session.prompt("hello"))
-                    .thenReturn(CompletableFuture.completedFuture(null));
+            when(session.prompt("hello")).thenReturn(CompletableFuture.completedFuture(null));
 
             var thread = new Thread(() -> {
                 sleep(200);
@@ -312,6 +332,7 @@ class InteractiveModeTest {
                 sleep(500);
                 terminal.simulateInput("\u0004");
             });
+            thread.setUncaughtExceptionHandler(LoggingUncaughtExceptionHandler.INSTANCE);
             thread.start();
 
             mode.run(session, terminal);
@@ -338,7 +359,8 @@ class InteractiveModeTest {
 
         @Test
         void throwsOnNullRegistry() {
-            assertThrows(NullPointerException.class, () -> new InteractiveMode(null, null, null, null, null, null, null));
+            assertThrows(
+                    NullPointerException.class, () -> new InteractiveMode(null, null, null, null, null, null, null));
         }
     }
 
@@ -354,6 +376,10 @@ class InteractiveModeTest {
     }
 
     private static void sleep(long ms) {
-        try { Thread.sleep(ms); } catch (InterruptedException e) { Thread.currentThread().interrupt(); }
+        try {
+            Thread.sleep(ms);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
     }
 }

@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026-2026. All rights reserved.
+ */
+
 package com.campusclaw.ai.provider;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -106,7 +110,8 @@ class ApiProviderRegistryTest {
             var provider = new MockApiProvider(Api.BEDROCK_CONVERSE_STREAM);
             registry.register(provider, "plugin-a");
 
-            assertSame(provider, registry.getProvider(Api.BEDROCK_CONVERSE_STREAM).orElse(null));
+            assertSame(
+                    provider, registry.getProvider(Api.BEDROCK_CONVERSE_STREAM).orElse(null));
             assertEquals(1, registry.getProviders().size());
         }
 
@@ -222,10 +227,8 @@ class ApiProviderRegistryTest {
 
         @Test
         void clearRemovesAllProviders() {
-            var registry = new ApiProviderRegistry(List.of(
-                new MockApiProvider(Api.ANTHROPIC_MESSAGES),
-                new MockApiProvider(Api.OPENAI_RESPONSES)
-            ));
+            var registry = new ApiProviderRegistry(
+                    List.of(new MockApiProvider(Api.ANTHROPIC_MESSAGES), new MockApiProvider(Api.OPENAI_RESPONSES)));
             registry.register(new MockApiProvider(Api.BEDROCK_CONVERSE_STREAM), "plugin");
 
             registry.clear();
@@ -238,9 +241,7 @@ class ApiProviderRegistryTest {
 
         @Test
         void clearAllowsReregistration() {
-            var registry = new ApiProviderRegistry(List.of(
-                new MockApiProvider(Api.ANTHROPIC_MESSAGES)
-            ));
+            var registry = new ApiProviderRegistry(List.of(new MockApiProvider(Api.ANTHROPIC_MESSAGES)));
 
             registry.clear();
             assertTrue(registry.getProviders().isEmpty());
@@ -259,13 +260,12 @@ class ApiProviderRegistryTest {
 
         @Test
         void getProvidersReturnsUnmodifiableList() {
-            var registry = new ApiProviderRegistry(List.of(
-                new MockApiProvider(Api.ANTHROPIC_MESSAGES)
-            ));
+            var registry = new ApiProviderRegistry(List.of(new MockApiProvider(Api.ANTHROPIC_MESSAGES)));
 
             var providers = registry.getProviders();
-            assertThrows(UnsupportedOperationException.class,
-                () -> providers.add(new MockApiProvider(Api.OPENAI_RESPONSES)));
+            assertThrows(
+                    UnsupportedOperationException.class,
+                    () -> providers.add(new MockApiProvider(Api.OPENAI_RESPONSES)));
         }
     }
 }

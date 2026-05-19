@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026-2026. All rights reserved.
+ */
+
 package com.huawei.hicampus.mate.matecampusclaw.ai.types;
 
 import java.util.List;
@@ -23,20 +27,21 @@ import jakarta.annotation.Nullable;
  * @param headers         optional custom HTTP headers for API calls
  * @param thinkingFormat  optional thinking format identifier (e.g. "zai")
  * @param apiKey          optional API key embedded in the model (for custom models)
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 public record Model(
-    @JsonProperty("id") String id,
-    @JsonProperty("name") String name,
-    @JsonProperty("api") Api api,
-    @JsonProperty("provider") Provider provider,
-    @JsonProperty("baseUrl") String baseUrl,
-    @JsonProperty("reasoning") boolean reasoning,
-    @JsonProperty("inputModalities") List<InputModality> inputModalities,
-    @JsonProperty("cost") ModelCost cost,
-    @JsonProperty("contextWindow") int contextWindow,
-    @JsonProperty("maxTokens") int maxTokens,
-    @JsonProperty("headers") @Nullable Map<String, String> headers,
-    @JsonProperty("thinkingFormat") @Nullable String thinkingFormat,
-    @JsonProperty("apiKey") @Nullable String apiKey
-) {
-}
+        @JsonProperty("id") String id,
+        @JsonProperty("name") String name,
+        @JsonProperty("api") Api api,
+        @JsonProperty("provider") Provider provider,
+        @JsonProperty("baseUrl") String baseUrl,
+        @JsonProperty("reasoning") boolean reasoning,
+        @JsonProperty("inputModalities") List<InputModality> inputModalities,
+        @JsonProperty("cost") ModelCost cost,
+        @JsonProperty("contextWindow") int contextWindow,
+        @JsonProperty("maxTokens") int maxTokens,
+        @JsonProperty("headers") @Nullable Map<String, String> headers,
+        @JsonProperty("thinkingFormat") @Nullable String thinkingFormat,
+        @JsonProperty("apiKey") @Nullable String apiKey) {}

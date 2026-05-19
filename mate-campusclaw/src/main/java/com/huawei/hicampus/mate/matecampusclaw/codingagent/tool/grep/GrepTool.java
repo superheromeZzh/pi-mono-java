@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026-2026. All rights reserved.
+ */
+
 package com.huawei.hicampus.mate.matecampusclaw.codingagent.tool.grep;
 
 import java.io.IOException;
@@ -39,6 +43,9 @@ import org.springframework.stereotype.Component;
 /**
  * Agent tool for searching file contents using regular expressions.
  * Prefers system ripgrep (rg) when available, falls back to a Java implementation.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 @Component
 @ConditionalOnProperty(name = "tool.execution.hybrid-enabled", havingValue = "false", matchIfMissing = true)
@@ -47,7 +54,9 @@ public class GrepTool implements AgentTool {
     static final int MAX_RESULTS = 500;
     static final Duration TIMEOUT = Duration.ofSeconds(30);
 
-    /** File type to extensions mapping, matching ripgrep's --type behavior. */
+    /**
+     * File type to extensions mapping, matching ripgrep's --type behavior.
+     */
     static final Map<String, Set<String>> TYPE_EXTENSIONS = Map.ofEntries(
             Map.entry("js", Set.of(".js", ".mjs", ".cjs", ".jsx")),
             Map.entry("ts", Set.of(".ts", ".mts", ".cts", ".tsx")),
@@ -71,8 +80,7 @@ public class GrepTool implements AgentTool {
             Map.entry("md", Set.of(".md", ".markdown")),
             Map.entry("sh", Set.of(".sh", ".bash", ".zsh")),
             Map.entry("sql", Set.of(".sql")),
-            Map.entry("php", Set.of(".php"))
-    );
+            Map.entry("php", Set.of(".php")));
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
@@ -108,18 +116,26 @@ public class GrepTool implements AgentTool {
     @Override
     public JsonNode parameters() {
         ObjectNode props = MAPPER.createObjectNode();
-        props.set("pattern", MAPPER.createObjectNode()
-                .put("type", "string")
-                .put("description", "Regular expression pattern to search for"));
-        props.set("path", MAPPER.createObjectNode()
-                .put("type", "string")
-                .put("description", "File or directory to search in (optional, defaults to cwd)"));
-        props.set("glob", MAPPER.createObjectNode()
-                .put("type", "string")
-                .put("description", "Glob pattern to filter files (e.g. \"*.ts\")"));
-        props.set("type", MAPPER.createObjectNode()
-                .put("type", "string")
-                .put("description", "File type filter (e.g. \"js\", \"py\", \"java\")"));
+        props.set(
+                "pattern",
+                MAPPER.createObjectNode()
+                        .put("type", "string")
+                        .put("description", "Regular expression pattern to search for"));
+        props.set(
+                "path",
+                MAPPER.createObjectNode()
+                        .put("type", "string")
+                        .put("description", "File or directory to search in (optional, defaults to cwd)"));
+        props.set(
+                "glob",
+                MAPPER.createObjectNode()
+                        .put("type", "string")
+                        .put("description", "Glob pattern to filter files (e.g. \"*.ts\")"));
+        props.set(
+                "type",
+                MAPPER.createObjectNode()
+                        .put("type", "string")
+                        .put("description", "File type filter (e.g. \"js\", \"py\", \"java\")"));
 
         return MAPPER.createObjectNode()
                 .put("type", "object")
@@ -129,11 +145,8 @@ public class GrepTool implements AgentTool {
 
     @Override
     public AgentToolResult execute(
-            String toolCallId,
-            Map<String, Object> params,
-            CancellationToken signal,
-            AgentToolUpdateCallback onUpdate
-    ) throws Exception {
+            String toolCallId, Map<String, Object> params, CancellationToken signal, AgentToolUpdateCallback onUpdate)
+            throws Exception {
         String pattern = (String) params.get("pattern");
         if (pattern == null || pattern.isEmpty()) {
             return errorResult("Error: pattern is required");
@@ -165,8 +178,7 @@ public class GrepTool implements AgentTool {
     // -------------------------------------------------------------------
 
     private AgentToolResult executeWithRg(
-            String pattern, Path searchPath, String glob, String type, CancellationToken signal
-    ) throws IOException {
+            String pattern, Path searchPath, String glob, String type, CancellationToken signal) throws IOException {
         var cmd = new StringBuilder("rg --line-number --no-heading");
         cmd.append(" --max-count ").append(MAX_RESULTS);
 
@@ -202,9 +214,7 @@ public class GrepTool implements AgentTool {
     // Java fallback
     // -------------------------------------------------------------------
 
-    AgentToolResult executeWithJava(
-            String patternStr, Path searchPath, String glob, String type
-    ) {
+    AgentToolResult executeWithJava(String patternStr, Path searchPath, String glob, String type) {
         Pattern regex;
         try {
             regex = Pattern.compile(patternStr);
@@ -242,9 +252,7 @@ public class GrepTool implements AgentTool {
     }
 
     private void walkAndSearch(
-            Path dir, Pattern regex, PathMatcher globMatcher,
-            Set<String> typeExtensions, List<String> results
-    ) {
+            Path dir, Pattern regex, PathMatcher globMatcher, Set<String> typeExtensions, List<String> results) {
         try {
             Files.walkFileTree(dir, new SimpleFileVisitor<>() {
                 @Override
@@ -253,9 +261,7 @@ public class GrepTool implements AgentTool {
                     if (name.startsWith(".") || name.equals("node_modules")) {
                         return FileVisitResult.SKIP_SUBTREE;
                     }
-                    return results.size() >= MAX_RESULTS
-                            ? FileVisitResult.TERMINATE
-                            : FileVisitResult.CONTINUE;
+                    return results.size() >= MAX_RESULTS ? FileVisitResult.TERMINATE : FileVisitResult.CONTINUE;
                 }
 
                 @Override
@@ -267,9 +273,7 @@ public class GrepTool implements AgentTool {
                         return FileVisitResult.CONTINUE;
                     }
                     searchFile(file, regex, results);
-                    return results.size() >= MAX_RESULTS
-                            ? FileVisitResult.TERMINATE
-                            : FileVisitResult.CONTINUE;
+                    return results.size() >= MAX_RESULTS ? FileVisitResult.TERMINATE : FileVisitResult.CONTINUE;
                 }
 
                 @Override
@@ -289,7 +293,9 @@ public class GrepTool implements AgentTool {
         if (typeExtensions != null) {
             String fileName = file.getFileName().toString();
             int dot = fileName.lastIndexOf('.');
-            if (dot < 0) return false;
+            if (dot < 0) {
+                return false;
+            }
             String ext = fileName.substring(dot);
             return typeExtensions.contains(ext);
         }
@@ -334,8 +340,7 @@ public class GrepTool implements AgentTool {
     private boolean checkRgAvailable() {
         try {
             BashExecutionResult result = bashExecutor.execute(
-                    "command -v rg", cwd,
-                    new BashExecutorOptions(Duration.ofSeconds(5), null, null));
+                    "command -v rg", cwd, new BashExecutorOptions(Duration.ofSeconds(5), null, null));
             return result.exitCode() != null && result.exitCode() == 0;
         } catch (IOException e) {
             return false;
@@ -347,16 +352,10 @@ public class GrepTool implements AgentTool {
     }
 
     private static AgentToolResult textResult(String text) {
-        return new AgentToolResult(
-                List.<ContentBlock>of(new TextContent(text)),
-                null
-        );
+        return new AgentToolResult(List.<ContentBlock>of(new TextContent(text)), null);
     }
 
     private static AgentToolResult errorResult(String message) {
-        return new AgentToolResult(
-                List.<ContentBlock>of(new TextContent(message)),
-                null
-        );
+        return new AgentToolResult(List.<ContentBlock>of(new TextContent(message)), null);
     }
 }

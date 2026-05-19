@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026-2026. All rights reserved.
+ */
+
 package com.huawei.hicampus.mate.matecampusclaw.codingagent.tool.edit;
 
 import java.util.ArrayList;
@@ -8,8 +12,7 @@ import java.util.List;
  */
 final class DiffUtils {
 
-    private DiffUtils() {
-    }
+    private DiffUtils() {}
 
     static final int CONTEXT_LINES = 3;
 
@@ -43,9 +46,8 @@ final class DiffUtils {
             int newStart = hunk[2];
             int newEnd = hunk[3];
 
-            sb.append(String.format("@@ -%d,%d +%d,%d @@\n",
-                    oldStart + 1, oldEnd - oldStart,
-                    newStart + 1, newEnd - newStart));
+            sb.append(String.format(
+                    "@@ -%d,%d +%d,%d @@\n", oldStart + 1, oldEnd - oldStart, newStart + 1, newEnd - newStart));
 
             appendHunkContent(sb, oldLines, newLines, oldStart, oldEnd, newStart, newEnd, changes);
         }
@@ -55,6 +57,10 @@ final class DiffUtils {
 
     /**
      * Finds the 1-indexed line number of the first change.
+     *
+     * @param oldText the oldText
+     * @param newText the newText
+     * @return the result
      */
     static Integer findFirstChangedLine(String oldText, String newText) {
         String[] oldLines = oldText.split("\n", -1);
@@ -74,6 +80,10 @@ final class DiffUtils {
     /**
      * Computes a list of change regions as [oldIdx, newIdx] pairs for each differing line.
      * Uses a simple LCS-based approach for small diffs.
+     *
+     * @param oldLines the oldLines
+     * @param newLines the newLines
+     * @return the result
      */
     private static List<int[]> computeChanges(String[] oldLines, String[] newLines) {
         // Find common prefix
@@ -100,8 +110,9 @@ final class DiffUtils {
         }
 
         List<int[]> changes = new ArrayList<>();
+
         // Each change: [oldLineStart, oldLineEnd, newLineStart, newLineEnd]
-        changes.add(new int[]{oldDiffStart, oldDiffEnd, newDiffStart, newDiffEnd});
+        changes.add(new int[] {oldDiffStart, oldDiffEnd, newDiffStart, newDiffEnd});
         return changes;
     }
 
@@ -113,35 +124,39 @@ final class DiffUtils {
             int ctxAfterNew = Math.min(CONTEXT_LINES, newLen - change[3]);
             int ctxAfter = Math.min(ctxAfterOld, ctxAfterNew);
 
-            hunks.add(new int[]{
-                    change[0] - ctxBefore,
-                    change[1] + ctxAfter,
-                    change[2] - ctxBefore,
-                    change[3] + ctxAfter
-            });
+            hunks.add(
+                    new int[] {change[0] - ctxBefore, change[1] + ctxAfter, change[2] - ctxBefore, change[3] + ctxAfter
+                    });
         }
         return hunks;
     }
 
     private static void appendHunkContent(
             StringBuilder sb,
-            String[] oldLines, String[] newLines,
-            int oldStart, int oldEnd, int newStart, int newEnd,
-            List<int[]> changes
-    ) {
+            String[] oldLines,
+            String[] newLines,
+            int oldStart,
+            int oldEnd,
+            int newStart,
+            int newEnd,
+            List<int[]> changes) {
         int[] change = changes.get(0);
+
         // Context before
         for (int i = oldStart; i < change[0]; i++) {
             sb.append(' ').append(oldLines[i]).append('\n');
         }
+
         // Removed lines
         for (int i = change[0]; i < change[1]; i++) {
             sb.append('-').append(oldLines[i]).append('\n');
         }
+
         // Added lines
         for (int i = change[2]; i < change[3]; i++) {
             sb.append('+').append(newLines[i]).append('\n');
         }
+
         // Context after
         for (int i = change[1]; i < oldEnd; i++) {
             sb.append(' ').append(oldLines[i]).append('\n');

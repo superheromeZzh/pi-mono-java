@@ -1,15 +1,23 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026-2026. All rights reserved.
+ */
+
 package com.huawei.hicampus.mate.matecampusclaw.ai.model;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
 
-import com.huawei.hicampus.mate.matecampusclaw.ai.types.*;
+import com.huawei.hicampus.mate.matecampusclaw.ai.types.Api;
+import com.huawei.hicampus.mate.matecampusclaw.ai.types.InputModality;
+import com.huawei.hicampus.mate.matecampusclaw.ai.types.Model;
+import com.huawei.hicampus.mate.matecampusclaw.ai.types.ModelCost;
+import com.huawei.hicampus.mate.matecampusclaw.ai.types.Provider;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -26,26 +34,36 @@ class ModelRegistryTest {
 
     private Model anthropicModel(String id, String name) {
         return new Model(
-            id, name,
-            Api.ANTHROPIC_MESSAGES, Provider.ANTHROPIC,
-            "https://api.anthropic.com", false,
-            List.of(InputModality.TEXT),
-            new ModelCost(3.0, 15.0, 0.3, 3.75),
-            200000, 8192, null, null,
-            null
-        );
+                id,
+                name,
+                Api.ANTHROPIC_MESSAGES,
+                Provider.ANTHROPIC,
+                "https://api.anthropic.com",
+                false,
+                List.of(InputModality.TEXT),
+                new ModelCost(3.0, 15.0, 0.3, 3.75),
+                200000,
+                8192,
+                null,
+                null,
+                null);
     }
 
     private Model openaiModel(String id, String name) {
         return new Model(
-            id, name,
-            Api.OPENAI_RESPONSES, Provider.OPENAI,
-            "https://api.openai.com", false,
-            List.of(InputModality.TEXT, InputModality.IMAGE),
-            new ModelCost(2.5, 10.0, 1.25, 2.5),
-            128000, 16384, null, null,
-            null
-        );
+                id,
+                name,
+                Api.OPENAI_RESPONSES,
+                Provider.OPENAI,
+                "https://api.openai.com",
+                false,
+                List.of(InputModality.TEXT, InputModality.IMAGE),
+                new ModelCost(2.5, 10.0, 1.25, 2.5),
+                128000,
+                16384,
+                null,
+                null,
+                null);
     }
 
     @Nested
@@ -77,10 +95,7 @@ class ModelRegistryTest {
         @Test
         void registerAllMultipleModels() {
             var models = List.of(
-                anthropicModel("model-a", "A"),
-                anthropicModel("model-b", "B"),
-                openaiModel("model-c", "C")
-            );
+                    anthropicModel("model-a", "A"), anthropicModel("model-b", "B"), openaiModel("model-c", "C"));
             registry.registerAll(models);
 
             assertTrue(registry.getModel(Provider.ANTHROPIC, "model-a").isPresent());
@@ -258,8 +273,9 @@ class ModelRegistryTest {
             for (var model : ModelRegistry.builtInModels()) {
                 assertTrue(model.contextWindow() > 0, "contextWindow must be positive: " + model.id());
                 assertTrue(model.maxTokens() > 0, "maxTokens must be positive: " + model.id());
-                assertTrue(model.maxTokens() <= model.contextWindow(),
-                    "maxTokens should not exceed contextWindow: " + model.id());
+                assertTrue(
+                        model.maxTokens() <= model.contextWindow(),
+                        "maxTokens should not exceed contextWindow: " + model.id());
             }
         }
 

@@ -1,22 +1,35 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026-2026. All rights reserved.
+ */
+
 package com.campusclaw.codingagent.mode;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
+import java.util.Locale;
 
-import com.campusclaw.codingagent.mode.tui.*;
+import com.campusclaw.codingagent.mode.tui.AssistantMessageComponent;
+import com.campusclaw.codingagent.mode.tui.EditorContainer;
+import com.campusclaw.codingagent.mode.tui.FooterComponent;
+import com.campusclaw.codingagent.mode.tui.UserMessageComponent;
 import com.campusclaw.tui.Tui;
-import com.campusclaw.tui.component.*;
+import com.campusclaw.tui.component.Container;
+import com.campusclaw.tui.component.Text;
 import com.campusclaw.tui.terminal.TestTerminal;
 
 import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Visual rendering test — validates the full TUI output matches expectations.
- * Run this test and inspect the output to verify visual correctness.
+ * Run this test and inspect the logger output to verify visual correctness.
  */
 class TuiVisualTest {
+
+    private static final Logger log = LoggerFactory.getLogger(TuiVisualTest.class);
 
     @Test
     void fullConversationRendersCorrectly() {
@@ -26,9 +39,8 @@ class TuiVisualTest {
         var footer = new FooterComponent();
 
         // Welcome
-        chatContainer.addChild(new Text(
-                "\033[1m\033[36mCampusClaw\033[0m\033[2m (glm-5)\033[0m\n"
-                        + "\033[2mType /help for commands, /quit to exit\033[0m"));
+        chatContainer.addChild(new Text("\033[1m\033[36mCampusClaw\033[0m\033[2m (glm-5)\033[0m\n"
+                + "\033[2mType /help for commands, /quit to exit\033[0m"));
 
         // User message
         chatContainer.addChild(new UserMessageComponent("你好，你是哪个大模型"));
@@ -52,11 +64,11 @@ class TuiVisualTest {
 
         List<String> lines = root.render(80);
 
-        // Print for visual inspection
-        System.out.println("=== RENDERED (" + lines.size() + " lines) ===");
+        // Log rendered output for visual inspection
+        log.info("=== RENDERED ({} lines) ===", lines.size());
         for (int i = 0; i < lines.size(); i++) {
             String clean = stripAnsi(lines.get(i));
-            System.out.printf("%3d: |%s|\n", i, clean);
+            log.info("{}: |{}|", String.format(Locale.ROOT, "%3d", i), clean);
         }
 
         // Structural assertions
@@ -115,6 +127,7 @@ class TuiVisualTest {
     @Test
     void streamingIndicatorAppearsWhenIncomplete() {
         var assistant = new AssistantMessageComponent();
+
         // No content yet, not complete
         var lines = assistant.render(80);
         String all = String.join("\n", lines.stream().map(this::stripAnsi).toList());
@@ -135,14 +148,17 @@ class TuiVisualTest {
     @Test
     void streamingIndicatorDisappearsWhenContentArrives() {
         var assistant = new AssistantMessageComponent();
+
         // First render: no content
         var lines1 = assistant.render(80);
-        assertTrue(String.join("\n", lines1.stream().map(this::stripAnsi).toList()).contains("..."));
+        assertTrue(
+                String.join("\n", lines1.stream().map(this::stripAnsi).toList()).contains("..."));
 
         // Second render: text arrives
         assistant.appendText("Hello");
         var lines2 = assistant.render(80);
-        assertFalse(String.join("\n", lines2.stream().map(this::stripAnsi).toList()).contains("..."));
+        assertFalse(
+                String.join("\n", lines2.stream().map(this::stripAnsi).toList()).contains("..."));
     }
 
     @Test
@@ -178,7 +194,6 @@ class TuiVisualTest {
     }
 
     private String stripAnsi(String s) {
-        return s.replaceAll("\033\\[[;\\d]*[a-zA-Z]", "")
-                .replaceAll("\033\\[\\d+;\\d+;\\d+;\\d+;\\d+m", "");
+        return s.replaceAll("\033\\[[;\\d]*[a-zA-Z]", "").replaceAll("\033\\[\\d+;\\d+;\\d+;\\d+;\\d+m", "");
     }
 }

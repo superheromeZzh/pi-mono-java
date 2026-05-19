@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026-2026. All rights reserved.
+ */
+
 package com.huawei.hicampus.mate.matecampusclaw.codingagent.mode.tui;
 
 import java.io.IOException;
@@ -7,6 +11,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.function.Consumer;
 
@@ -18,6 +23,9 @@ import com.huawei.hicampus.mate.matecampusclaw.tui.component.SelectList;
 /**
  * Session selector overlay for /resume.
  * Shows recent session files with metadata.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 public class SessionSelectorOverlay implements Component, Focusable {
 
@@ -26,6 +34,7 @@ public class SessionSelectorOverlay implements Component, Focusable {
     private static final String ANSI_RESET = "\033[0m";
     private static final String ANSI_BOLD = "\033[1m";
 
+    @SuppressWarnings("checkstyle:top_class_comment")
     public record SessionItem(String id, Path path, Instant modified, long sizeKb) {}
 
     private final SelectList<SessionItem> selectList;
@@ -40,10 +49,14 @@ public class SessionSelectorOverlay implements Component, Focusable {
 
         this.selectList = new SelectList<>(sessions, this::renderItem, 15);
         selectList.setOnSelect(item -> {
-            if (onSelect != null) onSelect.accept(item);
+            if (onSelect != null) {
+                onSelect.accept(item);
+            }
         });
         selectList.setOnCancel(() -> {
-            if (onCancel != null) onCancel.run();
+            if (onCancel != null) {
+                onCancel.run();
+            }
         });
     }
 
@@ -61,22 +74,27 @@ public class SessionSelectorOverlay implements Component, Focusable {
 
     private String renderItem(SessionItem item) {
         String time = item.modified.toString().substring(0, 16).replace("T", " ");
-        return String.format("%-10s  %s  %dKB", item.id, time, item.sizeKb);
+        return String.format(Locale.ROOT, "%-10s  %s  %dKB", item.id, time, item.sizeKb);
     }
 
     private List<SessionItem> loadSessions(String cwd) {
         String safePath = "--" + cwd.replaceFirst("^[/\\\\]", "").replaceAll("[/\\\\:]", "-") + "--";
         Path sessionDir = AppPaths.SESSIONS_DIR.resolve(safePath);
 
-        if (!Files.isDirectory(sessionDir)) return List.of();
+        if (!Files.isDirectory(sessionDir)) {
+            return List.of();
+        }
 
         try (var stream = Files.list(sessionDir)) {
-            return stream
-                    .filter(p -> p.toString().endsWith(".jsonl"))
+            return stream.filter(p -> p.toString().endsWith(".jsonl"))
                     .sorted(Comparator.comparingLong((Path p) -> {
-                        try { return Files.getLastModifiedTime(p).toMillis(); }
-                        catch (IOException e) { return 0; }
-                    }).reversed())
+                                try {
+                                    return Files.getLastModifiedTime(p).toMillis();
+                                } catch (IOException e) {
+                                    return 0;
+                                }
+                            })
+                            .reversed())
                     .limit(20)
                     .map(p -> {
                         try {
@@ -99,7 +117,9 @@ public class SessionSelectorOverlay implements Component, Focusable {
     public void handleInput(String data) {
         // Escape / Ctrl+C → cancel
         if ("\033".equals(data) || "\003".equals(data)) {
-            if (onCancel != null) onCancel.run();
+            if (onCancel != null) {
+                onCancel.run();
+            }
             return;
         }
         selectList.handleInput(data);
@@ -114,8 +134,8 @@ public class SessionSelectorOverlay implements Component, Focusable {
     public List<String> render(int width) {
         var lines = new ArrayList<String>();
         lines.add("");
-        lines.add(" " + ANSI_BOLD + ANSI_ACCENT + "Resume Session" + ANSI_RESET
-                + ANSI_DIM + "  (↑↓ navigate, Enter select, Esc cancel)" + ANSI_RESET);
+        lines.add(" " + ANSI_BOLD + ANSI_ACCENT + "Resume Session" + ANSI_RESET + ANSI_DIM
+                + "  (↑↓ navigate, Enter select, Esc cancel)" + ANSI_RESET);
         lines.add("");
 
         if (empty) {
@@ -131,7 +151,9 @@ public class SessionSelectorOverlay implements Component, Focusable {
     }
 
     @Override
-    public boolean isFocused() { return focused; }
+    public boolean isFocused() {
+        return focused;
+    }
 
     @Override
     public void setFocused(boolean focused) {

@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026-2026. All rights reserved.
+ */
+
 package com.campusclaw.ai.stream;
 
 import java.util.function.Function;
@@ -24,6 +28,9 @@ import reactor.core.publisher.Sinks;
  *
  * @param <T> the event type
  * @param <R> the final result type
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 public class EventStream<T, R> {
 
@@ -64,7 +71,9 @@ public class EventStream<T, R> {
      */
     public void push(T event) {
         synchronized (lock) {
-            if (done) { return; }
+            if (done) {
+                return;
+            }
 
             if (isComplete.test(event)) {
                 done = true;
@@ -90,7 +99,9 @@ public class EventStream<T, R> {
      */
     public void end(R result) {
         synchronized (lock) {
-            if (done) { return; }
+            if (done) {
+                return;
+            }
             done = true;
             resultSink.tryEmitValue(result);
             eventSink.tryEmitComplete();
@@ -106,7 +117,9 @@ public class EventStream<T, R> {
      */
     public void end() {
         synchronized (lock) {
-            if (done) { return; }
+            if (done) {
+                return;
+            }
             done = true;
             resultSink.tryEmitEmpty();
             eventSink.tryEmitComplete();
@@ -123,7 +136,9 @@ public class EventStream<T, R> {
      */
     public void error(Throwable e) {
         synchronized (lock) {
-            if (done) { return; }
+            if (done) {
+                return;
+            }
             done = true;
             resultSink.tryEmitError(e);
             eventSink.tryEmitError(e);
@@ -136,6 +151,8 @@ public class EventStream<T, R> {
      * <p>This is a unicast Flux — only one subscriber is supported.
      * Events pushed before subscription are buffered and delivered
      * when a subscriber connects.
+     *
+     * @return the underlying event flux
      */
     public Flux<T> asFlux() {
         return eventSink.asFlux();
@@ -149,6 +166,8 @@ public class EventStream<T, R> {
      * If the stream ends without a result ({@link #end()}), the Mono completes empty.
      * If the stream ends with an error ({@link #error(Throwable)}), the Mono signals
      * that error.
+     *
+     * @return the final-result mono
      */
     public Mono<R> result() {
         return resultSink.asMono();

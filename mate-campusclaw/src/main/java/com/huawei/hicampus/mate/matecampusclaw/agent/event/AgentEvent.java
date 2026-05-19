@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026-2026. All rights reserved.
+ */
+
 package com.huawei.hicampus.mate.matecampusclaw.agent.event;
 
 import com.fasterxml.jackson.annotation.JsonSubTypes;
@@ -5,6 +9,9 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
 /**
  * Sealed union of events emitted by the agent runtime.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
+ * @since [br_eCampusCore 25.1.0_Next]
  */
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
 @JsonSubTypes({
@@ -19,15 +26,14 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
     @JsonSubTypes.Type(value = ToolExecutionUpdateEvent.class, name = "tool_execution_update"),
     @JsonSubTypes.Type(value = ToolExecutionEndEvent.class, name = "tool_execution_end")
 })
-public sealed interface AgentEvent permits
-    AgentStartEvent,
-    AgentEndEvent,
-    TurnStartEvent,
-    TurnEndEvent,
-    MessageStartEvent,
-    MessageUpdateEvent,
-    MessageEndEvent,
-    ToolExecutionStartEvent,
-    ToolExecutionUpdateEvent,
-    ToolExecutionEndEvent {
-}
+public sealed interface AgentEvent
+        permits AgentStartEvent,
+                AgentEndEvent,
+                TurnStartEvent,
+                TurnEndEvent,
+                MessageStartEvent,
+                MessageUpdateEvent,
+                MessageEndEvent,
+                ToolExecutionStartEvent,
+                ToolExecutionUpdateEvent,
+                ToolExecutionEndEvent {}
