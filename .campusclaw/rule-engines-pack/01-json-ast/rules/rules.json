@@ -1,0 +1,232 @@
+{
+  "version": 1,
+  "rules": [
+    {
+      "id": "vav_damper_control_error_70d3c8a2",
+      "name": "风阀控制误差超限",
+      "meta": {
+        "deviceType": "VAV",
+        "component": "风阀",
+        "points": [
+          "damper_opening",
+          "damper_opening_sp"
+        ]
+      },
+      "window": {
+        "type": "rolling",
+        "durationSeconds": 1800
+      },
+      "trigger": {
+        "expr": {
+          "op": ">",
+          "left": {
+            "func": "abs",
+            "args": [
+              {
+                "op": "-",
+                "left": {
+                  "fact": "damper_opening"
+                },
+                "right": {
+                  "fact": "damper_opening_sp"
+                }
+              }
+            ]
+          },
+          "right": {
+            "const": 5
+          }
+        }
+      },
+      "effective": {
+        "metric": "ratio_true",
+        "source": "trigger",
+        "threshold": 0.95
+      },
+      "原因分析": "",
+      "专家处理建议": ""
+    },
+    {
+      "id": "vav_temp_sensor_over_range_4a7e9c1d",
+      "name": "检测温度超限",
+      "meta": {
+        "deviceType": "VAV",
+        "component": "温度传感器",
+        "points": [
+          "room_temp"
+        ]
+      },
+      "window": {
+        "type": "rolling",
+        "durationSeconds": 900
+      },
+      "trigger": {
+        "expr": {
+          "op": "or",
+          "left": {
+            "op": "<",
+            "left": {
+              "fact": "room_temp"
+            },
+            "right": {
+              "const": -5
+            }
+          },
+          "right": {
+            "op": ">",
+            "left": {
+              "fact": "room_temp"
+            },
+            "right": {
+              "const": 40
+            }
+          }
+        }
+      },
+      "effective": {
+        "metric": "ratio_true",
+        "source": "trigger",
+        "threshold": 0.9
+      },
+      "原因分析": "",
+      "专家处理建议": ""
+    },
+    {
+      "id": "vav_co2_sensor_fault_8b3f2d41",
+      "name": "CO2传感器故障",
+      "meta": {
+        "deviceType": "VAV",
+        "component": "CO2传感器",
+        "points": [
+          "room_co2"
+        ]
+      },
+      "window": {
+        "type": "rolling",
+        "durationSeconds": 1800
+      },
+      "trigger": {
+        "expr": {
+          "op": "or",
+          "left": {
+            "op": "<",
+            "left": {
+              "fact": "room_co2"
+            },
+            "right": {
+              "const": 0
+            }
+          },
+          "right": {
+            "op": ">",
+            "left": {
+              "fact": "room_co2"
+            },
+            "right": {
+              "const": 2000
+            }
+          }
+        }
+      },
+      "effective": {
+        "metric": "ratio_true",
+        "source": "trigger",
+        "threshold": 0.9
+      },
+      "原因分析": "1. 硬件性能故障：传感器感测元件老化、漂移或损坏，导致输出信号超出量程（如出现负值）。\n2.线路及供电问题：接线松动、短路或电源电压（通常为 24V DC）不稳定，导致信号传输异常。",
+      "专家处理建议": "1.现场核实：使用手持式 CO2 检测仪进行实地比对，确认是传感器误报还是环境真实超标。\n2.检查电气连接：紧固传感器接线端子，测量供电电压是否处于正常范围，排除线路干扰。"
+    },
+    {
+      "id": "pahuan_vav_supply_fan_inverter_fault_a1b2c3d4",
+      "name": "新风机组送风机变频器故障",
+      "meta": {
+        "deviceType": "新风机",
+        "component": "送风机变频器",
+        "points": [
+          "SupplyFanInverterFaultAlarm"
+        ]
+      },
+      "window": {
+        "type": "rolling",
+        "durationSeconds": 60
+      },
+      "trigger": {
+        "expr": {
+          "op": "==",
+          "left": {
+            "fact": "SupplyFanInverterFaultAlarm"
+          },
+          "right": {
+            "const": 0
+          }
+        }
+      },
+      "effective": {
+        "metric": "ratio_true",
+        "source": "trigger",
+        "threshold": 1
+      },
+      "原因分析": "",
+      "专家处理建议": ""
+    },
+    {
+      "id": "ahu_supply_air_pressure_anomaly_e5f6a7b8",
+      "name": "送风压力异常",
+      "meta": {
+        "deviceType": "AHU",
+        "component": "送风压力传感器",
+        "points": [
+          "supply_air_pressure",
+          "supply_air_pressure_sp",
+          "supply_fan_status"
+        ]
+      },
+      "window": {
+        "type": "rolling",
+        "durationSeconds": 900
+      },
+      "trigger": {
+        "delaySeconds": 600,
+        "expr": {
+          "op": "and",
+          "left": {
+            "op": "==",
+            "left": {
+              "fact": "supply_fan_status"
+            },
+            "right": {
+              "const": 1
+            }
+          },
+          "right": {
+            "op": ">",
+            "left": {
+              "func": "abs",
+              "args": [
+                {
+                  "op": "-",
+                  "left": {
+                    "fact": "supply_air_pressure"
+                  },
+                  "right": {
+                    "fact": "supply_air_pressure_sp"
+                  }
+                }
+              ]
+            },
+            "right": {
+              "const": 20
+            }
+          }
+        }
+      },
+      "effective": {
+        "metric": "ratio_true",
+        "source": "trigger",
+        "threshold": 0.9
+      },
+      "原因分析": "",
+      "专家处理建议": ""
+    }
+  ]
+}

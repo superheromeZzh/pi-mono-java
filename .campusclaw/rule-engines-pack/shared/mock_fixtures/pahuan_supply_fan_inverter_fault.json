@@ -1,0 +1,41 @@
+{
+  "deviceId": "新风机_送风机变频器",
+  "data": [
+    {
+      "ts": 1700000000,
+      "points": {
+        "SupplyFanInverterFaultAlarm": 1
+      }
+    },
+    {
+      "ts": 1700000060,
+      "points": {
+        "SupplyFanInverterFaultAlarm": 1
+      }
+    },
+    {
+      "ts": 1700000120,
+      "points": {
+        "SupplyFanInverterFaultAlarm": 1
+      }
+    },
+    {
+      "ts": 1700000180,
+      "points": {
+        "SupplyFanInverterFaultAlarm": 1
+      }
+    },
+    {
+      "ts": 1700000240,
+      "points": {
+        "SupplyFanInverterFaultAlarm": 0
+      }
+    },
+    {
+      "ts": 1700000300,
+      "points": {
+        "SupplyFanInverterFaultAlarm": 0
+      }
+    }
+  ]
+}

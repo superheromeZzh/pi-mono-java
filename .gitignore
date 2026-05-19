@@ -54,6 +54,8 @@ package-lock.json
 .campusclaw/*
 !.campusclaw/skills/
 !.campusclaw/skills/**
+!.campusclaw/rule-engines-pack/
+!.campusclaw/rule-engines-pack/**
 
 # Python bytecode (skills/scripts may include python helpers)
 __pycache__/
