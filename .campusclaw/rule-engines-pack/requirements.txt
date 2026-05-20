@@ -1,0 +1,5 @@
+# 02-rule-engine-pypi 需要
+rule-engine>=4.0.0
+
+# 若在本包内用 Excel Agent（不在此目录则忽略）
+# openpyxl>=3.1.0
