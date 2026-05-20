@@ -5,27 +5,24 @@
 package com.campusclaw.agent.subagent.acp.backend;
 
 import java.io.BufferedReader;
-import java.io.InputStreamReader;
 import java.io.PrintStream;
-import java.nio.charset.StandardCharsets;
 
 /**
  * Test-only stub ACP server. Reads ndJSON envelopes from stdin and writes canned JSON-RPC
- * responses to stdout. Used by {@link ProcessAcpBackendTest} so that {@code ProcessAcpBackend.open}
- * can complete its handshake against a real child process, which then exercises the post-open
- * code paths (prompt/cancel/close, drainStderr at scale, destroyTree waitFor + onExit, etc.).
+ * responses to stdout. Used by {@link ProcessAcpBackendTest} via {@link InProcessFakeAcpServer}
+ * so that {@code ProcessAcpBackend.open} can complete its handshake without forking a real
+ * JVM child — the dispatch loop runs on a virtual thread inside the test process and the
+ * post-open code paths (prompt/cancel/close, drainStderr at scale, destroyTree waitFor +
+ * onExit, etc.) are still exercised end-to-end.
  *
  * <p>Each request is recognised by its {@code "method":"..."} substring; we don't fully parse
  * JSON because the protocol surface we care about for tests is small and the field shapes are
  * stable. The corresponding response copies the request {@code id} back via a regex.
  *
- * <p>Optional behaviour switches via system properties:
- * <ul>
- *   <li>{@code fakeacp.stderr.lines=N} — print N lines to stderr at startup (used to exercise
- *       the {@code StderrTail} ring-buffer overflow branch).</li>
- *   <li>{@code fakeacp.exit.after.prompt=true} — exit immediately after writing the prompt
- *       reply (so the parent's close path sees an already-dead child).</li>
- * </ul>
+ * <p>Behaviour switches live in {@link ServerOptions}: which tool name field to use, whether
+ * the server initiates a {@code session/request_permission} round-trip before answering the
+ * prompt, what shape the options array takes, whether to exit immediately after the prompt
+ * reply, and how many noise lines to blast onto stderr at startup.
  *
  * @version [br_eCampusCore 25.1.0_Next, 2026/05/20]
  * @since [br_eCampusCore 25.1.0_Next]
@@ -35,42 +32,26 @@ public final class FakeAcpServer {
 
     private FakeAcpServer() {}
 
-    private record ServerOptions(
+    /**
+     * Behaviour switches for the dispatch loop. Defaults match the most common happy path
+     * (no permission round-trip, name field "name", tool "bash", include toolCall + params,
+     * allow/reject options).
+     */
+    record ServerOptions(
             boolean exitAfterPrompt,
             boolean sendPermission,
             String toolNameField,
             String toolName,
             boolean includeToolCall,
             boolean includeParams,
-            String optionsShape) {}
+            String optionsShape) {
 
-    private static ServerOptions readOptions() {
-        return new ServerOptions(
-                Boolean.parseBoolean(System.getProperty("fakeacp.exit.after.prompt", "false")),
-                Boolean.parseBoolean(System.getProperty("fakeacp.send.permission", "false")),
-                System.getProperty("fakeacp.tool.name.field", "name"),
-                System.getProperty("fakeacp.tool.name", "bash"),
-                Boolean.parseBoolean(System.getProperty("fakeacp.include.toolcall", "true")),
-                Boolean.parseBoolean(System.getProperty("fakeacp.include.params", "true")),
-                System.getProperty("fakeacp.options.shape", "allow_reject"));
-    }
-
-    public static void main(String[] args) throws Exception {
-        // Optional: blast some stderr at startup so the parent can drain a non-trivial tail.
-        int stderrLines = Integer.parseInt(System.getProperty("fakeacp.stderr.lines", "0"));
-        for (int i = 0; i < stderrLines; i++) {
-            System.err.println("stderr-noise-line-" + i);
-        }
-        System.err.flush();
-
-        ServerOptions opts = readOptions();
-        PrintStream out = new PrintStream(System.out, false, StandardCharsets.UTF_8);
-        try (var reader = new BufferedReader(new InputStreamReader(System.in, StandardCharsets.UTF_8))) {
-            runDispatchLoop(reader, out, opts);
+        static ServerOptions defaults() {
+            return new ServerOptions(false, false, "name", "bash", true, true, "allow_reject");
         }
     }
 
-    private static void runDispatchLoop(BufferedReader reader, PrintStream out, ServerOptions opts) throws Exception {
+    static void runDispatchLoop(BufferedReader reader, PrintStream out, ServerOptions opts) throws Exception {
         long serverInitiatedId = 1000L;
         String line;
         while ((line = reader.readLine()) != null) {
