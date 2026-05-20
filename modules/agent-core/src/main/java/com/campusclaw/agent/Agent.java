@@ -41,6 +41,8 @@ import com.campusclaw.ai.types.SimpleStreamOptions;
 import com.campusclaw.ai.types.ThinkingLevel;
 import com.campusclaw.ai.types.UserMessage;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -52,6 +54,8 @@ import org.springframework.stereotype.Service;
  */
 @Service
 public class Agent {
+
+    private static final Logger log = LoggerFactory.getLogger(Agent.class);
 
     private static final Executor VIRTUAL_THREAD_EXECUTOR =
             command -> Thread.ofVirtual().start(command);
@@ -273,8 +277,12 @@ public class Agent {
         for (var listener : listeners) {
             try {
                 listener.onEvent(event);
-            } catch (RuntimeException ignored) {
-                // Listeners should not break the agent run.
+            } catch (RuntimeException e) {
+                // Listeners should not break the agent run; surface the bug in logs.
+                log.warn(
+                        "agent event listener threw exception (event={})",
+                        event.getClass().getSimpleName(),
+                        e);
             }
         }
     }

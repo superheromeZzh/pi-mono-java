@@ -13,6 +13,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Base64;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 
@@ -36,6 +37,7 @@ public final class ImageUtils {
      * Maximum dimension for images sent to LLM (preserves aspect ratio).
      */
     public static final int MAX_LLM_DIMENSION = 2048;
+
     /**
      * Maximum file size for images (5 MB).
      */
@@ -194,16 +196,11 @@ public final class ImageUtils {
      * @param path the path
      * @return the result
      */
+    private static final List<String> IMAGE_FILE_EXTENSIONS =
+            List.of(".png", ".jpg", ".jpeg", ".gif", ".webp", ".bmp", ".svg", ".ico", ".tiff");
+
     public static boolean isImageFile(Path path) {
         String name = path.getFileName().toString().toLowerCase(Locale.ROOT);
-        return name.endsWith(".png")
-                || name.endsWith(".jpg")
-                || name.endsWith(".jpeg")
-                || name.endsWith(".gif")
-                || name.endsWith(".webp")
-                || name.endsWith(".bmp")
-                || name.endsWith(".svg")
-                || name.endsWith(".ico")
-                || name.endsWith(".tiff");
+        return IMAGE_FILE_EXTENSIONS.stream().anyMatch(name::endsWith);
     }
 }

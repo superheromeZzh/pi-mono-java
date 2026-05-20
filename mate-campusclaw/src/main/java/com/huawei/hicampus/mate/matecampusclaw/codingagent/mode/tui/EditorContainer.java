@@ -40,6 +40,7 @@ public class EditorContainer implements Component, Focusable {
     public static final String THINKING_MEDIUM = "\033[38;2;129;162;190m"; // #81a2be
     public static final String THINKING_HIGH = "\033[38;2;178;148;187m"; // #b294bb
     public static final String THINKING_XHIGH = "\033[38;2;209;131;232m"; // #d183e8
+
     // Legacy aliases
     public static final String CYAN = BORDER_DEFAULT;
     public static final String YELLOW = BORDER_BASH;

@@ -23,6 +23,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
@@ -38,6 +40,8 @@ import org.springframework.stereotype.Component;
 @Component
 @ConditionalOnProperty(name = "tool.execution.hybrid-enabled", havingValue = "false", matchIfMissing = true)
 public class BashTool implements AgentTool {
+
+    private static final Logger log = LoggerFactory.getLogger(BashTool.class);
 
     /**
      * No default timeout — matches campusclaw behavior (timeout only if explicitly set).
@@ -142,8 +146,9 @@ public class BashTool implements AgentTool {
                 Path tempFile = Files.createTempFile("bash-output-", ".txt");
                 Files.writeString(tempFile, combined, StandardCharsets.UTF_8);
                 fullOutputPath = tempFile.toString();
-            } catch (IOException ignored) {
+            } catch (IOException e) {
                 // If we can't write the temp file, just proceed without it
+                log.warn("failed to spill truncated bash output to temp file; full output unavailable", e);
             }
         } else {
             displayText = combined;

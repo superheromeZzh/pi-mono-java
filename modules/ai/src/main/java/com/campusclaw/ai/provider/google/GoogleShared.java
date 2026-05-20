@@ -27,6 +27,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import jakarta.annotation.Nullable;
 
 /**
@@ -38,6 +41,7 @@ import jakarta.annotation.Nullable;
  */
 public final class GoogleShared {
 
+    private static final Logger log = LoggerFactory.getLogger(GoogleShared.class);
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
     private GoogleShared() {}
@@ -219,8 +223,9 @@ public final class GoogleShared {
             if (fc.has("args")) {
                 try {
                     args = MAPPER.convertValue(fc.get("args"), new TypeReference<>() {});
-                } catch (Exception ignored) {
+                } catch (Exception e) {
                     // fall back to empty args — server sent malformed JSON
+                    log.warn("Google function-call args could not be parsed (name={}); using empty args", name, e);
                 }
             }
             return new ToolCall(java.util.UUID.randomUUID().toString(), name, args);

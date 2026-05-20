@@ -169,13 +169,15 @@ public class AcpTransport implements AutoCloseable {
         Thread closer = Thread.ofVirtual().name("acp-transport-closer").unstarted(() -> {
             try {
                 input.close();
-            } catch (IOException ignored) {
+            } catch (IOException e) {
                 // best-effort: child may already be gone
+                log.debug("AcpTransport input.close best-effort failure", e);
             }
             try {
                 output.close();
-            } catch (IOException ignored) {
+            } catch (IOException e) {
                 // best-effort
+                log.debug("AcpTransport output.close best-effort failure", e);
             }
             note("AcpTransport.close streams closed (async)");
         });

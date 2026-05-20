@@ -13,6 +13,7 @@ import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 import com.huawei.hicampus.mate.matecampusclaw.ai.provider.ApiProvider;
 import com.huawei.hicampus.mate.matecampusclaw.ai.stream.AssistantMessageEventStream;
@@ -142,8 +143,12 @@ public class GoogleVertexAIProvider implements ApiProvider {
         }
         if (projectId != null && !projectId.isBlank()) {
             return String.format(
+                    Locale.ROOT,
                     "https://%s-aiplatform.googleapis.com/v1/projects/%s/locations/%s/publishers/google/models/%s:streamGenerateContent?alt=sse",
-                    location, projectId, location, model.id());
+                    location,
+                    projectId,
+                    location,
+                    model.id());
         }
         if (apiKey != null && !apiKey.isBlank()) {
             return "https://generativelanguage.googleapis.com/v1beta/models/" + model.id()
@@ -251,8 +256,9 @@ public class GoogleVertexAIProvider implements ApiProvider {
                     idx,
                     MAPPER.writeValueAsString(tc.arguments()),
                     buildMessage(model, state.blocks, state.usage, state.stop)));
-        } catch (Exception ignored) {
-            // ToolCallDelta is best-effort; swallow JSON serialization failures.
+        } catch (Exception e) {
+            // ToolCallDelta is best-effort; serialization failures only break the streaming delta event.
+            log.debug("Vertex ToolCallDelta serialization failed; dropping incremental delta event", e);
         }
         eventStream.push(new com.huawei.hicampus.mate.matecampusclaw.ai.stream.AssistantMessageEvent.ToolCallEndEvent(
                 idx, tc, buildMessage(model, state.blocks, state.usage, state.stop)));

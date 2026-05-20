@@ -18,6 +18,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
@@ -31,6 +33,8 @@ import org.springframework.stereotype.Component;
 @Component
 @ConditionalOnProperty(name = "tool.execution.hybrid-enabled", havingValue = "true", matchIfMissing = false)
 public class HybridGlobTool implements AgentTool {
+
+    private static final Logger log = LoggerFactory.getLogger(HybridGlobTool.class);
 
     private final ExecutionRouter router;
     private final ObjectMapper mapper = new ObjectMapper();
@@ -98,6 +102,7 @@ public class HybridGlobTool implements AgentTool {
                 return ExecutionMode.valueOf(mode.toString().toUpperCase(Locale.ROOT));
             } catch (IllegalArgumentException e) {
                 // 忽略无效值
+                log.debug("ignoring unknown _executionMode '{}', router will pick default", mode, e);
             }
         }
         return null;

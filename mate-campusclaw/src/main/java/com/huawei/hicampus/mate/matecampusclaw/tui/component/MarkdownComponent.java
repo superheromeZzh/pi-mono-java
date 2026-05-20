@@ -168,14 +168,22 @@ public class MarkdownComponent implements Component {
 
     private boolean isBlockBoundary(String[] rawLines, int i) {
         String line = rawLines[i];
-        return line.isEmpty()
-                || HEADING_PATTERN.matcher(line).matches()
+        if (line.isEmpty() || isTableStart(rawLines, i)) {
+            return true;
+        }
+        return matchesHeadingOrRule(line) || matchesListOrQuote(line);
+    }
+
+    private boolean matchesHeadingOrRule(String line) {
+        return HEADING_PATTERN.matcher(line).matches()
                 || HR_PATTERN.matcher(line).matches()
-                || CODE_FENCE_PATTERN.matcher(line).matches()
-                || UNORDERED_LIST_PATTERN.matcher(line).matches()
+                || CODE_FENCE_PATTERN.matcher(line).matches();
+    }
+
+    private boolean matchesListOrQuote(String line) {
+        return UNORDERED_LIST_PATTERN.matcher(line).matches()
                 || ORDERED_LIST_PATTERN.matcher(line).matches()
-                || BLOCKQUOTE_PATTERN.matcher(line).matches()
-                || isTableStart(rawLines, i);
+                || BLOCKQUOTE_PATTERN.matcher(line).matches();
     }
 
     private int consumeParagraph(String[] rawLines, int startIdx, int width, List<String> out) {

@@ -128,8 +128,9 @@ public class ChatHandler {
                         "error",
                         MAPPER.writeValueAsString(
                                 Map.of("error", Agent.formatError(ex), "conversation_id", conversationId))));
-            } catch (Exception ignored) {
-                // swallow — sink will be completed below regardless
+            } catch (Exception e) {
+                // sink will be completed below regardless — log so diagnostics survive
+                log.warn("failed to serialize SSE error event for conversation {}", conversationId, e);
             }
             sink.complete();
         });

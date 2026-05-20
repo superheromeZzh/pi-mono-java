@@ -6,6 +6,7 @@ package com.campusclaw.codingagent.tool.edit;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * Generates unified diff output from before/after text.
@@ -47,7 +48,12 @@ final class DiffUtils {
             int newEnd = hunk[3];
 
             sb.append(String.format(
-                    "@@ -%d,%d +%d,%d @@\n", oldStart + 1, oldEnd - oldStart, newStart + 1, newEnd - newStart));
+                    Locale.ROOT,
+                    "@@ -%d,%d +%d,%d @@\n",
+                    oldStart + 1,
+                    oldEnd - oldStart,
+                    newStart + 1,
+                    newEnd - newStart));
 
             appendHunkContent(sb, oldLines, newLines, oldStart, oldEnd, newStart, newEnd, changes);
         }

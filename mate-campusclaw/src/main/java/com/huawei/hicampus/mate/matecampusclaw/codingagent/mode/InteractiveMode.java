@@ -451,8 +451,13 @@ public class InteractiveMode {
                     .inheritIO()
                     .start()
                     .waitFor();
-        } catch (Exception ignored) {
-            // SIGTSTP self-send is a convenience; fall through and re-render.
+        } catch (InterruptedException e) {
+            // Restore interrupt flag so upstream cancellation observes it.
+            Thread.currentThread().interrupt();
+            log.debug("interrupted while self-suspending via SIGTSTP", e);
+        } catch (IOException e) {
+            // SIGTSTP self-send is a convenience; if `kill` couldn't even launch, just re-render.
+            log.warn("failed to self-suspend via SIGTSTP (kill subprocess); continuing", e);
         }
         tui.start();
         tui.render();

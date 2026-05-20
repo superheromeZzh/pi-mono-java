@@ -5,6 +5,7 @@
 package com.campusclaw.codingagent.skill;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
@@ -106,7 +107,7 @@ public class SkillStateStore {
             Files.writeString(tmp, MAPPER.writeValueAsString(new ArrayList<>(set)));
             Files.move(tmp, file, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
         } catch (IOException e) {
-            throw new RuntimeException("Failed to write skill state file: " + file, e);
+            throw new UncheckedIOException("Failed to write skill state file: " + file, e);
         }
     }
 }

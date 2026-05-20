@@ -370,6 +370,7 @@ public class CampusClawCommand implements Callable<Integer> {
             }
         } catch (IOException e) {
             // stdin not available — fall through with null
+            log.debug("could not read piped stdin; treating as no input", e);
         }
         return null;
     }
@@ -624,7 +625,9 @@ public class CampusClawCommand implements Callable<Integer> {
         try {
             var store = applicationContext.getBean(com.campusclaw.assistant.memory.ChatMemoryStore.class);
             return store.load(sessionManager.getSessionId());
-        } catch (Exception ignored) {
+        } catch (Exception e) {
+            // Memory store may not be wired (e.g. assistant module disabled) — fall back to empty.
+            log.debug("ChatMemoryStore unavailable; loading no prior messages", e);
             return List.of();
         }
     }

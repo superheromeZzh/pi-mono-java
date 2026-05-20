@@ -486,8 +486,10 @@ class EditorTest {
             var editor = new Editor("abc def ghi");
             editor.setCursorPosition(0, 7);
             editor.handleInput(KEY_CTRL_K); // kills " ghi" → kill ring: [" ghi"]
+
             // cursor stays at 7 but line is now "abc def"
             editor.handleInput(KEY_CTRL_K); // at end of line, merges next (no next line)
+
             // Now yank should give accumulated text
             editor.setCursorPosition(0, 0);
             editor.handleInput(KEY_CTRL_Y);

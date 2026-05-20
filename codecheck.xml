@@ -20,23 +20,59 @@
     </module>
 
     <!-- comment_blank_line_before: 行注释 // 紧跟在以 `;` 或 `}` 结尾的代码行下方时，
-         中间必须空一行——把「段落标题式注释」与上一段代码视觉分开。
+         中间必须空一行——把「段落标题式注释」与上一段代码视觉分开。两种触发形态：
+         (1) 上一行以 `;`/`}` 结尾，无 trailing 注释；
+         (2) 上一行以 `;`/`}` 结尾后跟 `// trailing...`，下一行是另一段 `//`——上一行
+             的 trailing 注释属于上一行那条语句，与下一段段落注释是两件事，仍需空行分开。
          匹配示例（BAD）：
              int x = 1;
              // next section
+         以及（BAD）：
+             foo(); // does the thing
+             // next paragraph describing the next block
          应当写为（GOOD）：
              int x = 1;
 
              // next section
+         以及（GOOD）：
+             foo(); // does the thing
+
+             // next paragraph describing the next block
          排除：
          - `///` 三斜线（DocC-style）；
          - 上一行以 `{`、`(`、`,` 等结尾——块内开场或参数延续不属于「新段落」。
-         由 RegexpMultiline 在 Checker 级跨行扫描；不影响 trailing 注释（同一行的 `; //...`）。 -->
+         由 RegexpMultiline 在 Checker 级跨行扫描。 -->
     <module name="RegexpMultiline">
         <property name="id" value="comment_blank_line_before"/>
-        <property name="format" value="[;}][ \t]*\r?\n[ \t]*//[^/\r\n]"/>
+        <property name="format" value="[;}](?:[ \t]*//[^\r\n]*)?[ \t]*\r?\n[ \t]*//[^/\r\n]"/>
         <property name="fileExtensions" value="java"/>
-        <property name="message" value="独占一行的 // 注释紧跟在 ; 或 } 之后时，请在注释行上方空一行。"/>
+        <property name="message" value="独占一行的 // 注释紧跟在 ; 或 } 之后时（即便上一行带 trailing //），请在注释行上方空一行。"/>
+    </module>
+
+    <!-- javadoc_blank_line_before: Javadoc 块 /** 紧跟在以 `;` 或 `}` 结尾的代码行下方时，
+         中间必须空一行——和 comment_blank_line_before 同源同理，把成员声明与紧贴它上方的
+         上一个成员视觉分开。最常见的反例是「字段 + Javadoc + 字段 + Javadoc」连排时漏写空行，
+         读者一眼看不出 Javadoc 是「上个字段的尾巴」还是「下个字段的标题」。
+         匹配示例（BAD）：
+             private final ObjectMapper mapper;
+             /**
+              * Doc for next field.
+              */
+             private final ObjectWriter writer;
+         应当写为（GOOD）：
+             private final ObjectMapper mapper;
+
+             /**
+              * Doc for next field.
+              */
+             private final ObjectWriter writer;
+         由 RegexpMultiline 跨行扫描；class/method/field 的首个 Javadoc 紧贴 `{` 不会命中
+         （`{` 不在前置字符集合里）。 -->
+    <module name="RegexpMultiline">
+        <property name="id" value="javadoc_blank_line_before"/>
+        <property name="format" value="[;}][ \t]*\r?\n[ \t]*/\*\*"/>
+        <property name="fileExtensions" value="java"/>
+        <property name="message" value="Javadoc /** 紧跟在 ; 或 } 之后时，请在 Javadoc 上方空一行——视觉分离上一个成员与下一段文档。"/>
     </module>
 
     <!-- no_back_to_back_javadoc: 两段 Javadoc `*/` 后紧跟 `/**` 视为非法。
@@ -48,6 +84,37 @@
         <property name="format" value="\*/[ \t]*\r?\n[ \t]*/\*\*"/>
         <property name="fileExtensions" value="java"/>
         <property name="message" value="检测到相邻的两段 Javadoc 块——上一段已悬空。请删除冗余的一段，或把 Javadoc 移到目标声明正上方。"/>
+    </module>
+
+    <!-- no_silent_catch: [[no_empty_catch_block]] 的加强版——把「只有注释、没有任何实际处理
+         语句」的 catch 体也拒。理由：留一行 "// best-effort" 而不打日志只是 signed silence——
+         对运行时可观测性是零，故障溯源仍然得靠猜，达不到 no_empty_catch_block 想堵的根本目的。
+         合规写法：
+         1. `log.debug/warn/error("contextual message", e)` 走 SLF4J；
+         2. `Thread.currentThread().interrupt()` 恢复中断位（吞 InterruptedException 必备）；
+         3. `throw new ...Exception(e)` 包装重抛；
+         4. 状态修复（`flag = true`、`map.put(...)`、`return defaultValue` 等）。
+         检测：RegexpMultiline 跨行匹配 `catch (...) { 仅空白和注释 }`——具体地，
+         body 内只允许：空白 (`\s`)、行注释 (`//...`)、块注释 (`/* ... */`)。一旦出现任何
+         其他 token（标识符、字面量、关键字），就视为有实际处理，规则放行。 -->
+    <module name="RegexpMultiline">
+        <property name="id" value="no_silent_catch"/>
+        <property name="format" value="catch\s*\([^)]*\)\s*\{(?:\s|//[^\r\n]*|/\*[\s\S]*?\*/)*\}"/>
+        <property name="fileExtensions" value="java"/>
+        <property name="message" value="catch 体不能只有注释——请走 SLF4J 打日志（log.debug/warn/error(&quot;...&quot;, e)）、Thread.currentThread().interrupt() 恢复中断位、或重抛包装异常。"/>
+    </module>
+
+    <!-- Locale: 禁止 String.format 直接以字符串字面量为第一参数（即未指定 Locale）。
+         允许 String.format(Locale.X, "...") 或 String.format(localeVar, "...")。
+         用 RegexpMultiline 在 Checker 级跨行扫描，因此 palantir 把 `String.format(` 与格式
+         串折成两行（常见格式）也会命中——这是相对 RegexpSinglelineJava 的关键差别。
+         代价：无 ignoreComments，Javadoc 里举反例需要写成 `String . format(...)` 错位字符
+         或加局部豁免。截至 2026-05-19 全仓零此类示例，落规则前已盘点过。 -->
+    <module name="RegexpMultiline">
+        <property name="id" value="LocaleStringFormat"/>
+        <property name="format" value="\bString\.format\s*\(\s*&quot;"/>
+        <property name="fileExtensions" value="java"/>
+        <property name="message" value="String.format 必须显式以 Locale.ROOT 或 Locale.ENGLISH 作为第一参数。"/>
     </module>
 
     <module name="TreeWalker">
@@ -82,15 +149,6 @@
             <property name="message" value="字符串大小写转换必须显式传入 Locale.ROOT 或 Locale.ENGLISH。"/>
             <property name="ignoreComments" value="true"/>
         </module>
-        <!-- Locale: 禁止 String.format 直接以字符串字面量为第一参数（即未指定 Locale）。
-             允许 String.format(Locale.X, "...") 或 String.format(localeVar, "...")。 -->
-        <module name="RegexpSinglelineJava">
-            <property name="id" value="LocaleStringFormat"/>
-            <property name="format" value="\bString\.format\s*\(\s*&quot;"/>
-            <property name="message" value="String.format 必须显式以 Locale.ROOT 或 Locale.ENGLISH 作为第一参数。"/>
-            <property name="ignoreComments" value="true"/>
-        </module>
-
         <!-- explicit_charset_*: 字符 ↔ 字节互转 API 必须显式传 Charset（统一 StandardCharsets.UTF_8）。
              覆盖最常见的「单凭语法即可判定无歧义错误」的几个调用点；语义模糊的（如
              new String(byte[]) vs new String(char[]) 类型相关、Files.readString 默认即 UTF-8）
@@ -269,16 +327,35 @@
         <!-- no_empty_catch_block: 禁止用「空 catch 块」静默吞掉异常。
              空 catch（含 `catch (Exception ignored) {}` 这种形式）让异常在生产环境彻底失声——
              日志拿不到、监控拿不到、复现也复现不出，故障溯源时只能靠猜。
-             规则放行两种合规写法：
-             1. 把异常交给 SLF4J：`log.debug/warn/error("...", e)`；
-             2. 确实是无害的 fall-through，但**必须**在 catch 体内留一行解释性注释（默认
-                commentFormat=`.*` 接受任意非空注释），让 reviewer 一眼能判断这是「有意忽略」
-                而非「忘了处理」。
+             规则只放行一种合规写法：catch 体内有真实处理（log / throw / 中断恢复
+             Thread.currentThread().interrupt() / 状态更新等）。仅留一行解释性注释**不**够——
+             那只是"signed silence"，对运行时观测仍然是零。要让"无害 fall-through"可信，
+             就显式 `log.debug("contextual message", e)` 走 SLF4J 链路。
              检测：Checkstyle 内置 EmptyCatchBlock 模块。exceptionVariableName 留默认 `^$`——
-             即便变量起名 `ignored`/`expected` 也照样拒，强制让作者把忽略理由写出来。 -->
+             即便变量起名 `ignored`/`expected` 也照样拒，强制让作者写日志。 -->
         <module name="EmptyCatchBlock">
             <property name="id" value="no_empty_catch_block"/>
             <property name="commentFormat" value=".*"/>
+        </module>
+
+        <!-- no_throw_runtime_exception: 禁止 `throw new RuntimeException(...)`。
+             RuntimeException 是所有 unchecked 异常的根，过于笼统，永远无法表达任何方法
+             自身的抽象层次——调用方拿到它既不能 catch 到特定语义，也无法区分这是
+             I/O 失败、状态不变式被破坏，还是参数非法。
+             推荐替换：
+             - 包 IOException：`throw new UncheckedIOException(msg, e)`（本仓 5 处先例）
+             - 状态不变式被破坏：`throw new IllegalStateException(msg)`（本仓 14 处先例）
+             - 参数非法：`throw new IllegalArgumentException(msg)`
+             - 领域错误：本仓已有 SkillLoadException / SessionPersistenceException 等
+             正则锚定到 `throw new RuntimeException(`，子类名（`MyRuntimeException`）由
+             `\b` 边界与严格匹配排除；catch 子句、`throws` 声明、`Class<? extends RuntimeException>`
+             不会被误命中。其他三个根类（Exception / Throwable / Error）当前存量为 0，
+             由 PR review 把关。 -->
+        <module name="RegexpSinglelineJava">
+            <property name="id" value="no_throw_runtime_exception"/>
+            <property name="format" value="\bthrow\s+new\s+RuntimeException\s*\("/>
+            <property name="message" value="方法抛出的异常应与抽象层次匹配：禁止 throw new RuntimeException(...)。请改用 JDK 语义异常（UncheckedIOException、IllegalStateException、IllegalArgumentException、NoSuchElementException 等）或仓库领域异常（SkillLoadException、SessionPersistenceException 等）。"/>
+            <property name="ignoreComments" value="true"/>
         </module>
 
         <!-- huge_cyclomatic_complexity: 圈复杂度超阈值即拒。
@@ -380,6 +457,44 @@
             <property name="allowMissingReturnTag" value="false"/>
             <property name="validateThrows" value="true"/>
             <property name="allowedAnnotations" value="Override,Generated,GeneratedBy,Bean"/>
+        </module>
+
+        <!-- no_complex_control_condition: 控制条件表达式（if/while/for/三元/return 的布尔
+             条件）中的逻辑运算符总数不得超过 5 个——`&&`、`||`、`&`、`|`、`^` 合并统计。
+             理由：单个布尔表达式里堆叠过多逻辑运算符（>5）说明判断逻辑已经被压成「一行
+             代码 + 多重否定 + 优先级隐式约定」，读者必须心里画括号才能推理；拆成命名良好
+             的局部 boolean 或私有 isXxx() 方法，每一步都能自解释、每一步都能独立单测、
+             debugger 上单步看到中间值。5 个是经验线——少于 5 通常仍在可读区间。
+             ❌ 反例（7 个运算符 → 拒）：
+                 if (a && (b || c) && (d || e || f) && !g) { ... }
+             ✅ 正例（拆 + 命名）：
+                 boolean qualifies = a && (b || c);
+                 boolean hasAccess = d || e || f;
+                 if (qualifies && hasAccess && !g) { ... }
+             由 Checkstyle 内置 BooleanExpressionComplexity 实现，max=5。 -->
+        <module name="BooleanExpressionComplexity">
+            <property name="id" value="no_complex_control_condition"/>
+            <property name="max" value="5"/>
+        </module>
+
+        <!-- no_assignment_in_control_condition: 禁止把赋值表达式嵌进控制条件等更大的表达式
+             里执行。最典型的反例是 `if ((x = next()) != null) { use(x); }`——一行里同时
+             发生「赋值」和「条件判断」两件事，读者很容易把它误读成 `if (x == next())`（特别
+             是 == vs = 的笔误），编译器无法分辨意图。
+             ❌ 反例：
+                 if ((line = reader.readLine()) != null) { ... }
+                 while ((b = in.read()) != -1) { ... }
+                 return x = compute();
+             ✅ 正例（拆开赋值与判断）：
+                 String line = reader.readLine();
+                 while (line != null) {
+                     ...
+                     line = reader.readLine();
+                 }
+             由 Checkstyle 内置 InnerAssignment 实现。豁免：for 循环的 init/update 槽位、
+             try-with-resources 资源声明——这两种语法上就要求在「条件位置」绑定变量。 -->
+        <module name="InnerAssignment">
+            <property name="id" value="no_assignment_in_control_condition"/>
         </module>
 
         <!-- AtclauseOrder: Javadoc 块标签必须按 @param → @return → @throws → @see → @since

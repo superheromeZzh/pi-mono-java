@@ -50,6 +50,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -65,6 +67,7 @@ import reactor.netty.http.server.HttpServer;
  */
 class ChatWebSocketHandlerTest {
 
+    private static final Logger log = LoggerFactory.getLogger(ChatWebSocketHandlerTest.class);
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
     private DisposableServer server;
@@ -427,8 +430,9 @@ class ChatWebSocketHandlerTest {
                                         matched.set(node);
                                         latch.countDown();
                                     }
-                                } catch (Exception ignored) {
+                                } catch (Exception e) {
                                     // non-matching/non-JSON frame — keep waiting for the response
+                                    log.debug("ws frame did not parse as expected response (continuing wait)", e);
                                 }
                             })
                             .takeUntil(frame -> {
@@ -472,8 +476,9 @@ class ChatWebSocketHandlerTest {
                                                     .asText())) {
                                         sawDone.countDown();
                                     }
-                                } catch (Exception ignored) {
+                                } catch (Exception e) {
                                     // non-JSON frame, ignore
+                                    log.debug("ws frame did not parse as JSON (continuing)", e);
                                 }
                             })
                             .takeUntil(frame -> {

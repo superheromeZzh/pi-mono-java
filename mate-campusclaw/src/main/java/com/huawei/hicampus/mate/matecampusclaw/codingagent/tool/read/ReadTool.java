@@ -26,6 +26,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
@@ -41,6 +43,8 @@ import org.springframework.stereotype.Component;
 @Component
 @ConditionalOnProperty(name = "tool.execution.hybrid-enabled", havingValue = "false", matchIfMissing = true)
 public class ReadTool implements AgentTool {
+
+    private static final Logger log = LoggerFactory.getLogger(ReadTool.class);
 
     static final int DEFAULT_MAX_BYTES = 32_768; // 32KB
     static final int DEFAULT_MAX_LINES = 500;
@@ -128,8 +132,9 @@ public class ReadTool implements AgentTool {
             if (mimeType != null && mimeType.startsWith("image/")) {
                 return readImage(resolvedPath, mimeType);
             }
-        } catch (IOException ignored) {
+        } catch (IOException e) {
             // If MIME detection fails, treat as text
+            log.debug("MIME detection failed for {}; falling back to text read", resolvedPath, e);
         }
 
         return readText(resolvedPath, params);

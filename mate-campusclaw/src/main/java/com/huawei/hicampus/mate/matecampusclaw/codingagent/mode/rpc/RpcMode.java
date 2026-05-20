@@ -6,8 +6,10 @@ package com.huawei.hicampus.mate.matecampusclaw.codingagent.mode.rpc;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
+import java.util.Objects;
 
 import com.huawei.hicampus.mate.matecampusclaw.agent.event.AgentEndEvent;
 import com.huawei.hicampus.mate.matecampusclaw.agent.event.MessageEndEvent;
@@ -33,9 +35,15 @@ public class RpcMode {
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
     private final AgentSession session;
+    private final PrintStream out;
 
     public RpcMode(AgentSession session) {
-        this.session = session;
+        this(session, System.out);
+    }
+
+    RpcMode(AgentSession session, PrintStream out) {
+        this.session = Objects.requireNonNull(session, "session");
+        this.out = Objects.requireNonNull(out, "out");
     }
 
     public void run() {
@@ -125,14 +133,13 @@ public class RpcMode {
 
     /*
      * RPC mode's contract is "newline-delimited JSON events on stdout". External
-     * processes parse this stream line-by-line, so events must go through System.out,
-     * never a logger.
+     * processes parse this stream line-by-line, so events go to the injected
+     * PrintStream (defaults to stdout) and never to a logger.
      */
-    @SuppressWarnings("checkstyle:no_system_out_err")
     private void emit(RpcEvent event) {
         try {
-            System.out.println(MAPPER.writeValueAsString(event));
-            System.out.flush();
+            out.println(MAPPER.writeValueAsString(event));
+            out.flush();
         } catch (Exception e) {
             log.warn("Failed to emit RPC event", e);
         }

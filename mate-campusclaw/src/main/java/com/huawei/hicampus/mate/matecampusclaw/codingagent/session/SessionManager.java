@@ -44,6 +44,7 @@ public class SessionManager {
     private static final Logger log = LoggerFactory.getLogger(SessionManager.class);
 
     private final ObjectMapper mapper;
+
     /**
      * Typed writer for {@link Message}. {@link Message} carries
      * {@code @JsonTypeInfo(property = "role")}, but when a Message is embedded
@@ -188,6 +189,7 @@ public class SessionManager {
                     entries.add(entry);
                 } catch (JsonProcessingException e) {
                     // Skip malformed lines — session files can be partially written on crash.
+                    log.debug("skipping malformed session line in {}", file, e);
                 }
             }
         } catch (IOException e) {
@@ -254,17 +256,14 @@ public class SessionManager {
      * @param message the message
      * @return the result
      */
+    private static final List<String> ASSISTANT_ROLE_KEYS =
+            List.of("api", "provider", "model", "responseId", "usage", "stopReason", "errorMessage");
+
     static String inferRole(Map<String, Object> message) {
         if (message.containsKey("toolCallId") && message.containsKey("toolName")) {
             return "toolResult";
         }
-        if (message.containsKey("api")
-                || message.containsKey("provider")
-                || message.containsKey("model")
-                || message.containsKey("responseId")
-                || message.containsKey("usage")
-                || message.containsKey("stopReason")
-                || message.containsKey("errorMessage")) {
+        if (ASSISTANT_ROLE_KEYS.stream().anyMatch(message::containsKey)) {
             return "assistant";
         }
         return "user";

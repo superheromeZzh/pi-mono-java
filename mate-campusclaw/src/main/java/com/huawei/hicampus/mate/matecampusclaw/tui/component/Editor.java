@@ -7,6 +7,7 @@ package com.huawei.hicampus.mate.matecampusclaw.tui.component;
 import java.text.BreakIterator;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.function.Consumer;
 
 import com.huawei.hicampus.mate.matecampusclaw.tui.Component;
@@ -1166,19 +1167,21 @@ public class Editor implements Component, Focusable {
         return Character.isWhitespace(s.codePointAt(0));
     }
 
+    private static final Set<Integer> PUNCTUATION_CHARACTER_TYPES = Set.of(
+            (int) Character.CONNECTOR_PUNCTUATION,
+            (int) Character.DASH_PUNCTUATION,
+            (int) Character.START_PUNCTUATION,
+            (int) Character.END_PUNCTUATION,
+            (int) Character.INITIAL_QUOTE_PUNCTUATION,
+            (int) Character.FINAL_QUOTE_PUNCTUATION,
+            (int) Character.OTHER_PUNCTUATION,
+            (int) Character.MATH_SYMBOL);
+
     private static boolean isPunctuation(String s) {
         if (s == null || s.isEmpty()) {
             return false;
         }
-        int type = Character.getType(s.codePointAt(0));
-        return type == Character.CONNECTOR_PUNCTUATION
-                || type == Character.DASH_PUNCTUATION
-                || type == Character.START_PUNCTUATION
-                || type == Character.END_PUNCTUATION
-                || type == Character.INITIAL_QUOTE_PUNCTUATION
-                || type == Character.FINAL_QUOTE_PUNCTUATION
-                || type == Character.OTHER_PUNCTUATION
-                || type == Character.MATH_SYMBOL;
+        return PUNCTUATION_CHARACTER_TYPES.contains(Character.getType(s.codePointAt(0)));
     }
 
     private static String normalizeText(String text) {

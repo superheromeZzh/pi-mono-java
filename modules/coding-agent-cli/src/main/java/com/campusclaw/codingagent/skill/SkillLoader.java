@@ -145,6 +145,7 @@ public class SkillLoader {
             }
         } catch (IOException e) {
             // Skip unreadable directories
+            log.debug("skill scan skipped unreadable directory {}", dir, e);
         }
     }
 

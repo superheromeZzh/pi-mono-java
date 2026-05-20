@@ -128,6 +128,7 @@ public class AuthStorage {
                 Files.setPosixFilePermissions(AUTH_FILE, OWNER_ONLY);
             } catch (UnsupportedOperationException e) {
                 // Windows doesn't support POSIX permissions
+                log.debug("skipped owner-only chmod on {} (non-POSIX FS)", AUTH_FILE, e);
             }
         } catch (IOException e) {
             log.error("Failed to save auth file: {}", AUTH_FILE, e);

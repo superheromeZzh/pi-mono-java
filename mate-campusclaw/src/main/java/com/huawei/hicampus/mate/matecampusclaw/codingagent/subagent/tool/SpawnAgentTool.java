@@ -207,8 +207,9 @@ public class SpawnAgentTool implements AgentTool {
                 cancelledByParent.set(true);
                 try {
                     backend.cancel(session, "parent-cancelled");
-                } catch (RuntimeException ignored) {
-                    // best-effort
+                } catch (RuntimeException e) {
+                    // best-effort: subagent backend may already be torn down
+                    log.debug("subagent cancel propagation failed (session={})", session.runtimeSessionId(), e);
                 }
                 done.countDown();
             });
@@ -299,8 +300,9 @@ public class SpawnAgentTool implements AgentTool {
                 if (seconds > 0L) {
                     return Duration.ofSeconds(seconds);
                 }
-            } catch (NumberFormatException ignored) {
+            } catch (NumberFormatException e) {
                 // fall through to default
+                log.debug("ignoring non-numeric subagent timeout '{}', using default", s, e);
             }
         }
         return Duration.ofSeconds(DEFAULT_TIMEOUT_SECONDS);

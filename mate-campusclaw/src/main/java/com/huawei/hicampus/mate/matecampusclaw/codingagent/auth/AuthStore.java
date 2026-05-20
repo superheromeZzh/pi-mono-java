@@ -152,8 +152,9 @@ public class AuthStore {
         try {
             Set<PosixFilePermission> perms = PosixFilePermissions.fromString("rw-------");
             Files.setPosixFilePermissions(file, perms);
-        } catch (UnsupportedOperationException | IOException ignored) {
-            // Non-POSIX FS (e.g. Windows) — silently skip.
+        } catch (UnsupportedOperationException | IOException e) {
+            // Non-POSIX FS (e.g. Windows) — safe to skip; log for diagnostics only.
+            log.debug("could not tighten POSIX permissions on {} (likely non-POSIX FS)", file, e);
         }
     }
 }

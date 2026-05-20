@@ -6,6 +6,7 @@ package com.huawei.hicampus.mate.matecampusclaw.codingagent.mode.tui;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.function.Consumer;
 
 import com.huawei.hicampus.mate.matecampusclaw.ai.types.AssistantMessage;
@@ -121,8 +122,15 @@ public class TreeSelectorOverlay implements Component, Focusable {
                     default -> "T";
                 };
         return String.format(
+                Locale.ROOT,
                 "%s[%s]%s %s#%d%s %s",
-                roleColor, roleLabel, ANSI_RESET, ANSI_DIM, item.index + 1, ANSI_RESET, item.preview);
+                roleColor,
+                roleLabel,
+                ANSI_RESET,
+                ANSI_DIM,
+                item.index + 1,
+                ANSI_RESET,
+                item.preview);
     }
 
     @Override

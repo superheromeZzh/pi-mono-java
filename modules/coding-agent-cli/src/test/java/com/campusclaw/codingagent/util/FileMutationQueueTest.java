@@ -45,7 +45,7 @@ class FileMutationQueueTest {
             assertThrows(
                     RuntimeException.class,
                     () -> queue.withLock(Path.of("/tmp/test.txt"), () -> {
-                        throw new RuntimeException("boom");
+                        throw new IllegalStateException("boom");
                     }));
         }
 
@@ -55,7 +55,7 @@ class FileMutationQueueTest {
             assertThrows(
                     RuntimeException.class,
                     () -> queue.withLock(Path.of("/tmp/test.txt"), () -> {
-                        throw new RuntimeException("fail");
+                        throw new IllegalStateException("fail");
                     }));
 
             // Second call should still succeed (lock was released)
@@ -84,7 +84,7 @@ class FileMutationQueueTest {
                         return null;
                     });
                 } catch (Exception e) {
-                    throw new RuntimeException(e);
+                    throw new IllegalStateException(e);
                 }
             });
             t1.setUncaughtExceptionHandler(LoggingUncaughtExceptionHandler.INSTANCE);
@@ -105,7 +105,7 @@ class FileMutationQueueTest {
                         return null;
                     });
                 } catch (Exception e) {
-                    throw new RuntimeException(e);
+                    throw new IllegalStateException(e);
                 }
             });
             t2.setUncaughtExceptionHandler(LoggingUncaughtExceptionHandler.INSTANCE);
@@ -153,7 +153,7 @@ class FileMutationQueueTest {
                             return null;
                         });
                     } catch (Exception e) {
-                        throw new RuntimeException(e);
+                        throw new IllegalStateException(e);
                     }
                     return null;
                 }));
@@ -201,7 +201,7 @@ class FileMutationQueueTest {
                             return null;
                         });
                     } catch (Exception e) {
-                        throw new RuntimeException(e);
+                        throw new IllegalStateException(e);
                     }
                     return null;
                 }));

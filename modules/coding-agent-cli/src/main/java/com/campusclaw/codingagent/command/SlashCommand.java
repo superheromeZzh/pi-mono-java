@@ -19,12 +19,14 @@ public interface SlashCommand {
      * @return the result
      */
     String name();
+
     /**
      * Short description for help text.
      *
      * @return the result
      */
     String description();
+
     /**
      * Execute the command with the given arguments.
      *
