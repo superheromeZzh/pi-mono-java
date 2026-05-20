@@ -17,6 +17,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
+import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -362,8 +363,9 @@ public class ProxyConfig {
     }
 
     private static String regQuery(String valueName) {
+        Process process = null;
         try {
-            var process = new ProcessBuilder(
+            process = new ProcessBuilder(
                             "reg",
                             "query",
                             "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings",
@@ -372,9 +374,20 @@ public class ProxyConfig {
                     .redirectErrorStream(true)
                     .start();
             String output = new String(process.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
-            int exitCode = process.waitFor();
-            return exitCode == 0 ? output : null;
-        } catch (Exception e) {
+            if (!process.waitFor(5L, TimeUnit.SECONDS)) {
+                process.destroyForcibly();
+                log.debug("reg query {} timed out", valueName);
+                return null;
+            }
+            return process.exitValue() == 0 ? output : null;
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            if (process != null) {
+                process.destroyForcibly();
+            }
+            return null;
+        } catch (IOException e) {
+            log.debug("reg query {} failed", valueName, e);
             return null;
         }
     }
@@ -399,10 +412,6 @@ public class ProxyConfig {
             }
         }
         return null;
-    }
-
-    private static boolean isWindows() {
-        return System.getProperty("os.name", "").toLowerCase(Locale.ROOT).contains("win");
     }
 
     private static String coalesce(String... values) {

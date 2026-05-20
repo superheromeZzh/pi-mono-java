@@ -4,10 +4,8 @@
 
 package com.huawei.hicampus.mate.matecampusclaw.ai.env;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-
-import java.util.Optional;
 
 import com.huawei.hicampus.mate.matecampusclaw.ai.types.Provider;
 
@@ -19,10 +17,10 @@ class EnvApiKeyResolverTest {
 
     @Test
     void resolveDoesNotThrowForAnyProvider() {
-        // Environment is whatever the JVM has — we just verify no exception escapes.
+        // Environment is whatever the JVM has — we just verify every Provider value is
+        // dispatchable without an exception escaping (e.g. no missing switch branch).
         for (Provider p : Provider.values()) {
-            Optional<String> result = resolver.resolve(p);
-            assertNotNull(result);
+            assertDoesNotThrow(() -> resolver.resolve(p), "resolver must handle provider: " + p);
         }
     }
 

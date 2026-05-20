@@ -10,6 +10,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
+import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -38,9 +39,7 @@ class GitUtilsTest {
 
     @Test
     void freshGitRepoReportsBranchAndCleanWorkingTree() throws Exception {
-        if (!gitAvailable()) {
-            return; // Skip silently — environment without git on PATH
-        }
+        Assumptions.assumeTrue(gitAvailable(), "git not on PATH");
         runGit("init", "-b", "main");
         runGit("config", "user.email", "test@example.com");
         runGit("config", "user.name", "Test User");
@@ -61,9 +60,7 @@ class GitUtilsTest {
 
     @Test
     void detectsUncommittedChanges() throws Exception {
-        if (!gitAvailable()) {
-            return;
-        }
+        Assumptions.assumeTrue(gitAvailable(), "git not on PATH");
         runGit("init", "-b", "main");
         runGit("config", "user.email", "test@example.com");
         runGit("config", "user.name", "Test User");
@@ -78,9 +75,7 @@ class GitUtilsTest {
 
     @Test
     void getRemoteUrlReturnsConfiguredOriginUrl() throws Exception {
-        if (!gitAvailable()) {
-            return;
-        }
+        Assumptions.assumeTrue(gitAvailable(), "git not on PATH");
         runGit("init", "-b", "main");
         runGit("remote", "add", "origin", "https://example.com/repo.git");
         assertThat(GitUtils.getRemoteUrl(tempDir)).contains("https://example.com/repo.git");

@@ -273,13 +273,13 @@ public class ModelRegistry {
 
     private int loadFromJsonStream(InputStream in, String source) throws java.io.IOException {
         var mapper = new ObjectMapper();
-        var models = mapper.readValue(in, new TypeReference<List<Model>>() {});
-        if (models == null || models.isEmpty()) {
+        var loaded = mapper.readValue(in, new TypeReference<List<Model>>() {});
+        if (loaded == null || loaded.isEmpty()) {
             return 0;
         }
-        registerAll(models);
-        log.debug("Loaded {} model(s) from {}", models.size(), source);
-        return models.size();
+        registerAll(loaded);
+        log.debug("Loaded {} model(s) from {}", loaded.size(), source);
+        return loaded.size();
     }
 
     /**

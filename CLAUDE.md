@@ -273,14 +273,53 @@ System.out.println("DEBUG: state = " + state);                      // 改 log.d
 
 **覆盖范围**：`src/main` 与 `src/test/java` 都生效——生产代码里 `assertTrue(true)` 同样是 dead code（多半是误删条件后的残余）。`ignoreComments=true` 让 javadoc 举反例不被误判。
 
-**规则不覆盖**（靠 PR review + 覆盖率把关，不是放任）：
-- **`@Test` 方法整体没有任何断言**——Checkstyle 的正则难以稳健地跨越方法体大括号，但这是更严重的虚假测试。盘点命令：
-  ```bash
-  grep -rL 'assert\|verify\|fail(' modules/**/src/test/java --include='*.java'
-  ```
-  以及 review 时对每个新增 `@Test` 方法人工核实：是否对被测行为做了真实断言。
-- **语义弱断言**：`assertNotNull(new Foo())`、`verify(mock)` 未设期望——存在但无意义，review 时拒。
-- **断言用了被测代码自身的副产物**：`assertEquals(service.compute(x), service.compute(x))` 两次调用结果自比——绕过反向引用检测，但语义同样空洞，review 时拒。
+**软约束**（Checkstyle regex 跨方法体判定不稳健，硬规则没法上锁——但和硬规则同档次，写测试时必须遵守，PR review 拒绝任何违例）：
+
+#### 软约束 1：`@Test` 方法必须至少有一处真实断言
+
+`@Test`（含 `@ParameterizedTest` / `@RepeatedTest`）方法体内必须出现以下任一调用：
+- JUnit 5：`assert*`（含 `assertDoesNotThrow` / `assertThrows`）、`fail(...)`；
+- AssertJ：`assertThat(...).xxx(...)`、`assertThatThrownBy(...)`、`assertThatNoException()...`；
+- Mockito：`verify(...)`、`verifyNoInteractions(...)`、`verifyNoMoreInteractions(...)`、`inOrder(...).verify(...)`；
+- Reactor `StepVerifier`：`.expectNext(...)`、`.expectError(...)`、`.verifyComplete()`、`.verifyError(...)`。
+
+「这个方法跑通就算过」不是断言。**意图是「不抛异常」就显式 `assertDoesNotThrow(() -> ...)` 或 `assertThatNoException().isThrownBy(() -> ...)`**，让意图变成可失败的断言。
+
+| ✅ 正例 | ❌ 反例 |
+|---|---|
+| `assertThatNoException().isThrownBy(client::shutdown);` | `client.shutdown(); // Should not throw` |
+| `assertDoesNotThrow(() -> registry.forgetSession(s));` | `registry.forgetSession(s); // not tracked → no-op` |
+
+#### 软约束 2：断言不能只有 `assertNotNull` / `isNotNull`
+
+一个 `@Test` 方法的**所有断言**加起来只检查「非 null」时——典型是 `assertNotNull(x)` 单独出现，或 `assertNotNull(x); assertTrue(x.isEmpty())` 这种 `assertNotNull` + 紧跟一个 `assertTrue/assertEquals(x.isEmpty()/.size())` 让 null-check 变成纯冗余——一律视为「没有真实断言」。
+
+原因：JVM 保证 `new X(...)` 永不返回 null；`Optional` / `Stream` / 集合 accessor 的契约也是「永不 null」；只检查非空等于什么都没测。要么换成真实值断言，要么删掉那个 null 检查、把后续的真实断言留住。
+
+| ✅ 正例 | ❌ 反例 |
+|---|---|
+| `assertEquals("hint", ac.getInput().getPlaceholder());` | `assertNotNull(ac.getInput());`（单独出现） |
+| `assertTrue(suggestions.isEmpty());` | `assertNotNull(suggestions); assertTrue(suggestions.isEmpty());` |
+| `assertDoesNotThrow(() -> resolver.resolve(p));` | `Optional<String> r = resolver.resolve(p); assertNotNull(r);` |
+
+#### 软约束 3：断言不能用被测代码自身的副产物自比
+
+`assertEquals(service.compute(x), service.compute(x))` 两次调用结果自比——绕过 Checkstyle 反向引用检测，但语义同样空洞，review 时拒。
+
+#### 盘点命令
+
+写完一批单测后，跑下面两条命令自检（也可以挂进 PR review checklist）：
+
+```bash
+# 1. 找完全没有任何断言/verify/fail 的测试文件（粗筛）
+grep -rL 'assert\|verify\|fail(' modules/**/src/test/java --include='*.java'
+
+# 2. 跑 java-ut-coverage-loop skill 自带的 quality checker（精确）
+~/.claude/skills/java-ut-coverage-loop/scripts/check_test_quality.py \
+    modules/**/src/test/java/**/<NewTest>.java
+```
+
+`check_test_quality.py` 覆盖 `no-assertion`（软约束 1）、`only-not-null-assert`（软约束 2）、`tautological-assert`（硬规则）、`stub-on-sut`、`tests-private-via-reflection` 等多条规则，输出 JSON。补完单测**必须**跑这一遍，errors > 0 不算完工。
 
 **理由**：虚假断言比缺单测更糟。缺单测时大家心里有数、覆盖率指标也会报警；虚假断言把覆盖率刷上去，给团队和审计者一个"已被测试"的假信号，问题真的发生时反而失去最关键的"测试早就该发现"那一层防御。AI 生成的测试代码尤其容易出 `assertTrue(true)` 这种占位——规则上锁是为了让这类提交在 build 阶段就被拦下，不进入 review 噪音。
 
@@ -434,6 +473,42 @@ private final ObjectWriter messageWriter;
 | `for (int i = 0; i < n; i++)`（单字符豁免） | — |
 
 **理由**：Java 业界惯例（JLS、Google Java Style、Oracle Code Conventions）一致要求字段与局部变量 lowerCamelCase。混用 snake_case / UpperCamel / `m_` 前缀让 import/grep/IDE 重构难以一致命中。常量与变量视觉区分（UPPER_SNAKE vs lowerCamel）让读者第一眼判断「这是不可变共享值」还是「会变的状态」——方法内拿 `String DIM = ...` 当变量会被误认为常量。
+
+### 不在无关概念之间重用名字（避免遮蔽 / 隐藏 / 遮掩）（软约束）
+
+**规则**：同一个标识符在一个类的不同作用域里只表达同一个概念。具体三种「遮蔽（shadowing）」必须避免：
+
+1. **局部变量遮蔽字段**：方法体内的局部变量与本类某个字段同名，且**两者表示的不是同一件事**——典型如字段 `Map<K,V> models`（注册表）与方法内 `List<Model> models`（刚解析出的一批数据）。
+2. **参数遮蔽字段且二者概念无关**：方法参数与字段同名却语义不同。`set/builder` 风格「参数即将赋给字段」这种**同概念**情况不算（见下方豁免）。
+3. **嵌套类字段遮蔽外层字段**：内部类/嵌套类定义与外层类同名字段，且不是「同一份数据的内层视图」。
+
+不强制走 Checkstyle 是因为 `HiddenField` 无法稳健区分「同概念别名」与「无关概念撞名」——Builder fluent setter（`temperature(Double temperature)`）、record 的 canonical constructor、`with` 拷贝方法都属于「同概念」，强行上锁会产出大量假阳性。靠 PR review + 写代码时自觉。
+
+**豁免**（这些撞名是合法约定，不属于「无关概念」）：
+
+| 场景 | 例子 |
+|---|---|
+| 构造器 / setter / fluent builder 把入参赋给同名字段 | `public Builder temperature(Double temperature) { this.temperature = temperature; ... }` |
+| Record 的 canonical / compact constructor 参数与组件同名 | `record Point(int x, int y) { Point { if (x < 0) ... } }` |
+| `with*` 拷贝方法接收的新值与字段同名 | `Foo withName(String name) { return new Foo(name, ...); }` |
+| `for (var x : items)` 与字段 `x` 同名但 for 体只在迭代意义下使用 | 强不推荐，能改名就改名；保留为豁免 |
+
+**违规重命名思路**：让局部 / 参数名体现**该作用域内的特定语义**，而不是复用字段那个泛化名字。
+
+| 字段（泛化语义） | 局部 / 参数（具体语义） |
+|---|---|
+| `models`（注册表全集） | `loaded`（这次从 JSON 解析出的批次）/ `incoming` / `parsed` |
+| `sessions`（会话池） | `expired`（被淘汰的）/ `selected`（命中的） |
+| `config`（注入的全局配置） | `override`（被覆盖的子集） |
+| `client`（持有的外部客户端实例） | `temporary`（临时构造、只用一次的） |
+
+| ✅ 正例 | ❌ 反例 |
+|---|---|
+| `var loaded = mapper.readValue(in, ...); registerAll(loaded);` | `var models = mapper.readValue(in, ...); registerAll(models);`（外层有字段 `models`） |
+| `Builder temperature(Double temperature) { this.temperature = temperature; ... }`（豁免） | — |
+| `void merge(Map<K,V> incoming) { this.cache.putAll(incoming); }` | `void merge(Map<K,V> cache) { this.cache.putAll(cache); }`（参数与字段同名却不同物） |
+
+**理由**：读 `registerAll(models)` 时，读者会下意识把 `models` 关联到外层那个 `Map<Provider, Map<String, Model>>` 字段——而实际它指向一个刚解析出来的 `List<Model>`，类型与语义都不同。IDE 不会警告，因为局部合法地遮蔽了字段；编译器也不会警告（unlike Rust）。后续维护者把 `models` 误当字段访问、或试图把 `this.models` 抠出来重构，就会埋雷。撞名的代价是「读代码时多花一秒钟反应」乘以「这段代码被读到的次数」——免费的可读性收益就是改个名字。
 
 ### 数字字面量后缀
 - **long 类型变量赋值的整数字面量必须以 `L` 结尾**（大写）。`60_000` → `60_000L`。避免静默的 int→long 转换。

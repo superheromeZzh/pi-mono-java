@@ -5,6 +5,7 @@
 package com.campusclaw.agent.subagent;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.time.Duration;
@@ -124,8 +125,10 @@ class SubAgentRegistryTest {
         registry.register(backend);
         var session = new SubAgentSession(SubAgentSessionKey.newKey("main", "foo"), "remote", backend);
 
-        // Not tracked — should not throw
-        registry.forgetSession(session);
+        // forgetSession must be safe to call on a session that was never registered — the
+        // registry should silently no-op rather than throw on the missing key lookup.
+        assertThatNoException().isThrownBy(() -> registry.forgetSession(session));
+        assertThat(registry.session(session.keyString())).isEmpty();
     }
 
     @Test

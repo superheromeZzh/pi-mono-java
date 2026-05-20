@@ -6,6 +6,7 @@ package com.huawei.hicampus.mate.matecampusclaw.codingagent.config;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -49,9 +50,7 @@ class ConfigValueResolverTest {
     void envWithDefaultPrefersActualValueWhenSet() {
         // PATH is universally present on POSIX/Windows test runners.
         String pathValue = System.getenv("PATH");
-        if (pathValue == null) {
-            return; // Skip silently on exotic runners
-        }
+        Assumptions.assumeTrue(pathValue != null, "PATH env var not set on this runner");
         assertThat(ConfigValueResolver.resolve("${PATH:-fallback-value}")).isEqualTo(pathValue);
     }
 

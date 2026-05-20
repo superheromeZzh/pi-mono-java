@@ -15,7 +15,9 @@ public interface MessageSubmitter {
 
     /**
      * Submit a message to be processed by the current session's agent.
-     * Returns true if the message was successfully submitted.
+     *
+     * @param message the user message text to enqueue
+     * @return {@code true} if the message was successfully submitted, {@code false} otherwise
      */
     boolean submitMessage(String message);
 }

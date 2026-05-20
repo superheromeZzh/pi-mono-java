@@ -9,6 +9,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Locale;
+import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,6 +31,8 @@ public class SystemSchedulerInstaller {
             .resolve("Library/LaunchAgents")
             .resolve(LABEL + ".plist");
     private static final String CRONTAB_MARKER = "# campusclaw-cron";
+    private static final long PROC_TIMEOUT_SECONDS = 10L;
+    private static final long ID_TIMEOUT_SECONDS = 5L;
 
     private final Path launcherScript;
 
@@ -132,33 +135,47 @@ public class SystemSchedulerInstaller {
     // Stop an existing plist (if any) and reload the new one. Falls back to
     // the legacy `launchctl load` path if `bootstrap` is unavailable.
     private void reloadLaunchd() {
+        runDiscardingOutput("launchctl bootout", "launchctl", "bootout", "gui/" + getUid(), PLIST_PATH.toString());
+        Integer exit = runDiscardingOutput(
+                "launchctl bootstrap", "launchctl", "bootstrap", "gui/" + getUid(), PLIST_PATH.toString());
+        if (exit == null || exit != 0) {
+            runDiscardingOutput("launchctl load", "launchctl", "load", PLIST_PATH.toString());
+        }
+    }
+
+    /**
+     * Run a command discarding both stdout and stderr at the OS level so we never
+     * have to drain pipes.
+     *
+     * @param description label used in debug log lines
+     * @param command argv to execute
+     * @return the process exit code, or {@code null} if the process could not start,
+     *         was interrupted, or timed out
+     */
+    private Integer runDiscardingOutput(String description, String... command) {
+        Process proc = null;
         try {
-            new ProcessBuilder("launchctl", "bootout", "gui/" + getUid(), PLIST_PATH.toString())
-                    .redirectErrorStream(true)
-                    .start()
-                    .waitFor();
+            proc = new ProcessBuilder(command)
+                    .redirectOutput(ProcessBuilder.Redirect.DISCARD)
+                    .redirectError(ProcessBuilder.Redirect.DISCARD)
+                    .start();
+            if (!proc.waitFor(PROC_TIMEOUT_SECONDS, TimeUnit.SECONDS)) {
+                proc.destroyForcibly();
+                log.debug("{} timed out after {}s", description, PROC_TIMEOUT_SECONDS);
+                return null;
+            }
+            return proc.exitValue();
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            log.debug("launchctl bootout interrupted", e);
+            if (proc != null) {
+                proc.destroyForcibly();
+            }
+            log.debug("{} interrupted", description, e);
+            return null;
         } catch (IOException e) {
-            // bootout fails when not loaded — safe to ignore for the reload path.
-            log.debug("launchctl bootout failed (expected when plist not yet loaded)", e);
-        }
-        try {
-            int exit = new ProcessBuilder("launchctl", "bootstrap", "gui/" + getUid(), PLIST_PATH.toString())
-                    .redirectErrorStream(true)
-                    .start()
-                    .waitFor();
-            if (exit != 0) {
-                new ProcessBuilder("launchctl", "load", PLIST_PATH.toString())
-                        .redirectErrorStream(true)
-                        .start()
-                        .waitFor();
-            }
-        } catch (Exception e) {
-            if (e instanceof InterruptedException) {
-                Thread.currentThread().interrupt();
-            }
+            // Command may legitimately not exist or fail to launch — best-effort.
+            log.debug("{} failed", description, e);
+            return null;
         }
     }
 
@@ -166,25 +183,11 @@ public class SystemSchedulerInstaller {
         if (!Files.exists(PLIST_PATH)) {
             return "Not installed (no plist found)";
         }
-        try {
-            new ProcessBuilder("launchctl", "bootout", "gui/" + getUid(), PLIST_PATH.toString())
-                    .redirectErrorStream(true)
-                    .start()
-                    .waitFor();
-        } catch (Exception e) {
+        Integer exit = runDiscardingOutput(
+                "launchctl bootout", "launchctl", "bootout", "gui/" + getUid(), PLIST_PATH.toString());
+        if (exit == null) {
             // Fallback to legacy unload
-            try {
-                new ProcessBuilder("launchctl", "unload", PLIST_PATH.toString())
-                        .redirectErrorStream(true)
-                        .start()
-                        .waitFor();
-            } catch (InterruptedException ie) {
-                Thread.currentThread().interrupt();
-                log.debug("launchctl unload (legacy) interrupted", ie);
-            } catch (IOException ie) {
-                // legacy unload also failed — plist file removal below is still safe.
-                log.debug("launchctl unload (legacy fallback) failed", ie);
-            }
+            runDiscardingOutput("launchctl unload", "launchctl", "unload", PLIST_PATH.toString());
         }
         Files.deleteIfExists(PLIST_PATH);
         return "Uninstalled launchd agent: " + LABEL;
@@ -194,18 +197,32 @@ public class SystemSchedulerInstaller {
         if (!Files.exists(PLIST_PATH)) {
             return "Not installed";
         }
+        Process proc = null;
         try {
-            var proc = new ProcessBuilder("launchctl", "print", "gui/" + getUid() + "/" + LABEL)
+            proc = new ProcessBuilder("launchctl", "print", "gui/" + getUid() + "/" + LABEL)
                     .redirectErrorStream(true)
                     .start();
-            String output = new String(proc.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
-            int exit = proc.waitFor();
-            if (exit == 0) {
+
+            // Drain stdout before waitFor to avoid pipe-fill deadlock; output is read
+            // for completeness but not used in the status string.
+            proc.getInputStream().readAllBytes();
+            if (!proc.waitFor(PROC_TIMEOUT_SECONDS, TimeUnit.SECONDS)) {
+                proc.destroyForcibly();
+                return "Plist exists: " + PLIST_PATH + " (status check timed out)";
+            }
+            if (proc.exitValue() == 0) {
                 return "Installed and active\nPlist: " + PLIST_PATH;
             } else {
                 return "Plist exists but service not loaded\nPlist: " + PLIST_PATH + "\nRun: /cron install to reload";
             }
-        } catch (Exception e) {
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            if (proc != null) {
+                proc.destroyForcibly();
+            }
+            return "Plist exists: " + PLIST_PATH + " (interrupted)";
+        } catch (IOException e) {
+            log.debug("launchctl print failed", e);
             return "Plist exists: " + PLIST_PATH + " (status check failed)";
         }
     }
@@ -254,31 +271,30 @@ public class SystemSchedulerInstaller {
     }
 
     private String getCurrentCrontab() throws IOException {
+        Process proc = null;
         try {
-            var proc = new ProcessBuilder("crontab", "-l")
-                    .redirectErrorStream(true)
-                    .start();
+            proc = new ProcessBuilder("crontab", "-l").redirectErrorStream(true).start();
             String output = new String(proc.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
-            proc.waitFor();
+            if (!proc.waitFor(PROC_TIMEOUT_SECONDS, TimeUnit.SECONDS)) {
+                proc.destroyForcibly();
+                log.debug("crontab -l timed out after {}s", PROC_TIMEOUT_SECONDS);
+                return "";
+            }
             return output;
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
+            if (proc != null) {
+                proc.destroyForcibly();
+            }
             return "";
         }
     }
 
     private void writeCrontab(String content) throws IOException {
-        try {
-            var tmpFile = Files.createTempFile("campusclaw-crontab-", ".tmp");
-            Files.writeString(tmpFile, content);
-            new ProcessBuilder("crontab", tmpFile.toString())
-                    .redirectErrorStream(true)
-                    .start()
-                    .waitFor();
-            Files.deleteIfExists(tmpFile);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
+        var tmpFile = Files.createTempFile("campusclaw-crontab-", ".tmp");
+        Files.writeString(tmpFile, content);
+        runDiscardingOutput("crontab apply", "crontab", tmpFile.toString());
+        Files.deleteIfExists(tmpFile);
     }
 
     // --- Windows Task Scheduler ---
@@ -294,22 +310,12 @@ public class SystemSchedulerInstaller {
         String command =
                 "cmd /c \"" + launcherScript + " --cron-tick >> " + logDir.resolve("cron-tick.log") + " 2>&1\"";
 
-        try {
-            // Delete existing task first (ignore errors if not found)
-            new ProcessBuilder("schtasks", "/Delete", "/TN", TASK_NAME, "/F")
-                    .redirectErrorStream(true)
-                    .start()
-                    .waitFor();
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            log.debug("schtasks /Delete interrupted", e);
-        } catch (IOException e) {
-            // pre-existing task may not exist — recreate below regardless
-            log.debug("schtasks /Delete failed (expected when task not yet registered)", e);
-        }
+        // Delete existing task first (ignore errors if not found)
+        runDiscardingOutput("schtasks /Delete (pre-install)", "schtasks", "/Delete", "/TN", TASK_NAME, "/F");
 
+        Process proc = null;
         try {
-            var proc = new ProcessBuilder(
+            proc = new ProcessBuilder(
                             "schtasks",
                             "/Create",
                             "/SC",
@@ -325,12 +331,18 @@ public class SystemSchedulerInstaller {
                     .redirectErrorStream(true)
                     .start();
             String output = new String(proc.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
-            int exit = proc.waitFor();
-            if (exit != 0) {
+            if (!proc.waitFor(PROC_TIMEOUT_SECONDS, TimeUnit.SECONDS)) {
+                proc.destroyForcibly();
+                return "Failed to create task: timed out after " + PROC_TIMEOUT_SECONDS + "s";
+            }
+            if (proc.exitValue() != 0) {
                 return "Failed to create task: " + output;
             }
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
+            if (proc != null) {
+                proc.destroyForcibly();
+            }
         }
 
         return "Installed Windows scheduled task: " + TASK_NAME
@@ -340,30 +352,41 @@ public class SystemSchedulerInstaller {
     }
 
     private String uninstallWindows() throws IOException {
+        Process proc = null;
         try {
-            var proc = new ProcessBuilder("schtasks", "/Delete", "/TN", TASK_NAME, "/F")
+            proc = new ProcessBuilder("schtasks", "/Delete", "/TN", TASK_NAME, "/F")
                     .redirectErrorStream(true)
                     .start();
             String output = new String(proc.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
-            int exit = proc.waitFor();
-            if (exit != 0) {
+            if (!proc.waitFor(PROC_TIMEOUT_SECONDS, TimeUnit.SECONDS)) {
+                proc.destroyForcibly();
+                return "schtasks /Delete timed out after " + PROC_TIMEOUT_SECONDS + "s";
+            }
+            if (proc.exitValue() != 0) {
                 return "Not installed or failed to remove: " + output.trim();
             }
             return "Uninstalled Windows scheduled task: " + TASK_NAME;
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
+            if (proc != null) {
+                proc.destroyForcibly();
+            }
             return "Interrupted while removing task";
         }
     }
 
     private String statusWindows() {
+        Process proc = null;
         try {
-            var proc = new ProcessBuilder("schtasks", "/Query", "/TN", TASK_NAME, "/FO", "LIST")
+            proc = new ProcessBuilder("schtasks", "/Query", "/TN", TASK_NAME, "/FO", "LIST")
                     .redirectErrorStream(true)
                     .start();
             String output = new String(proc.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
-            int exit = proc.waitFor();
-            if (exit == 0) {
+            if (!proc.waitFor(PROC_TIMEOUT_SECONDS, TimeUnit.SECONDS)) {
+                proc.destroyForcibly();
+                return "Unable to check task: schtasks /Query timed out";
+            }
+            if (proc.exitValue() == 0) {
                 // Extract key info from LIST format
                 String status = output.lines()
                         .filter(l -> l.contains("Status:")
@@ -375,7 +398,14 @@ public class SystemSchedulerInstaller {
             } else {
                 return "Not installed";
             }
-        } catch (Exception e) {
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            if (proc != null) {
+                proc.destroyForcibly();
+            }
+            return "Unable to check task: interrupted";
+        } catch (IOException e) {
+            log.debug("schtasks /Query failed", e);
             return "Unable to check task: " + e.getMessage();
         }
     }
@@ -391,13 +421,27 @@ public class SystemSchedulerInstaller {
     }
 
     private static String getUid() {
+        Process proc = null;
         try {
-            var proc = new ProcessBuilder("id", "-u").start();
+            proc = new ProcessBuilder("id", "-u")
+                    .redirectError(ProcessBuilder.Redirect.DISCARD)
+                    .start();
             String uid = new String(proc.getInputStream().readAllBytes(), StandardCharsets.UTF_8).trim();
-            proc.waitFor();
+            if (!proc.waitFor(ID_TIMEOUT_SECONDS, TimeUnit.SECONDS)) {
+                proc.destroyForcibly();
+                log.debug("id -u timed out after {}s; using fallback uid", ID_TIMEOUT_SECONDS);
+                return "501";
+            }
             return uid;
-        } catch (Exception e) {
-            return "501"; // fallback
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            if (proc != null) {
+                proc.destroyForcibly();
+            }
+            return "501";
+        } catch (IOException e) {
+            log.debug("id -u failed; using fallback uid", e);
+            return "501";
         }
     }
 

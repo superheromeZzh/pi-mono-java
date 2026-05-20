@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.concurrent.TimeUnit;
 
 import com.campusclaw.codingagent.command.SlashCommand;
 import com.campusclaw.codingagent.command.SlashCommandContext;
@@ -21,6 +22,8 @@ import com.campusclaw.codingagent.export.HtmlExporter;
  * @since [br_eCampusCore 25.1.0_Next]
  */
 public class ShareCommand implements SlashCommand {
+
+    private static final long GH_TIMEOUT_SECONDS = 30L;
 
     @Override
     public String name() {
@@ -62,7 +65,13 @@ public class ShareCommand implements SlashCommand {
                     .start();
 
             String output = new String(process.getInputStream().readAllBytes(), StandardCharsets.UTF_8).trim();
-            int exitCode = process.waitFor();
+            if (!process.waitFor(GH_TIMEOUT_SECONDS, TimeUnit.SECONDS)) {
+                process.destroyForcibly();
+                Files.deleteIfExists(tmpFile);
+                context.output().println("gh gist create timed out after " + GH_TIMEOUT_SECONDS + "s");
+                return;
+            }
+            int exitCode = process.exitValue();
 
             Files.deleteIfExists(tmpFile);
 

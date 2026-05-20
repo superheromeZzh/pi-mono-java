@@ -132,7 +132,11 @@ public final class GitUtils {
             command[0] = "git";
             System.arraycopy(args, 0, command, 1, args.length);
 
-            var pb = new ProcessBuilder(command).directory(workDir.toFile()).redirectErrorStream(false);
+            // Discard stderr at OS level so unread stderr can never fill the pipe
+            // and deadlock git's write side (which would in turn block readAllBytes on stdout).
+            var pb = new ProcessBuilder(command)
+                    .directory(workDir.toFile())
+                    .redirectError(ProcessBuilder.Redirect.DISCARD);
 
             var process = pb.start();
             var stdout = new String(process.getInputStream().readAllBytes(), StandardCharsets.UTF_8);

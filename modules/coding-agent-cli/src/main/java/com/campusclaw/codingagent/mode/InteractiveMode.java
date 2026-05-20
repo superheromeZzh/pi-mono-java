@@ -1279,14 +1279,21 @@ public class InteractiveMode {
                     .redirectErrorStream(true)
                     .start();
             String output = new String(check.getInputStream().readAllBytes(), StandardCharsets.UTF_8).trim();
-            int exit = check.waitFor();
+            if (!check.waitFor(5, TimeUnit.SECONDS)) {
+                check.destroyForcibly();
+                showStatus("剪贴板中没有图片");
+                return;
+            }
+            int exit = check.exitValue();
 
             if (exit != 0 || output.isEmpty()) {
                 showStatus("剪贴板中没有图片");
                 return;
             }
 
-            // Save clipboard image to temp file
+            // Save clipboard image to temp file. The write script produces no stdout on
+            // success; discard both streams at OS level so an unexpected diagnostic from
+            // osascript can never fill the pipe and deadlock waitFor.
             Path tmpFile = Files.createTempFile("campusclaw-clipboard-", ".png");
             var save = new ProcessBuilder(
                             "osascript",
@@ -1294,9 +1301,15 @@ public class InteractiveMode {
                             "set imgData to the clipboard as «class PNGf»\n" + "set fp to open for access POSIX file \""
                                     + tmpFile + "\" with write permission\n" + "write imgData to fp\n"
                                     + "close access fp")
-                    .redirectErrorStream(true)
+                    .redirectOutput(ProcessBuilder.Redirect.DISCARD)
+                    .redirectError(ProcessBuilder.Redirect.DISCARD)
                     .start();
-            save.waitFor();
+            if (!save.waitFor(10, TimeUnit.SECONDS)) {
+                save.destroyForcibly();
+                showStatus("读取剪贴板图片失败");
+                Files.deleteIfExists(tmpFile);
+                return;
+            }
 
             if (Files.exists(tmpFile) && Files.size(tmpFile) > 0) {
                 showStatus("已粘贴图片: " + tmpFile.getFileName());
@@ -1463,14 +1476,6 @@ public class InteractiveMode {
             }
             tui.render();
         }
-    }
-
-    private String modelInfo(AgentSession session) {
-        var model = session.getAgent().getState().getModel();
-        if (model != null) {
-            return "\033[2m (" + model.id() + ")\033[0m";
-        }
-        return "";
     }
 
     private static String truncateDisplay(String s, int max) {

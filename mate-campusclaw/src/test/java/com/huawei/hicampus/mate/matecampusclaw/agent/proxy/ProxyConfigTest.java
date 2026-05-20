@@ -5,6 +5,7 @@
 package com.huawei.hicampus.mate.matecampusclaw.agent.proxy;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatNoException;
 
 import java.net.Proxy;
 
@@ -365,12 +366,14 @@ class ProxyConfigTest {
                 cfg.setHttpProxy(new ProxyConfig.ProxyEntry(ProxyConfig.ProxyType.HTTP, "host", 8080, null, null));
                 cfg.installAsDefault();
 
-                // Calling connectFailed must not throw — just exercise it for coverage.
-                java.net.ProxySelector.getDefault()
-                        .connectFailed(
-                                new java.net.URI("http://example.com"),
-                                new java.net.InetSocketAddress("host", 8080),
-                                new java.io.IOException("test"));
+                java.net.ProxySelector selector = java.net.ProxySelector.getDefault();
+                java.net.URI uri = new java.net.URI("http://example.com");
+                java.net.InetSocketAddress addr = new java.net.InetSocketAddress("host", 8080);
+                java.io.IOException cause = new java.io.IOException("test");
+
+                // ProxySelector.connectFailed is a notification hook; it must swallow the failure
+                // and merely log so callers (URLConnection internals) keep working.
+                assertThatNoException().isThrownBy(() -> selector.connectFailed(uri, addr, cause));
             } finally {
                 java.net.ProxySelector.setDefault(saved);
             }

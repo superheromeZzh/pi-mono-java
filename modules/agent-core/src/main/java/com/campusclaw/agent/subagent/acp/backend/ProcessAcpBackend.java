@@ -56,7 +56,6 @@ public class ProcessAcpBackend implements SubAgentBackend {
     private static final Logger log = LoggerFactory.getLogger(ProcessAcpBackend.class);
 
     private static final Duration DEFAULT_INIT_TIMEOUT = Duration.ofSeconds(30L);
-
     private static final Duration DEFAULT_ASK_PARENT_TIMEOUT = Duration.ofSeconds(30L);
 
     /**
@@ -73,6 +72,7 @@ public class ProcessAcpBackend implements SubAgentBackend {
     private final ApprovalClassifier classifier;
     private final ApprovalPolicy policy;
     private final ParentPermissionResolver parentResolver;
+    private final ProcessSpawner spawner;
     private final Map<String, RuntimeHandle> handles = new ConcurrentHashMap<>();
 
     public ProcessAcpBackend(
@@ -82,6 +82,31 @@ public class ProcessAcpBackend implements SubAgentBackend {
             ApprovalClassifier classifier,
             ApprovalPolicy policy,
             ParentPermissionResolver parentResolver) {
+        this(id, config, mapper, classifier, policy, parentResolver, ProcessBuilder::start);
+    }
+
+    /**
+     * Package-private constructor variant that lets tests substitute the process
+     * spawner. Production callers use the public 6-arg constructor; tests in the
+     * same package pass an in-process fake to avoid forking real JVMs.
+     *
+     * @param id backend id
+     * @param config backend config
+     * @param mapper jackson mapper shared with {@link AcpClient}
+     * @param classifier optional approval classifier
+     * @param policy optional approval policy
+     * @param parentResolver optional parent permission resolver
+     * @param spawner seam that turns a configured {@link ProcessBuilder} into a {@link Process}
+     * @throws IllegalArgumentException if {@code id} is null or blank
+     */
+    ProcessAcpBackend(
+            String id,
+            Config config,
+            ObjectMapper mapper,
+            ApprovalClassifier classifier,
+            ApprovalPolicy policy,
+            ParentPermissionResolver parentResolver,
+            ProcessSpawner spawner) {
         if (id == null || id.isBlank()) {
             throw new IllegalArgumentException("id must not be blank");
         }
@@ -91,6 +116,17 @@ public class ProcessAcpBackend implements SubAgentBackend {
         this.classifier = classifier;
         this.policy = policy;
         this.parentResolver = parentResolver;
+        this.spawner = spawner == null ? ProcessBuilder::start : spawner;
+    }
+
+    /**
+     * Test seam: turn a configured {@link ProcessBuilder} into a {@link Process}. The default
+     * implementation in production is {@code ProcessBuilder::start}; tests substitute an
+     * in-process fake to skip JVM fork/exec.
+     */
+    @FunctionalInterface
+    interface ProcessSpawner {
+        Process start(ProcessBuilder pb) throws IOException;
     }
 
     @Override
@@ -108,8 +144,9 @@ public class ProcessAcpBackend implements SubAgentBackend {
         client.setPermissionHandler((req, ctx) -> resolvePermission(req, ctx, key));
         client.start("acp-reader-" + id + "-" + key.uuid());
         try {
-            client.initialize(config.clientName(), config.clientVersion(), DEFAULT_INIT_TIMEOUT);
-            String runtimeSessionId = client.newSession(request.cwd(), DEFAULT_INIT_TIMEOUT);
+            Duration initTimeout = config.initTimeout();
+            client.initialize(config.clientName(), config.clientVersion(), initTimeout);
+            String runtimeSessionId = client.newSession(request.cwd(), initTimeout);
             handles.put(key.asString(), new RuntimeHandle(process, client, stderr));
             return new SubAgentSession(key, runtimeSessionId, this);
         } catch (RuntimeException ex) {
@@ -267,7 +304,7 @@ public class ProcessAcpBackend implements SubAgentBackend {
         pb.redirectError(ProcessBuilder.Redirect.PIPE);
         Process process;
         try {
-            process = pb.start();
+            process = spawner.start(pb);
         } catch (IOException ex) {
             throw new SubAgentException(
                     "ACP_SPAWN_FAILED", "failed to launch " + config.command() + " (argv=" + argv + ")", ex);
@@ -336,7 +373,8 @@ public class ProcessAcpBackend implements SubAgentBackend {
             Map<String, String> env,
             String clientName,
             String clientVersion,
-            Duration promptTimeout) {
+            Duration promptTimeout,
+            Duration initTimeout) {
 
         public Config {
             if (command == null || command.isBlank()) {
@@ -347,6 +385,29 @@ public class ProcessAcpBackend implements SubAgentBackend {
             clientName = clientName == null || clientName.isBlank() ? "campusclaw" : clientName;
             clientVersion = clientVersion == null || clientVersion.isBlank() ? "1.0.0" : clientVersion;
             promptTimeout = promptTimeout == null ? Duration.ofMinutes(10L) : promptTimeout;
+            initTimeout = initTimeout == null ? DEFAULT_INIT_TIMEOUT : initTimeout;
+        }
+
+        /**
+         * Convenience constructor that leaves {@code initTimeout} at its default
+         * ({@link ProcessAcpBackend#DEFAULT_INIT_TIMEOUT}). Equivalent to the 7-arg form with
+         * {@code initTimeout=null}.
+         *
+         * @param command process command
+         * @param args process args
+         * @param env environment overrides
+         * @param clientName ACP client name
+         * @param clientVersion ACP client version
+         * @param promptTimeout per-prompt timeout
+         */
+        public Config(
+                String command,
+                List<String> args,
+                Map<String, String> env,
+                String clientName,
+                String clientVersion,
+                Duration promptTimeout) {
+            this(command, args, env, clientName, clientVersion, promptTimeout, null);
         }
     }
 

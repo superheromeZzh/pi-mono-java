@@ -5,6 +5,7 @@
 package com.huawei.hicampus.mate.matecampusclaw.codingagent.tool.sandbox;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatNoException;
 
 import java.util.List;
 
@@ -49,8 +50,8 @@ class DockerSandboxClientTest {
         void shutdownIsSafeWhenInactive() {
             DockerSandboxClient c = client(false);
 
-            // Should not throw
-            c.shutdown();
+            // No worker container ever spawned — shutdown should be a no-op rather than throwing.
+            assertThatNoException().isThrownBy(c::shutdown);
         }
     }
 }

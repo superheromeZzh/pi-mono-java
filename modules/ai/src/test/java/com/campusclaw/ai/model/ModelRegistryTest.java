@@ -7,7 +7,6 @@ package com.campusclaw.ai.model;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -154,8 +153,7 @@ class ModelRegistryTest {
         @Test
         void returnsEmptyListForUnknownProvider() {
             var result = registry.getModels(Provider.MISTRAL);
-            assertNotNull(result);
-            assertTrue(result.isEmpty());
+            assertTrue(result.isEmpty(), "no models registered for MISTRAL must yield an empty list, not null");
         }
 
         @Test

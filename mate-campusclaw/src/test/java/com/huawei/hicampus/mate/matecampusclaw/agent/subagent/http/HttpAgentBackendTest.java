@@ -5,6 +5,7 @@
 package com.huawei.hicampus.mate.matecampusclaw.agent.subagent.http;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatNoException;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -267,8 +268,11 @@ class HttpAgentBackendTest {
         SubAgentSession session = backend.open(
                 new SubAgentBackend.OpenRequest("main", null, null, null, Map.of(), Duration.ofSeconds(30L)));
 
-        // No active prompt — cancel and close should not throw
-        backend.cancel(session, "test-cancel");
-        backend.close(session, "test-cleanup");
+        // No active prompt — cancel and close must silently no-op rather than throw on the
+        // absent in-flight subscription / closed channels.
+        assertThatNoException().isThrownBy(() -> {
+            backend.cancel(session, "test-cancel");
+            backend.close(session, "test-cleanup");
+        });
     }
 }
