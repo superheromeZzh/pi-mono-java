@@ -5,6 +5,7 @@
 package com.huawei.hicampus.mate.matecampusclaw.codingagent.util;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Locale;
@@ -99,8 +100,9 @@ public final class ClipboardUtils {
 
         try {
             // Discard stdout/stderr at OS level: pbcopy/xclip/xsel/clip occasionally print
-            // warnings, and we never read them — without DISCARD the pipe could fill and
-            // deadlock waitFor.
+            // warnings, and we never read them. Redirect.DISCARD is best-effort (not
+            // guaranteed on macOS), so also drain the JVM-side streams to nullOutputStream
+            // — without an explicit drain the pipe could fill and deadlock the writer.
             Process proc = new ProcessBuilder(cmd)
                     .redirectOutput(ProcessBuilder.Redirect.DISCARD)
                     .redirectError(ProcessBuilder.Redirect.DISCARD)
@@ -108,6 +110,8 @@ public final class ClipboardUtils {
             try (OutputStream out = proc.getOutputStream()) {
                 out.write(text.getBytes(StandardCharsets.UTF_8));
             }
+            drainToNull(proc.getInputStream());
+            drainToNull(proc.getErrorStream());
             if (!proc.waitFor(COPY_TIMEOUT_SECONDS, TimeUnit.SECONDS)) {
                 proc.destroyForcibly();
                 log.debug("Native clipboard copy timed out after {}s: {}", COPY_TIMEOUT_SECONDS, cmd[0]);
@@ -164,13 +168,26 @@ public final class ClipboardUtils {
                     .redirectOutput(ProcessBuilder.Redirect.DISCARD)
                     .redirectError(ProcessBuilder.Redirect.DISCARD)
                     .start();
+
+            // which does not read stdin; close it so the child sees EOF immediately.
+            proc.getOutputStream().close();
+            drainToNull(proc.getInputStream());
+            drainToNull(proc.getErrorStream());
             if (!proc.waitFor(WHICH_TIMEOUT_SECONDS, TimeUnit.SECONDS)) {
                 proc.destroyForcibly();
                 return false;
             }
             return proc.exitValue() == 0;
         } catch (Exception e) {
+            log.debug("commandExists check failed: {}", command, e);
             return false;
+        }
+    }
+
+    private static void drainToNull(InputStream in) throws IOException {
+        try (in;
+                OutputStream sink = OutputStream.nullOutputStream()) {
+            in.transferTo(sink);
         }
     }
 }
