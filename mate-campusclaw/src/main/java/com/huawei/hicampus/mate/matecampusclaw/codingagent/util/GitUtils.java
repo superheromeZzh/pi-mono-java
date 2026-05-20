@@ -5,6 +5,8 @@
 package com.huawei.hicampus.mate.matecampusclaw.codingagent.util;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.List;
@@ -139,7 +141,21 @@ public final class GitUtils {
                     .redirectError(ProcessBuilder.Redirect.DISCARD);
 
             var process = pb.start();
-            var stdout = new String(process.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
+
+            // git rev-parse / status / config / remote / diff --name-only do not read stdin —
+            // close it so the child sees EOF immediately and never blocks reading from a fd
+            // that nobody writes to.
+            process.getOutputStream().close();
+
+            String stdout;
+            try (InputStream in = process.getInputStream()) {
+                stdout = new String(in.readAllBytes(), StandardCharsets.UTF_8);
+            }
+
+            // Redirect.DISCARD is best-effort (not guaranteed on macOS) — explicitly drain
+            // the JVM-side stderr stream so an un-redirected pipe can never block waitFor.
+            drainToNull(process.getErrorStream());
+
             boolean completed = process.waitFor(TIMEOUT_SECONDS, TimeUnit.SECONDS);
 
             if (!completed) {
@@ -151,6 +167,13 @@ public final class GitUtils {
         } catch (IOException | InterruptedException e) {
             log.debug("Git command failed: {}", e.getMessage());
             return Optional.empty();
+        }
+    }
+
+    private static void drainToNull(InputStream in) throws IOException {
+        try (in;
+                OutputStream sink = OutputStream.nullOutputStream()) {
+            in.transferTo(sink);
         }
     }
 }
