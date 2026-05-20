@@ -9,6 +9,7 @@ import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Locale;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,6 +22,9 @@ import org.slf4j.LoggerFactory;
  */
 public final class ClipboardUtils {
     private static final Logger log = LoggerFactory.getLogger(ClipboardUtils.class);
+    private static final long COPY_TIMEOUT_SECONDS = 10L;
+    private static final long PASTE_TIMEOUT_SECONDS = 10L;
+    private static final long WHICH_TIMEOUT_SECONDS = 5L;
 
     private ClipboardUtils() {}
 
@@ -94,11 +98,22 @@ public final class ClipboardUtils {
         }
 
         try {
-            Process proc = new ProcessBuilder(cmd).redirectErrorStream(true).start();
+            // Discard stdout/stderr at OS level: pbcopy/xclip/xsel/clip occasionally print
+            // warnings, and we never read them — without DISCARD the pipe could fill and
+            // deadlock waitFor.
+            Process proc = new ProcessBuilder(cmd)
+                    .redirectOutput(ProcessBuilder.Redirect.DISCARD)
+                    .redirectError(ProcessBuilder.Redirect.DISCARD)
+                    .start();
             try (OutputStream out = proc.getOutputStream()) {
                 out.write(text.getBytes(StandardCharsets.UTF_8));
             }
-            return proc.waitFor() == 0;
+            if (!proc.waitFor(COPY_TIMEOUT_SECONDS, TimeUnit.SECONDS)) {
+                proc.destroyForcibly();
+                log.debug("Native clipboard copy timed out after {}s: {}", COPY_TIMEOUT_SECONDS, cmd[0]);
+                return false;
+            }
+            return proc.exitValue() == 0;
         } catch (Exception e) {
             log.debug("Native clipboard copy failed", e);
             return false;
@@ -124,8 +139,17 @@ public final class ClipboardUtils {
 
         try {
             Process proc = new ProcessBuilder(cmd).redirectErrorStream(true).start();
+
+            // pbpaste / xclip -o / xsel --output do not read stdin; close it explicitly to
+            // signal EOF defensively in case a future command does.
+            proc.getOutputStream().close();
             String result = new String(proc.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
-            if (proc.waitFor() == 0) {
+            if (!proc.waitFor(PASTE_TIMEOUT_SECONDS, TimeUnit.SECONDS)) {
+                proc.destroyForcibly();
+                log.debug("Native clipboard paste timed out after {}s", PASTE_TIMEOUT_SECONDS);
+                return Optional.empty();
+            }
+            if (proc.exitValue() == 0) {
                 return Optional.of(result);
             }
         } catch (Exception e) {
@@ -137,9 +161,14 @@ public final class ClipboardUtils {
     private static boolean commandExists(String command) {
         try {
             Process proc = new ProcessBuilder("which", command)
-                    .redirectErrorStream(true)
+                    .redirectOutput(ProcessBuilder.Redirect.DISCARD)
+                    .redirectError(ProcessBuilder.Redirect.DISCARD)
                     .start();
-            return proc.waitFor() == 0;
+            if (!proc.waitFor(WHICH_TIMEOUT_SECONDS, TimeUnit.SECONDS)) {
+                proc.destroyForcibly();
+                return false;
+            }
+            return proc.exitValue() == 0;
         } catch (Exception e) {
             return false;
         }

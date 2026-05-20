@@ -23,7 +23,6 @@ import com.campusclaw.ai.types.ContentBlock;
 import com.campusclaw.ai.types.Message;
 import com.campusclaw.ai.types.TextContent;
 import com.campusclaw.codingagent.session.AgentSession;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
@@ -297,10 +296,5 @@ public class AcpMode {
             }
         }
         return sb.toString();
-    }
-
-    @SuppressWarnings("unused")
-    private JsonNode placeholder() {
-        return mapper.createObjectNode();
     }
 }

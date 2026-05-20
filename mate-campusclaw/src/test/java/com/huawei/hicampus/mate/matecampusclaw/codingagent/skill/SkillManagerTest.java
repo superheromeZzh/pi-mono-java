@@ -15,6 +15,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 
+import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -348,6 +349,48 @@ class SkillManagerTest {
             assertEquals("real-name", name);
         }
 
+        @Test
+        void rejectsZipSlipParentTraversal() throws Exception {
+            Path zipFile = tempDir.resolve("evil-traversal.zip");
+            buildZip(zipFile, "../evil/SKILL.md", "---\ndescription: evil\n---\n");
+            SkillInstallException ex = assertThrows(SkillInstallException.class, () -> manager.importArchive(zipFile));
+            assertTrue(
+                    ex.getMessage().contains("parent traversal"),
+                    "expected parent-traversal rejection but got: " + ex.getMessage());
+            assertFalse(Files.exists(tempDir.resolve("evil/SKILL.md")));
+        }
+
+        @Test
+        void rejectsZipEntryWithUnixAbsolutePath() throws Exception {
+            Path zipFile = tempDir.resolve("evil-absolute.zip");
+            buildZip(zipFile, "/etc/passwd-skill/SKILL.md", "---\ndescription: evil\n---\n");
+            SkillInstallException ex = assertThrows(SkillInstallException.class, () -> manager.importArchive(zipFile));
+            assertTrue(
+                    ex.getMessage().contains("absolute"),
+                    "expected absolute-path rejection but got: " + ex.getMessage());
+        }
+
+        @Test
+        void rejectsZipEntryWithWindowsBackslashAbsolutePath() throws Exception {
+            Path zipFile = tempDir.resolve("evil-windows.zip");
+            buildZip(zipFile, "\\windows\\evil\\SKILL.md", "---\ndescription: evil\n---\n");
+            SkillInstallException ex = assertThrows(SkillInstallException.class, () -> manager.importArchive(zipFile));
+            assertTrue(
+                    ex.getMessage().contains("absolute"),
+                    "expected absolute-path rejection but got: " + ex.getMessage());
+        }
+
+        @Test
+        void rejectsZipEntryWithWindowsDriveLetter() throws Exception {
+            Path zipFile = tempDir.resolve("evil-drive.zip");
+            buildZip(zipFile, "C:\\evil\\SKILL.md", "---\ndescription: evil\n---\n");
+            SkillInstallException ex = assertThrows(SkillInstallException.class, () -> manager.importArchive(zipFile));
+            assertTrue(
+                    ex.getMessage().contains("Windows absolute")
+                            || ex.getMessage().contains("absolute"),
+                    "expected absolute-path rejection but got: " + ex.getMessage());
+        }
+
         private void buildZip(Path target, String entryName, String content) throws IOException {
             try (var out = new java.util.zip.ZipOutputStream(
                     new java.io.BufferedOutputStream(Files.newOutputStream(target)))) {
@@ -368,9 +411,7 @@ class SkillManagerTest {
 
         @Test
         void importsValidTarGzArchive() throws Exception {
-            if (!tarAvailable()) {
-                return; // Skip silently when the system tar binary is not available
-            }
+            Assumptions.assumeTrue(tarAvailable(), "tar binary not on PATH");
             Path stagingDir = tempDir.resolve("staging");
             Files.createDirectories(stagingDir.resolve("tar-skill"));
             Files.writeString(

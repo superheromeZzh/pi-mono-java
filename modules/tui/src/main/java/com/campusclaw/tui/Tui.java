@@ -49,7 +49,7 @@ public class Tui {
     private final boolean syncOutputSupported;
 
     private Container root;
-    private Consumer<String> inputHandler;
+    private volatile Consumer<String> inputHandler;
     private volatile boolean running = false;
 
     // Differential render state (all in buffer coordinates — row 0 is the topmost
@@ -85,18 +85,18 @@ public class Tui {
         return true;
     }
 
-    public void setRoot(Container root) {
+    public synchronized void setRoot(Container root) {
         this.root = root;
     }
 
-    public void setInputHandler(Consumer<String> handler) {
+    public synchronized void setInputHandler(Consumer<String> handler) {
         this.inputHandler = handler;
     }
 
     /**
      * Start the TUI. Enters raw mode, hides cursor, clears screen.
      */
-    public void start() {
+    public synchronized void start() {
         running = true;
         terminal.clearListeners();
         terminal.enterRawMode();
@@ -112,8 +112,9 @@ public class Tui {
         maxLinesRendered = 0;
 
         terminal.onInput(data -> {
-            if (inputHandler != null) {
-                inputHandler.accept(data);
+            Consumer<String> handler = inputHandler;
+            if (handler != null) {
+                handler.accept(data);
             }
         });
 
@@ -123,7 +124,7 @@ public class Tui {
     /**
      * Stop the TUI. Shows cursor, moves below content, exits raw mode.
      */
-    public void stop() {
+    public synchronized void stop() {
         running = false;
 
         // Move cursor below all content and show it

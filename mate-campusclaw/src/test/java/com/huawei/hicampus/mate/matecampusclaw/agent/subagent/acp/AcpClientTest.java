@@ -5,6 +5,7 @@
 package com.huawei.hicampus.mate.matecampusclaw.agent.subagent.acp;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.io.BufferedReader;
@@ -183,9 +184,12 @@ class AcpClientTest {
                 var clientFromServer = new PipedInputStream(serverToClient, 4096)) {
             var client = new AcpClient(mapper, clientFromServer, clientToServer);
 
-            // Should silently no-op since sessionId is null.
-            client.cancel();
-            client.close();
+            // cancel() must short-circuit when no session/new has run yet — calling without a
+            // session id should silently no-op rather than write a malformed JSON-RPC frame.
+            assertThatNoException().isThrownBy(() -> {
+                client.cancel();
+                client.close();
+            });
         }
     }
 

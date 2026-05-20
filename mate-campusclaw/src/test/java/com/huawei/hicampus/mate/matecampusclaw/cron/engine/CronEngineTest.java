@@ -5,6 +5,7 @@
 package com.huawei.hicampus.mate.matecampusclaw.cron.engine;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.atLeast;
@@ -426,9 +427,10 @@ class CronEngineTest {
         @Test
         void unscheduleMissingJobIsNoOp() {
             engine = new CronEngine(store, executor);
-            engine.unscheduleJob("nonexistent");
 
-            // Should not throw
+            // unscheduleJob must tolerate a job id that was never scheduled — engine never
+            // saw it, so the lookup miss should silently no-op rather than throw NPE.
+            assertThatNoException().isThrownBy(() -> engine.unscheduleJob("nonexistent"));
         }
     }
 }

@@ -474,8 +474,7 @@ class AgentSessionTest {
             session.initialize(config());
 
             List<Message> history = session.getHistory();
-            assertNotNull(history);
-            assertTrue(history.isEmpty());
+            assertTrue(history.isEmpty(), "history of a freshly initialized session must be empty");
         }
     }
 

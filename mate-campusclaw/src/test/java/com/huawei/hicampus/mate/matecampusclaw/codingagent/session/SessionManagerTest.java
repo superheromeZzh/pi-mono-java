@@ -4,8 +4,10 @@
 
 package com.huawei.hicampus.mate.matecampusclaw.codingagent.session;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.nio.file.Files;
@@ -196,11 +198,14 @@ class SessionManagerTest {
         SessionManager sm = new SessionManager();
 
         // No createSession call yet — sessionFile is null. All these should silently no-op.
-        sm.appendMessage(new UserMessage("ignored", 1L));
-        sm.appendModelChange("p", "m");
-        sm.appendThinkingLevelChange("low");
-        sm.appendSessionName("name");
-        assertNotNull(sm, "no exception expected from append-* on idle SessionManager");
+        assertDoesNotThrow(() -> {
+            sm.appendMessage(new UserMessage("ignored", 1L));
+            sm.appendModelChange("p", "m");
+            sm.appendThinkingLevelChange("low");
+            sm.appendSessionName("name");
+        });
+        assertNull(sm.getSessionFile(), "append-* must not lazily create a session file");
+        assertNull(sm.getSessionId(), "append-* must not lazily assign a session id");
     }
 
     @Test
@@ -297,11 +302,12 @@ class SessionManagerTest {
     void closeIsSafeToCallTwice() {
         SessionManager sm = new SessionManager();
         sm.createSession(uniqueCwd());
-        createdDir = sm.getSessionFile().getParent();
+        Path file = sm.getSessionFile();
+        createdDir = file.getParent();
         sm.appendMessage(new UserMessage("once", 1L));
         sm.close();
-        sm.close(); // second call should be a no-op rather than throwing
-        assertNotNull(sm.getSessionFile(), "sessionFile reference must survive close()");
+        assertDoesNotThrow(sm::close, "second close() must be a no-op rather than throwing");
+        assertEquals(file, sm.getSessionFile(), "sessionFile reference must survive double-close()");
     }
 
     @Test

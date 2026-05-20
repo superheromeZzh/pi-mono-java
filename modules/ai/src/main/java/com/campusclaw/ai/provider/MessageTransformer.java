@@ -118,7 +118,8 @@ public class MessageTransformer {
         } else if (cb instanceof ToolCall tc) {
             String normalizedId = normalizeToolCallId(tc.id());
             String sig = isSameModel ? tc.thoughtSignature() : null;
-            if (!normalizedId.equals(tc.id()) || sig != tc.thoughtSignature()) {
+            boolean signatureStripped = !isSameModel && tc.thoughtSignature() != null;
+            if (!normalizedId.equals(tc.id()) || signatureStripped) {
                 sink.add(new ToolCall(normalizedId, tc.name(), tc.arguments(), sig));
             } else {
                 sink.add(cb);

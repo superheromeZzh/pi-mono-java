@@ -4,9 +4,9 @@
 
 package com.campusclaw.tui.image;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.Nested;
@@ -95,8 +95,12 @@ class TerminalImageProtocolTest {
 
         @Test
         void returnsAProtocol() {
-            TerminalImageProtocol.Protocol p = TerminalImageProtocol.detect();
-            assertNotNull(p);
+            // detect() inspects env vars (TERM, KITTY_WINDOW_ID, TERM_PROGRAM …) — must return
+            // some classification without throwing, even when none of those vars are set.
+            TerminalImageProtocol.Protocol p = assertDoesNotThrow(TerminalImageProtocol::detect);
+
+            // isSupported() is the public boolean form of detect(); the two must agree.
+            assertEquals(p != TerminalImageProtocol.Protocol.NONE, TerminalImageProtocol.isSupported());
         }
     }
 

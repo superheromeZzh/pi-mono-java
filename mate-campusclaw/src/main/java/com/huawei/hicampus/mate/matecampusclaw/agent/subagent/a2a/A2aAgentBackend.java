@@ -91,7 +91,7 @@ public class A2aAgentBackend implements SubAgentBackend {
                 HttpClient.newBuilder().connectTimeout(config.connectTimeout()).version(HttpClient.Version.HTTP_1_1);
         if (config.insecureSkipVerify()) {
             log.warn(
-                    "a2a backend '{}' has insecureSkipVerify=true; TLS verification disabled — DO NOT use in production",
+                    "a2a backend '{}' has insecureSkipVerify=true; TLS verification disabled - DO NOT use in production",
                     config.id());
             applyInsecureSsl(builder);
         }

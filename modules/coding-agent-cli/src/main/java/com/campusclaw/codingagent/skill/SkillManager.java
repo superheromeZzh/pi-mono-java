@@ -319,11 +319,12 @@ public class SkillManager {
 
             ZipEntry entry;
             while ((entry = zis.getNextEntry()) != null) {
-                Path entryPath = destDir.resolve(entry.getName()).normalize();
+                String entryName = entry.getName();
+                validateZipEntryName(entryName);
+                Path entryPath = destDir.resolve(entryName).normalize();
 
-                // Guard against zip-slip
                 if (!entryPath.startsWith(destDir)) {
-                    throw new IOException("Zip entry outside target directory: " + entry.getName());
+                    throw new IOException("Zip entry outside target directory: " + entryName);
                 }
                 if (entry.isDirectory()) {
                     Files.createDirectories(entryPath);
@@ -332,6 +333,39 @@ public class SkillManager {
                     Files.copy(zis, entryPath);
                 }
                 zis.closeEntry();
+            }
+        }
+    }
+
+    /**
+     * Validates a raw zip entry name before it is passed to {@code Path.resolve(...)}.
+     *
+     * <p>Rejects four classes of malicious inputs at the boundary so static analysis
+     * (e.g. Fortify path-manipulation taint tracking) sees the input as sanitized:
+     * empty / null-byte names, Unix or Windows absolute paths, Windows drive letters,
+     * and any {@code ..} path segment (split on both {@code /} and {@code \} for
+     * cross-platform safety). The post-resolve {@code startsWith(destDir)} check in
+     * {@link #extractZip(Path, Path)} remains as defense in depth.
+     *
+     * @param name the raw {@code ZipEntry.getName()} value
+     * @throws IOException if the entry name is unsafe to resolve under the destination directory
+     */
+    private static void validateZipEntryName(String name) throws IOException {
+        if (name == null || name.isEmpty()) {
+            throw new IOException("Zip entry has empty name");
+        }
+        if (name.indexOf('\0') >= 0) {
+            throw new IOException("Zip entry name contains null byte: " + name);
+        }
+        if (name.startsWith("/") || name.startsWith("\\")) {
+            throw new IOException("Zip entry name is absolute: " + name);
+        }
+        if (name.length() >= 2 && name.charAt(1) == ':') {
+            throw new IOException("Zip entry name is a Windows absolute path: " + name);
+        }
+        for (String segment : name.split("[/\\\\]", -1)) {
+            if ("..".equals(segment)) {
+                throw new IOException("Zip entry name contains parent traversal: " + name);
             }
         }
     }

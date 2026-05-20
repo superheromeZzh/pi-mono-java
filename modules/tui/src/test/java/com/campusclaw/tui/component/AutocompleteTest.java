@@ -4,6 +4,7 @@
 
 package com.campusclaw.tui.component;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -94,9 +95,10 @@ class AutocompleteTest {
 
         @Test
         void emptyInputUsesCurrentDir() {
-            // Just verify no exception and a list returned
-            List<String> suggestions = Autocomplete.computeFileSuggestions("");
-            assertNotNull(suggestions);
+            // Falls back to listing the current working directory; must return a list (possibly empty)
+            // without throwing — Autocomplete uses this branch when the user has typed nothing yet.
+            List<String> suggestions = assertDoesNotThrow(() -> Autocomplete.computeFileSuggestions(""));
+            assertTrue(suggestions.stream().allMatch(s -> s != null && !s.isBlank()));
         }
     }
 
