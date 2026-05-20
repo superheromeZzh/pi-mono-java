@@ -66,7 +66,14 @@ public class Timings {
                 return String.format(Locale.ROOT, "%s: %.1fms", name, totalMs);
             }
             return String.format(
-                    "%s: %.1fms avg (min=%.1f, max=%.1f, p95=%.1f, n=%d)", name, avgMs, minMs, maxMs, p95Ms, count);
+                    Locale.ROOT,
+                    "%s: %.1fms avg (min=%.1f, max=%.1f, p95=%.1f, n=%d)",
+                    name,
+                    avgMs,
+                    minMs,
+                    maxMs,
+                    p95Ms,
+                    count);
         }
     }
 

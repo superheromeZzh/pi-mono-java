@@ -11,6 +11,7 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 import com.huawei.hicampus.mate.matecampusclaw.agent.tool.AgentTool;
@@ -139,7 +140,12 @@ public class LsTool implements AgentTool {
                     };
             String name = "directory".equals(entry.type()) ? entry.name() + "/" : entry.name();
             sb.append(String.format(
-                    "%s %5d  %s  %s", typeFlag, entry.size(), DATE_FORMAT.format(entry.lastModified()), name));
+                    Locale.ROOT,
+                    "%s %5d  %s  %s",
+                    typeFlag,
+                    entry.size(),
+                    DATE_FORMAT.format(entry.lastModified()),
+                    name));
         }
         if (truncated) {
             sb.append("\n... (truncated to ").append(MAX_ENTRIES).append(" entries)");

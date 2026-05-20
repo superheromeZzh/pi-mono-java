@@ -54,6 +54,127 @@ class SubAgentRegistryTest {
         assertThat(backend.cancelCount.get()).isEqualTo(1);
     }
 
+    @Test
+    void registerNormalizesIdAndAcceptsUppercase() {
+        var registry = new SubAgentRegistry(emptyProvider());
+        var backend = new RecordingBackend("Foo");
+        registry.register(backend);
+        assertThat(registry.backend("foo")).contains(backend);
+        assertThat(registry.backend("FOO")).contains(backend);
+        assertThat(registry.backend("  foo  ")).contains(backend);
+    }
+
+    @Test
+    void registerBlankIdRejected() {
+        var registry = new SubAgentRegistry(emptyProvider());
+        assertThatThrownBy(() -> registry.register(new RecordingBackend("")))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("blank");
+        assertThatThrownBy(() -> registry.register(new RecordingBackend("   ")))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void registerReplacementKeepsLatest() {
+        var registry = new SubAgentRegistry(emptyProvider());
+        var first = new RecordingBackend("foo");
+        var second = new RecordingBackend("foo");
+        registry.register(first);
+        registry.register(second);
+        assertThat(registry.backend("foo")).contains(second);
+    }
+
+    @Test
+    void requireBackendReturnsRegistered() {
+        var registry = new SubAgentRegistry(emptyProvider());
+        var backend = new RecordingBackend("foo");
+        registry.register(backend);
+        assertThat(registry.requireBackend("foo")).isSameAs(backend);
+    }
+
+    @Test
+    void backendForUnknownIdEmpty() {
+        var registry = new SubAgentRegistry(emptyProvider());
+        assertThat(registry.backend("missing")).isEmpty();
+        assertThat(registry.backend(null)).isEmpty();
+    }
+
+    @Test
+    void trackAndForgetSessions() {
+        var registry = new SubAgentRegistry(emptyProvider());
+        var backend = new RecordingBackend("foo");
+        registry.register(backend);
+
+        var key = SubAgentSessionKey.newKey("main", "foo");
+        var session = new SubAgentSession(key, "remote-1", backend);
+        registry.trackSession(session, "my-label");
+
+        assertThat(registry.session(session.keyString())).contains(session);
+        assertThat(registry.sessions()).contains(session);
+
+        registry.forgetSession(session);
+        assertThat(registry.session(session.keyString())).isEmpty();
+        assertThat(registry.sessions()).doesNotContain(session);
+    }
+
+    @Test
+    void forgetUntrackedSessionIsNoOp() {
+        var registry = new SubAgentRegistry(emptyProvider());
+        var backend = new RecordingBackend("foo");
+        registry.register(backend);
+        var session = new SubAgentSession(SubAgentSessionKey.newKey("main", "foo"), "remote", backend);
+
+        // Not tracked — should not throw
+        registry.forgetSession(session);
+    }
+
+    @Test
+    void cancelAllSwallowsBackendException() {
+        var registry = new SubAgentRegistry(emptyProvider());
+        AtomicInteger cancelCount = new AtomicInteger();
+        SubAgentBackend backend = new SubAgentBackend() {
+            @Override
+            public String id() {
+                return "throwy";
+            }
+
+            @Override
+            public SubAgentSession open(OpenRequest request) {
+                return new SubAgentSession(SubAgentSessionKey.newKey(request.parentAgentId(), id()), "sid", this);
+            }
+
+            @Override
+            public Flux<SubAgentEvent> prompt(SubAgentSession session, String text, CancellationToken signal) {
+                return Flux.empty();
+            }
+
+            @Override
+            public void cancel(SubAgentSession session, String reason) {
+                cancelCount.incrementAndGet();
+                throw new IllegalStateException("backend boom");
+            }
+
+            @Override
+            public void close(SubAgentSession session, String reason) {}
+        };
+        registry.register(backend);
+        var session = new SubAgentSession(SubAgentSessionKey.newKey("main", "throwy"), "remote", backend);
+        registry.trackSession(session);
+
+        // Should not propagate the exception
+        registry.cancelAll("abort");
+        assertThat(cancelCount.get()).isEqualTo(1);
+    }
+
+    @Test
+    void backendIdsReturnsAllRegistered() {
+        var registry = new SubAgentRegistry(emptyProvider());
+        registry.register(new RecordingBackend("a"));
+        registry.register(new RecordingBackend("b"));
+        registry.register(new RecordingBackend("c"));
+        assertThat(registry.backendIds()).containsExactlyInAnyOrder("a", "b", "c");
+    }
+
     private static ObjectProvider<SubAgentBackend> emptyProvider() {
         @SuppressWarnings("unchecked")
         ObjectProvider<SubAgentBackend> provider =

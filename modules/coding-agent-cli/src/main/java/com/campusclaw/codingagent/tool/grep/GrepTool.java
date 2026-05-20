@@ -36,6 +36,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
@@ -50,6 +52,8 @@ import org.springframework.stereotype.Component;
 @Component
 @ConditionalOnProperty(name = "tool.execution.hybrid-enabled", havingValue = "false", matchIfMissing = true)
 public class GrepTool implements AgentTool {
+
+    private static final Logger log = LoggerFactory.getLogger(GrepTool.class);
 
     static final int MAX_RESULTS = 500;
     static final Duration TIMEOUT = Duration.ofSeconds(30);
@@ -281,8 +285,9 @@ public class GrepTool implements AgentTool {
                     return FileVisitResult.CONTINUE;
                 }
             });
-        } catch (IOException ignored) {
+        } catch (IOException e) {
             // Best-effort walk
+            log.debug("grep walk encountered IO error in {}", dir, e);
         }
     }
 
@@ -312,8 +317,9 @@ public class GrepTool implements AgentTool {
                     results.add(relative + ":" + (i + 1) + ":" + lines.get(i));
                 }
             }
-        } catch (IOException ignored) {
+        } catch (IOException e) {
             // Skip unreadable files (binary, permission issues, etc.)
+            log.debug("grep skipping unreadable file {}", file, e);
         }
     }
 

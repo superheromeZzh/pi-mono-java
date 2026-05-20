@@ -174,16 +174,19 @@ class AnsiCodeTracker {
     }
 
     boolean hasActiveCodes() {
-        return bold
-                || dim
-                || italic
-                || underline
-                || blink
-                || inverse
-                || hidden
-                || strikethrough
-                || fgColor != null
-                || bgColor != null;
+        return hasIntensityOrEmphasis() || hasDecoration() || hasActiveColor();
+    }
+
+    private boolean hasIntensityOrEmphasis() {
+        return bold || dim || italic || inverse;
+    }
+
+    private boolean hasDecoration() {
+        return underline || blink || hidden || strikethrough;
+    }
+
+    private boolean hasActiveColor() {
+        return fgColor != null || bgColor != null;
     }
 
     String getLineEndReset() {

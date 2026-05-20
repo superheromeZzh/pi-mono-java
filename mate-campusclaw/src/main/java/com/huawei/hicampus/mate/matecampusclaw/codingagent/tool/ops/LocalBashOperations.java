@@ -14,6 +14,9 @@ import java.util.concurrent.TimeUnit;
 import com.huawei.hicampus.mate.matecampusclaw.agent.util.LoggingUncaughtExceptionHandler;
 import com.huawei.hicampus.mate.matecampusclaw.codingagent.tool.bash.ShellResolver;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * Local shell implementation of {@link BashOperations}.
  * Executes commands via {@code bash -c}; shell discovery is delegated to
@@ -24,6 +27,8 @@ import com.huawei.hicampus.mate.matecampusclaw.codingagent.tool.bash.ShellResolv
  * @since [br_eCampusCore 25.1.0_Next]
  */
 public class LocalBashOperations implements BashOperations {
+
+    private static final Logger log = LoggerFactory.getLogger(LocalBashOperations.class);
 
     @Override
     public BashResult exec(String command, Path cwd, BashExecOptions options) throws IOException {
@@ -75,8 +80,9 @@ public class LocalBashOperations implements BashOperations {
                                 options.onData().accept(chunk);
                             }
                         }
-                    } catch (IOException ignored) {
+                    } catch (IOException e) {
                         // Stream closed due to process destruction — expected on timeout/cancel.
+                        log.debug("local bash output drain stopped (stream closed by process)", e);
                     }
                 },
                 "bash-output-drainer");

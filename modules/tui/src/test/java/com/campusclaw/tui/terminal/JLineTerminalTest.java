@@ -18,11 +18,15 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Tests JLineTerminal using a dumb JLine terminal (no real TTY needed).
  */
 class JLineTerminalTest {
+
+    private static final Logger log = LoggerFactory.getLogger(JLineTerminalTest.class);
 
     private org.jline.terminal.Terminal dumbTerminal;
     private JLineTerminal terminal;
@@ -134,6 +138,7 @@ class JLineTerminalTest {
                     dumbTerminal.close();
                 } catch (IOException e) {
                     // Some dumb terminals may throw on double close - that's fine
+                    log.debug("double-close on dumb terminal threw (acceptable)", e);
                 }
             });
         }

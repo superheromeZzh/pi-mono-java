@@ -183,7 +183,7 @@ public class EditDiffTool implements AgentTool {
                 }
                 """);
         } catch (Exception e) {
-            throw new RuntimeException("Failed to build EditDiff schema", e);
+            throw new IllegalStateException("Failed to build EditDiff schema", e);
         }
     }
 

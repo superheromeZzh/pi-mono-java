@@ -4,6 +4,7 @@
 
 package com.huawei.hicampus.mate.matecampusclaw.codingagent.mode.acp;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.UUID;
@@ -88,8 +89,13 @@ public class AcpMode {
             while (!Thread.currentThread().isInterrupted() && input.available() >= 0) {
                 Thread.sleep(200L);
             }
-        } catch (Exception ignored) {
-            // exit on close
+        } catch (InterruptedException e) {
+            // Restore interrupt flag and exit normally.
+            Thread.currentThread().interrupt();
+            log.debug("ACP mode interrupted while waiting on stdin; exiting", e);
+        } catch (IOException e) {
+            // stdin closed — normal shutdown signal from the parent.
+            log.debug("ACP mode stdin closed; exiting", e);
         } finally {
             if (transport != null) {
                 transport.close();

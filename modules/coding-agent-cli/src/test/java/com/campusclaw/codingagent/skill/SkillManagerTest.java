@@ -296,6 +296,129 @@ class SkillManagerTest {
     }
 
     // -------------------------------------------------------------------
+    // Import archive
+    // -------------------------------------------------------------------
+
+    @Nested
+    class ImportArchive {
+
+        @Test
+        void importsValidZipArchive() throws Exception {
+            Path zipFile = tempDir.resolve("my-skill.zip");
+            buildZip(zipFile, "my-skill/SKILL.md", "---\ndescription: Imported\n---\nbody");
+            String name = manager.importArchive(zipFile);
+            assertEquals("my-skill", name);
+            assertTrue(Files.exists(skillsDir.resolve("my-skill/SKILL.md")));
+        }
+
+        @Test
+        void rejectsUnsupportedFormat() throws IOException {
+            Path file = tempDir.resolve("payload.bin");
+            Files.writeString(file, "x");
+            assertThrows(SkillInstallException.class, () -> manager.importArchive(file));
+        }
+
+        @Test
+        void rejectsMissingFile() {
+            Path file = tempDir.resolve("nope.zip");
+            assertThrows(SkillInstallException.class, () -> manager.importArchive(file));
+        }
+
+        @Test
+        void rejectsZipWithoutSkillMd() throws Exception {
+            Path zipFile = tempDir.resolve("invalid.zip");
+            buildZip(zipFile, "invalid/README.md", "no skill here");
+            assertThrows(SkillInstallException.class, () -> manager.importArchive(zipFile));
+        }
+
+        @Test
+        void rejectsDuplicateTarget() throws Exception {
+            // Pre-create the target directory so the second import attempt collides
+            Files.createDirectories(skillsDir.resolve("dup-skill"));
+            Path zipFile = tempDir.resolve("dup-skill.zip");
+            buildZip(zipFile, "dup-skill/SKILL.md", "---\ndescription: x\n---\n");
+            assertThrows(SkillInstallException.class, () -> manager.importArchive(zipFile));
+        }
+
+        @Test
+        void useOriginalNameForDerivation() throws Exception {
+            Path zipFile = tempDir.resolve("tmpXYZ.tmp");
+            buildZip(zipFile, "real-name/SKILL.md", "---\ndescription: x\n---\n");
+            String name = manager.importArchive(zipFile, "Real-Name.zip");
+            assertEquals("real-name", name);
+        }
+
+        private void buildZip(Path target, String entryName, String content) throws IOException {
+            try (var out = new java.util.zip.ZipOutputStream(
+                    new java.io.BufferedOutputStream(Files.newOutputStream(target)))) {
+                var entry = new java.util.zip.ZipEntry(entryName);
+                out.putNextEntry(entry);
+                out.write(content.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+                out.closeEntry();
+            }
+        }
+    }
+
+    // -------------------------------------------------------------------
+    // Import tar.gz
+    // -------------------------------------------------------------------
+
+    @Nested
+    class ImportTarGz {
+
+        @Test
+        void importsValidTarGzArchive() throws Exception {
+            if (!tarAvailable()) {
+                return; // Skip silently when the system tar binary is not available
+            }
+            Path stagingDir = tempDir.resolve("staging");
+            Files.createDirectories(stagingDir.resolve("tar-skill"));
+            Files.writeString(
+                    stagingDir.resolve("tar-skill/SKILL.md"),
+                    "---\ndescription: From tar.gz\n---\nbody",
+                    java.nio.charset.StandardCharsets.UTF_8);
+
+            Path tarFile = tempDir.resolve("tar-skill.tar.gz");
+            Process p = new ProcessBuilder("tar", "czf", tarFile.toString(), "-C", stagingDir.toString(), "tar-skill")
+                    .redirectErrorStream(true)
+                    .start();
+            p.getInputStream().readAllBytes();
+            org.junit.jupiter.api.Assertions.assertEquals(0, p.waitFor(), "tar packing must succeed");
+
+            String name = manager.importArchive(tarFile);
+            assertEquals("tar-skill", name);
+            assertTrue(Files.exists(skillsDir.resolve("tar-skill/SKILL.md")));
+        }
+
+        private boolean tarAvailable() {
+            try {
+                return new ProcessBuilder("tar", "--version").start().waitFor() == 0;
+            } catch (Exception e) {
+                return false;
+            }
+        }
+    }
+
+    // -------------------------------------------------------------------
+    // Update
+    // -------------------------------------------------------------------
+
+    @Nested
+    class Update {
+
+        @Test
+        void throwsWhenSkillNotInstalled() {
+            assertThrows(SkillInstallException.class, () -> manager.update("nonexistent"));
+        }
+
+        @Test
+        void throwsWhenSkillIsNotGitRepo() throws Exception {
+            createSkillDir(skillsDir.resolve("not-git"), "Not git");
+            assertThrows(SkillInstallException.class, () -> manager.update("not-git"));
+        }
+    }
+
+    // -------------------------------------------------------------------
     // Helpers
     // -------------------------------------------------------------------
 

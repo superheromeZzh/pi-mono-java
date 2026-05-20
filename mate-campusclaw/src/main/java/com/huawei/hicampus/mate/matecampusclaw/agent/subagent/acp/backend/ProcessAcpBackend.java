@@ -149,8 +149,9 @@ public class ProcessAcpBackend implements SubAgentBackend {
             for (ProcessHandle d : descendants) {
                 try {
                     d.onExit().get(2L, java.util.concurrent.TimeUnit.SECONDS);
-                } catch (java.util.concurrent.TimeoutException | java.util.concurrent.ExecutionException ignored) {
+                } catch (java.util.concurrent.TimeoutException | java.util.concurrent.ExecutionException e) {
                     // best-effort; descendant may already be unreachable
+                    log.debug("descendant onExit best-effort drain failed (pid={})", d.pid(), e);
                 }
             }
             AcpTransport.note("ProcessAcpBackend.destroyTree[" + reason + "] descendants drained");

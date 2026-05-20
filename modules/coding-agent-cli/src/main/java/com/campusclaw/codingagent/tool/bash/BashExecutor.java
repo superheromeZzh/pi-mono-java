@@ -14,6 +14,8 @@ import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 /**
@@ -25,6 +27,8 @@ import org.springframework.stereotype.Service;
  */
 @Service
 public class BashExecutor {
+
+    private static final Logger log = LoggerFactory.getLogger(BashExecutor.class);
 
     /**
      * Executes a bash command and captures its output.
@@ -104,8 +108,9 @@ public class BashExecutor {
             while ((bytesRead = is.read(buffer)) != -1) {
                 out.write(buffer, 0, bytesRead);
             }
-        } catch (IOException ignored) {
+        } catch (IOException e) {
             // Stream closed due to process destruction — expected on timeout/cancel
+            log.debug("bash output drain stopped (stream closed by process)", e);
         }
     }
 

@@ -512,8 +512,9 @@ public class MistralProvider implements ApiProvider {
             if (!arguments.isEmpty()) {
                 try {
                     args = MAPPER.readValue(arguments.toString(), new TypeReference<>() {});
-                } catch (Exception ignored) {
+                } catch (Exception e) {
                     // malformed tool-call JSON from upstream — fall back to empty args
+                    log.warn("Mistral tool-call args could not be parsed (name={}); using empty args", name, e);
                 }
             }
             return new ToolCall(id != null ? id : UUID.randomUUID().toString(), name != null ? name : "", args);

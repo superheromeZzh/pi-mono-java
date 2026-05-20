@@ -195,17 +195,14 @@ public class ConversationLister {
      * @param message the message
      * @return the result
      */
+    private static final List<String> ASSISTANT_ROLE_KEYS =
+            List.of("api", "provider", "model", "responseId", "usage", "stopReason", "errorMessage");
+
     private static String inferRoleFromJsonNode(JsonNode message) {
         if (message.has("toolCallId") && message.has("toolName")) {
             return "toolResult";
         }
-        if (message.has("api")
-                || message.has("provider")
-                || message.has("model")
-                || message.has("responseId")
-                || message.has("usage")
-                || message.has("stopReason")
-                || message.has("errorMessage")) {
+        if (ASSISTANT_ROLE_KEYS.stream().anyMatch(message::has)) {
             return "assistant";
         }
         return "user";

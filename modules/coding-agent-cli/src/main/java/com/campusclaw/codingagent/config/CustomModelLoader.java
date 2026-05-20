@@ -80,8 +80,9 @@ public class CustomModelLoader {
             for (String m : cfg.inputModalities()) {
                 try {
                     modalities.add(InputModality.valueOf(m.toUpperCase(Locale.ROOT)));
-                } catch (IllegalArgumentException ignored) {
+                } catch (IllegalArgumentException e) {
                     // skip unknown modality string from settings.json — falls back to TEXT below
+                    log.debug("ignoring unknown input modality '{}' from custom model config", m, e);
                 }
             }
         }

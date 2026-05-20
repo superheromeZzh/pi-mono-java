@@ -205,4 +205,70 @@ class HttpAgentBackendTest {
     private List<String> sample() {
         return Collections.emptyList();
     }
+
+    @Test
+    void openSessionFailsWhenServerReturnsError() throws IOException {
+        HttpServer broken = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
+        broken.createContext("/sessions", ex -> {
+            ex.sendResponseHeaders(500, -1L);
+            ex.close();
+        });
+        broken.start();
+        try {
+            HttpAgentConfig config = new HttpAgentConfig(
+                    "broken",
+                    URI.create("http://127.0.0.1:" + broken.getAddress().getPort()),
+                    HttpAgentConfig.AuthType.NONE,
+                    null,
+                    null,
+                    Duration.ofSeconds(2L),
+                    Duration.ofSeconds(2L),
+                    Duration.ofSeconds(5L));
+            var backend = new HttpAgentBackend(config, mapper);
+            org.junit.jupiter.api.Assertions.assertThrows(
+                    com.campusclaw.agent.subagent.SubAgentException.class,
+                    () -> backend.open(new SubAgentBackend.OpenRequest(
+                            "main", null, null, null, Map.of(), Duration.ofSeconds(5L))));
+        } finally {
+            broken.stop(0);
+        }
+    }
+
+    @Test
+    void headerAuthOpensSessionSuccessfully() throws Exception {
+        HttpAgentConfig config = new HttpAgentConfig(
+                "header-auth",
+                URI.create("http://127.0.0.1:" + server.getAddress().getPort()),
+                HttpAgentConfig.AuthType.HEADER,
+                "secret-value",
+                "X-Custom-Auth",
+                Duration.ofSeconds(2L),
+                Duration.ofSeconds(5L),
+                Duration.ofSeconds(10L));
+        var backend = new HttpAgentBackend(config, mapper);
+        SubAgentSession session = backend.open(
+                new SubAgentBackend.OpenRequest("main", null, null, null, Map.of(), Duration.ofSeconds(30L)));
+        assertThat(session.runtimeSessionId()).isEqualTo("remote-1");
+        backend.close(session, "test-cleanup");
+    }
+
+    @Test
+    void cancelAndCloseOnIdleSessionAreSafe() throws Exception {
+        HttpAgentConfig config = new HttpAgentConfig(
+                "cancellable",
+                URI.create("http://127.0.0.1:" + server.getAddress().getPort()),
+                HttpAgentConfig.AuthType.NONE,
+                null,
+                null,
+                Duration.ofSeconds(2L),
+                Duration.ofSeconds(5L),
+                Duration.ofSeconds(10L));
+        var backend = new HttpAgentBackend(config, mapper);
+        SubAgentSession session = backend.open(
+                new SubAgentBackend.OpenRequest("main", null, null, null, Map.of(), Duration.ofSeconds(30L)));
+
+        // No active prompt — cancel and close should not throw
+        backend.cancel(session, "test-cancel");
+        backend.close(session, "test-cleanup");
+    }
 }

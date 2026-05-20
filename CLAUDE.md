@@ -188,23 +188,68 @@ System.out.println("DEBUG: state = " + state);                      // 改 log.d
 
 **理由**：项目已普遍引入 SLF4J（128 个文件），`LoggingUncaughtExceptionHandler` 已经把后台线程未捕获异常导到 `log.error`。日志型 print 残留在代码里就是可观测性漏洞——上规则一次性堵住，并把「stdout 是契约」的少数类用注解显式标注，杜绝增量。`new InteractiveMode` 路径里类似的事件发布失败、`InteractiveMode#close` 兜底分支，这些都应当走 `log.error("...", e)`，不要在用户终端噪音里再混入诊断信息。
 
-### 禁止空 catch 块吞异常
+### 禁止 catch 块静默吞异常（必须有真实处理）
 
-**规则**：`catch (...) { }` 形式（包括 `catch (Exception ignored) {}` 这种「假装合规」的写法）一律拒绝——异常被静默丢弃，故障一旦发生，日志/监控/复现路径全部失声，溯源只能靠猜。
+**规则**：`catch (...) { }` 与 `catch (...) { /* 只有注释 */ }` 一律拒绝——前者直接吞，后者是 signed silence（看似有意为之，但对运行时可观测性仍是零）。故障一旦发生，日志/监控/复现路径全部失声，溯源只能靠猜。
 
-合规出口只有两条：
-1. **交给 SLF4J**：`log.debug/warn/error("contextual message", e)`，让异常进入正常日志链路；
-2. **确实是无害的 fall-through**：catch 体内**必须**留一行解释性注释，写明*为什么*忽略安全（如 "Windows 不支持 POSIX 权限"、"格式错误的 SSE 行 — 跳过即可"），让 reviewer 一眼能判断这是「有意忽略」而非「忘了处理」。
+合规处理（catch 体必须出现以下之一）：
 
-**硬约束**（Checkstyle `no_empty_catch_block`，build-failing）：内置 `EmptyCatchBlock` 模块，`commentFormat=.*` 接受任意非空注释；变量名豁免留默认 `^$`——即便起名 `ignored`/`expected` 也照样拒，强制把理由写出来。
+1. **交给 SLF4J**：`log.debug/warn/error("contextual message", e)`——异常进入日志框架链路，能被 appender 收集、能在测试里静默、带上下文（logger 名、线程、级别、时间戳）；
+2. **恢复中断位**：`Thread.currentThread().interrupt();`——吞 `InterruptedException` 必备，否则上游的 cancellation / shutdown 信号被静默丢弃；
+3. **包装重抛**：`throw new ...Exception(e)`——把底层异常转成调用方能识别的抽象层次（见 [[no_throw_runtime_exception]]）；
+4. **状态修复**：`flag = true;` / `map.put(...)` / `return defaultValue;` 等实际推进控制流的语句。
+
+注释仍然欢迎写，但**注释 ≠ 处理**——必须额外有上述之一。
+
+**硬约束**（两条联动，均 build-failing）：
+
+| 规则 id | 触发 |
+|---|---|
+| `no_empty_catch_block` | catch 体完全为空 `{ }`（包括 `catch (Exception ignored) {}`） |
+| `no_silent_catch` | catch 体只有空白和注释，无任何实际语句（RegexpMultiline 跨行匹配） |
+
+变量名豁免留默认 `^$`——即便起名 `ignored`/`expected` 也照样拒，强制把日志写出来。
 
 | ✅ 正例 | ❌ 反例 |
 |---|---|
 | `catch (IOException e) { log.warn("failed to flush cache", e); }` | `catch (IOException e) { }` |
-| `catch (Exception ignored) { /* legacy unload also failed — file removal below is safe */ }` | `catch (Exception ignored) { }` |
-| `catch (NumberFormatException ignored) { // skip unknown enum value from settings.json }` | `catch (Exception ignored) {}` |
+| `catch (InterruptedException e) { Thread.currentThread().interrupt(); log.debug("...", e); }` | `catch (Exception ignored) { /* swallow */ }` |
+| `catch (IOException e) { /* expected on cancel */ log.debug("drain closed", e); }` | `catch (NumberFormatException ignored) { // skip unknown }` |
+| `catch (ParseException e) { throw new ConfigLoadException("bad cron expr", e); }` | `catch (IOException ignored) {}` |
 
-**理由**：空 catch 是可观测性的最大单点漏洞——比 `printStackTrace`、比 `System.err.println` 都糟，因为后两者至少在 stderr 留下痕迹，空 catch 连这个都没有。即便确认异常无害，强制写注释也是廉价的"signed acknowledgement"，让六个月后维护此代码的人不必怀疑"这是不是 bug"。本仓 PR review 应当拒绝任何形如 `} catch (...) { }` 的新增——存量在引入规则时已清零，规则上锁防止回潮。
+**理由**：静默 catch 是可观测性的最大单点漏洞——比 `printStackTrace`、比 `System.err.println` 都糟，因为后两者至少在 stderr 留下痕迹，静默 catch 连这个都没有。CLAUDE.md 早期版本允许「无害 fall-through + 注释」作为合规出口（仅 `no_empty_catch_block`），实践证明这条豁免容易被滥用——「best-effort」「fall through」这类注释往往写完就忘，等到生产环境真的爆问题时一行 stack 都没有。所以 2026-05 收紧：增加 `no_silent_catch` 把这条豁免也堵上，要"有意忽略"就必须落到 `log.debug` 里——成本极低（一行 + e 参数），但运行时凭证完整。本仓 PR review 应当拒绝任何形如 `} catch (...) { /* ... */ }` 的新增——存量在引入规则时已清零，规则上锁防止回潮。
+
+### 抛出的异常必须与方法抽象层次匹配（禁止 throw new RuntimeException）
+
+**规则**：方法抛出的异常类型应与该方法本身所处的抽象层次对应——文件持久化层抛 `UncheckedIOException`，业务状态校验层抛 `IllegalStateException`，参数校验抛 `IllegalArgumentException`，领域特定错误抛对应的领域异常。**禁止** `throw new RuntimeException(...)`：它是所有 unchecked 异常的根，过于笼统，永远无法表达任何方法的抽象层次——调用方拿到它既无法 catch 到「文件失败」「状态非法」这种特定语义，也丢失了「这是什么性质的错误」的结构化信息，监控和日志聚合也无从分类。
+
+**硬约束**（Checkstyle `no_throw_runtime_exception`，build-failing；存量 0，规则上锁防止回潮）：
+
+| 规则 id | 命中 |
+|---|---|
+| `no_throw_runtime_exception` | `throw new RuntimeException(...)`——`\bthrow\s+new\s+RuntimeException\s*\(` |
+
+正则锚定到 `throw new` 语句，不会误命中 catch 子句、`throws` 声明、`Class<? extends RuntimeException>` 类型引用；子类（`MyRuntimeException`、`SkillLoadException extends RuntimeException`）也不会被误判。其他三个根类（`Exception` / `Throwable` / `Error`）当前存量为 0，由 PR review 把关——若未来需要补硬规则，扩展同一正则即可。
+
+**推荐替换表**：
+
+| 场景 | 替换 |
+|---|---|
+| catch `IOException`（包括 `Files.*`、socket、stream 失败） | `throw new UncheckedIOException(msg, e)` |
+| 类被构造或方法被调用时进入了「不该出现的状态」（如 schema 构造失败、初始化条件违反、状态机非法转移） | `throw new IllegalStateException(msg, e)` |
+| 入参不合法（null、out-of-range、格式不符） | `throw new IllegalArgumentException(msg)` |
+| 容器中找不到必需键 | `throw new NoSuchElementException(msg)` |
+| 不支持的运行时操作（如未实现的协议分支） | `throw new UnsupportedOperationException(msg)` |
+| 仓库领域错误 | 现有 `SkillLoadException` / `SkillInstallException` / `SessionPersistenceException` / `SubAgentException` 等；确实需要新类型才新建 |
+
+| ✅ 正例 | ❌ 反例 |
+|---|---|
+| `throw new UncheckedIOException("Failed to write skill state file: " + file, e);` | `throw new RuntimeException("Failed to write skill state file: " + file, e);` |
+| `throw new IllegalStateException("Failed to build EditDiff schema", e);` | `throw new RuntimeException("Failed to build EditDiff schema", e);` |
+| `throw new SkillLoadException("Skill manifest missing entry: " + name);` | `throw new RuntimeException("Skill manifest missing entry: " + name);` |
+| `throw new IllegalArgumentException("port out of range: " + port);` | `throw new RuntimeException("bad port: " + port);` |
+
+**理由**：用 `RuntimeException` 抛出错误等价于「我不愿意花一秒钟去想这个错误属于哪一类」——调用方为了区分语义只能 `e.getMessage().contains("Failed to write")` 这种字符串嗅探，与「类型即文档」的初衷背离。本仓已经有清晰的两条主路径：`UncheckedIOException`（5 处，包 IOException）+ `IllegalStateException`（14 处，断言式失败）；以及 6 个领域异常类。规则上锁是为了让后续提交一开始就走对路径，而非等 review 阶段返工。测试代码里 `throw new RuntimeException("not supposed to reach")` 应改写为 `throw new AssertionError(...)`——后者才是 JUnit 5 / AssertJ 体系里「断言失败」的正确表达。
 
 ### 测试代码必须存在真实断言，禁止虚假断言
 
@@ -290,7 +335,12 @@ grep -rnE '\b(log|logger|LOGGER|LOG)\.(trace|debug|info|warn|error)\s*\(\s*"[^"]
 
 ### 段落注释上方必须空一行
 
-**规则**：独占一行的 `//` 注释，若紧跟在以 `;` 或 `}` 结尾的代码行下方，注释行上方必须空一行。紧贴在 `{` / `(` / `,` 之后的注释（块内开场注释、参数延续注释）不属于「新段落」，不在此规则覆盖范围内。
+**规则**：独占一行的 `//` 注释，若紧跟在以 `;` 或 `}` 结尾的代码行下方，注释行上方必须空一行。两种触发形态：
+
+1. 上一行以 `;`/`}` 结尾，无 trailing 注释；
+2. 上一行是 `;` + trailing `// xxx`——trailing 部分属于上一行那条语句，与下一段段落注释仍是两件事，仍需空行分开。
+
+紧贴在 `{` / `(` / `,` 之后的注释（块内开场注释、参数延续注释）不属于「新段落」，不在此规则覆盖范围内。
 
 **硬约束**（Checkstyle `comment_blank_line_before`，RegexpMultiline，build-failing）：
 
@@ -300,6 +350,13 @@ private static final String ANSI_DIM_KEY = "\033[38;2;102;102;102m";
 
 // Background colors matching campusclaw dark theme
 private static final String BG_PENDING = "\033[48;2;40;40;50m";
+```
+
+```java
+foo(); // does the thing
+
+// next paragraph describing the next block
+bar();
 ```
 
 ```java
@@ -318,7 +375,40 @@ private static final String ANSI_DIM_KEY = "\033[38;2;102;102;102m";
 private static final String BG_PENDING = "\033[48;2;40;40;50m";
 ```
 
+```java
+foo(); // does the thing
+// next paragraph describing the next block
+bar();
+```
+
 **理由**：「段落标题」紧贴上一段代码会让两段在视觉上糊成一片，读者第一眼分不清这条注释是 *上一段的尾巴* 还是 *下一段的标题*。空一行是廉价的视觉分隔。
+
+### Javadoc 块上方必须空一行
+
+**规则**：Javadoc 起始 `/**` 若紧跟在以 `;` 或 `}` 结尾的代码行下方，Javadoc 上方必须空一行——与 [[comment_blank_line_before]] 同源同理，把成员声明与紧贴它上方的上一个成员视觉分开。Class/method 体首个 Javadoc 紧贴 `{` 不受影响（`{` 不在前置字符集合里）。
+
+**硬约束**（Checkstyle `javadoc_blank_line_before`，RegexpMultiline，build-failing）：
+
+✅ 正例：
+```java
+private final ObjectMapper mapper;
+
+/**
+ * Typed writer for {@link Message}.
+ */
+private final ObjectWriter messageWriter;
+```
+
+❌ 反例：
+```java
+private final ObjectMapper mapper;
+/**
+ * Typed writer for {@link Message}.
+ */
+private final ObjectWriter messageWriter;
+```
+
+**理由**：和段落 `//` 注释完全同构——Javadoc 紧贴上一个成员的 `;` 或 `}`，读者第一眼分不清这段 Javadoc 是「上一个成员的尾注释」还是「下一个成员的标题」。空一行是廉价的视觉分隔，spotless 不会自动加，靠 Checkstyle 上锁。
 
 ### 行尾 trailing 注释 // 前必须有空格（软约束）
 
@@ -384,6 +474,69 @@ int toolCount = 0;
 单个方法的「非空非（行）注释」行数不得超过 50（`huge_method` 规则，Checkstyle `MethodLength` + `countEmpty=false`）。计入：方法签名行、`}`、含代码的行尾注释、块注释 `/* ... */` 内部行；跳过：空行、纯 `//` 单行注释。
 
 超阈值的方法**优先拆分**：抽出明确职责的私有方法、用 record/sealed type 把分支表代码化、把数据初始化（如查表）改成静态常量或工厂。只有在拆解会损害可读性（如协议 stream 解析、Unicode 范围表）才用 `@SuppressWarnings("checkstyle:huge_method")` 保留，并在 PR description 里写明理由。**不要新增**与历史保留方法对齐的批量豁免——存量带此注解的是历史欠债，等待重构。
+
+### 控制条件表达式不得过度复杂（逻辑运算符 ≤ 5）
+
+**规则**：单个布尔表达式中的逻辑运算符（`&&`、`||`、`&`、`|`、`^`）总数不得超过 5；同时禁止把赋值表达式嵌进控制条件等更大表达式里执行（如 `if ((x = foo()) != null)`）。两条由 Checkstyle 内置 `BooleanExpressionComplexity`（`max=5`）与 `InnerAssignment` 实现，build-failing。
+
+**为什么 5**：经验线——少于 5 通常仍在「一眼看懂」的可读区间；超过 5 几乎必然要求读者心里画括号才能推理优先级，特别是 `&&` / `||` 混排时。**长 OR 链的枚举式分发**（一堆 `flag1 || flag2 || ...`、`type == A || type == B || ...`、`name.endsWith(".png") || name.endsWith(".jpg") || ...`）同样被这条规则拦下，因为它们更适合改成命名集合或拆分子方法——可读性更高、可单测、扩展时不会越改越长。
+
+**为什么禁内嵌赋值**：`if ((line = reader.readLine()) != null) { ... }` 一行里同时发生「赋值」和「条件判断」两件事——读者很容易把它误读成 `if (x == next())`（== vs = 笔误），编译器无法分辨意图。豁免：`for` 循环的 init / update 槽位、`try-with-resources` 资源声明——这两种语法上就要求在「条件位置」绑定变量。
+
+**违规重构思路**（按优先级）：
+
+| 模式 | 推荐改写 |
+|---|---|
+| 长 OR 链对常量 / 字面量比较 | 抽成 `Set<T> ALLOWED = Set.of(...)`，`return ALLOWED.contains(value)` |
+| 长 OR 链对 `endsWith` / `matches` 等谓词 | 抽成 `List<T>` + `stream().anyMatch(name::endsWith)` |
+| 长 OR/AND 混合表达式 | 拆成命名良好的 `boolean isXxx()` 子方法，每个子方法 ≤ 5 个运算符 |
+| 内嵌赋值 `while ((b = in.read()) != -1)` | 拆开：先赋值后判断；或改 try-with-resources 模式 |
+
+✅ 正例：
+
+```java
+private static final Set<Integer> PUNCTUATION_CHARACTER_TYPES = Set.of(
+        (int) Character.CONNECTOR_PUNCTUATION,
+        (int) Character.DASH_PUNCTUATION,
+        // ...
+        (int) Character.MATH_SYMBOL);
+
+private static boolean isPunctuation(String s) {
+    if (s == null || s.isEmpty()) {
+        return false;
+    }
+    return PUNCTUATION_CHARACTER_TYPES.contains(Character.getType(s.codePointAt(0)));
+}
+```
+
+```java
+private static final List<String> IMAGE_FILE_EXTENSIONS =
+        List.of(".png", ".jpg", ".jpeg", ".gif", ".webp", ".bmp", ".svg", ".ico", ".tiff");
+
+public static boolean isImageFile(Path path) {
+    String name = path.getFileName().toString().toLowerCase(Locale.ROOT);
+    return IMAGE_FILE_EXTENSIONS.stream().anyMatch(name::endsWith);
+}
+```
+
+❌ 反例：
+
+```java
+return type == Character.CONNECTOR_PUNCTUATION
+        || type == Character.DASH_PUNCTUATION
+        || type == Character.START_PUNCTUATION
+        || type == Character.END_PUNCTUATION
+        || type == Character.INITIAL_QUOTE_PUNCTUATION
+        || type == Character.FINAL_QUOTE_PUNCTUATION
+        || type == Character.OTHER_PUNCTUATION
+        || type == Character.MATH_SYMBOL;   // 7 个 || > 5
+```
+
+```java
+if ((line = reader.readLine()) != null) { ... }   // 内嵌赋值
+```
+
+当前仓内存量已为 0，规则上锁防止回潮。
 
 ### 后台线程必须装 UncaughtExceptionHandler（软约束，全员遵守）
 

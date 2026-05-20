@@ -60,6 +60,8 @@ import com.openai.models.chat.completions.ChatCompletionToolMessageParam;
 import com.openai.models.chat.completions.ChatCompletionUserMessageParam;
 import com.openai.models.completions.CompletionUsage;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import jakarta.annotation.Nullable;
@@ -77,6 +79,7 @@ import jakarta.annotation.Nullable;
 @Component
 public class OpenAICompletionsProvider implements ApiProvider {
 
+    private static final Logger log = LoggerFactory.getLogger(OpenAICompletionsProvider.class);
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
     private final ProviderConfigResolver providerConfigResolver;
@@ -682,8 +685,9 @@ public class OpenAICompletionsProvider implements ApiProvider {
                     if (!str.isEmpty() && !"null".equals(str)) {
                         return str;
                     }
-                } catch (Exception ignored) {
+                } catch (Exception e) {
                     // best-effort string extraction — null return below signals "no usable text"
+                    log.debug("OpenAI completions string extraction failed; falling back to null", e);
                 }
             }
         }

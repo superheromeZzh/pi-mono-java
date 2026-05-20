@@ -10,6 +10,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Locale;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * Installs/uninstalls CampusClaw cron into the OS scheduler.
  * macOS: launchd plist; Linux: crontab entry; Windows: Task Scheduler (schtasks).
@@ -18,6 +21,8 @@ import java.util.Locale;
  * @since [br_eCampusCore 25.1.0_Next]
  */
 public class SystemSchedulerInstaller {
+
+    private static final Logger log = LoggerFactory.getLogger(SystemSchedulerInstaller.class);
 
     private static final String LABEL = "com.huawei.hicampus.mate.matecampusclaw.cron";
     private static final String TASK_NAME = "CampusClaw-Cron";
@@ -132,8 +137,12 @@ public class SystemSchedulerInstaller {
                     .redirectErrorStream(true)
                     .start()
                     .waitFor();
-        } catch (Exception ignored) {
-            // bootout fails when not loaded — safe to ignore.
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            log.debug("launchctl bootout interrupted", e);
+        } catch (IOException e) {
+            // bootout fails when not loaded — safe to ignore for the reload path.
+            log.debug("launchctl bootout failed (expected when plist not yet loaded)", e);
         }
         try {
             int exit = new ProcessBuilder("launchctl", "bootstrap", "gui/" + getUid(), PLIST_PATH.toString())
@@ -169,8 +178,12 @@ public class SystemSchedulerInstaller {
                         .redirectErrorStream(true)
                         .start()
                         .waitFor();
-            } catch (Exception ignored) {
-                // legacy unload also failed — plist file removal below is still safe
+            } catch (InterruptedException ie) {
+                Thread.currentThread().interrupt();
+                log.debug("launchctl unload (legacy) interrupted", ie);
+            } catch (IOException ie) {
+                // legacy unload also failed — plist file removal below is still safe.
+                log.debug("launchctl unload (legacy fallback) failed", ie);
             }
         }
         Files.deleteIfExists(PLIST_PATH);
@@ -287,8 +300,12 @@ public class SystemSchedulerInstaller {
                     .redirectErrorStream(true)
                     .start()
                     .waitFor();
-        } catch (Exception ignored) {
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            log.debug("schtasks /Delete interrupted", e);
+        } catch (IOException e) {
             // pre-existing task may not exist — recreate below regardless
+            log.debug("schtasks /Delete failed (expected when task not yet registered)", e);
         }
 
         try {
@@ -406,8 +423,9 @@ public class SystemSchedulerInstaller {
             if (Files.exists(script)) {
                 return script;
             }
-        } catch (Exception ignored) {
+        } catch (Exception e) {
             // jar location lookup is best-effort — fall through to cwd-relative resolution
+            log.debug("jar-relative launcher lookup failed; falling back to cwd-relative", e);
         }
 
         // Fallback: look relative to cwd

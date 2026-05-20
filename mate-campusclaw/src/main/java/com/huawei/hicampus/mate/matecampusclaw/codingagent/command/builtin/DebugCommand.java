@@ -17,6 +17,9 @@ import com.huawei.hicampus.mate.matecampusclaw.codingagent.command.SlashCommandC
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * Dumps agent state and messages to a debug log file for troubleshooting.
  * Matches campusclaw TS /debug command.
@@ -25,6 +28,8 @@ import com.fasterxml.jackson.databind.SerializationFeature;
  * @since [br_eCampusCore 25.1.0_Next]
  */
 public class DebugCommand implements SlashCommand {
+
+    private static final Logger log = LoggerFactory.getLogger(DebugCommand.class);
 
     private static final ObjectMapper MAPPER = new ObjectMapper().enable(SerializationFeature.INDENT_OUTPUT);
 
@@ -86,7 +91,8 @@ public class DebugCommand implements SlashCommand {
         try {
             Files.createDirectories(debugDir);
         } catch (IOException e) {
-            // ignore
+            // pre-create best-effort; the write below will surface the real failure
+            log.debug("could not pre-create debug dir {}", debugDir, e);
         }
 
         String filename =
