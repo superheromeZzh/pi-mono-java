@@ -16,6 +16,7 @@ import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 
 import com.campusclaw.agent.subagent.SubAgentBackend;
 import com.campusclaw.agent.subagent.SubAgentEvent;
@@ -482,13 +483,28 @@ class ProcessAcpBackendTest {
                     false, true, toolNameField, "bash", includeToolCall, includeParams, optionsShape);
         }
 
-        private static ProcessAcpBackend backendFor(
+        /**
+         * Pairs a {@link ProcessAcpBackend} under test with a reference that will hold the
+         * {@link InProcessFakeAcpServer} the spawner creates on {@code open()}. The reference is
+         * populated lazily; tests must call {@link ProcessAcpBackend#open} (via
+         * {@link #runPermissionScenarioToDone}) before reading {@code fakeRef.get()}.
+         */
+        private record TestBackend(ProcessAcpBackend backend, AtomicReference<InProcessFakeAcpServer> fakeRef) {}
+
+        private static TestBackend backendFor(
                 String id,
                 FakeAcpServer.ServerOptions opts,
                 ApprovalClassifier classifier,
                 ApprovalPolicy policy,
                 ParentPermissionResolver resolver) {
-            return new ProcessAcpBackend(id, fastConfig(), MAPPER, classifier, policy, resolver, spawnerWith(opts));
+            AtomicReference<InProcessFakeAcpServer> fakeRef = new AtomicReference<>();
+            ProcessAcpBackend.ProcessSpawner spawner = pb -> {
+                InProcessFakeAcpServer fake = new InProcessFakeAcpServer(opts, 0);
+                fakeRef.set(fake);
+                return fake;
+            };
+            return new TestBackend(
+                    new ProcessAcpBackend(id, fastConfig(), MAPPER, classifier, policy, resolver, spawner), fakeRef);
         }
 
         private static List<SubAgentEvent> runPromptUntilDone(ProcessAcpBackend backend, SubAgentSession session)
@@ -514,70 +530,76 @@ class ProcessAcpBackendTest {
 
         @Test
         void testAutoAllowSelectsAllowOption() throws Exception {
-            ProcessAcpBackend backend = backendFor(
+            TestBackend t = backendFor(
                     "auto-allow",
                     optsWith("allow_reject"),
                     new ApprovalClassifier(),
                     (risk, tool) -> ApprovalDecision.AUTO_ALLOW,
                     null);
-            runPermissionScenarioToDone(backend);
+            String response = runPermissionScenarioAndGetResponse(t);
+            assertThat(response).contains("\"outcome\":\"selected\"").contains("\"optionId\":\"allow_once\"");
         }
 
         @Test
         void testAutoAllowFallsBackToFirstOptionWhenNoAllowKind() throws Exception {
-            ProcessAcpBackend backend = backendFor(
+            TestBackend t = backendFor(
                     "auto-allow-fallback",
                     optsWith("reject_only"),
                     new ApprovalClassifier(),
                     (risk, tool) -> ApprovalDecision.AUTO_ALLOW,
                     null);
-            runPermissionScenarioToDone(backend);
+            String response = runPermissionScenarioAndGetResponse(t);
+            assertThat(response).contains("\"outcome\":\"selected\"").contains("\"optionId\":\"reject_once\"");
         }
 
         @Test
         void testAutoAllowWithNoOptionsCancels() throws Exception {
-            ProcessAcpBackend backend = backendFor(
+            TestBackend t = backendFor(
                     "auto-allow-no-opts",
                     optsWith("empty"),
                     new ApprovalClassifier(),
                     (risk, tool) -> ApprovalDecision.AUTO_ALLOW,
                     null);
-            runPermissionScenarioToDone(backend);
+            String response = runPermissionScenarioAndGetResponse(t);
+            assertThat(response).contains("\"outcome\":\"cancelled\"");
         }
 
         @Test
         void testAskParentWithNullResolverCancels() throws Exception {
-            ProcessAcpBackend backend = backendFor(
+            TestBackend t = backendFor(
                     "ask-no-resolver",
                     optsWith("allow_reject"),
                     new ApprovalClassifier(),
                     (risk, tool) -> ApprovalDecision.ASK_PARENT,
                     null);
-            runPermissionScenarioToDone(backend);
+            String response = runPermissionScenarioAndGetResponse(t);
+            assertThat(response).contains("\"outcome\":\"cancelled\"");
         }
 
         @Test
         void testAskParentResolverReturnsSelectedOption() throws Exception {
             ParentPermissionResolver resolver = (req, timeout) -> ParentPermissionDecision.selected("allow_once");
-            ProcessAcpBackend backend = backendFor(
+            TestBackend t = backendFor(
                     "ask-selected",
                     optsWith("allow_reject"),
                     new ApprovalClassifier(),
                     (risk, tool) -> ApprovalDecision.ASK_PARENT,
                     resolver);
-            runPermissionScenarioToDone(backend);
+            String response = runPermissionScenarioAndGetResponse(t);
+            assertThat(response).contains("\"outcome\":\"selected\"").contains("\"optionId\":\"allow_once\"");
         }
 
         @Test
         void testAskParentResolverReturnsCancelled() throws Exception {
             ParentPermissionResolver resolver = (req, timeout) -> ParentPermissionDecision.cancelled();
-            ProcessAcpBackend backend = backendFor(
+            TestBackend t = backendFor(
                     "ask-cancelled",
                     optsWith("allow_reject"),
                     new ApprovalClassifier(),
                     (risk, tool) -> ApprovalDecision.ASK_PARENT,
                     resolver);
-            runPermissionScenarioToDone(backend);
+            String response = runPermissionScenarioAndGetResponse(t);
+            assertThat(response).contains("\"outcome\":\"cancelled\"");
         }
 
         @Test
@@ -585,133 +607,166 @@ class ProcessAcpBackendTest {
             ParentPermissionResolver throwing = (req, timeout) -> {
                 throw new IllegalStateException("resolver-boom");
             };
-            ProcessAcpBackend backend = backendFor(
+            TestBackend t = backendFor(
                     "ask-throws",
                     optsWith("allow_reject"),
                     new ApprovalClassifier(),
                     (risk, tool) -> ApprovalDecision.ASK_PARENT,
                     throwing);
-            runPermissionScenarioToDone(backend);
+            String response = runPermissionScenarioAndGetResponse(t);
+            assertThat(response).contains("\"outcome\":\"cancelled\"");
         }
 
         @Test
         void testAskParentResolverSelectedWithoutOptionIdFallsBackToCancelled() throws Exception {
             ParentPermissionResolver resolver =
                     (req, timeout) -> new ParentPermissionDecision(ParentPermissionDecision.Outcome.SELECTED, " ");
-            ProcessAcpBackend backend = backendFor(
+            TestBackend t = backendFor(
                     "ask-blank-id",
                     optsWith("allow_reject"),
                     new ApprovalClassifier(),
                     (risk, tool) -> ApprovalDecision.ASK_PARENT,
                     resolver);
-            runPermissionScenarioToDone(backend);
+            String response = runPermissionScenarioAndGetResponse(t);
+            assertThat(response).contains("\"outcome\":\"cancelled\"");
         }
 
         @Test
         void testAskParentNullDecisionCancels() throws Exception {
             ParentPermissionResolver resolver = (req, timeout) -> null;
-            ProcessAcpBackend backend = backendFor(
+            TestBackend t = backendFor(
                     "ask-null",
                     optsWith("allow_reject"),
                     new ApprovalClassifier(),
                     (risk, tool) -> ApprovalDecision.ASK_PARENT,
                     resolver);
-            runPermissionScenarioToDone(backend);
+            String response = runPermissionScenarioAndGetResponse(t);
+            assertThat(response).contains("\"outcome\":\"cancelled\"");
         }
 
         @Test
         void testDenySelectsRejectOption() throws Exception {
-            ProcessAcpBackend backend = backendFor(
+            TestBackend t = backendFor(
                     "deny-with-reject",
                     optsWith("allow_reject"),
                     new ApprovalClassifier(),
                     (risk, tool) -> ApprovalDecision.DENY,
                     null);
-            runPermissionScenarioToDone(backend);
+            String response = runPermissionScenarioAndGetResponse(t);
+            assertThat(response).contains("\"outcome\":\"selected\"").contains("\"optionId\":\"reject_once\"");
         }
 
         @Test
         void testDenyWithoutRejectOptionCancels() throws Exception {
-            ProcessAcpBackend backend = backendFor(
+            TestBackend t = backendFor(
                     "deny-no-reject",
                     optsWith("empty"),
                     new ApprovalClassifier(),
                     (risk, tool) -> ApprovalDecision.DENY,
                     null);
-            runPermissionScenarioToDone(backend);
+            String response = runPermissionScenarioAndGetResponse(t);
+            assertThat(response).contains("\"outcome\":\"cancelled\"");
         }
 
         @Test
         void testNullPolicyDefaultsToAskParent() throws Exception {
-            ProcessAcpBackend backend =
-                    backendFor("null-policy", optsWith("allow_reject"), new ApprovalClassifier(), null, null);
-            runPermissionScenarioToDone(backend);
+            // No resolver supplied → ASK_PARENT default path resolves to cancelled, so the wire
+            // response carries outcome:cancelled. This verifies the null-policy → ASK_PARENT
+            // fallback by way of the resulting cancellation (rather than a no-op pass-through).
+            TestBackend t = backendFor("null-policy", optsWith("allow_reject"), new ApprovalClassifier(), null, null);
+            String response = runPermissionScenarioAndGetResponse(t);
+            assertThat(response).contains("\"outcome\":\"cancelled\"");
         }
 
         @Test
         void testNullClassifierFallsBackToUnknownRisk() throws Exception {
-            ProcessAcpBackend backend = backendFor(
+            TestBackend t = backendFor(
                     "null-classifier",
                     optsWith("allow_reject"),
                     null,
                     (risk, tool) -> ApprovalDecision.AUTO_ALLOW,
                     null);
-            runPermissionScenarioToDone(backend);
+            String response = runPermissionScenarioAndGetResponse(t);
+            assertThat(response).contains("\"outcome\":\"selected\"").contains("\"optionId\":\"allow_once\"");
         }
 
         @Test
         void testToolNameExtractedFromToolNameField() throws Exception {
-            ProcessAcpBackend backend = backendFor(
+            TestBackend t = backendFor(
                     "toolname-field",
                     optsWith("allow_reject", "toolName", true, true),
                     new ApprovalClassifier(),
                     (risk, tool) -> ApprovalDecision.AUTO_ALLOW,
                     null);
-            runPermissionScenarioToDone(backend);
+            String response = runPermissionScenarioAndGetResponse(t);
+            assertThat(response).contains("\"outcome\":\"selected\"").contains("\"optionId\":\"allow_once\"");
         }
 
         @Test
         void testToolCallMissingHasEmptyToolName() throws Exception {
-            ProcessAcpBackend backend = backendFor(
+            TestBackend t = backendFor(
                     "no-toolcall",
                     optsWith("allow_reject", "name", false, true),
                     new ApprovalClassifier(),
                     (risk, tool) -> ApprovalDecision.AUTO_ALLOW,
                     null);
-            runPermissionScenarioToDone(backend);
+            String response = runPermissionScenarioAndGetResponse(t);
+            assertThat(response).contains("\"outcome\":\"selected\"").contains("\"optionId\":\"allow_once\"");
         }
 
         @Test
         void testToolCallMissingParamsBecomesEmptyMap() throws Exception {
             ParentPermissionResolver resolver = (req, timeout) -> ParentPermissionDecision.cancelled();
-            ProcessAcpBackend backend = backendFor(
+            TestBackend t = backendFor(
                     "no-params",
                     optsWith("allow_reject", "name", true, false),
                     new ApprovalClassifier(),
                     (risk, tool) -> ApprovalDecision.ASK_PARENT,
                     resolver);
-            runPermissionScenarioToDone(backend);
+            String response = runPermissionScenarioAndGetResponse(t);
+            assertThat(response).contains("\"outcome\":\"cancelled\"");
         }
 
         @Test
         void testOptionsNotAnArrayBecomesEmptyList() throws Exception {
             ParentPermissionResolver resolver = (req, timeout) -> ParentPermissionDecision.cancelled();
-            ProcessAcpBackend backend = backendFor(
+            TestBackend t = backendFor(
                     "options-not-array",
                     optsWith("options_object"),
                     new ApprovalClassifier(),
                     (risk, tool) -> ApprovalDecision.ASK_PARENT,
                     resolver);
-            runPermissionScenarioToDone(backend);
+            String response = runPermissionScenarioAndGetResponse(t);
+            assertThat(response).contains("\"outcome\":\"cancelled\"");
         }
 
-        private static void runPermissionScenarioToDone(ProcessAcpBackend backend) throws InterruptedException {
-            SubAgentSession session = backend.open(openRequest());
+        /**
+         * Drives the prompt to {@code Done}, then returns the single permission response the
+         * backend sent in reply to the server-initiated {@code session/request_permission}.
+         * Fails fast if the backend never produced a response — that indicates the permission
+         * round-trip itself broke, which is distinct from the outcome-mismatch case each caller
+         * asserts against.
+         *
+         * @param t backend under test paired with the spawner's fake reference
+         * @return the raw JSON-RPC response line the backend sent back to the fake server
+         * @throws InterruptedException if the prompt-done latch is interrupted
+         */
+        private static String runPermissionScenarioAndGetResponse(TestBackend t) throws InterruptedException {
+            SubAgentSession session = t.backend().open(openRequest());
             try {
-                List<SubAgentEvent> events = runPromptUntilDone(backend, session);
+                List<SubAgentEvent> events = runPromptUntilDone(t.backend(), session);
                 assertThat(events).anyMatch(e -> e instanceof SubAgentEvent.Done);
+                InProcessFakeAcpServer fake = t.fakeRef().get();
+                assertThat(fake)
+                        .as("spawner should have produced a fake server")
+                        .isNotNull();
+                List<String> responses = fake.permissionResponses();
+                assertThat(responses)
+                        .as("backend must reply to the server-initiated session/request_permission")
+                        .hasSize(1);
+                return responses.get(0);
             } finally {
-                backend.close(session, "test");
+                t.backend().close(session, "test");
             }
         }
     }

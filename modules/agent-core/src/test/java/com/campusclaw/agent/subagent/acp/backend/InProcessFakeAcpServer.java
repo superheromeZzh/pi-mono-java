@@ -13,6 +13,9 @@ import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -60,6 +63,7 @@ final class InProcessFakeAcpServer extends Process {
     private final PipedInputStream parentReadsChildStderr;
     private final CompletableFuture<Integer> exitFuture = new CompletableFuture<>();
     private final Thread dispatchThread;
+    private final List<String> permissionResponses = Collections.synchronizedList(new ArrayList<>());
 
     /**
      * Construct an in-process fake server.
@@ -106,7 +110,7 @@ final class InProcessFakeAcpServer extends Process {
 
             PrintStream out = new PrintStream(stdout, false, StandardCharsets.UTF_8);
             try (BufferedReader reader = new BufferedReader(new InputStreamReader(stdin, StandardCharsets.UTF_8))) {
-                FakeAcpServer.runDispatchLoop(reader, out, opts);
+                FakeAcpServer.runDispatchLoop(reader, out, opts, permissionResponses::add);
             }
         } catch (IOException ex) {
             // Pipe closed by destroyForcibly — normal teardown path.
@@ -213,6 +217,19 @@ final class InProcessFakeAcpServer extends Process {
     @Override
     public CompletableFuture<Process> onExit() {
         return exitFuture.thenApply(code -> this);
+    }
+
+    /**
+     * Snapshot of every response the parent sent in reply to a server-initiated
+     * {@code session/request_permission}. Tests assert on this to verify the permission outcome
+     * (selected option vs cancelled) the backend chose for a given policy/resolver/options shape.
+     *
+     * @return a defensive copy of the captured response lines, in dispatch order
+     */
+    List<String> permissionResponses() {
+        synchronized (permissionResponses) {
+            return new ArrayList<>(permissionResponses);
+        }
     }
 
     private static void closeQuietly(java.io.Closeable closeable) {
