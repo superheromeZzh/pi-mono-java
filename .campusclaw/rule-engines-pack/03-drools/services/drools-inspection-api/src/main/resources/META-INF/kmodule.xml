@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kmodule xmlns="http://www.drools.org/xsd/kmodule">
+  <!-- kbase 名称与 Java 中 newKieSession 所用一致；packages 对应 src/main/resources 下规则目录的包名 -->
+  <kbase name="inspectionKbase" packages="rules">
+    <ksession name="inspectionSession"/>
+  </kbase>
+</kmodule>

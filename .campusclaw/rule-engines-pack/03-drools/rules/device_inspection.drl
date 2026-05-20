@@ -1,0 +1,106 @@
+package rules;
+
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
+
+// 工作内存中的事实为 java.util.Map（键为点位名等）。
+// rule 名称须与 ruleset.json 中规则 id 一致。
+// hits：由 Java 在每次评估前 setGlobal 注入。
+// 历史点位（如 room_co2_2h_ago）须由取数接口在同一时刻的行上拼好。
+
+global AtomicInteger hits;
+
+rule "vav_damper_control_error_overlimit"
+when
+  $m: Map(
+    this["damper_opening"] != null,
+    this["damper_opening_sp"] != null,
+    eval( Math.abs(((Number)this["damper_opening"]).doubleValue() - ((Number)this["damper_opening_sp"]).doubleValue()) > 5.0 )
+  )
+then
+  hits.incrementAndGet();
+end
+
+rule "vav_temp_sensor_temp_out_of_range"
+when
+  $m: Map(
+    this["room_temp"] != null,
+    eval( ((Number)this["room_temp"]).doubleValue() < -5.0 || ((Number)this["room_temp"]).doubleValue() > 40.0 )
+  )
+then
+  hits.incrementAndGet();
+end
+
+// 室内 CO2（room_co2）：硬件/量程类故障 — <0 或 >2000 ppm
+rule "vav_co2_sensor_fault_range"
+when
+  $m: Map(
+    this["room_co2"] != null,
+    eval( ((Number)this["room_co2"]).doubleValue() < 0.0 || ((Number)this["room_co2"]).doubleValue() > 2000.0 )
+  )
+then
+  hits.incrementAndGet();
+end
+
+// 0=不正常，1=正常（与点位说明一致）
+rule "pahuan_supply_fan_inverter_fault"
+when
+  $m: Map(
+    this["SupplyFanInverterFaultAlarm"] != null,
+    eval( ((Number)this["SupplyFanInverterFaultAlarm"]).intValue() == 0 )
+  )
+then
+  hits.incrementAndGet();
+end
+
+// 送风机运行且 |送风压力-设定反馈|>20；设定反馈与风机状态应为相对压力滞后约10分钟的值（由取数侧对齐）
+rule "ahu_supply_air_pressure_anomaly"
+when
+  $m: Map(
+    this["supply_fan_status"] != null,
+    this["supply_air_pressure"] != null,
+    this["supply_air_pressure_sp"] != null,
+    eval( ((Number)this["supply_fan_status"]).intValue() == 1 ),
+    eval( Math.abs(((Number)this["supply_air_pressure"]).doubleValue() - ((Number)this["supply_air_pressure_sp"]).doubleValue()) > 20.0 )
+  )
+then
+  hits.incrementAndGet();
+end
+
+// 漂移：<300 或 >5000 ppm
+rule "vav_co2_drift_anomaly"
+when
+  $m: Map(
+    this["room_co2"] != null,
+    eval( ((Number)this["room_co2"]).doubleValue() < 300.0 || ((Number)this["room_co2"]).doubleValue() > 5000.0 )
+  )
+then
+  hits.incrementAndGet();
+end
+
+// 呆滞/响应异常：2h 变动率 <1%（相对 2h 前读数）；或 阀开度下降且 CO2 相对 30min 前几乎不变
+rule "vav_co2_static_response_anomaly"
+when
+  $m: Map(
+    this["room_co2"] != null,
+    this["room_co2_2h_ago"] != null,
+    this["damper_opening"] != null,
+    this["damper_opening_30min_ago"] != null,
+    this["room_co2_30min_ago"] != null,
+    eval(
+      (
+        Math.abs(((Number)this["room_co2"]).doubleValue() - ((Number)this["room_co2_2h_ago"]).doubleValue())
+        < 0.01 * Math.max(1.0, Math.abs(((Number)this["room_co2_2h_ago"]).doubleValue()))
+      )
+      ||
+      (
+        ((Number)this["damper_opening"]).doubleValue() < ((Number)this["damper_opening_30min_ago"]).doubleValue()
+        &&
+        Math.abs(((Number)this["room_co2"]).doubleValue() - ((Number)this["room_co2_30min_ago"]).doubleValue())
+        < 0.001 * Math.max(1.0, Math.abs(((Number)this["room_co2_30min_ago"]).doubleValue()))
+      )
+    )
+  )
+then
+  hits.incrementAndGet();
+end
