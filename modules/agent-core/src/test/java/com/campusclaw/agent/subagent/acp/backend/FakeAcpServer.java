@@ -6,6 +6,7 @@ package com.campusclaw.agent.subagent.acp.backend;
 
 import java.io.BufferedReader;
 import java.io.PrintStream;
+import java.util.function.Consumer;
 
 /**
  * Test-only stub ACP server. Reads ndJSON envelopes from stdin and writes canned JSON-RPC
@@ -52,6 +53,23 @@ public final class FakeAcpServer {
     }
 
     static void runDispatchLoop(BufferedReader reader, PrintStream out, ServerOptions opts) throws Exception {
+        runDispatchLoop(reader, out, opts, line -> {});
+    }
+
+    /**
+     * Variant that records every response the parent sends to a server-initiated
+     * {@code session/request_permission}.
+     *
+     * @param reader child stdin (parent → child)
+     * @param out child stdout (child → parent)
+     * @param opts dispatch behaviour switches
+     * @param permissionRecorder consumer invoked with the raw response line for each captured
+     *     permission response; tests use this to assert which outcome / optionId the backend chose
+     * @throws Exception if I/O fails
+     */
+    static void runDispatchLoop(
+            BufferedReader reader, PrintStream out, ServerOptions opts, Consumer<String> permissionRecorder)
+            throws Exception {
         long serverInitiatedId = 1000L;
         String line;
         while ((line = reader.readLine()) != null) {
@@ -67,7 +85,7 @@ public final class FakeAcpServer {
             if (id == null) {
                 continue;
             }
-            if (!dispatchOne(trimmed, id, out, opts, reader, serverInitiatedId)) {
+            if (!dispatchOne(trimmed, id, out, opts, reader, serverInitiatedId, permissionRecorder)) {
                 return;
             }
             if (opts.sendPermission() && trimmed.contains("\"method\":\"session/prompt\"")) {
@@ -83,7 +101,8 @@ public final class FakeAcpServer {
             PrintStream out,
             ServerOptions opts,
             BufferedReader reader,
-            long serverInitiatedId)
+            long serverInitiatedId,
+            Consumer<String> permissionRecorder)
             throws Exception {
         if (trimmed.contains("\"method\":\"initialize\"")) {
             out.println("{\"jsonrpc\":\"2.0\",\"id\":" + id + ",\"result\":{\"protocolVersion\":1}}");
@@ -105,9 +124,11 @@ public final class FakeAcpServer {
                         opts.includeParams(),
                         opts.optionsShape()));
                 out.flush();
-                if (reader.readLine() == null) {
+                String response = reader.readLine();
+                if (response == null) {
                     return false;
                 }
+                permissionRecorder.accept(response);
             }
             out.println("{\"jsonrpc\":\"2.0\",\"id\":" + id + ",\"result\":{\"stopReason\":\"end_turn\"}}");
             out.flush();

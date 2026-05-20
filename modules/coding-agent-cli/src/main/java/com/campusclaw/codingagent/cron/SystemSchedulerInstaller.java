@@ -5,6 +5,8 @@
 package com.campusclaw.codingagent.cron;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -159,6 +161,10 @@ public class SystemSchedulerInstaller {
                     .redirectOutput(ProcessBuilder.Redirect.DISCARD)
                     .redirectError(ProcessBuilder.Redirect.DISCARD)
                     .start();
+
+            drainToNull(proc.getInputStream());
+            drainToNull(proc.getErrorStream());
+
             if (!proc.waitFor(PROC_TIMEOUT_SECONDS, TimeUnit.SECONDS)) {
                 proc.destroyForcibly();
                 log.debug("{} timed out after {}s", description, PROC_TIMEOUT_SECONDS);
@@ -173,9 +179,15 @@ public class SystemSchedulerInstaller {
             log.debug("{} interrupted", description, e);
             return null;
         } catch (IOException e) {
-            // Command may legitimately not exist or fail to launch — best-effort.
             log.debug("{} failed", description, e);
             return null;
+        }
+    }
+
+    private static void drainToNull(InputStream in) throws IOException {
+        try (in;
+                OutputStream sink = OutputStream.nullOutputStream()) {
+            in.transferTo(sink);
         }
     }
 
