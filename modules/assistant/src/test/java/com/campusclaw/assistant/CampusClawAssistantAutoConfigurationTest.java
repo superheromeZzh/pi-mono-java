@@ -8,7 +8,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
@@ -96,8 +95,8 @@ class CampusClawAssistantAutoConfigurationTest {
             ChatMemoryStore store = config.chatMemoryStore(repo);
 
             // Behavioral assertion: store must forward calls to the underlying repository.
-            // A wiring break that swaps the field would fail this, where a bare
-            // assertNotNull(store) would silently pass.
+            // A wiring break that swaps the field would fail this, where a smoke
+            // test that only constructed the bean would silently pass.
             store.clear("conv-1");
             verify(repo).clear("conv-1");
         }
@@ -113,8 +112,10 @@ class CampusClawAssistantAutoConfigurationTest {
 
         @Test
         void classLevelConditionalOnClassRequiresMapperScanAndDataSource() {
+            assertTrue(
+                    CampusClawAssistantAutoConfiguration.class.isAnnotationPresent(ConditionalOnClass.class),
+                    "@ConditionalOnClass must be present on the configuration");
             ConditionalOnClass ann = CampusClawAssistantAutoConfiguration.class.getAnnotation(ConditionalOnClass.class);
-            assertNotNull(ann, "@ConditionalOnClass must be present on the configuration");
             assertArrayEquals(
                     new Class<?>[] {MapperScan.class, DataSource.class},
                     ann.value(),
@@ -123,9 +124,11 @@ class CampusClawAssistantAutoConfigurationTest {
 
         @Test
         void classLevelConditionalOnPropertyIsOptIn() {
+            assertTrue(
+                    CampusClawAssistantAutoConfiguration.class.isAnnotationPresent(ConditionalOnProperty.class),
+                    "@ConditionalOnProperty must be present");
             ConditionalOnProperty ann =
                     CampusClawAssistantAutoConfiguration.class.getAnnotation(ConditionalOnProperty.class);
-            assertNotNull(ann, "@ConditionalOnProperty must be present");
             assertEquals("pi.assistant", ann.prefix());
             assertArrayEquals(new String[] {"enabled"}, ann.name());
             assertEquals("true", ann.havingValue());
@@ -148,13 +151,17 @@ class CampusClawAssistantAutoConfigurationTest {
         void chatMemoryRepositoryGatedOnDataSourceAndMissingBean() throws Exception {
             Method m = CampusClawAssistantAutoConfiguration.class.getMethod(
                     "chatMemoryRepository", ObjectMapper.class, ChatMemoryMapper.class);
-            ConditionalOnBean onBean = m.getAnnotation(ConditionalOnBean.class);
-            ConditionalOnMissingBean onMissing = m.getAnnotation(ConditionalOnMissingBean.class);
+            assertTrue(
+                    m.isAnnotationPresent(ConditionalOnBean.class),
+                    "@ConditionalOnBean(DataSource) must gate the repository bean");
+            assertTrue(
+                    m.isAnnotationPresent(ConditionalOnMissingBean.class),
+                    "@ConditionalOnMissingBean(ChatMemoryRepository) must be present");
 
-            assertNotNull(onBean, "@ConditionalOnBean(DataSource) must gate the repository bean");
+            ConditionalOnBean onBean = m.getAnnotation(ConditionalOnBean.class);
             assertArrayEquals(new Class<?>[] {DataSource.class}, onBean.value());
 
-            assertNotNull(onMissing, "@ConditionalOnMissingBean(ChatMemoryRepository) must be present");
+            ConditionalOnMissingBean onMissing = m.getAnnotation(ConditionalOnMissingBean.class);
             assertArrayEquals(new Class<?>[] {ChatMemoryRepository.class}, onMissing.value());
         }
 
@@ -162,22 +169,27 @@ class CampusClawAssistantAutoConfigurationTest {
         void chatMemoryStoreGatedOnDataSourceAndMissingBean() throws Exception {
             Method m =
                     CampusClawAssistantAutoConfiguration.class.getMethod("chatMemoryStore", ChatMemoryRepository.class);
-            ConditionalOnBean onBean = m.getAnnotation(ConditionalOnBean.class);
-            ConditionalOnMissingBean onMissing = m.getAnnotation(ConditionalOnMissingBean.class);
+            assertTrue(
+                    m.isAnnotationPresent(ConditionalOnBean.class),
+                    "@ConditionalOnBean(DataSource) must gate the store bean");
+            assertTrue(
+                    m.isAnnotationPresent(ConditionalOnMissingBean.class),
+                    "@ConditionalOnMissingBean(ChatMemoryStore) must be present");
 
-            assertNotNull(onBean, "@ConditionalOnBean(DataSource) must gate the store bean");
+            ConditionalOnBean onBean = m.getAnnotation(ConditionalOnBean.class);
             assertArrayEquals(new Class<?>[] {DataSource.class}, onBean.value());
 
-            assertNotNull(onMissing, "@ConditionalOnMissingBean(ChatMemoryStore) must be present");
+            ConditionalOnMissingBean onMissing = m.getAnnotation(ConditionalOnMissingBean.class);
             assertArrayEquals(new Class<?>[] {ChatMemoryStore.class}, onMissing.value());
         }
 
         @Test
         void assistantObjectMapperGatedOnMissingBean() throws Exception {
             Method m = CampusClawAssistantAutoConfiguration.class.getMethod("assistantObjectMapper");
+            assertTrue(
+                    m.isAnnotationPresent(ConditionalOnMissingBean.class),
+                    "@ConditionalOnMissingBean(ObjectMapper) must be present");
             ConditionalOnMissingBean onMissing = m.getAnnotation(ConditionalOnMissingBean.class);
-
-            assertNotNull(onMissing, "@ConditionalOnMissingBean(ObjectMapper) must be present");
             assertArrayEquals(new Class<?>[] {ObjectMapper.class}, onMissing.value());
         }
     }
