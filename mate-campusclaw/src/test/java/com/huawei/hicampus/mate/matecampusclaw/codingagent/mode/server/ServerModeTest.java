@@ -10,6 +10,8 @@ import static org.mockito.Mockito.mock;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
 
 import com.huawei.hicampus.mate.matecampusclaw.ai.CampusClawAiService;
 import com.huawei.hicampus.mate.matecampusclaw.ai.model.ModelRegistry;
@@ -21,8 +23,15 @@ import com.huawei.hicampus.mate.matecampusclaw.codingagent.settings.SettingsMana
 
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.springframework.core.io.Resource;
+import org.springframework.web.reactive.function.server.HandlerFunction;
+import org.springframework.web.reactive.function.server.RequestPredicate;
 import org.springframework.web.reactive.function.server.RouterFunction;
+import org.springframework.web.reactive.function.server.RouterFunctions;
+import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
+
+import reactor.core.publisher.Mono;
 
 /**
  * Drives the wiring paths in {@link ServerMode} introduced by d986437c —
@@ -107,21 +116,57 @@ class ServerModeTest {
     @Nested
     class BuildRoutes {
 
+        // The settings handler branch should add exactly 3 routes:
+        // GET /api/settings/models, PUT /api/settings/models/default, PUT /api/settings/customModels.
         @Test
-        void withSettingsHandlerProducesRouter() throws Exception {
+        void addsThreeSettingsRoutesWhenHandlerProvided() throws Exception {
             ServerMode server = buildServer(
                     mock(SettingsManager.class), mock(CustomModelLoader.class), mock(ModelCatalogService.class));
 
-            RouterFunction<ServerResponse> routes = invokeBuildRoutes(server, mock(SettingsHandler.class));
-            assertThat(routes).isNotNull();
+            int withHandler = countRoutes(invokeBuildRoutes(server, mock(SettingsHandler.class)));
+            int withoutHandler = countRoutes(invokeBuildRoutes(server, null));
+
+            assertThat(withHandler - withoutHandler).isEqualTo(3);
         }
 
         @Test
-        void withoutSettingsHandlerProducesRouter() throws Exception {
+        void includesAllBaselineRoutesWhenSettingsHandlerNull() throws Exception {
             ServerMode server = buildServer(null, null, null);
 
-            RouterFunction<ServerResponse> routes = invokeBuildRoutes(server, null);
-            assertThat(routes).isNotNull();
+            // Baseline routes: health, chat, list-conversations, delete-conversation,
+            // skills upload/list/delete/enable/disable = 9 routes
+            int routes = countRoutes(invokeBuildRoutes(server, null));
+            assertThat(routes).isEqualTo(9);
+        }
+
+        private static int countRoutes(RouterFunction<ServerResponse> routes) {
+            CountingVisitor v = new CountingVisitor();
+            routes.accept(v);
+            return v.count;
+        }
+
+        private static final class CountingVisitor implements RouterFunctions.Visitor {
+            int count;
+
+            @Override
+            public void startNested(RequestPredicate predicate) {}
+
+            @Override
+            public void endNested(RequestPredicate predicate) {}
+
+            @Override
+            public void route(RequestPredicate predicate, HandlerFunction<?> handlerFunction) {
+                count++;
+            }
+
+            @Override
+            public void resources(Function<ServerRequest, Mono<Resource>> lookupFunction) {}
+
+            @Override
+            public void attributes(Map<String, Object> attributes) {}
+
+            @Override
+            public void unknown(RouterFunction<?> routerFunction) {}
         }
     }
 
@@ -138,8 +183,8 @@ class ServerModeTest {
                     mock(SessionConfig.class),
                     3000);
 
-            assertFieldNull(server, "settingsManager");
-            assertFieldNull(server, "customModelLoader");
+            assertThat(readField(server, "settingsManager")).isNull();
+            assertThat(readField(server, "customModelLoader")).isNull();
         }
 
         @Test
@@ -157,14 +202,14 @@ class ServerModeTest {
                     mock(ModelCatalogService.class),
                     true);
 
-            assertFieldNull(server, "settingsManager");
-            assertFieldNull(server, "customModelLoader");
+            assertThat(readField(server, "settingsManager")).isNull();
+            assertThat(readField(server, "customModelLoader")).isNull();
         }
 
-        private static void assertFieldNull(ServerMode server, String name) throws Exception {
+        private static Object readField(ServerMode server, String name) throws Exception {
             Field f = ServerMode.class.getDeclaredField(name);
             f.setAccessible(true);
-            assertThat(f.get(server)).isNull();
+            return f.get(server);
         }
     }
 

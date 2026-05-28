@@ -4,14 +4,15 @@
 
 package com.huawei.hicampus.mate.matecampusclaw.assistant;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 
 import java.lang.reflect.Method;
 import java.time.OffsetDateTime;
@@ -86,19 +87,19 @@ class CampusClawAssistantAutoConfigurationTest {
 
             ChatMemoryRepository repo = config.chatMemoryRepository(om, mapper);
 
-            assertInstanceOf(MyBatisChatMemoryRepository.class, repo);
+            assertThat(repo).isInstanceOf(MyBatisChatMemoryRepository.class);
         }
 
         @Test
-        void chatMemoryStoreWrapsGivenRepository() {
+        void chatMemoryStoreDelegatesClearToRepository() {
             ChatMemoryRepository repo = mock(ChatMemoryRepository.class);
             ChatMemoryStore store = config.chatMemoryStore(repo);
 
-            assertNotNull(store);
-
-            // Smoke-test the delegation path so we catch a wiring break that swaps the field.
+            // Behavioral assertion: store must forward calls to the underlying repository.
+            // A wiring break that swaps the field would fail this, where a bare
+            // assertNotNull(store) would silently pass.
             store.clear("conv-1");
-            org.mockito.Mockito.verify(repo).clear("conv-1");
+            verify(repo).clear("conv-1");
         }
     }
 
