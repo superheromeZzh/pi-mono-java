@@ -5,6 +5,7 @@
 package com.huawei.hicampus.mate.matecampusclaw.codingagent.config;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -14,6 +15,7 @@ import java.util.List;
 
 import com.huawei.hicampus.mate.matecampusclaw.ai.model.ModelRegistry;
 import com.huawei.hicampus.mate.matecampusclaw.ai.types.Model;
+import com.huawei.hicampus.mate.matecampusclaw.ai.types.Provider;
 import com.huawei.hicampus.mate.matecampusclaw.codingagent.settings.Settings;
 import com.huawei.hicampus.mate.matecampusclaw.codingagent.settings.SettingsManager;
 
@@ -51,10 +53,11 @@ class CustomModelLoaderTest {
     class RegisterCustomModels {
 
         @Test
-        void noCustomsIsNoOp() {
+        void noCustomsUnregistersWithoutAdding() {
             when(settingsManager.load()).thenReturn(Settings.empty());
             loader.registerCustomModels();
-            verifyNoInteractions(modelRegistry);
+            verify(modelRegistry, times(1)).unregisterByProvider(Provider.CUSTOM);
+            verify(modelRegistry, never()).registerAll(org.mockito.ArgumentMatchers.anyList());
         }
 
         @Test
@@ -79,6 +82,7 @@ class CustomModelLoaderTest {
                     null);
             when(settingsManager.load()).thenReturn(settingsWith(List.of(cfg)));
             loader.registerCustomModels();
+            verify(modelRegistry, times(1)).unregisterByProvider(Provider.CUSTOM);
             @SuppressWarnings("unchecked")
             ArgumentCaptor<List<Model>> captor = ArgumentCaptor.forClass(List.class);
             verify(modelRegistry, times(1)).registerAll(captor.capture());
@@ -92,8 +96,8 @@ class CustomModelLoaderTest {
             when(settingsManager.load()).thenReturn(settingsWith(List.of(cfg)));
             loader.registerCustomModels();
 
-            // Bad config skipped, no registration call
-            verifyNoInteractions(modelRegistry);
+            verify(modelRegistry, times(1)).unregisterByProvider(Provider.CUSTOM);
+            verify(modelRegistry, never()).registerAll(org.mockito.ArgumentMatchers.anyList());
         }
 
         @Test
@@ -120,6 +124,47 @@ class CustomModelLoaderTest {
             assertThat(m.reasoning()).isTrue();
             assertThat(m.thinkingFormat()).isEqualTo("anthropic");
             assertThat(m.inputModalities()).hasSize(2); // TEXT + IMAGE, UNKNOWN_THING dropped
+        }
+    }
+
+    @Nested
+    class Refresh {
+
+        @Test
+        void refreshClearsStaleAndRegistersNew() {
+            Settings.CustomModelConfig first = new Settings.CustomModelConfig(
+                    "stale", null, "openai-completions", "https://example.com", "k", null, null, null, null, null);
+            when(settingsManager.load()).thenReturn(settingsWith(List.of(first)));
+            loader.refresh();
+
+            Settings.CustomModelConfig fresh = new Settings.CustomModelConfig(
+                    "fresh", null, "openai-completions", "https://example.com", "k", null, null, null, null, null);
+            when(settingsManager.load()).thenReturn(settingsWith(List.of(fresh)));
+            loader.refresh();
+
+            verify(modelRegistry, times(2)).unregisterByProvider(Provider.CUSTOM);
+            @SuppressWarnings("unchecked")
+            ArgumentCaptor<List<Model>> captor = ArgumentCaptor.forClass(List.class);
+            verify(modelRegistry, times(2)).registerAll(captor.capture());
+            assertThat(captor.getAllValues()).hasSize(2);
+            assertThat(captor.getAllValues().get(0)).extracting(Model::id).containsExactly("stale");
+            assertThat(captor.getAllValues().get(1)).extracting(Model::id).containsExactly("fresh");
+        }
+
+        @Test
+        void refreshWithEmptyArrayClearsRegistry() {
+            Settings.CustomModelConfig seed = new Settings.CustomModelConfig(
+                    "seed", null, "openai-completions", "https://example.com", "k", null, null, null, null, null);
+            when(settingsManager.load()).thenReturn(settingsWith(List.of(seed)));
+            loader.refresh();
+
+            when(settingsManager.load()).thenReturn(settingsWith(List.of()));
+            loader.refresh();
+
+            verify(modelRegistry, times(2)).unregisterByProvider(Provider.CUSTOM);
+
+            // Only the first refresh registers anything (the seed); the empty refresh does not.
+            verify(modelRegistry, times(1)).registerAll(org.mockito.ArgumentMatchers.anyList());
         }
     }
 }

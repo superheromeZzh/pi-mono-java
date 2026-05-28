@@ -523,22 +523,41 @@ public class CampusClawCommand implements Callable<Integer> {
             return 0;
         }
         if ("server".equals(mode)) {
-            new ServerMode(
-                            piAiService,
-                            modelRegistry,
-                            promptBuilder,
-                            effectiveTools,
-                            config,
-                            port != null ? port : 3000,
-                            host != null ? host : "localhost",
-                            sandboxSkillParser,
-                            useSandbox,
-                            modelCatalogService,
-                            serverSessionPersistenceEnabled)
-                    .run();
+            runServerMode(config, effectiveTools, useSandbox);
             return 0;
         }
         return runInteractiveMode(session, sessionManager, effectivePrompt);
+    }
+
+    private void runServerMode(SessionConfig config, List<AgentTool> effectiveTools, boolean useSandbox) {
+        com.campusclaw.codingagent.config.CustomModelLoader customModelLoader = resolveCustomModelLoader();
+        new ServerMode(
+                        piAiService,
+                        modelRegistry,
+                        promptBuilder,
+                        effectiveTools,
+                        config,
+                        port != null ? port : 3000,
+                        host != null ? host : "localhost",
+                        sandboxSkillParser,
+                        useSandbox,
+                        modelCatalogService,
+                        serverSessionPersistenceEnabled,
+                        settingsManager,
+                        customModelLoader)
+                .run();
+    }
+
+    private com.campusclaw.codingagent.config.CustomModelLoader resolveCustomModelLoader() {
+        if (applicationContext == null) {
+            return null;
+        }
+        try {
+            return applicationContext.getBean(com.campusclaw.codingagent.config.CustomModelLoader.class);
+        } catch (org.springframework.beans.BeansException e) {
+            log.warn("CustomModelLoader bean not available; settings/customModels endpoint disabled", e);
+            return null;
+        }
     }
 
     private String mergeSystemPrompts() {

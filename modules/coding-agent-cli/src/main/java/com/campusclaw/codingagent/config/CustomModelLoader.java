@@ -47,13 +47,32 @@ public class CustomModelLoader {
 
     @EventListener(ApplicationReadyEvent.class)
     public void registerCustomModels() {
+        refresh();
+    }
+
+    /**
+     * Re-syncs the {@link Provider#CUSTOM} bucket of the registry with the
+     * current {@code settings.customModels} list. Removes any custom entries
+     * that are no longer present, then registers the freshly loaded set.
+     * Built-in models from other providers are not affected.
+     *
+     * <p>Called by the {@code @EventListener} once at boot and by the
+     * {@code PUT /api/settings/customModels} endpoint after a write so the
+     * next WebSocket connection sees the updated catalogue.
+     */
+    public void refresh() {
         Settings settings;
         try {
             settings = settingsManager.load();
-        } catch (Exception e) {
+        } catch (RuntimeException e) {
+            log.warn("Failed to load settings for custom model refresh", e);
             return;
         }
+
+        modelRegistry.unregisterByProvider(Provider.CUSTOM);
+
         if (settings.customModels() == null || settings.customModels().isEmpty()) {
+            log.debug("No custom models configured; registry left without {} entries", Provider.CUSTOM.value());
             return;
         }
 
@@ -61,7 +80,7 @@ public class CustomModelLoader {
         for (Settings.CustomModelConfig cfg : settings.customModels()) {
             try {
                 toRegister.add(toModel(cfg));
-            } catch (Exception e) {
+            } catch (RuntimeException e) {
                 log.warn("Skipping invalid custom model {}: {}", cfg.id(), e.getMessage());
             }
         }
