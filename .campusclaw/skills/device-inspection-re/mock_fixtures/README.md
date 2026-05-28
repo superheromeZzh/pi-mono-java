@@ -1,5 +1,7 @@
 # Mock fixtures for `rules_re.json`（故障规则.xlsx，多 Sheet）
 
+**不入 Git**：`*.json` 已在仓库 `.gitignore` 中排除，每台机器本地生成。
+
 由 `excel-antlr-to-rules-json/scripts/generate_mock_fixtures.py` 生成。
 
 - 每条规则一个文件：`<rule_id>.json`（当前约 29 条）

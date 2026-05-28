@@ -61,3 +61,6 @@ package-lock.json
 __pycache__/
 *.pyc
 
+# Device inspection mock telemetry — regenerate locally (see mock_fixtures/README.md)
+.campusclaw/skills/**/mock_fixtures/*.json
+
