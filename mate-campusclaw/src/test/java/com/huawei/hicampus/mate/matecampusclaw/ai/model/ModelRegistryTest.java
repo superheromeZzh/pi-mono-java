@@ -213,6 +213,37 @@ class ModelRegistryTest {
     }
 
     @Nested
+    class UnregisterByProvider {
+
+        @Test
+        void removesOnlyThatProvider() {
+            registry.register(anthropicModel("a1", "A1"));
+            registry.register(anthropicModel("a2", "A2"));
+            registry.register(openaiModel("o1", "O1"));
+
+            registry.unregisterByProvider(Provider.ANTHROPIC);
+
+            assertTrue(registry.getModel(Provider.ANTHROPIC, "a1").isEmpty());
+            assertTrue(registry.getModel(Provider.ANTHROPIC, "a2").isEmpty());
+            assertTrue(registry.getModels(Provider.ANTHROPIC).isEmpty());
+            assertTrue(registry.getModel(Provider.OPENAI, "o1").isPresent());
+            assertEquals(1, registry.getModels(Provider.OPENAI).size());
+        }
+
+        @Test
+        void unregisterUnknownProviderIsNoOp() {
+            registry.register(openaiModel("o1", "O1"));
+            assertDoesNotThrow(() -> registry.unregisterByProvider(Provider.CUSTOM));
+            assertEquals(1, registry.getModels(Provider.OPENAI).size());
+        }
+
+        @Test
+        void nullProviderThrows() {
+            assertThrows(NullPointerException.class, () -> registry.unregisterByProvider(null));
+        }
+    }
+
+    @Nested
     class BuiltInModels {
 
         @BeforeEach

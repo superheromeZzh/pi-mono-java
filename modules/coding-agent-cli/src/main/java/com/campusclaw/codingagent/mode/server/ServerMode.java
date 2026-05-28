@@ -11,9 +11,11 @@ import com.campusclaw.agent.tool.AgentTool;
 import com.campusclaw.ai.CampusClawAiService;
 import com.campusclaw.ai.model.ModelRegistry;
 import com.campusclaw.codingagent.config.AppPaths;
+import com.campusclaw.codingagent.config.CustomModelLoader;
 import com.campusclaw.codingagent.model.ModelCatalogService;
 import com.campusclaw.codingagent.prompt.SystemPromptBuilder;
 import com.campusclaw.codingagent.session.SessionConfig;
+import com.campusclaw.codingagent.settings.SettingsManager;
 import com.campusclaw.codingagent.skill.SandboxSkillParser;
 import com.campusclaw.codingagent.skill.SkillLoader;
 import com.campusclaw.codingagent.skill.SkillManager;
@@ -41,6 +43,9 @@ import reactor.netty.http.server.HttpServerResponse;
  *   <li>DELETE /api/skills/{name}         — remove a skill</li>
  *   <li>POST   /api/skills/{name}/enable  — enable a skill</li>
  *   <li>POST   /api/skills/{name}/disable — disable a skill</li>
+ *   <li>GET    /api/settings/models       — read defaultModel + customModels + availableModels</li>
+ *   <li>PUT    /api/settings/models/default — persist defaultModel to settings.json</li>
+ *   <li>PUT    /api/settings/customModels — replace customModels (refreshes ModelRegistry)</li>
  * </ul>
  *
  * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
@@ -70,6 +75,8 @@ public class ServerMode {
     private final boolean useSandbox;
     private final ModelCatalogService modelCatalog;
     private final boolean sessionPersistenceEnabled;
+    private final SettingsManager settingsManager;
+    private final CustomModelLoader customModelLoader;
 
     public ServerMode(
             CampusClawAiService aiService,
@@ -78,7 +85,20 @@ public class ServerMode {
             List<AgentTool> tools,
             SessionConfig baseConfig,
             int port) {
-        this(aiService, modelRegistry, promptBuilder, tools, baseConfig, port, "localhost", null, false, null, true);
+        this(
+                aiService,
+                modelRegistry,
+                promptBuilder,
+                tools,
+                baseConfig,
+                port,
+                "localhost",
+                null,
+                false,
+                null,
+                true,
+                null,
+                null);
     }
 
     public ServerMode(
@@ -103,7 +123,9 @@ public class ServerMode {
                 sandboxParser,
                 useSandbox,
                 modelCatalog,
-                true);
+                true,
+                null,
+                null);
     }
 
     public ServerMode(
@@ -118,6 +140,36 @@ public class ServerMode {
             boolean useSandbox,
             ModelCatalogService modelCatalog,
             boolean sessionPersistenceEnabled) {
+        this(
+                aiService,
+                modelRegistry,
+                promptBuilder,
+                tools,
+                baseConfig,
+                port,
+                host,
+                sandboxParser,
+                useSandbox,
+                modelCatalog,
+                sessionPersistenceEnabled,
+                null,
+                null);
+    }
+
+    public ServerMode(
+            CampusClawAiService aiService,
+            ModelRegistry modelRegistry,
+            SystemPromptBuilder promptBuilder,
+            List<AgentTool> tools,
+            SessionConfig baseConfig,
+            int port,
+            String host,
+            SandboxSkillParser sandboxParser,
+            boolean useSandbox,
+            ModelCatalogService modelCatalog,
+            boolean sessionPersistenceEnabled,
+            SettingsManager settingsManager,
+            CustomModelLoader customModelLoader) {
         this.aiService = aiService;
         this.modelRegistry = modelRegistry;
         this.promptBuilder = promptBuilder;
@@ -129,6 +181,8 @@ public class ServerMode {
         this.useSandbox = useSandbox;
         this.modelCatalog = modelCatalog;
         this.sessionPersistenceEnabled = sessionPersistenceEnabled;
+        this.settingsManager = settingsManager;
+        this.customModelLoader = customModelLoader;
     }
 
     public void run() {
@@ -146,7 +200,8 @@ public class ServerMode {
         var skillHandler = new SkillHandler(
                 new SkillManager(AppPaths.USER_SKILLS_DIR, sandboxParser, useSandbox),
                 new SkillLoader(sandboxParser, useSandbox));
-        RouterFunction<ServerResponse> routes = buildRoutes(chatHandler, skillHandler, sessionPool);
+        SettingsHandler settingsHandler = buildSettingsHandler();
+        RouterFunction<ServerResponse> routes = buildRoutes(chatHandler, skillHandler, sessionPool, settingsHandler);
         var adapter = new ReactorHttpHandlerAdapter(RouterFunctions.toHttpHandler(routes));
         var server = HttpServer.create()
                 .host(host)
@@ -159,9 +214,12 @@ public class ServerMode {
     }
 
     private RouterFunction<ServerResponse> buildRoutes(
-            ChatHandler chatHandler, SkillHandler skillHandler, SessionPool sessionPool) {
+            ChatHandler chatHandler,
+            SkillHandler skillHandler,
+            SessionPool sessionPool,
+            SettingsHandler settingsHandler) {
         var conversationLister = new com.campusclaw.codingagent.session.ConversationLister();
-        return RouterFunctions.route()
+        var builder = RouterFunctions.route()
                 .GET("/api/health", req -> ServerResponse.ok().bodyValue(Map.of("status", "ok")))
                 .POST("/api/chat", chatHandler::chat)
                 .GET("/api/conversations", req -> ServerResponse.ok()
@@ -181,8 +239,22 @@ public class ServerMode {
                 .GET("/api/skills", skillHandler::list)
                 .DELETE("/api/skills/{name}", skillHandler::delete)
                 .POST("/api/skills/{name}/enable", skillHandler::enable)
-                .POST("/api/skills/{name}/disable", skillHandler::disable)
-                .build();
+                .POST("/api/skills/{name}/disable", skillHandler::disable);
+        if (settingsHandler != null) {
+            builder = builder.GET("/api/settings/models", settingsHandler::getModels)
+                    .PUT("/api/settings/models/default", settingsHandler::setDefaultModel)
+                    .PUT("/api/settings/customModels", settingsHandler::setCustomModels);
+        }
+        return builder.build();
+    }
+
+    private SettingsHandler buildSettingsHandler() {
+        if (settingsManager == null || customModelLoader == null || modelCatalog == null) {
+            log.warn(
+                    "Settings endpoints disabled: settingsManager / customModelLoader / modelCatalog not wired (server constructed via legacy overload?)");
+            return null;
+        }
+        return new SettingsHandler(settingsManager, modelRegistry, modelCatalog, customModelLoader);
     }
 
     private static void wireServerRoutes(
@@ -222,6 +294,11 @@ public class ServerMode {
         banner.info("  DELETE /api/skills/{name}");
         banner.info("  POST   /api/skills/{name}/enable");
         banner.info("  POST   /api/skills/{name}/disable");
+        if (settingsManager != null && customModelLoader != null && modelCatalog != null) {
+            banner.info("  GET    /api/settings/models");
+            banner.info("  PUT    /api/settings/models/default");
+            banner.info("  PUT    /api/settings/customModels");
+        }
         banner.info("  WS     /api/ws/chat");
     }
 

@@ -208,6 +208,25 @@ public class ModelRegistry {
     }
 
     /**
+     * Removes every model registered under {@code provider}. Other providers'
+     * entries are left untouched. Used by {@code CustomModelLoader.refresh()}
+     * to surgically rebuild the {@link Provider#CUSTOM} bucket after the user
+     * edits {@code settings.json}.
+     *
+     * @param provider the provider whose entries should be removed; must not be null
+     * @throws NullPointerException when {@code provider} is null
+     */
+    public void unregisterByProvider(Provider provider) {
+        Objects.requireNonNull(provider, "provider must not be null");
+        int removed;
+        synchronized (lock) {
+            var bucket = models.remove(provider);
+            removed = bucket == null ? 0 : bucket.size();
+        }
+        log.debug("Unregistered {} model(s) for provider {}", removed, provider.value());
+    }
+
+    /**
      * Pre-registers commonly used models after bean construction.
      *
      * <p>Order:

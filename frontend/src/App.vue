@@ -3,6 +3,7 @@ import { computed, nextTick, onMounted, ref, watch } from 'vue';
 import { useChatWs } from './composables/useChatWs';
 import MessageList from './components/MessageList.vue';
 import ConversationsPanel from './components/ConversationsPanel.vue';
+import SettingsPanel from './components/SettingsPanel.vue';
 import type { ThinkingLevel } from './types/ws';
 import {
   getSlashCommandCompletions,
@@ -15,6 +16,7 @@ const chat = useChatWs();
 
 // ----- sidebar state (local) -----
 const wsUrl = ref('ws://localhost:3000/api/ws/chat');
+const showSettings = ref(false);
 const convInput = ref('');
 const levelInput = ref<ThinkingLevel>('medium');
 
@@ -253,6 +255,7 @@ function logPrefix(dir: 'in' | 'out' | 'err' | 'info') {
     <span class="sep">|</span>
     <span class="status">{{ streamStatus }}</span>
     <span class="spacer"></span>
+    <button @click="showSettings = true">⚙ Settings</button>
     <button @click="chat.getState()" :disabled="!chat.connected.value">Refresh</button>
     <button
       @click="chat.getHistory()"
@@ -391,6 +394,8 @@ function logPrefix(dir: 'in' | 'out' | 'err' | 'info') {
       <button class="danger" @click="chat.abort()" :disabled="!chat.connected.value">Abort</button>
     </div>
   </footer>
+
+  <SettingsPanel :ws-url="wsUrl" :open="showSettings" @close="showSettings = false" />
 </template>
 
 <style scoped>

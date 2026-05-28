@@ -65,6 +65,18 @@ tags:
       影响**，需要在该会话内执行 `/reload` 才会生效。注意：禁用清单不会
       因 `DELETE /api/skills/{name}` 而清理，删除后再以同名重装的 skill
       会沿用之前的禁用状态。
+  - name: settings
+    description: |
+      读取与回写全局 `~/.campusclaw/agent/settings.json` 中的模型相关字段。
+      所有写入端点都走 `SettingsManager.setGlobal`，仅修改全局文件；
+      project 级 `.campusclaw/settings.json` 不受影响。
+
+      **生效时机**：`SettingsManager.load()` 每次都重新读盘 + 合并，所以
+      `defaultModel` 在写入后对**新的 WS 连接**立即生效；已经打开的连接
+      保留原值。`customModels` 的新增/删除会触发
+      `CustomModelLoader.refresh()`，即时刷新 `ModelRegistry` 中
+      `provider==custom` 的条目——下一次 `list_models` 命令或新 WS 连接
+      会读到最新目录。
 
 paths:
   /api/conversations:
@@ -456,6 +468,158 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
 
+  /api/settings/models:
+    get:
+      tags: [settings]
+      summary: 读取模型相关 settings + 当前可见模型目录
+      operationId: getSettingsModels
+      description: |
+        返回前端配置页所需的全部模型相关状态：
+          - `defaultModel` —— 合并 `model` / `defaultModel` 后的当前默认模型 id（可能为 null）
+          - `customModels` —— `settings.customModels` 数组的当前值
+          - `availableModels` —— `ModelCatalogService.getAvailableModels()` 的输出
+            （即过滤后允许给 UI 切换的模型集，始终包含 `provider==custom` 的条目）
+          - `filtered` —— `enabledModels` 是否生效（true 表示 `availableModels` 是过滤后的子集）
+      responses:
+        "200":
+          description: 当前的模型 settings snapshot。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SettingsModelsSnapshot"
+        "500":
+          description: 读盘或合并 settings 时发生意外错误。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /api/settings/models/default:
+    put:
+      tags: [settings]
+      summary: 设置默认模型
+      operationId: setSettingsDefaultModel
+      description: |
+        把 `defaultModel` 写入 `~/.campusclaw/agent/settings.json`。模型 id
+        必须在当前 `ModelRegistry` 中存在（含内置 + customModels），否则返回
+        400。**对已经打开的 WS 连接不生效**；新 WS 连接会读到新值。
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DefaultModelRequest"
+            example:
+              model: glm-5
+      responses:
+        "200":
+          description: 写入成功。
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [defaultModel]
+                properties:
+                  defaultModel:
+                    type: string
+                    description: 刚刚写入的模型 id。
+              example:
+                defaultModel: glm-5
+        "400":
+          description: 请求体缺字段、字段为空，或模型 id 不存在于 registry。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              examples:
+                missing-model:
+                  value:
+                    error: model is required
+                unknown-model:
+                  value:
+                    error: "unknown model: nonexistent"
+        "500":
+          description: 写入 settings.json 时发生意外错误。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /api/settings/customModels:
+    put:
+      tags: [settings]
+      summary: 全量替换自定义模型列表
+      operationId: setSettingsCustomModels
+      description: |
+        把请求体作为 **完整** `customModels` 数组写入
+        `~/.campusclaw/agent/settings.json`，覆盖原值（**不是 patch**）。写入
+        成功后立即调用 `CustomModelLoader.refresh()`：先从 `ModelRegistry`
+        中删掉所有 `provider==custom` 条目，再用新数组重新注册。下一个 WS
+        连接 / 下一次 `list_models` 命令就能看到新目录。
+
+        校验规则：
+          - 数组每一项必须含非空 `id` 和 `api`
+          - 数组内 `id` 不允许重复
+          - 解析失败、空对象、缺字段、id 重复 → 400
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: "#/components/schemas/CustomModelConfig"
+            example:
+              - id: local-foo
+                name: Local Foo
+                api: openai
+                baseUrl: http://localhost:1234/v1
+                apiKey: sk-x
+                contextWindow: 128000
+                maxTokens: 8192
+      responses:
+        "200":
+          description: 写入并刷新成功。
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [customModels, count]
+                properties:
+                  customModels:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/CustomModelConfig"
+                  count:
+                    type: integer
+                    minimum: 0
+                    description: 新数组的长度（等于 `customModels.length`，便于前端 sanity check）。
+        "400":
+          description: 请求体不是 JSON 数组，或某一项缺字段 / id 重复。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              examples:
+                not-array:
+                  value:
+                    error: customModels payload must be a JSON array
+                missing-id:
+                  value:
+                    error: "customModels[0].id is required"
+                missing-api:
+                  value:
+                    error: "customModels[1].api is required (id=local-foo)"
+                duplicate-id:
+                  value:
+                    error: "duplicate customModels id: local-foo"
+        "500":
+          description: 写盘或 registry 刷新时发生意外错误。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
 components:
   schemas:
     ConversationSummary:
@@ -621,6 +785,125 @@ components:
                 pattern: "^[a-z0-9-]+$"
                 maxLength: 64
                 example: my-skill
+
+    CustomModelConfig:
+      type: object
+      description: |
+        `settings.customModels` 数组的一项。映射到 Java record
+        `Settings.CustomModelConfig`。`id` + `api` 必填，其余可选；缺省时由
+        `CustomModelLoader.toModel` 填默认值（contextWindow=128000、
+        maxTokens=8192、modalities=[TEXT]、reasoning=false）。
+      required: [id, api, baseUrl, apiKey]
+      properties:
+        id:
+          type: string
+          description: 模型 id（在 registry 中作为查找键，必须全局唯一）。
+          example: local-foo
+        name:
+          type: string
+          nullable: true
+          description: 人类可读名称（UI 展示用），未给则回退为 `id`。
+          example: Local Foo
+        api:
+          type: string
+          description: |
+            协议类型，对应 `Api` 枚举的字符串值（如 `openai`、
+            `openai-completions`、`anthropic`）。无效值在写盘成功后被
+            `CustomModelLoader.refresh()` 跳过（warn 日志）。
+          example: openai
+        baseUrl:
+          type: string
+          description: 提供方的 base URL。支持 `${ENV}` / `${ENV:-default}` 表达式。
+          example: http://localhost:1234/v1
+        apiKey:
+          type: string
+          description: API key。支持 `${ENV}` / `${ENV:-default}` 表达式。
+          example: ${LOCAL_API_KEY:-sk-local}
+        contextWindow:
+          type: integer
+          minimum: 1
+          nullable: true
+          description: 上下文窗口大小（tokens）。缺省 128000。
+        maxTokens:
+          type: integer
+          minimum: 1
+          nullable: true
+          description: 最大输出 tokens。缺省 8192。
+        reasoning:
+          type: boolean
+          nullable: true
+          description: 是否启用 reasoning（thinking）。缺省 false。
+        inputModalities:
+          type: array
+          nullable: true
+          items:
+            type: string
+            enum: [TEXT, IMAGE]
+          description: 支持的输入模态。缺省 `[TEXT]`，未知值会被忽略。
+        thinkingFormat:
+          type: string
+          nullable: true
+          description: |
+            Reasoning 内容的传输格式（`zai`、`anthropic` 等）。
+            按 provider 自定义；空则使用 provider 默认。
+
+    DefaultModelRequest:
+      type: object
+      description: "`PUT /api/settings/models/default` 的请求体。"
+      required: [model]
+      properties:
+        model:
+          type: string
+          description: 要写入 `settings.defaultModel` 的模型 id。必须存在于 `ModelRegistry`。
+          example: glm-5
+
+    SettingsModelsSnapshot:
+      type: object
+      description: "`GET /api/settings/models` 的响应体。"
+      required: [customModels, availableModels, filtered]
+      properties:
+        defaultModel:
+          type: string
+          nullable: true
+          description: |
+            当前生效的默认模型 id。优先采用 opencode 风格的 `model` 字段，
+            退回 `defaultModel`。两个字段都未设置时为 null。
+          example: glm-5
+        customModels:
+          type: array
+          description: settings.json 中当前的 customModels 数组（可能为空）。
+          items:
+            $ref: "#/components/schemas/CustomModelConfig"
+        availableModels:
+          type: array
+          description: |
+            UI 模型选择器应当展示的条目。等同于
+            `ModelCatalogService.getAvailableModels()` + 同样的 wire 格式，
+            与 WS `list_models` 命令返回的 `models` 字段一致。
+          items:
+            type: object
+            required: [id, name, provider, contextWindow, maxTokens, reasoning, hasCredentials]
+            properties:
+              id: { type: string }
+              name: { type: string }
+              provider: { type: string }
+              contextWindow: { type: integer }
+              maxTokens: { type: integer }
+              reasoning: { type: boolean }
+              hasCredentials: { type: boolean }
+              cost:
+                type: object
+                description: 价格表（USD per 1M tokens）。所有内置/自定义模型都会含此结构（自定义默认全 0）。
+                properties:
+                  input: { type: number }
+                  output: { type: number }
+                  cacheRead: { type: number }
+                  cacheWrite: { type: number }
+        filtered:
+          type: boolean
+          description: |
+            `enabledModels` 是否生效。true 表示 `availableModels` 是从全集
+            过滤后的子集；false 表示返回了全部已注册模型。
 
     Error:
       type: object
