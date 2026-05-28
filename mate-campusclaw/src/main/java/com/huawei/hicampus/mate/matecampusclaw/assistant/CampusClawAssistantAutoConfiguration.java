@@ -6,7 +6,6 @@ package com.huawei.hicampus.mate.matecampusclaw.assistant;
 
 import javax.sql.DataSource;
 
-import com.huawei.hicampus.mate.matecampusclaw.assistant.channel.gateway.WebSocketGatewayProperties;
 import com.huawei.hicampus.mate.matecampusclaw.assistant.mapper.ChatMemoryMapper;
 import com.huawei.hicampus.mate.matecampusclaw.assistant.memory.ChatMemoryRepository;
 import com.huawei.hicampus.mate.matecampusclaw.assistant.memory.ChatMemoryStore;
@@ -50,7 +49,7 @@ import org.springframework.context.annotation.Configuration;
 @ConditionalOnProperty(prefix = "pi.assistant", name = "enabled", havingValue = "true", matchIfMissing = false)
 @ComponentScan
 @MapperScan("com.huawei.hicampus.mate.matecampusclaw.assistant.mapper")
-@EnableConfigurationProperties({AssistantProperties.class, WebSocketGatewayProperties.class})
+@EnableConfigurationProperties(AssistantProperties.class)
 public class CampusClawAssistantAutoConfiguration {
 
     @Bean

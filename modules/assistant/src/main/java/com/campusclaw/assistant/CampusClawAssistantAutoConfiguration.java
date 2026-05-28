@@ -6,7 +6,6 @@ package com.campusclaw.assistant;
 
 import javax.sql.DataSource;
 
-import com.campusclaw.assistant.channel.gateway.WebSocketGatewayProperties;
 import com.campusclaw.assistant.mapper.ChatMemoryMapper;
 import com.campusclaw.assistant.memory.ChatMemoryRepository;
 import com.campusclaw.assistant.memory.ChatMemoryStore;
@@ -50,7 +49,7 @@ import org.springframework.context.annotation.Configuration;
 @ConditionalOnProperty(prefix = "pi.assistant", name = "enabled", havingValue = "true", matchIfMissing = false)
 @ComponentScan
 @MapperScan("com.campusclaw.assistant.mapper")
-@EnableConfigurationProperties({AssistantProperties.class, WebSocketGatewayProperties.class})
+@EnableConfigurationProperties(AssistantProperties.class)
 public class CampusClawAssistantAutoConfiguration {
 
     @Bean

@@ -11,6 +11,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.SmartLifecycle;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -39,6 +40,7 @@ import io.netty.handler.logging.LoggingHandler;
  */
 @Configuration
 @ConditionalOnProperty(prefix = "pi.assistant.gateway", name = "enabled", havingValue = "true")
+@EnableConfigurationProperties(WebSocketGatewayProperties.class)
 public class WebSocketGatewayConfig implements SmartLifecycle {
 
     private static final Logger log = LoggerFactory.getLogger(WebSocketGatewayConfig.class);
