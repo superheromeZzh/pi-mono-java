@@ -10,19 +10,27 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.mockConstruction;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.lang.reflect.Method;
 import java.nio.file.Path;
+import java.util.List;
 
+import com.campusclaw.agent.tool.AgentTool;
 import com.campusclaw.codingagent.config.CustomModelLoader;
+import com.campusclaw.codingagent.mode.server.ServerMode;
+import com.campusclaw.codingagent.session.SessionConfig;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.mockito.MockedConstruction;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.context.ApplicationContext;
 
@@ -382,6 +390,77 @@ class CampusClawCommandTest {
 
             CustomModelLoader result = invoke(ctx);
             assertNull(result);
+        }
+    }
+
+    // -------------------------------------------------------------------
+    // runServerMode (private) — d986437c new code, covered without real TCP bind
+    // -------------------------------------------------------------------
+
+    /**
+     * Covers the private {@code runServerMode} body added in d986437c. Without
+     * mocking the {@code new ServerMode(...).run()} call would bind a real TCP
+     * port and block indefinitely; {@code MockedConstruction} intercepts the
+     * constructor inside the try-block so {@code run()} on the returned mock
+     * is a no-op.
+     */
+    @Nested
+    class RunServerMode {
+
+        private void invokeRunServerMode(CampusClawCommand cmd, SessionConfig config) throws Exception {
+            Method m = CampusClawCommand.class.getDeclaredMethod(
+                    "runServerMode", SessionConfig.class, List.class, boolean.class);
+            m.setAccessible(true);
+            m.invoke(cmd, config, List.<AgentTool>of(), false);
+        }
+
+        @Test
+        void constructsServerModeAndCallsRun() throws Exception {
+            ApplicationContext ctx = mock(ApplicationContext.class);
+            CustomModelLoader loader = mock(CustomModelLoader.class);
+            when(ctx.getBean(CustomModelLoader.class)).thenReturn(loader);
+
+            CampusClawCommand cmd = new CampusClawCommand(
+                    null, null, null, null, null, null, null, null, null, ctx, null, null, null, null);
+            SessionConfig config = mock(SessionConfig.class);
+
+            try (MockedConstruction<ServerMode> mc = mockConstruction(ServerMode.class)) {
+                invokeRunServerMode(cmd, config);
+
+                assertEquals(1, mc.constructed().size(), "exactly one ServerMode should be constructed");
+                verify(mc.constructed().get(0), times(1)).run();
+            }
+        }
+
+        @Test
+        void resolvesCustomModelLoaderFromContext() throws Exception {
+            ApplicationContext ctx = mock(ApplicationContext.class);
+            CustomModelLoader loader = mock(CustomModelLoader.class);
+            when(ctx.getBean(CustomModelLoader.class)).thenReturn(loader);
+
+            CampusClawCommand cmd = new CampusClawCommand(
+                    null, null, null, null, null, null, null, null, null, ctx, null, null, null, null);
+
+            try (MockedConstruction<ServerMode> mc = mockConstruction(ServerMode.class)) {
+                invokeRunServerMode(cmd, mock(SessionConfig.class));
+
+                // Confirms resolveCustomModelLoader was wired into the construction path —
+                // the getBean call only happens via runServerMode -> resolveCustomModelLoader.
+                verify(ctx, times(1)).getBean(CustomModelLoader.class);
+                assertEquals(1, mc.constructed().size());
+            }
+        }
+
+        @Test
+        void toleratesNullApplicationContext() throws Exception {
+            CampusClawCommand cmd = new CampusClawCommand(
+                    null, null, null, null, null, null, null, null, null, null, null, null, null, null);
+
+            try (MockedConstruction<ServerMode> mc = mockConstruction(ServerMode.class)) {
+                invokeRunServerMode(cmd, mock(SessionConfig.class));
+                assertEquals(1, mc.constructed().size());
+                verify(mc.constructed().get(0)).run();
+            }
         }
     }
 
