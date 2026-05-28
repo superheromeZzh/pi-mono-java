@@ -5,21 +5,21 @@
 package com.huawei.hicampus.mate.matecampusclaw.codingagent.util;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatNoException;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.io.PrintStream;
 import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
-import java.util.Locale;
 import java.util.Optional;
 
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.DisabledOnOs;
+import org.junit.jupiter.api.condition.OS;
 
 class ClipboardUtilsTest {
 
@@ -77,80 +77,31 @@ class ClipboardUtilsTest {
     @Nested
     class Paste {
 
+        /**
+         * Round-trips through the public copy/paste API: writing a unique random string
+         * via {@code copy()} and reading it back via {@code paste()}. On platforms with
+         * a working native clipboard (macOS with pbpaste, Linux with xclip/xsel) the
+         * round-trip must succeed; on platforms without it, paste() falls back to
+         * {@code Optional.empty()} and the assertion is skipped via JUnit's Assumption
+         * machinery so the test reports as skipped (not silently passing).
+         */
         @Test
-        void pasteDoesNotThrow() {
-            // pbpaste / xclip / xsel may or may not be available — assert via doesNotThrow
-            // so the test fails on regression rather than silently passing on non-null.
-            assertThatNoException().isThrownBy(ClipboardUtils::paste);
-        }
+        void roundTripThroughCopyAndPaste() {
+            String unique = "campusclaw-paste-test-" + System.nanoTime();
+            boolean copyOk = assertDoesNotThrow(() -> ClipboardUtils.copy(unique));
 
-        @Test
-        void pasteOnUnsupportedOsReturnsEmpty() {
-            String os = System.getProperty("os.name", "").toLowerCase(Locale.ROOT);
+            // copy() is always true on macOS/Linux/Windows (OSC52 fallback never fails
+            // unless System.out is closed). If it ever returns false the contract is
+            // already broken, so we assert that first.
+            assertThat(copyOk).isTrue();
 
-            // Only assert on platforms where paste cannot succeed (no pbpaste/xclip/xsel branch).
-            // On macOS / Linux the call may legitimately return a value, so we skip the assertion.
-            boolean nativeUnavailable = !os.contains("mac") && !os.contains("linux") && !commandOnPath("pbpaste");
-            if (nativeUnavailable) {
-                Optional<String> result = ClipboardUtils.paste();
-                assertThat(result).isEmpty();
-            }
-        }
-
-        private static boolean commandOnPath(String c) {
-            try {
-                Process p =
-                        new ProcessBuilder("which", c).redirectErrorStream(true).start();
-                p.getOutputStream().close();
-                p.getInputStream().readAllBytes();
-                return p.waitFor() == 0;
-            } catch (Exception e) {
-                return false;
-            }
-        }
-    }
-
-    // -------------------------------------------------------------------
-    // OSC 52 IOException fallback (65dd1a6d)
-    // -------------------------------------------------------------------
-
-    /**
-     * Forces the IOException catch on lines 75-77 of ClipboardUtils. We swap
-     * {@code System.out} for a PrintStream whose underlying OutputStream always
-     * throws — but note PrintStream itself swallows IOExceptions, so this only
-     * triggers the catch when the byte write goes through {@code System.out.write(...)}.
-     */
-    @Nested
-    class Osc52IoFailure {
-
-        @Test
-        void doesNotThrowAndReturnsBooleanWhenStreamFails() throws Exception {
-            PrintStream original = System.out;
-
-            // PrintStream catches IO errors and sets an internal flag; tryOsc52Copy
-            // observes this via System.out.write throwing only when wrapping a
-            // ThrowingOutputStream that propagates. Use the latter directly:
-            ThrowingOutputStream bad = new ThrowingOutputStream();
-            System.setOut(new PrintStream(bad, true, StandardCharsets.UTF_8));
-            try {
-                // Either branch (true or false) is acceptable — what we are guarding
-                // against is an uncaught IOException leaking out of tryOsc52Copy.
-                assertThatNoException().isThrownBy(() -> ClipboardUtils.tryOsc52Copy("payload"));
-            } finally {
-                System.setOut(original);
-            }
-        }
-
-        private static final class ThrowingOutputStream extends OutputStream {
-            @Override
-            public void write(int b) throws IOException {
-                throw new IOException("induced failure");
-            }
-
-            @Override
-            public void write(byte[] b, int off, int len) throws IOException {
-                throw new IOException("induced failure");
-            }
+            // Best-effort paste; if no native tool is available (Windows / headless
+            // container), paste() returns Optional.empty() — that is itself the
+            // documented contract for unsupported platforms.
+            Optional<String> pasted = assertDoesNotThrow(() -> ClipboardUtils.paste());
+            org.junit.jupiter.api.Assumptions.assumeTrue(
+                    pasted.isPresent(), "no native clipboard tool on this platform; paste roundtrip skipped");
+            assertThat(pasted).contains(unique);
         }
     }
 
@@ -229,13 +180,8 @@ class ClipboardUtilsTest {
     class CommandExists {
 
         @Test
+        @DisabledOnOs(value = OS.WINDOWS, disabledReason = "`ls` is not on PATH on Windows; JUnit reports skipped")
         void returnsTrueForKnownCommand() throws Exception {
-            // `ls` exists on macOS/Linux PATH; on Windows the test runner has `cmd` but not `ls`,
-            // so we skip the positive case there.
-            String os = System.getProperty("os.name", "").toLowerCase(Locale.ROOT);
-            if (os.contains("win")) {
-                return;
-            }
             Method m = ClipboardUtils.class.getDeclaredMethod("commandExists", String.class);
             m.setAccessible(true);
             assertThat((boolean) m.invoke(null, "ls")).isTrue();

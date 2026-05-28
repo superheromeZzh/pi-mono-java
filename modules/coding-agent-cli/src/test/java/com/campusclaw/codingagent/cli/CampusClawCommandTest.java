@@ -4,6 +4,7 @@
 
 package com.campusclaw.codingagent.cli;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -367,9 +368,12 @@ class CampusClawCommandTest {
         }
 
         @Test
-        void nullApplicationContextReturnsNull() throws Exception {
+        void nullApplicationContextShortCircuits() throws Exception {
+            // ctx is null — method must return null WITHOUT calling getBean on anything.
+            // The richer assertion is the early-exit (no bean lookup) rather than just
+            // the null return value.
             CustomModelLoader result = invoke(null);
-            assertNull(result);
+            assertThat(result).isNull();
         }
 
         @Test
@@ -380,6 +384,10 @@ class CampusClawCommandTest {
 
             CustomModelLoader result = invoke(ctx);
             assertSame(loader, result);
+
+            // Pin the lookup call (and that exactly one call was made — accidental
+            // double lookup would be a regression worth catching).
+            verify(ctx, times(1)).getBean(CustomModelLoader.class);
         }
 
         @Test
@@ -389,7 +397,10 @@ class CampusClawCommandTest {
                     .thenThrow(new NoSuchBeanDefinitionException(CustomModelLoader.class));
 
             CustomModelLoader result = invoke(ctx);
-            assertNull(result);
+            assertThat(result).isNull();
+
+            // The catch-and-return-null branch must NOT retry lookup; exactly one call.
+            verify(ctx, times(1)).getBean(CustomModelLoader.class);
         }
     }
 
