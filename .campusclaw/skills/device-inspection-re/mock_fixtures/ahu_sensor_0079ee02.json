@@ -1,0 +1,262 @@
+{
+  "requestId": "ahu_sensor_0079ee02",
+  "ruleName": "送风压力异常",
+  "deviceType": "AHU",
+  "component": "送风压力传感器",
+  "scenario": "fault",
+  "devices": [
+    {
+      "deviceId": "AHU_送风压力传感器",
+      "data": [
+        {
+          "ts": 1779959309.140269,
+          "points": {
+            "supplyAirStatus": 1.0,
+            "supplyAirPressure": 100.0,
+            "supplyAirPressureSp": 50.0
+          }
+        },
+        {
+          "ts": 1779959339.140269,
+          "points": {
+            "supplyAirStatus": 1.0,
+            "supplyAirPressure": 100.0,
+            "supplyAirPressureSp": 50.0
+          }
+        },
+        {
+          "ts": 1779959369.140269,
+          "points": {
+            "supplyAirStatus": 1.0,
+            "supplyAirPressure": 100.0,
+            "supplyAirPressureSp": 50.0
+          }
+        },
+        {
+          "ts": 1779959399.140269,
+          "points": {
+            "supplyAirStatus": 1.0,
+            "supplyAirPressure": 100.0,
+            "supplyAirPressureSp": 50.0
+          }
+        },
+        {
+          "ts": 1779959429.140269,
+          "points": {
+            "supplyAirStatus": 1.0,
+            "supplyAirPressure": 100.0,
+            "supplyAirPressureSp": 50.0
+          }
+        },
+        {
+          "ts": 1779959459.140269,
+          "points": {
+            "supplyAirStatus": 1.0,
+            "supplyAirPressure": 100.0,
+            "supplyAirPressureSp": 50.0
+          }
+        },
+        {
+          "ts": 1779959489.140269,
+          "points": {
+            "supplyAirStatus": 1.0,
+            "supplyAirPressure": 100.0,
+            "supplyAirPressureSp": 50.0
+          }
+        },
+        {
+          "ts": 1779959519.140269,
+          "points": {
+            "supplyAirStatus": 1.0,
+            "supplyAirPressure": 100.0,
+            "supplyAirPressureSp": 50.0
+          }
+        },
+        {
+          "ts": 1779959549.140269,
+          "points": {
+            "supplyAirStatus": 1.0,
+            "supplyAirPressure": 100.0,
+            "supplyAirPressureSp": 50.0
+          }
+        },
+        {
+          "ts": 1779959579.140269,
+          "points": {
+            "supplyAirStatus": 1.0,
+            "supplyAirPressure": 100.0,
+            "supplyAirPressureSp": 50.0
+          }
+        },
+        {
+          "ts": 1779959609.140269,
+          "points": {
+            "supplyAirStatus": 1.0,
+            "supplyAirPressure": 100.0,
+            "supplyAirPressureSp": 50.0
+          }
+        },
+        {
+          "ts": 1779959639.140269,
+          "points": {
+            "supplyAirStatus": 1.0,
+            "supplyAirPressure": 100.0,
+            "supplyAirPressureSp": 50.0
+          }
+        },
+        {
+          "ts": 1779959669.140269,
+          "points": {
+            "supplyAirStatus": 1.0,
+            "supplyAirPressure": 100.0,
+            "supplyAirPressureSp": 50.0
+          }
+        },
+        {
+          "ts": 1779959699.140269,
+          "points": {
+            "supplyAirStatus": 1.0,
+            "supplyAirPressure": 100.0,
+            "supplyAirPressureSp": 50.0
+          }
+        },
+        {
+          "ts": 1779959729.140269,
+          "points": {
+            "supplyAirStatus": 1.0,
+            "supplyAirPressure": 100.0,
+            "supplyAirPressureSp": 50.0
+          }
+        },
+        {
+          "ts": 1779959759.140269,
+          "points": {
+            "supplyAirStatus": 1.0,
+            "supplyAirPressure": 100.0,
+            "supplyAirPressureSp": 50.0
+          }
+        },
+        {
+          "ts": 1779959789.140269,
+          "points": {
+            "supplyAirStatus": 1.0,
+            "supplyAirPressure": 100.0,
+            "supplyAirPressureSp": 50.0
+          }
+        },
+        {
+          "ts": 1779959819.140269,
+          "points": {
+            "supplyAirStatus": 1.0,
+            "supplyAirPressure": 100.0,
+            "supplyAirPressureSp": 50.0
+          }
+        },
+        {
+          "ts": 1779959849.140269,
+          "points": {
+            "supplyAirStatus": 1.0,
+            "supplyAirPressure": 100.0,
+            "supplyAirPressureSp": 50.0
+          }
+        },
+        {
+          "ts": 1779959879.140269,
+          "points": {
+            "supplyAirStatus": 1.0,
+            "supplyAirPressure": 100.0,
+            "supplyAirPressureSp": 50.0
+          }
+        },
+        {
+          "ts": 1779959909.140269,
+          "points": {
+            "supplyAirStatus": 1.0,
+            "supplyAirPressure": 100.0,
+            "supplyAirPressureSp": 50.0
+          }
+        },
+        {
+          "ts": 1779959939.140269,
+          "points": {
+            "supplyAirStatus": 1.0,
+            "supplyAirPressure": 100.0,
+            "supplyAirPressureSp": 50.0
+          }
+        },
+        {
+          "ts": 1779959969.140269,
+          "points": {
+            "supplyAirStatus": 1.0,
+            "supplyAirPressure": 100.0,
+            "supplyAirPressureSp": 50.0
+          }
+        },
+        {
+          "ts": 1779959999.140269,
+          "points": {
+            "supplyAirStatus": 1.0,
+            "supplyAirPressure": 100.0,
+            "supplyAirPressureSp": 50.0
+          }
+        },
+        {
+          "ts": 1779960029.140269,
+          "points": {
+            "supplyAirStatus": 1.0,
+            "supplyAirPressure": 100.0,
+            "supplyAirPressureSp": 50.0
+          }
+        },
+        {
+          "ts": 1779960059.140269,
+          "points": {
+            "supplyAirStatus": 1.0,
+            "supplyAirPressure": 100.0,
+            "supplyAirPressureSp": 50.0
+          }
+        },
+        {
+          "ts": 1779960089.140269,
+          "points": {
+            "supplyAirStatus": 1.0,
+            "supplyAirPressure": 100.0,
+            "supplyAirPressureSp": 50.0
+          }
+        },
+        {
+          "ts": 1779960119.140269,
+          "points": {
+            "supplyAirStatus": 1.0,
+            "supplyAirPressure": 100.0,
+            "supplyAirPressureSp": 50.0
+          }
+        },
+        {
+          "ts": 1779960149.140269,
+          "points": {
+            "supplyAirStatus": 1.0,
+            "supplyAirPressure": 100.0,
+            "supplyAirPressureSp": 50.0
+          }
+        },
+        {
+          "ts": 1779960179.140269,
+          "points": {
+            "supplyAirStatus": 1.0,
+            "supplyAirPressure": 100.0,
+            "supplyAirPressureSp": 50.0
+          }
+        },
+        {
+          "ts": 1779960209.140269,
+          "points": {
+            "supplyAirStatus": 1.0,
+            "supplyAirPressure": 100.0,
+            "supplyAirPressureSp": 50.0
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,74 @@
+{
+  "requestId": "dev_rule_51748f0b",
+  "ruleName": "低速故障",
+  "deviceType": "送排风",
+  "component": "排风机",
+  "scenario": "fault",
+  "devices": [
+    {
+      "deviceId": "送排风_排风机",
+      "data": [
+        {
+          "ts": 1779960149.103241,
+          "points": {
+            "LowSpeedFaultAlarm": 1.0
+          }
+        },
+        {
+          "ts": 1779960179.103241,
+          "points": {
+            "LowSpeedFaultAlarm": 1.0
+          }
+        },
+        {
+          "ts": 1779960209.103241,
+          "points": {
+            "LowSpeedFaultAlarm": 1.0
+          }
+        },
+        {
+          "ts": 1779960239.103241,
+          "points": {
+            "LowSpeedFaultAlarm": 1.0
+          }
+        },
+        {
+          "ts": 1779960269.103241,
+          "points": {
+            "LowSpeedFaultAlarm": 1.0
+          }
+        },
+        {
+          "ts": 1779960299.103241,
+          "points": {
+            "LowSpeedFaultAlarm": 1.0
+          }
+        },
+        {
+          "ts": 1779960329.103241,
+          "points": {
+            "LowSpeedFaultAlarm": 1.0
+          }
+        },
+        {
+          "ts": 1779960359.103241,
+          "points": {
+            "LowSpeedFaultAlarm": 1.0
+          }
+        },
+        {
+          "ts": 1779960389.103241,
+          "points": {
+            "LowSpeedFaultAlarm": 1.0
+          }
+        },
+        {
+          "ts": 1779960419.103241,
+          "points": {
+            "LowSpeedFaultAlarm": 1.0
+          }
+        }
+      ]
+    }
+  ]
+}

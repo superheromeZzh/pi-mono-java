@@ -1,0 +1,974 @@
+{
+  "requestId": "vav_temp_sensor_temp_99779260",
+  "ruleName": "检测温度恒定",
+  "deviceType": "VAV",
+  "component": "温控器/温度传感器",
+  "scenario": "fault",
+  "devices": [
+    {
+      "deviceId": "VAV_温控器/温度传感器",
+      "data": [
+        {
+          "ts": 1779956609.133991,
+          "points": {
+            "zoneTemperature": 22.0,
+            "ahuSupplyFanStatus": 1.0,
+            "boxOccupancyModeSetpoint": 1.0
+          }
+        },
+        {
+          "ts": 1779956639.386092,
+          "points": {
+            "zoneTemperature": 22.0,
+            "ahuSupplyFanStatus": 1.0,
+            "boxOccupancyModeSetpoint": 1.0
+          }
+        },
+        {
+          "ts": 1779956669.6381927,
+          "points": {
+            "zoneTemperature": 22.0,
+            "ahuSupplyFanStatus": 1.0,
+            "boxOccupancyModeSetpoint": 1.0
+          }
+        },
+        {
+          "ts": 1779956699.8902936,
+          "points": {
+            "zoneTemperature": 22.0,
+            "ahuSupplyFanStatus": 1.0,
+            "boxOccupancyModeSetpoint": 1.0
+          }
+        },
+        {
+          "ts": 1779956730.1423943,
+          "points": {
+            "zoneTemperature": 22.0,
+            "ahuSupplyFanStatus": 1.0,
+            "boxOccupancyModeSetpoint": 1.0
+          }
+        },
+        {
+          "ts": 1779956760.3944952,
+          "points": {
+            "zoneTemperature": 22.0,
+            "ahuSupplyFanStatus": 1.0,
+            "boxOccupancyModeSetpoint": 1.0
+          }
+        },
+        {
+          "ts": 1779956790.646596,
+          "points": {
+            "zoneTemperature": 22.0,
+            "ahuSupplyFanStatus": 1.0,
+            "boxOccupancyModeSetpoint": 1.0
+          }
+        },
+        {
+          "ts": 1779956820.898697,
+          "points": {
+            "zoneTemperature": 22.0,
+            "ahuSupplyFanStatus": 1.0,
+            "boxOccupancyModeSetpoint": 1.0
+          }
+        },
+        {
+          "ts": 1779956851.1507978,
+          "points": {
+            "zoneTemperature": 22.0,
+            "ahuSupplyFanStatus": 1.0,
+            "boxOccupancyModeSetpoint": 1.0
+          }
+        },
+        {
+          "ts": 1779956881.4028986,
+          "points": {
+            "zoneTemperature": 22.0,
+            "ahuSupplyFanStatus": 1.0,
+            "boxOccupancyModeSetpoint": 1.0
+          }
+        },
+        {
+          "ts": 1779956911.6549995,
+          "points": {
+            "zoneTemperature": 22.0,
+            "ahuSupplyFanStatus": 1.0,
+            "boxOccupancyModeSetpoint": 1.0
+          }
+        },
+        {
+          "ts": 1779956941.9071002,
+          "points": {
+            "zoneTemperature": 22.0,
+            "ahuSupplyFanStatus": 1.0,
+            "boxOccupancyModeSetpoint": 1.0
+          }
+        },
+        {
+          "ts": 1779956972.1592011,
+          "points": {
+            "zoneTemperature": 22.0,
+            "ahuSupplyFanStatus": 1.0,
+            "boxOccupancyModeSetpoint": 1.0
+          }
+        },
+        {
+          "ts": 1779957002.4113019,
+          "points": {
+            "zoneTemperature": 22.0,
+            "ahuSupplyFanStatus": 1.0,
+            "boxOccupancyModeSetpoint": 1.0
+          }
+        },
+        {
+          "ts": 1779957032.6634028,
+          "points": {
+            "zoneTemperature": 22.0,
+            "ahuSupplyFanStatus": 1.0,
+            "boxOccupancyModeSetpoint": 1.0
+          }
+        },
+        {
+          "ts": 1779957062.9155035,
+          "points": {
+            "zoneTemperature": 22.0,
+            "ahuSupplyFanStatus": 1.0,
+            "boxOccupancyModeSetpoint": 1.0
+          }
+        },
+        {
+          "ts": 1779957093.1676044,
+          "points": {
+            "zoneTemperature": 22.0,
+            "ahuSupplyFanStatus": 1.0,
+            "boxOccupancyModeSetpoint": 1.0
+          }
+        },
+        {
+          "ts": 1779957123.4197054,
+          "points": {
+            "zoneTemperature": 22.0,
+            "ahuSupplyFanStatus": 1.0,
+            "boxOccupancyModeSetpoint": 1.0
+          }
+        },
+        {
+          "ts": 1779957153.671806,
+          "points": {
+            "zoneTemperature": 22.0,
+            "ahuSupplyFanStatus": 1.0,
+            "boxOccupancyModeSetpoint": 1.0
+          }
+        },
+        {
+          "ts": 1779957183.923907,
+          "points": {
+            "zoneTemperature": 22.0,
+            "ahuSupplyFanStatus": 1.0,
+            "boxOccupancyModeSetpoint": 1.0
+          }
+        },
+        {
+          "ts": 1779957214.1760077,
+          "points": {
+            "zoneTemperature": 22.0,
+            "ahuSupplyFanStatus": 1.0,
+            "boxOccupancyModeSetpoint": 1.0
+          }
+        },
+        {
+          "ts": 1779957244.4281087,
+          "points": {
+            "zoneTemperature": 22.0,
+            "ahuSupplyFanStatus": 1.0,
+            "boxOccupancyModeSetpoint": 1.0
+          }
+        },
+        {
+          "ts": 1779957274.6802094,
+          "points": {
+            "zoneTemperature": 22.0,
+            "ahuSupplyFanStatus": 1.0,
+            "boxOccupancyModeSetpoint": 1.0
+          }
+        },
+        {
+          "ts": 1779957304.9323103,
+          "points": {
+            "zoneTemperature": 22.0,
+            "ahuSupplyFanStatus": 1.0,
+            "boxOccupancyModeSetpoint": 1.0
+          }
+        },
+        {
+          "ts": 1779957335.1844113,
+          "points": {
+            "zoneTemperature": 22.0,
+            "ahuSupplyFanStatus": 1.0,
+            "boxOccupancyModeSetpoint": 1.0
+          }
+        },
+        {
+          "ts": 1779957365.436512,
+          "points": {
+            "zoneTemperature": 22.0,
+            "ahuSupplyFanStatus": 1.0,
+            "boxOccupancyModeSetpoint": 1.0
+          }
+        },
+        {
+          "ts": 1779957395.688613,
+          "points": {
+            "zoneTemperature": 22.0,
+            "ahuSupplyFanStatus": 1.0,
+            "boxOccupancyModeSetpoint": 1.0
+          }
+        },
+        {
+          "ts": 1779957425.9407136,
+          "points": {
+            "zoneTemperature": 22.0,
+            "ahuSupplyFanStatus": 1.0,
+            "boxOccupancyModeSetpoint": 1.0
+          }
+        },
+        {
+          "ts": 1779957456.1928146,
+          "points": {
+            "zoneTemperature": 22.0,
+            "ahuSupplyFanStatus": 1.0,
+            "boxOccupancyModeSetpoint": 1.0
+          }
+        },
+        {
+          "ts": 1779957486.4449153,
+          "points": {
+            "zoneTemperature": 22.0,
+            "ahuSupplyFanStatus": 1.0,
+            "boxOccupancyModeSetpoint": 1.0
+          }
+        },
+        {
+          "ts": 1779957516.6970162,
+          "points": {
+            "zoneTemperature": 22.0,
+            "ahuSupplyFanStatus": 1.0,
+            "boxOccupancyModeSetpoint": 1.0
+          }
+        },
+        {
+          "ts": 1779957546.949117,
+          "points": {
+            "zoneTemperature": 22.0,
+            "ahuSupplyFanStatus": 1.0,
+            "boxOccupancyModeSetpoint": 1.0
+          }
+        },
+        {
+          "ts": 1779957577.201218,
+          "points": {
+            "zoneTemperature": 22.0,
+            "ahuSupplyFanStatus": 1.0,
+            "boxOccupancyModeSetpoint": 1.0
+          }
+        },
+        {
+          "ts": 1779957607.4533188,
+          "points": {
+            "zoneTemperature": 22.0,
+            "ahuSupplyFanStatus": 1.0,
+            "boxOccupancyModeSetpoint": 1.0
+          }
+        },
+        {
+          "ts": 1779957637.7054195,
+          "points": {
+            "zoneTemperature": 22.0,
+            "ahuSupplyFanStatus": 1.0,
+            "boxOccupancyModeSetpoint": 1.0
+          }
+        },
+        {
+          "ts": 1779957667.9575205,
+          "points": {
+            "zoneTemperature": 22.0,
+            "ahuSupplyFanStatus": 1.0,
+            "boxOccupancyModeSetpoint": 1.0
+          }
+        },
+        {
+          "ts": 1779957698.2096212,
+          "points": {
+            "zoneTemperature": 22.0,
+            "ahuSupplyFanStatus": 1.0,
+            "boxOccupancyModeSetpoint": 1.0
+          }
+        },
+        {
+          "ts": 1779957728.4617221,
+          "points": {
+            "zoneTemperature": 22.0,
+            "ahuSupplyFanStatus": 1.0,
+            "boxOccupancyModeSetpoint": 1.0
+          }
+        },
+        {
+          "ts": 1779957758.7138228,
+          "points": {
+            "zoneTemperature": 22.0,
+            "ahuSupplyFanStatus": 1.0,
+            "boxOccupancyModeSetpoint": 1.0
+          }
+        },
+        {
+          "ts": 1779957788.9659238,
+          "points": {
+            "zoneTemperature": 22.0,
+            "ahuSupplyFanStatus": 1.0,
+            "boxOccupancyModeSetpoint": 1.0
+          }
+        },
+        {
+          "ts": 1779957819.2180247,
+          "points": {
+            "zoneTemperature": 22.0,
+            "ahuSupplyFanStatus": 1.0,
+            "boxOccupancyModeSetpoint": 1.0
+          }
+        },
+        {
+          "ts": 1779957849.4701254,
+          "points": {
+            "zoneTemperature": 22.0,
+            "ahuSupplyFanStatus": 1.0,
+            "boxOccupancyModeSetpoint": 1.0
+          }
+        },
+        {
+          "ts": 1779957879.7222264,
+          "points": {
+            "zoneTemperature": 22.0,
+            "ahuSupplyFanStatus": 1.0,
+            "boxOccupancyModeSetpoint": 1.0
+          }
+        },
+        {
+          "ts": 1779957909.974327,
+          "points": {
+            "zoneTemperature": 22.0,
+            "ahuSupplyFanStatus": 1.0,
+            "boxOccupancyModeSetpoint": 1.0
+          }
+        },
+        {
+          "ts": 1779957940.226428,
+          "points": {
+            "zoneTemperature": 22.0,
+            "ahuSupplyFanStatus": 1.0,
+            "boxOccupancyModeSetpoint": 1.0
+          }
+        },
+        {
+          "ts": 1779957970.4785287,
+          "points": {
+            "zoneTemperature": 22.0,
+            "ahuSupplyFanStatus": 1.0,
+            "boxOccupancyModeSetpoint": 1.0
+          }
+        },
+        {
+          "ts": 1779958000.7306297,
+          "points": {
+            "zoneTemperature": 22.0,
+            "ahuSupplyFanStatus": 1.0,
+            "boxOccupancyModeSetpoint": 1.0
+          }
+        },
+        {
+          "ts": 1779958030.9827304,
+          "points": {
+            "zoneTemperature": 22.0,
+            "ahuSupplyFanStatus": 1.0,
+            "boxOccupancyModeSetpoint": 1.0
+          }
+        },
+        {
+          "ts": 1779958061.2348313,
+          "points": {
+            "zoneTemperature": 22.0,
+            "ahuSupplyFanStatus": 1.0,
+            "boxOccupancyModeSetpoint": 1.0
+          }
+        },
+        {
+          "ts": 1779958091.4869323,
+          "points": {
+            "zoneTemperature": 22.0,
+            "ahuSupplyFanStatus": 1.0,
+            "boxOccupancyModeSetpoint": 1.0
+          }
+        },
+        {
+          "ts": 1779958121.739033,
+          "points": {
+            "zoneTemperature": 22.0,
+            "ahuSupplyFanStatus": 1.0,
+            "boxOccupancyModeSetpoint": 1.0
+          }
+        },
+        {
+          "ts": 1779958151.991134,
+          "points": {
+            "zoneTemperature": 22.0,
+            "ahuSupplyFanStatus": 1.0,
+            "boxOccupancyModeSetpoint": 1.0
+          }
+        },
+        {
+          "ts": 1779958182.2432346,
+          "points": {
+            "zoneTemperature": 22.0,
+            "ahuSupplyFanStatus": 1.0,
+            "boxOccupancyModeSetpoint": 1.0
+          }
+        },
+        {
+          "ts": 1779958212.4953356,
+          "points": {
+            "zoneTemperature": 22.0,
+            "ahuSupplyFanStatus": 1.0,
+            "boxOccupancyModeSetpoint": 1.0
+          }
+        },
+        {
+          "ts": 1779958242.7474363,
+          "points": {
+            "zoneTemperature": 22.0,
+            "ahuSupplyFanStatus": 1.0,
+            "boxOccupancyModeSetpoint": 1.0
+          }
+        },
+        {
+          "ts": 1779958272.9995372,
+          "points": {
+            "zoneTemperature": 22.0,
+            "ahuSupplyFanStatus": 1.0,
+            "boxOccupancyModeSetpoint": 1.0
+          }
+        },
+        {
+          "ts": 1779958303.2516382,
+          "points": {
+            "zoneTemperature": 22.0,
+            "ahuSupplyFanStatus": 1.0,
+            "boxOccupancyModeSetpoint": 1.0
+          }
+        },
+        {
+          "ts": 1779958333.5037389,
+          "points": {
+            "zoneTemperature": 22.0,
+            "ahuSupplyFanStatus": 1.0,
+            "boxOccupancyModeSetpoint": 1.0
+          }
+        },
+        {
+          "ts": 1779958363.7558398,
+          "points": {
+            "zoneTemperature": 22.0,
+            "ahuSupplyFanStatus": 1.0,
+            "boxOccupancyModeSetpoint": 1.0
+          }
+        },
+        {
+          "ts": 1779958394.0079405,
+          "points": {
+            "zoneTemperature": 22.0,
+            "ahuSupplyFanStatus": 1.0,
+            "boxOccupancyModeSetpoint": 1.0
+          }
+        },
+        {
+          "ts": 1779958424.2600415,
+          "points": {
+            "zoneTemperature": 22.0,
+            "ahuSupplyFanStatus": 1.0,
+            "boxOccupancyModeSetpoint": 1.0
+          }
+        },
+        {
+          "ts": 1779958454.5121422,
+          "points": {
+            "zoneTemperature": 22.0,
+            "ahuSupplyFanStatus": 1.0,
+            "boxOccupancyModeSetpoint": 1.0
+          }
+        },
+        {
+          "ts": 1779958484.7642431,
+          "points": {
+            "zoneTemperature": 22.0,
+            "ahuSupplyFanStatus": 1.0,
+            "boxOccupancyModeSetpoint": 1.0
+          }
+        },
+        {
+          "ts": 1779958515.0163438,
+          "points": {
+            "zoneTemperature": 22.0,
+            "ahuSupplyFanStatus": 1.0,
+            "boxOccupancyModeSetpoint": 1.0
+          }
+        },
+        {
+          "ts": 1779958545.2684448,
+          "points": {
+            "zoneTemperature": 22.0,
+            "ahuSupplyFanStatus": 1.0,
+            "boxOccupancyModeSetpoint": 1.0
+          }
+        },
+        {
+          "ts": 1779958575.5205457,
+          "points": {
+            "zoneTemperature": 22.0,
+            "ahuSupplyFanStatus": 1.0,
+            "boxOccupancyModeSetpoint": 1.0
+          }
+        },
+        {
+          "ts": 1779958605.7726464,
+          "points": {
+            "zoneTemperature": 22.0,
+            "ahuSupplyFanStatus": 1.0,
+            "boxOccupancyModeSetpoint": 1.0
+          }
+        },
+        {
+          "ts": 1779958636.0247474,
+          "points": {
+            "zoneTemperature": 22.0,
+            "ahuSupplyFanStatus": 1.0,
+            "boxOccupancyModeSetpoint": 1.0
+          }
+        },
+        {
+          "ts": 1779958666.276848,
+          "points": {
+            "zoneTemperature": 22.0,
+            "ahuSupplyFanStatus": 1.0,
+            "boxOccupancyModeSetpoint": 1.0
+          }
+        },
+        {
+          "ts": 1779958696.528949,
+          "points": {
+            "zoneTemperature": 22.0,
+            "ahuSupplyFanStatus": 1.0,
+            "boxOccupancyModeSetpoint": 1.0
+          }
+        },
+        {
+          "ts": 1779958726.7810497,
+          "points": {
+            "zoneTemperature": 22.0,
+            "ahuSupplyFanStatus": 1.0,
+            "boxOccupancyModeSetpoint": 1.0
+          }
+        },
+        {
+          "ts": 1779958757.0331507,
+          "points": {
+            "zoneTemperature": 22.0,
+            "ahuSupplyFanStatus": 1.0,
+            "boxOccupancyModeSetpoint": 1.0
+          }
+        },
+        {
+          "ts": 1779958787.2852516,
+          "points": {
+            "zoneTemperature": 22.0,
+            "ahuSupplyFanStatus": 1.0,
+            "boxOccupancyModeSetpoint": 1.0
+          }
+        },
+        {
+          "ts": 1779958817.5373523,
+          "points": {
+            "zoneTemperature": 22.0,
+            "ahuSupplyFanStatus": 1.0,
+            "boxOccupancyModeSetpoint": 1.0
+          }
+        },
+        {
+          "ts": 1779958847.7894533,
+          "points": {
+            "zoneTemperature": 22.0,
+            "ahuSupplyFanStatus": 1.0,
+            "boxOccupancyModeSetpoint": 1.0
+          }
+        },
+        {
+          "ts": 1779958878.041554,
+          "points": {
+            "zoneTemperature": 22.0,
+            "ahuSupplyFanStatus": 1.0,
+            "boxOccupancyModeSetpoint": 1.0
+          }
+        },
+        {
+          "ts": 1779958908.293655,
+          "points": {
+            "zoneTemperature": 22.0,
+            "ahuSupplyFanStatus": 1.0,
+            "boxOccupancyModeSetpoint": 1.0
+          }
+        },
+        {
+          "ts": 1779958938.5457556,
+          "points": {
+            "zoneTemperature": 22.0,
+            "ahuSupplyFanStatus": 1.0,
+            "boxOccupancyModeSetpoint": 1.0
+          }
+        },
+        {
+          "ts": 1779958968.7978566,
+          "points": {
+            "zoneTemperature": 22.0,
+            "ahuSupplyFanStatus": 1.0,
+            "boxOccupancyModeSetpoint": 1.0
+          }
+        },
+        {
+          "ts": 1779958999.0499573,
+          "points": {
+            "zoneTemperature": 22.0,
+            "ahuSupplyFanStatus": 1.0,
+            "boxOccupancyModeSetpoint": 1.0
+          }
+        },
+        {
+          "ts": 1779959029.3020582,
+          "points": {
+            "zoneTemperature": 22.0,
+            "ahuSupplyFanStatus": 1.0,
+            "boxOccupancyModeSetpoint": 1.0
+          }
+        },
+        {
+          "ts": 1779959059.5541592,
+          "points": {
+            "zoneTemperature": 22.0,
+            "ahuSupplyFanStatus": 1.0,
+            "boxOccupancyModeSetpoint": 1.0
+          }
+        },
+        {
+          "ts": 1779959089.8062599,
+          "points": {
+            "zoneTemperature": 22.0,
+            "ahuSupplyFanStatus": 1.0,
+            "boxOccupancyModeSetpoint": 1.0
+          }
+        },
+        {
+          "ts": 1779959120.0583608,
+          "points": {
+            "zoneTemperature": 22.0,
+            "ahuSupplyFanStatus": 1.0,
+            "boxOccupancyModeSetpoint": 1.0
+          }
+        },
+        {
+          "ts": 1779959150.3104615,
+          "points": {
+            "zoneTemperature": 22.0,
+            "ahuSupplyFanStatus": 1.0,
+            "boxOccupancyModeSetpoint": 1.0
+          }
+        },
+        {
+          "ts": 1779959180.5625625,
+          "points": {
+            "zoneTemperature": 22.0,
+            "ahuSupplyFanStatus": 1.0,
+            "boxOccupancyModeSetpoint": 1.0
+          }
+        },
+        {
+          "ts": 1779959210.8146632,
+          "points": {
+            "zoneTemperature": 22.0,
+            "ahuSupplyFanStatus": 1.0,
+            "boxOccupancyModeSetpoint": 1.0
+          }
+        },
+        {
+          "ts": 1779959241.066764,
+          "points": {
+            "zoneTemperature": 22.0,
+            "ahuSupplyFanStatus": 1.0,
+            "boxOccupancyModeSetpoint": 1.0
+          }
+        },
+        {
+          "ts": 1779959271.318865,
+          "points": {
+            "zoneTemperature": 22.0,
+            "ahuSupplyFanStatus": 1.0,
+            "boxOccupancyModeSetpoint": 1.0
+          }
+        },
+        {
+          "ts": 1779959301.5709658,
+          "points": {
+            "zoneTemperature": 22.0,
+            "ahuSupplyFanStatus": 1.0,
+            "boxOccupancyModeSetpoint": 1.0
+          }
+        },
+        {
+          "ts": 1779959331.8230667,
+          "points": {
+            "zoneTemperature": 22.0,
+            "ahuSupplyFanStatus": 1.0,
+            "boxOccupancyModeSetpoint": 1.0
+          }
+        },
+        {
+          "ts": 1779959362.0751674,
+          "points": {
+            "zoneTemperature": 22.0,
+            "ahuSupplyFanStatus": 1.0,
+            "boxOccupancyModeSetpoint": 1.0
+          }
+        },
+        {
+          "ts": 1779959392.3272684,
+          "points": {
+            "zoneTemperature": 22.0,
+            "ahuSupplyFanStatus": 1.0,
+            "boxOccupancyModeSetpoint": 1.0
+          }
+        },
+        {
+          "ts": 1779959422.579369,
+          "points": {
+            "zoneTemperature": 22.0,
+            "ahuSupplyFanStatus": 1.0,
+            "boxOccupancyModeSetpoint": 1.0
+          }
+        },
+        {
+          "ts": 1779959452.83147,
+          "points": {
+            "zoneTemperature": 22.0,
+            "ahuSupplyFanStatus": 1.0,
+            "boxOccupancyModeSetpoint": 1.0
+          }
+        },
+        {
+          "ts": 1779959483.0835707,
+          "points": {
+            "zoneTemperature": 22.0,
+            "ahuSupplyFanStatus": 1.0,
+            "boxOccupancyModeSetpoint": 1.0
+          }
+        },
+        {
+          "ts": 1779959513.3356717,
+          "points": {
+            "zoneTemperature": 22.0,
+            "ahuSupplyFanStatus": 1.0,
+            "boxOccupancyModeSetpoint": 1.0
+          }
+        },
+        {
+          "ts": 1779959543.5877726,
+          "points": {
+            "zoneTemperature": 22.0,
+            "ahuSupplyFanStatus": 1.0,
+            "boxOccupancyModeSetpoint": 1.0
+          }
+        },
+        {
+          "ts": 1779959573.8398733,
+          "points": {
+            "zoneTemperature": 22.0,
+            "ahuSupplyFanStatus": 1.0,
+            "boxOccupancyModeSetpoint": 1.0
+          }
+        },
+        {
+          "ts": 1779959604.0919743,
+          "points": {
+            "zoneTemperature": 22.0,
+            "ahuSupplyFanStatus": 1.0,
+            "boxOccupancyModeSetpoint": 1.0
+          }
+        },
+        {
+          "ts": 1779959634.344075,
+          "points": {
+            "zoneTemperature": 22.0,
+            "ahuSupplyFanStatus": 1.0,
+            "boxOccupancyModeSetpoint": 1.0
+          }
+        },
+        {
+          "ts": 1779959664.596176,
+          "points": {
+            "zoneTemperature": 22.0,
+            "ahuSupplyFanStatus": 1.0,
+            "boxOccupancyModeSetpoint": 1.0
+          }
+        },
+        {
+          "ts": 1779959694.8482766,
+          "points": {
+            "zoneTemperature": 22.0,
+            "ahuSupplyFanStatus": 1.0,
+            "boxOccupancyModeSetpoint": 1.0
+          }
+        },
+        {
+          "ts": 1779959725.1003776,
+          "points": {
+            "zoneTemperature": 22.0,
+            "ahuSupplyFanStatus": 1.0,
+            "boxOccupancyModeSetpoint": 1.0
+          }
+        },
+        {
+          "ts": 1779959755.3524785,
+          "points": {
+            "zoneTemperature": 22.0,
+            "ahuSupplyFanStatus": 1.0,
+            "boxOccupancyModeSetpoint": 1.0
+          }
+        },
+        {
+          "ts": 1779959785.6045792,
+          "points": {
+            "zoneTemperature": 22.0,
+            "ahuSupplyFanStatus": 1.0,
+            "boxOccupancyModeSetpoint": 1.0
+          }
+        },
+        {
+          "ts": 1779959815.8566802,
+          "points": {
+            "zoneTemperature": 22.0,
+            "ahuSupplyFanStatus": 1.0,
+            "boxOccupancyModeSetpoint": 1.0
+          }
+        },
+        {
+          "ts": 1779959846.1087809,
+          "points": {
+            "zoneTemperature": 22.0,
+            "ahuSupplyFanStatus": 1.0,
+            "boxOccupancyModeSetpoint": 1.0
+          }
+        },
+        {
+          "ts": 1779959876.3608818,
+          "points": {
+            "zoneTemperature": 22.0,
+            "ahuSupplyFanStatus": 1.0,
+            "boxOccupancyModeSetpoint": 1.0
+          }
+        },
+        {
+          "ts": 1779959906.6129825,
+          "points": {
+            "zoneTemperature": 22.0,
+            "ahuSupplyFanStatus": 1.0,
+            "boxOccupancyModeSetpoint": 1.0
+          }
+        },
+        {
+          "ts": 1779959936.8650835,
+          "points": {
+            "zoneTemperature": 22.0,
+            "ahuSupplyFanStatus": 1.0,
+            "boxOccupancyModeSetpoint": 1.0
+          }
+        },
+        {
+          "ts": 1779959967.1171842,
+          "points": {
+            "zoneTemperature": 22.0,
+            "ahuSupplyFanStatus": 1.0,
+            "boxOccupancyModeSetpoint": 1.0
+          }
+        },
+        {
+          "ts": 1779959997.369285,
+          "points": {
+            "zoneTemperature": 22.0,
+            "ahuSupplyFanStatus": 1.0,
+            "boxOccupancyModeSetpoint": 1.0
+          }
+        },
+        {
+          "ts": 1779960027.621386,
+          "points": {
+            "zoneTemperature": 22.0,
+            "ahuSupplyFanStatus": 1.0,
+            "boxOccupancyModeSetpoint": 1.0
+          }
+        },
+        {
+          "ts": 1779960057.8734868,
+          "points": {
+            "zoneTemperature": 22.0,
+            "ahuSupplyFanStatus": 1.0,
+            "boxOccupancyModeSetpoint": 1.0
+          }
+        },
+        {
+          "ts": 1779960088.1255877,
+          "points": {
+            "zoneTemperature": 22.0,
+            "ahuSupplyFanStatus": 1.0,
+            "boxOccupancyModeSetpoint": 1.0
+          }
+        },
+        {
+          "ts": 1779960118.3776884,
+          "points": {
+            "zoneTemperature": 22.0,
+            "ahuSupplyFanStatus": 1.0,
+            "boxOccupancyModeSetpoint": 1.0
+          }
+        },
+        {
+          "ts": 1779960148.6297894,
+          "points": {
+            "zoneTemperature": 22.0,
+            "ahuSupplyFanStatus": 1.0,
+            "boxOccupancyModeSetpoint": 1.0
+          }
+        },
+        {
+          "ts": 1779960178.88189,
+          "points": {
+            "zoneTemperature": 22.0,
+            "ahuSupplyFanStatus": 1.0,
+            "boxOccupancyModeSetpoint": 1.0
+          }
+        },
+        {
+          "ts": 1779960209.133991,
+          "points": {
+            "zoneTemperature": 22.0,
+            "ahuSupplyFanStatus": 1.0,
+            "boxOccupancyModeSetpoint": 1.0
+          }
+        }
+      ]
+    }
+  ]
+}

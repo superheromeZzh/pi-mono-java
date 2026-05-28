@@ -1,0 +1,74 @@
+{
+  "requestId": "dev_rule_fd7241a5",
+  "ruleName": "送风机故障",
+  "deviceType": "送排风",
+  "component": "送风机",
+  "scenario": "fault",
+  "devices": [
+    {
+      "deviceId": "送排风_送风机",
+      "data": [
+        {
+          "ts": 1779960149.115831,
+          "points": {
+            "FaultAlarm": 1.0
+          }
+        },
+        {
+          "ts": 1779960179.115831,
+          "points": {
+            "FaultAlarm": 1.0
+          }
+        },
+        {
+          "ts": 1779960209.115831,
+          "points": {
+            "FaultAlarm": 1.0
+          }
+        },
+        {
+          "ts": 1779960239.115831,
+          "points": {
+            "FaultAlarm": 1.0
+          }
+        },
+        {
+          "ts": 1779960269.115831,
+          "points": {
+            "FaultAlarm": 1.0
+          }
+        },
+        {
+          "ts": 1779960299.115831,
+          "points": {
+            "FaultAlarm": 1.0
+          }
+        },
+        {
+          "ts": 1779960329.115831,
+          "points": {
+            "FaultAlarm": 1.0
+          }
+        },
+        {
+          "ts": 1779960359.115831,
+          "points": {
+            "FaultAlarm": 1.0
+          }
+        },
+        {
+          "ts": 1779960389.115831,
+          "points": {
+            "FaultAlarm": 1.0
+          }
+        },
+        {
+          "ts": 1779960419.115831,
+          "points": {
+            "FaultAlarm": 1.0
+          }
+        }
+      ]
+    }
+  ]
+}

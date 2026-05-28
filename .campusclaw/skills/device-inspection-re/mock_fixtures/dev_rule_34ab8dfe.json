@@ -1,0 +1,74 @@
+{
+  "requestId": "dev_rule_34ab8dfe",
+  "ruleName": "排风机压差失效报警",
+  "deviceType": "送排风",
+  "component": "排风机",
+  "scenario": "fault",
+  "devices": [
+    {
+      "deviceId": "送排风_排风机",
+      "data": [
+        {
+          "ts": 1779960149.094826,
+          "points": {
+            "FailureAlarm": 1.0
+          }
+        },
+        {
+          "ts": 1779960179.094826,
+          "points": {
+            "FailureAlarm": 1.0
+          }
+        },
+        {
+          "ts": 1779960209.094826,
+          "points": {
+            "FailureAlarm": 1.0
+          }
+        },
+        {
+          "ts": 1779960239.094826,
+          "points": {
+            "FailureAlarm": 1.0
+          }
+        },
+        {
+          "ts": 1779960269.094826,
+          "points": {
+            "FailureAlarm": 1.0
+          }
+        },
+        {
+          "ts": 1779960299.094826,
+          "points": {
+            "FailureAlarm": 1.0
+          }
+        },
+        {
+          "ts": 1779960329.094826,
+          "points": {
+            "FailureAlarm": 1.0
+          }
+        },
+        {
+          "ts": 1779960359.094826,
+          "points": {
+            "FailureAlarm": 1.0
+          }
+        },
+        {
+          "ts": 1779960389.094826,
+          "points": {
+            "FailureAlarm": 1.0
+          }
+        },
+        {
+          "ts": 1779960419.094826,
+          "points": {
+            "FailureAlarm": 1.0
+          }
+        }
+      ]
+    }
+  ]
+}

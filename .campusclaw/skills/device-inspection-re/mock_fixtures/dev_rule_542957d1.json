@@ -1,0 +1,74 @@
+{
+  "requestId": "dev_rule_542957d1",
+  "ruleName": "高速故障",
+  "deviceType": "送排风",
+  "component": "排风机",
+  "scenario": "fault",
+  "devices": [
+    {
+      "deviceId": "送排风_排风机",
+      "data": [
+        {
+          "ts": 1779960149.103818,
+          "points": {
+            "HighSpeedFaultAlarm": 1.0
+          }
+        },
+        {
+          "ts": 1779960179.103818,
+          "points": {
+            "HighSpeedFaultAlarm": 1.0
+          }
+        },
+        {
+          "ts": 1779960209.103818,
+          "points": {
+            "HighSpeedFaultAlarm": 1.0
+          }
+        },
+        {
+          "ts": 1779960239.103818,
+          "points": {
+            "HighSpeedFaultAlarm": 1.0
+          }
+        },
+        {
+          "ts": 1779960269.103818,
+          "points": {
+            "HighSpeedFaultAlarm": 1.0
+          }
+        },
+        {
+          "ts": 1779960299.103818,
+          "points": {
+            "HighSpeedFaultAlarm": 1.0
+          }
+        },
+        {
+          "ts": 1779960329.103818,
+          "points": {
+            "HighSpeedFaultAlarm": 1.0
+          }
+        },
+        {
+          "ts": 1779960359.103818,
+          "points": {
+            "HighSpeedFaultAlarm": 1.0
+          }
+        },
+        {
+          "ts": 1779960389.103818,
+          "points": {
+            "HighSpeedFaultAlarm": 1.0
+          }
+        },
+        {
+          "ts": 1779960419.103818,
+          "points": {
+            "HighSpeedFaultAlarm": 1.0
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "description": "Optional patch list. apply_excel_patch.py writes 故障规则_patched.xlsx by default; never overwrites 故障规则.xlsx.",
+  "patches": [
+    {
+      "row": 5,
+      "column": "触发条件",
+      "value": "abs([damper] - [damper_sp]) > 5"
+    },
+    {
+      "row": 8,
+      "column": "有效数据",
+      "value": "30min内，90%"
+    }
+  ]
+}
