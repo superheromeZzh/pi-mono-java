@@ -2,7 +2,7 @@
 name: excel-antlr-to-rules-json
 description: >-
   Excel 规则表 → rules_re.json（ANTLR + rule-engine）。失败时读 templates/agent-guide.md，
-  另存新 xlsx 后重跑。与 device-inspection-re 配套。
+  另存新 xlsx 后重跑。
 ---
 
 # Excel → ANTLR → `rules_re.json`
@@ -48,7 +48,6 @@ excel-antlr-to-rules-json/
     → _candidate_rules_re.json + compile_report.json
     → verify_rules_re.py
     → 用户确认 → rules/rules_re.json
-    → generate_mock_fixtures.py → device-inspection-re 巡检
 ```
 
 ## 命令
@@ -63,10 +62,14 @@ python .../scripts/excel_to_rules.py \
 
 python .../scripts/verify_rules_re.py \
   ${OPENCLAW_WORKSPACE}/rules/_candidate_rules_re.json
+```
 
+可选：按 `rules_re.json` 生成本地 mock 时序（**不入库**，输出目录自定）：
+
+```bash
 python .../scripts/generate_mock_fixtures.py \
   ${OPENCLAW_WORKSPACE}/rules/rules_re.json \
-  ${OPENCLAW_WORKSPACE}/skills/device-inspection-re/mock_fixtures
+  path/to/local/mock_fixtures
 ```
 
 可选补丁（不覆盖原表）：
@@ -74,10 +77,6 @@ python .../scripts/generate_mock_fixtures.py \
 ```bash
 python .../scripts/apply_excel_patch.py patches.json 故障规则.xlsx
 ```
-
-## 巡检结果展示
-
-见 **[device-inspection-re/SKILL.md](../device-inspection-re/SKILL.md)**（设备 ID、汇总表、完整 `rule_name` 明细表）。
 
 ## Excel 列（摘要）
 
