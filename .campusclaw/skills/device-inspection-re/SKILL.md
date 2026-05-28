@@ -14,7 +14,7 @@ description: >-
 | 项 | 路径 |
 |----|------|
 | 规则 | `${OPENCLAW_WORKSPACE}/rules/rules_re.json` |
-| Mock 夹具 | `${OPENCLAW_WORKSPACE}/skills/device-inspection-re/mock_fixtures/<rule_id>.json` |
+| Mock 夹具（本地生成，不入库） | `${OPENCLAW_WORKSPACE}/skills/device-inspection-re/mock_fixtures/<rule_id>.json` |
 | 脚本 | `.../scripts/judge_rules.py` |
 
 ```bash
