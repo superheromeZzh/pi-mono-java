@@ -7,16 +7,24 @@ package com.campusclaw.codingagent.cli;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
+import java.lang.reflect.Method;
 import java.nio.file.Path;
+
+import com.campusclaw.codingagent.config.CustomModelLoader;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.NoSuchBeanDefinitionException;
+import org.springframework.context.ApplicationContext;
 
 import picocli.CommandLine;
 
@@ -328,6 +336,52 @@ class CampusClawCommandTest {
         void oneShotWithoutPromptReturnsOne() {
             CampusClawCommand cmd = parse("--mode", "one-shot");
             assertEquals(1, cmd.call());
+        }
+    }
+
+    // -------------------------------------------------------------------
+    // resolveCustomModelLoader (3 reflective branches)
+    // -------------------------------------------------------------------
+
+    /**
+     * Covers the private {@code resolveCustomModelLoader} added in d986437c.
+     * Exercises all three branches: null context, bean found, BeansException.
+     */
+    @Nested
+    class ResolveCustomModelLoader {
+
+        private CustomModelLoader invoke(ApplicationContext ctx) throws Exception {
+            CampusClawCommand cmd = new CampusClawCommand(
+                    null, null, null, null, null, null, null, null, null, ctx, null, null, null, null);
+            Method m = CampusClawCommand.class.getDeclaredMethod("resolveCustomModelLoader");
+            m.setAccessible(true);
+            return (CustomModelLoader) m.invoke(cmd);
+        }
+
+        @Test
+        void nullApplicationContextReturnsNull() throws Exception {
+            CustomModelLoader result = invoke(null);
+            assertNull(result);
+        }
+
+        @Test
+        void beanFoundReturnsBean() throws Exception {
+            ApplicationContext ctx = mock(ApplicationContext.class);
+            CustomModelLoader loader = mock(CustomModelLoader.class);
+            when(ctx.getBean(CustomModelLoader.class)).thenReturn(loader);
+
+            CustomModelLoader result = invoke(ctx);
+            assertSame(loader, result);
+        }
+
+        @Test
+        void beansExceptionSwallowedAsNull() throws Exception {
+            ApplicationContext ctx = mock(ApplicationContext.class);
+            when(ctx.getBean(CustomModelLoader.class))
+                    .thenThrow(new NoSuchBeanDefinitionException(CustomModelLoader.class));
+
+            CustomModelLoader result = invoke(ctx);
+            assertNull(result);
         }
     }
 
