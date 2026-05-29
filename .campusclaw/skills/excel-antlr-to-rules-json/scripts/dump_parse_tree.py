@@ -2,7 +2,7 @@
 Debug: show ANTLR token stream, parse tree (syntax tree), and JSON AST.
 
 Usage:
-  python dump_parse_tree.py "abs([风阀开度]-[设定值])>5" "风阀开度,设定值"
+  python dump_parse_tree.py "abs([valvePosition]-[valvePositionCmd])>3" "valvePosition,valvePositionCmd"
 """
 from __future__ import annotations
 

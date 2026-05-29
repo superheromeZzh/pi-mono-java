@@ -2,22 +2,22 @@
   "version": 1,
   "rules": [
     {
-      "id": "dev_rule_a1029126",
-      "name": "排风机故障",
-      "原因分析": "排风机继电器过载",
-      "专家处理建议": "1.更换继电器…",
+      "id": "lab_rule_8f3c2a91",
+      "name": "冷却泵振动偏高",
+      "原因分析": "轴承磨损或叶轮不平衡",
+      "专家处理建议": "1.停机检查轴承；2.动平衡校验",
       "meta": {
-        "deviceType": "送排风",
-        "component": "排风机",
-        "points": ["FaultAlarm"]
+        "deviceType": "冷冻站",
+        "component": "一级冷却泵",
+        "points": ["PumpVibrationRms", "PumpRunStatus"]
       },
-      "window": { "type": "rolling", "durationSeconds": 60 },
+      "window": { "type": "rolling", "durationSeconds": 900 },
       "trigger": {
-        "rule_engine": "(FaultAlarm == 1)"
+        "rule_engine": "((PumpRunStatus == 1) && (PumpVibrationRms > 4.5))"
       },
       "effective": {
         "metric": "ratio_true",
-        "threshold": 1.0,
+        "threshold": 0.9,
         "minSamples": 1
       }
     }
