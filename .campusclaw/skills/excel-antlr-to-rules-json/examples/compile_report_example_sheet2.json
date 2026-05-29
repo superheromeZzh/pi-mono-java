@@ -1,6 +1,8 @@
 {
-  "excel": "C:\\Users\\Jason\\.openclaw\\workspace\\skills\\excel-antlr-to-rules-json\\故障规则.xlsx",
-  "sheet": "Sheet2",
+  "excel": "workspace/rules/lab_equipment_rules.xlsx",
+  "sheets": [
+    { "name": "校验页", "data_rows": 7, "ok": 0, "failed": 7 }
+  ],
   "summary": {
     "total": 7,
     "ok": 0,
@@ -9,67 +11,56 @@
   "rows": [
     {
       "row": 2,
+      "sheet": "校验页",
       "status": "failed",
       "errors": [
         {
           "field": "trigger_formula",
           "message": "line 1:0 extraneous input '||' expecting {'(', 'abs', 'min', 'max', 'avg', 'prev', FACT, NUMBER}",
-          "value": "|[风阀开度]-[风阀开度设定值]|>5"
+          "value": "|[调节阀开度]-[调节阀开度指令]|>3"
         },
         {
           "field": "trigger_formula",
           "message": "line 1:20 extraneous input '>' expecting {'(', 'abs', 'min', 'max', 'avg', 'prev', FACT, NUMBER}",
-          "value": "|[风阀开度]-[风阀开度设定值]|>5"
+          "value": "|[调节阀开度]-[调节阀开度指令]|>3"
         }
       ],
-      "rule_id": "vav_damper_damper_control_error_overlimit_9e29c43b"
+      "rule_id": "lab_valve_valve_tracking_error_overlimit_a1b2c3d4"
     },
     {
       "row": 3,
+      "sheet": "校验页",
       "status": "failed",
       "errors": [
         {
           "field": "trigger_formula",
           "message": "line 1:5 mismatched input '-1' expecting <EOF>",
-          "value": "Ni-Ni-1=0\nAND [AHU-送风机状态]=1 \nAND [BOX占用模式设定值]=1"
-        },
-        {
-          "field": "trigger_formula",
-          "message": "line 2:17 token recognition error at: ' '",
-          "value": "Ni-Ni-1=0\nAND [AHU-送风机状态]=1 \nAND [BOX占用模式设定值]=1"
+          "value": "Ni-Ni-1=0\nAND [冷机运行状态]=1\nAND [楼宇占用模式]=1"
         }
       ],
-      "rule_id": "vav_temp_sensor_temp_99779260"
+      "rule_id": "lab_chiller_chw_return_temp_stagnant_e5f6a7b8"
     },
     {
       "row": 4,
+      "sheet": "校验页",
       "status": "failed",
       "errors": [
         {
           "field": "trigger_formula",
           "message": "line 1:9 token recognition error at: '℃'",
-          "value": "[室内温度]<-5℃或[室内温度]>40℃"
+          "value": "[冷冻水回水温度]<-2℃或[冷冻水回水温度]>18℃"
         },
         {
           "field": "trigger_formula",
           "message": "line 1:10 token recognition error at: '或'",
-          "value": "[室内温度]<-5℃或[室内温度]>40℃"
-        },
-        {
-          "field": "trigger_formula",
-          "message": "line 1:11 mismatched input '[室内温度]' expecting <EOF>",
-          "value": "[室内温度]<-5℃或[室内温度]>40℃"
-        },
-        {
-          "field": "trigger_formula",
-          "message": "line 1:20 token recognition error at: '℃'",
-          "value": "[室内温度]<-5℃或[室内温度]>40℃"
+          "value": "[冷冻水回水温度]<-2℃或[冷冻水回水温度]>18℃"
         }
       ],
-      "rule_id": "vav_temp_sensor_temp_sensor_over_range_f2e6d088"
+      "rule_id": "lab_chiller_chw_return_temp_out_of_range_c9d0e1f2"
     },
     {
       "row": 5,
+      "sheet": "校验页",
       "status": "failed",
       "errors": [
         {
@@ -78,27 +69,29 @@
           "value": "Ni-Ni-1=0"
         }
       ],
-      "rule_id": "vav_co2_sensor_co2_8f11a2d8"
+      "rule_id": "lab_tower_condenser_water_temp_stagnant_3a4b5c6d"
     },
     {
       "row": 6,
+      "sheet": "校验页",
       "status": "failed",
       "errors": [
         {
           "field": "trigger_formula",
-          "message": "line 1:15 token recognition error at: '或'",
-          "value": "[室内二氧化碳含量]<0PPM或[室内二氧化碳含量]>2000PPM"
+          "message": "line 1:12 token recognition error at: '或'",
+          "value": "[冷却塔电导率]<50uS或[冷却塔电导率]>800uS"
         },
         {
           "field": "trigger_formula",
-          "message": "line 1:12 mismatched input 'PPM' expecting <EOF>",
-          "value": "[室内二氧化碳含量]<0PPM或[室内二氧化碳含量]>2000PPM"
+          "message": "line 1:10 mismatched input 'uS' expecting <EOF>",
+          "value": "[冷却塔电导率]<50uS或[冷却塔电导率]>800uS"
         }
       ],
-      "rule_id": "vav_co2_sensor_co2_sensor_a324b950"
+      "rule_id": "lab_tower_conductivity_out_of_range_7e8f9a0b"
     },
     {
       "row": 7,
+      "sheet": "校验页",
       "status": "failed",
       "errors": [
         {
@@ -106,19 +99,20 @@
           "message": "cannot parse effective data column: '无需设置诊断时间和延迟时间'"
         }
       ],
-      "rule_id": "dev_rule_73b14d12"
+      "rule_id": "lab_tower_cooling_tower_fan_fault_1c2d3e4f"
     },
     {
       "row": 8,
+      "sheet": "校验页",
       "status": "failed",
       "errors": [
         {
           "field": "trigger_formula",
           "message": "line 1:10 mismatched input 'and' expecting <EOF>",
-          "value": "[送风机状态]=1 and\n|[送风压力]-[送风压力设定反馈]|>20Pa"
+          "value": "[泵运行状态]=1 and\n|[泵排出压力]-[泵排出压力设定]|>15kPa"
         }
       ],
-      "rule_id": "ahu_sensor_0079ee02"
+      "rule_id": "lab_pump_discharge_pressure_deviation_5f6a7b8c"
     }
   ]
 }

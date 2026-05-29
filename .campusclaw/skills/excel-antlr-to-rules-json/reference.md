@@ -19,8 +19,8 @@ Agent 日常改表请只读 **`templates/agent-guide.md`**，不必读本文。
 ## 调试
 
 ```bash
-python scripts/dump_parse_tree.py "[FaultAlarm] == 1" "FaultAlarm"
-python scripts/compile_trigger.py "[FaultAlarm] == 1" "FaultAlarm"
+python scripts/dump_parse_tree.py "[PumpVibrationRms] > 4.5" "PumpVibrationRms,PumpRunStatus"
+python scripts/compile_trigger.py "([pumpRunStatus]==1)&&([PumpVibrationRms]>4.5)" "PumpVibrationRms,pumpRunStatus"
 python scripts/test_rule_engine_runtime.py
 ```
 
