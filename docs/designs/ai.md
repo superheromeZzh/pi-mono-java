@@ -27,7 +27,7 @@
 - `CampusClawAiService` 顶层门面：根据 `Model.api` 路由到合适的 `ApiProvider`，对外暴露 `stream` / `streamSimple` / `complete` / `completeSimple`；
 - 统一的消息代数：sealed `Message`（UserMessage / AssistantMessage / ToolResultMessage）、sealed `ContentBlock`（TextContent / ImageContent / ThinkingContent / ToolCall）、`Tool`、`Context`；
 - 统一的流式协议：sealed `AssistantMessageEvent` 12 种事件（start / text_* / thinking_* / toolcall_* / done / error），由 `AssistantMessageEventStream`（基于 Reactor `Sinks` 的 `EventStream<T,R>`）承载；
-- `ApiProviderRegistry` + `ModelRegistry`：可运行时注册 / 替换 / 按 sourceId 批量卸载 provider；模型目录支持 built-in、classpath 资源、`~/.campusclaw/agent/models.json` 三级覆盖；
+- `ApiProviderRegistry` + `ModelRegistry`：可运行时注册 / 替换 / 按 sourceId 批量卸载 provider；模型目录支持 built-in、classpath 资源、`~/file/.campusclaw/agent/models.json` 三级覆盖；
 - `MessageTransformer`：跨 provider 消息归一化（tool call id 截断到 ≤ 64、跨模型剥离 textSignature/thoughtSignature、孤儿 tool_use 补合成 tool_result）；
 - `ProviderConfigResolver` SPI + 默认 `EnvProviderConfigResolver`：API key 解析（环境变量 + ADC / AWS 凭据自动嗅探），可被上游 `@Primary` 覆盖；
 - `ContextOverflowDetector`：18 种 provider 的"上下文溢出"错误信息正则匹配 + z.ai 风格的"静默溢出"判定；
@@ -93,7 +93,7 @@ flowchart LR
 | 2 | 流式协议归一化 | 各 SDK 的 SSE 增量翻译成 sealed `AssistantMessageEvent`（12 子类）；通过 `AssistantMessageEventStream` 暴露 `Flux<event>` + `Mono<result>` | 高 | - |
 | 3 | 统一消息/内容/工具类型 | sealed `Message` / `ContentBlock` / `Tool` / `Context` + `Model` + `Usage` + `Cost` + `StopReason` | 高 | - |
 | 4 | 跨模型消息变换 | `MessageTransformer` 处理 tool call id 长度、thinking signature 复用 / 跨模型降级为文本、孤儿 tool_use 补 tool_result | 高 | - |
-| 5 | 模型目录管理 | `ModelRegistry` 17 个 provider 族的 built-in 模型 + classpath `/campusclaw-models.json` + 用户 `~/.campusclaw/agent/models.json` 三级合并 | 高 | - |
+| 5 | 模型目录管理 | `ModelRegistry` 17 个 provider 族的 built-in 模型 + classpath `/campusclaw-models.json` + 用户 `~/file/.campusclaw/agent/models.json` 三级合并 | 高 | - |
 | 6 | Provider 配置解析 | `ProviderConfigResolver` SPI；默认 `EnvProviderConfigResolver` + `EnvApiKeyResolver` 覆盖 20+ provider 的环境变量与 ADC / AWS 凭据嗅探 | 中 | - |
 | 7 | 上下文溢出探测 | `ContextOverflowDetector` 用 18 条 provider 专属正则匹配错误信息 + z.ai 静默溢出判定 | 中 | - |
 | 8 | Unicode 安全 | `SurrogateSanitizer` 清理未配对的 UTF-16 surrogate，避免 provider 端 JSON 解码错误 | 低 | - |
@@ -226,7 +226,7 @@ sequenceDiagram
 |---|---|---|
 | 编译内置 | `ModelRegistry.builtInModels()` 静态表（17 个 provider 族） | 是 |
 | classpath 资源 | `/campusclaw-models.json` | 否（缺省即跳过） |
-| 用户配置 | `~/.campusclaw/agent/models.json` | 否（缺省即跳过） |
+| 用户配置 | `~/file/.campusclaw/agent/models.json` | 否（缺省即跳过） |
 
 后两者覆盖前者，键为 `(provider, id)`。
 
@@ -373,7 +373,7 @@ classDiagram
 | GITHUB_COPILOT | `COPILOT_GITHUB_TOKEN` → `GH_TOKEN` → `GITHUB_TOKEN` |
 | GOOGLE_GEMINI_CLI / GOOGLE_ANTIGRAVITY | `GOOGLE_API_KEY` |
 
-外部文件（可选）：classpath `/campusclaw-models.json`、用户 `~/.campusclaw/agent/models.json`。
+外部文件（可选）：classpath `/campusclaw-models.json`、用户 `~/file/.campusclaw/agent/models.json`。
 
 ---
 
@@ -419,7 +419,7 @@ classDiagram
 |---|---|
 | `docs/module-architecture.md` | 包含 ai 模块说明段落（"LLM 多供应商抽象层"），需要随对外类型/Provider 列表变更同步 |
 | `CLAUDE.md`（仓库根） | 描述 ai 模块在整体依赖图与运行时中的角色 |
-| classpath `/campusclaw-models.json`（如有） + `~/.campusclaw/agent/models.json` | 用户级模型目录扩展约定 |
+| classpath `/campusclaw-models.json`（如有） + `~/file/.campusclaw/agent/models.json` | 用户级模型目录扩展约定 |
 | 上游 `docs/openapi/campusclaw-api.yaml` | HTTP server 模式 API（间接消费本模块的 AssistantMessage 形状），间接相关 |
 
 ---
@@ -442,7 +442,7 @@ classDiagram
 | 5.12 | 硬编码 | 否 | 未发现硬编码密钥/口令；所有 API key 通过环境变量或注入式 `Model.apiKey` 获取；built-in 模型 JSON 表内的 `baseUrl` 是公开端点（如 `https://api.anthropic.com`），不构成敏感信息 |
 | 5.13 | 安全资料（通信矩阵/用户清单/个人数据说明/公网IP说明/命令清单） | 是 | 本模块产生大量出站 HTTPS 流量（目标含 anthropic.com / openai.com / generativelanguage.googleapis.com / bedrock-runtime.\<region\>.amazonaws.com / api.mistral.ai 以及各 OpenAI 兼容 flavor 域名）——通信矩阵应在上游产品资料中标明 |
 | 5.14 | 不安全算法/协议 | 否 | 未使用 MD5 / SHA1 / DES；未自管 TLS（依赖 SDK 默认）；`new Random` / `Math.random` 未在主路径出现 |
-| 5.15 | 文件权限 | 不涉及 | 本模块不创建文件；仅读 `~/.campusclaw/agent/models.json` 与 classpath 资源 |
+| 5.15 | 文件权限 | 不涉及 | 本模块不创建文件；仅读 `~/file/.campusclaw/agent/models.json` 与 classpath 资源 |
 | 5.16 | 权限最小化 | 不涉及 | lib 性质，进程权限由上游决定；本模块不要求 OS 特权 |
 | 5.17 | Sudo 提权 | 不涉及 | 无 `sudo` 调用 |
 

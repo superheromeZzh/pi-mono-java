@@ -1,0 +1,61 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026-2026. All rights reserved.
+ */
+
+package com.huawei.hicampus.mate.matecampusclaw.ai.utils;
+
+import java.nio.file.Path;
+
+/**
+ * Resolves the CampusClaw user-level configuration root, shared across all modules.
+ *
+ * <p>Resolution order (highest precedence first):
+ * <ol>
+ *   <li>system property {@code -Dcampusclaw.home}</li>
+ *   <li>environment variable {@code CAMPUSCLAW_HOME}</li>
+ *   <li>default {@code ~/file/.campusclaw}</li>
+ * </ol>
+ *
+ * <p>This lives in the {@code ai} module — the lowest module in the dependency graph — so
+ * {@code agent-core}, {@code cron}, and {@code coding-agent-cli} can all reuse a single
+ * definition instead of independently hardcoding the path.
+ *
+ * @version [br_eCampusCore 25.1.0_Next, 2026/05/30]
+ * @since [br_eCampusCore 25.1.0_Next]
+ */
+public final class CampusClawHome {
+
+    private static final String HOME_PROPERTY = "campusclaw.home";
+    private static final String HOME_ENV = "CAMPUSCLAW_HOME";
+    private static final String DEFAULT_PARENT = "file";
+    private static final String CONFIG_DIR_NAME = ".campusclaw";
+    private static final String AGENT_SUBDIR = "agent";
+
+    private CampusClawHome() {}
+
+    /**
+     * Returns the user-level configuration root (default {@code ~/file/.campusclaw}).
+     *
+     * @return the resolved configuration root directory
+     */
+    public static Path baseDir() {
+        String prop = System.getProperty(HOME_PROPERTY);
+        if (prop != null && !prop.isBlank()) {
+            return Path.of(prop);
+        }
+        String env = System.getenv(HOME_ENV);
+        if (env != null && !env.isBlank()) {
+            return Path.of(env);
+        }
+        return Path.of(System.getProperty("user.home"), DEFAULT_PARENT, CONFIG_DIR_NAME);
+    }
+
+    /**
+     * Returns the user-level agent directory ({@code <baseDir>/agent}).
+     *
+     * @return the resolved agent configuration directory
+     */
+    public static Path agentDir() {
+        return baseDir().resolve(AGENT_SUBDIR);
+    }
+}

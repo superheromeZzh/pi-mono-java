@@ -132,14 +132,14 @@ public sealed interface CronEvent {
 ## Phase 3: 持久化
 
 ### 3.1 CronStore.java (`@Service`)
-- 位置：`~/.campusclaw/agent/cron/jobs.json`
+- 位置：`~/file/.campusclaw/agent/cron/jobs.json`
 - 格式：`{ "version": 1, "jobs": [...] }`
 - 线程安全：`ReentrantReadWriteLock`
 - 方法：`load()`, `save()`, `addJob()`, `removeJob()`, `updateJob()`
 - Jackson ObjectMapper 序列化，同项目已有的 SessionManager 模式
 
 ### 3.2 CronRunLog.java (`@Service`)
-- 位置：`~/.campusclaw/agent/cron/runs/{jobId}.jsonl`
+- 位置：`~/file/.campusclaw/agent/cron/runs/{jobId}.jsonl`
 - Append-only JSONL 格式
 - 方法：`appendRun(CronRunRecord)`, `getRecentRuns(jobId, limit)`
 

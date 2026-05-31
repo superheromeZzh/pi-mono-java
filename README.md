@@ -230,7 +230,7 @@ Agent 内置 8 个代码操作工具：
 
 | 操作系统 | 路径 |
 |----------|------|
-| macOS / Linux | `~/.campusclaw/settings.json` |
+| macOS / Linux | `~/file/.campusclaw/settings.json` |
 | Windows | `%USERPROFILE%\.campusclaw\settings.json` |
 
 可设置项：
@@ -425,7 +425,7 @@ campusclaw.bat --rebuild -m glm-5       # Windows
 
 **解决方案**（演进过的，按顺序）：
 
-1. **绕开 logback，写专用 trace 文件**——`AcpTransport` 在静态初始化时打开 `~/.campusclaw/acp-trace.jsonl`，每次 JVM 启动 TRUNCATE 重写。默认开启，关掉用 `CAMPUSCLAW_ACP_TRACE=0` 或 `-Dcampusclaw.acp.trace=0`。文件存在本身证明 JVM 跑了。引入于 `9a5b06fc`、`876d07e9`、`5a0bc9d8`。
+1. **绕开 logback，写专用 trace 文件**——`AcpTransport` 在静态初始化时打开 `~/file/.campusclaw/acp-trace.jsonl`，每次 JVM 启动 TRUNCATE 重写。默认开启，关掉用 `CAMPUSCLAW_ACP_TRACE=0` 或 `-Dcampusclaw.acp.trace=0`。文件存在本身证明 JVM 跑了。引入于 `9a5b06fc`、`876d07e9`、`5a0bc9d8`。
 2. **结构化 trace + 自由文本 marker 并存**——`>`/`<` 前缀记原始 JSON-RPC envelope，`#` 前缀的 `AcpTransport.note()` 静态方法供 `AcpClient` / `SpawnAgentTool` / `AgentLoop` / `ProcessAcpBackend` 在关键路径上插**人类可读的 checkpoint**。`grep '^#'` 直接拉出全链路里程碑。
 3. **在每个跨线程 / 跨进程 / 跨阶段边界都埋一个 note**——一次定位失败之后**补 trace 而不是补 log**。Windows 上拉个 jstack 是大工程；拉一份 jsonl 是 Ctrl+C。本仓常用埋点位置：`AcpClient.emit/emit-done`、`SpawnAgentTool.recv/done`、`AgentLoop.turn=N start/runToolPhase/invokeModel returned`、`ProcessAcpBackend.close/destroyTree`、`AcpTransport.close streams closed`。引入于 PR #72（`2d4ac8b1`）+ commit `343eaf81`、`85cd54fd`、`ed6018fc`。
 4. **每条 note 自带"我是谁"**——`SpawnAgentTool.done stopReason=END_TURN transcriptLen=776 thoughtLen=2989` 这种**带量级**的标记一次性告诉读者数据走到哪一步、还有多少。一行胜过五行通用日志。

@@ -22,7 +22,7 @@ import org.springframework.stereotype.Service;
  * Provider config resolver layered like opencode:
  *
  * <ol>
- *   <li>{@code ~/.campusclaw/agent/auth.json} (written by {@code /auth login})</li>
+ *   <li>{@code ~/file/.campusclaw/agent/auth.json} (written by {@code /auth login})</li>
  *   <li>{@code settings.json#provider.<id>.apiKey / .baseURL}</li>
  *   <li>Model-embedded {@code apiKey} (for hand-edited custom models)</li>
  *   <li>Provider-specific environment variables (legacy)</li>

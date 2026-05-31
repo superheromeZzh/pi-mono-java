@@ -21,6 +21,7 @@ import com.huawei.hicampus.mate.matecampusclaw.ai.types.Model;
 import com.huawei.hicampus.mate.matecampusclaw.ai.types.ModelCost;
 import com.huawei.hicampus.mate.matecampusclaw.ai.types.Provider;
 import com.huawei.hicampus.mate.matecampusclaw.ai.types.Usage;
+import com.huawei.hicampus.mate.matecampusclaw.ai.utils.CampusClawHome;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -233,7 +234,7 @@ public class ModelRegistry {
      * <ol>
      *   <li>Built-in models from {@link #builtInModels()} (compiled-in defaults)</li>
      *   <li>Optional classpath resource {@code /campusclaw-models.json} (override / add)</li>
-     *   <li>Optional user file {@code ~/.campusclaw/agent/models.json} (override / add)</li>
+     *   <li>Optional user file {@code ~/file/.campusclaw/agent/models.json} (override / add)</li>
      * </ol>
      */
     @PostConstruct
@@ -282,11 +283,7 @@ public class ModelRegistry {
     }
 
     private int loadFromUserFile() {
-        String home = System.getProperty("user.home");
-        if (home == null || home.isBlank()) {
-            return 0;
-        }
-        Path file = Path.of(home, ".campusclaw", "agent", "models.json");
+        Path file = CampusClawHome.agentDir().resolve("models.json");
         return loadFromJsonFile(file);
     }
 

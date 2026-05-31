@@ -36,7 +36,7 @@
 - **工具实现**：14 个 LLM `AgentTool` 落地实现（包含 LOCAL/SANDBOX 双路由）；
 - **HTTP server**：Reactor Netty 暴露 REST + SSE + WebSocket（参考 `docs/openapi/campusclaw-api.yaml`）；
 - **会话持久化**：JSONL 格式记录历史消息，跨进程恢复；
-- **Skill 扩展机制**：用户可在 `~/.campusclaw/packages` 安装 git/本地目录形式的 skill 包；
+- **Skill 扩展机制**：用户可在 `~/file/.campusclaw/packages` 安装 git/本地目录形式的 skill 包；
 - **Extension 扩展机制**：仓库内开发者可注册新 `AgentTool` / `SlashCommand` / `BeforeToolCallHandler` 等；
 - **Slash 命令**：26 个内置斜杠命令（`/model` `/login` `/cron` `/share` `/export` 等）；
 - **沙箱集成**：通过 `tool.execution.*` 配置在 Docker 容器中隔离运行高风险工具。
@@ -101,13 +101,13 @@ flowchart LR
 | 5 | HTTP server 模式 | `ServerMode` 用 Reactor Netty 暴露 `/api/chat` (SSE)、`/api/skills` (CRUD)、`/api/ws/chat` (WS) | 高 | - |
 | 6 | RPC 模式 | `RpcMode` 通过 stdin/stdout JSONL 与外部 controller 通信 | 中 | - |
 | 7 | ACP 模式 | `AcpMode` 把本进程封装为 ACP stdio agent，供其它进程嵌入 | 低 | - |
-| 8 | 会话 JSONL 持久化 | `SessionPersistence` / `SessionManager` 把消息历史写入 `~/.campusclaw/agent/sessions/--<cwd>--/<id>.jsonl` | 高 | - |
-| 9 | Skill 包安装与加载 | `SkillManager` 从 git/本地目录安装 skill 包到 `~/.campusclaw/packages`；`SkillLoader` + `SkillExpander` 把 skill 内容注入 system prompt | 中 | - |
+| 8 | 会话 JSONL 持久化 | `SessionPersistence` / `SessionManager` 把消息历史写入 `~/file/.campusclaw/agent/sessions/--<cwd>--/<id>.jsonl` | 高 | - |
+| 9 | Skill 包安装与加载 | `SkillManager` 从 git/本地目录安装 skill 包到 `~/file/.campusclaw/packages`；`SkillLoader` + `SkillExpander` 把 skill 内容注入 system prompt | 中 | - |
 | 10 | Extension 编译期扩展点 | `ExtensionRegistry` 收集仓库内 `@Component` 注册的 6 种 `ExtensionPoint`（TOOL / COMMAND / BEFORE_TOOL_CALL / AFTER_TOOL_CALL / CONTEXT_TRANSFORMER / EVENT_LISTENER） | 中 | - |
 | 11 | Slash 命令系统 | `SlashCommandRegistry` 注册 26 个内置 `SlashCommand`（`/model` `/login` `/cron` `/share` 等），交互模式下解析触发 | 中 | - |
 | 12 | 历史压缩 | `Compactor` 把过长对话用 LLM 二次摘要回写，由 `/compact` 触发 | 中 | - |
 | 13 | TUI 渲染组件 | `mode/tui/` 下 10 个组件类（消息气泡、Editor、Footer、覆盖层）订阅 `AgentEvent` 流 | 高 | - |
-| 14 | 设置与认证 | `SettingsManager` 读写 `~/.campusclaw/settings.json`；`AuthStore` 管理 provider 凭据 | 中 | - |
+| 14 | 设置与认证 | `SettingsManager` 读写 `~/file/.campusclaw/settings.json`；`AuthStore` 管理 provider 凭据 | 中 | - |
 | 15 | 系统调度集成 | `SystemSchedulerInstaller` 把 `--cron-tick` 注册为 launchd plist / crontab 条目 | 低 | - |
 
 ---
@@ -192,7 +192,7 @@ sequenceDiagram
 |---|---|---|
 | 主对话视图 | 顶部消息列表（User/Assistant 气泡），底部输入框，中间工具执行状态行 | `InteractiveMode` 全屏 |
 | Model 选择浮层 | Ctrl+P 弹出当前 provider 下可用模型 | `ModelSelectorOverlay` |
-| Session 选择浮层 | `/resume` 触发，列出 `~/.campusclaw/agent/sessions/--<cwd>--/` 下的历史 JSONL | `SessionSelectorOverlay` |
+| Session 选择浮层 | `/resume` 触发，列出 `~/file/.campusclaw/agent/sessions/--<cwd>--/` 下的历史 JSONL | `SessionSelectorOverlay` |
 | Tree 选择浮层 | `/fork` 触发，展示同一 cwd 下的会话树 | `TreeSelectorOverlay` |
 | 工具状态行 | 显示当前 tool 名称、参数摘要、流式增量结果 | `ToolStatusComponent` / `BashExecutionComponent` |
 | Footer | 显示当前模型、token 用量、键位提示 | `FooterComponent` |
@@ -288,7 +288,7 @@ sequenceDiagram
 |---|---|---|---|---|
 | `SlashCommand` | `name()` / `aliases()` / `execute` | `SlashCommandContext` | `void` | 内置或扩展命令契约 |
 | `ExtensionRegistry` | `register` | `ExtensionPoint, Extension` | `void` | 编译期扩展注册 |
-| `SkillLoader` | `load` | `Path` | `List<Skill>` | 从 `~/.campusclaw/packages` 加载 |
+| `SkillLoader` | `load` | `Path` | `List<Skill>` | 从 `~/file/.campusclaw/packages` 加载 |
 | `SkillManager` | `installFromGit` / `installFromLocal` / `remove` / `list` | varies | `InstalledSkillRecord` | Skill 包生命周期 |
 | `AgentSession` | `init` / `prompt` / `agent()` / `messages()` | text / `Message` | `CompletableFuture<Void>` / `Agent` / `List<Message>` | session 门面 |
 | `SessionManager` | `save` / `load` / `list` | session id / path | `List<Message>` | JSONL 持久化路由 |
@@ -304,15 +304,15 @@ sequenceDiagram
 
 | 路径 | 格式 | 写入类 | 说明 |
 |---|---|---|---|
-| `~/.campusclaw/agent/sessions/--<encoded-cwd>--/<id>.jsonl` | JSONL（一行一条 polymorphic `Message`） | `SessionPersistence` | 会话消息历史，按 cwd 隔离 |
-| `~/.campusclaw/agent/sessions/--<encoded-cwd>--/.tree.json` | JSON | `SessionTreePersistence` | 会话 fork 关系树 |
-| `~/.campusclaw/agent/cron/jobs.json` | JSON | `campusclaw-cron` 模块 | 定时任务（不在本模块） |
-| `~/.campusclaw/agent/loops/loops.json` | JSON | `LoopManager` | 轮询任务 |
-| `~/.campusclaw/agent/sub-agent-sessions/...` | JSON | `FileSubAgentSessionStore` | sub-agent 会话快照（可选） |
-| `~/.campusclaw/packages/.installed.json` | JSON manifest | `SkillManager` | 已安装 skill 索引 |
-| `~/.campusclaw/packages/<pkg>/...` | git clone / 解压目录 | `SkillManager` | skill 内容 |
-| `~/.campusclaw/settings.json` | JSON | `SettingsManager` | 用户设置 |
-| `~/.campusclaw/auth/<provider>.json` | JSON | `AuthStorage` | provider 凭据（apiKey / refreshToken 等） |
+| `~/file/.campusclaw/agent/sessions/--<encoded-cwd>--/<id>.jsonl` | JSONL（一行一条 polymorphic `Message`） | `SessionPersistence` | 会话消息历史，按 cwd 隔离 |
+| `~/file/.campusclaw/agent/sessions/--<encoded-cwd>--/.tree.json` | JSON | `SessionTreePersistence` | 会话 fork 关系树 |
+| `~/file/.campusclaw/agent/cron/jobs.json` | JSON | `campusclaw-cron` 模块 | 定时任务（不在本模块） |
+| `~/file/.campusclaw/agent/loops/loops.json` | JSON | `LoopManager` | 轮询任务 |
+| `~/file/.campusclaw/agent/sub-agent-sessions/...` | JSON | `FileSubAgentSessionStore` | sub-agent 会话快照（可选） |
+| `~/file/.campusclaw/packages/.installed.json` | JSON manifest | `SkillManager` | 已安装 skill 索引 |
+| `~/file/.campusclaw/packages/<pkg>/...` | git clone / 解压目录 | `SkillManager` | skill 内容 |
+| `~/file/.campusclaw/settings.json` | JSON | `SettingsManager` | 用户设置 |
+| `~/file/.campusclaw/auth/<provider>.json` | JSON | `AuthStorage` | provider 凭据（apiKey / refreshToken 等） |
 
 **2. 数据库持久化（间接转发到 `assistant` 模块）：**
 
@@ -410,7 +410,7 @@ sequenceDiagram
 - `Extension` / `ExtensionPoint` / `ExtensionRegistry`：编译期扩展点 SPI
 
 **`com.campusclaw.codingagent.config`**
-- `AppPaths`：`~/.campusclaw/...` 路径常量
+- `AppPaths`：`~/file/.campusclaw/...` 路径常量
 - `ToolExecutionProperties`：`@ConfigurationProperties("tool.execution")`
 - `ConfigValueResolver`：值解析
 - `CustomModelLoader`：从 settings 加载自定义模型
@@ -418,7 +418,7 @@ sequenceDiagram
 
 **`com.campusclaw.codingagent.settings`**
 - `Settings`：配置 record
-- `SettingsManager`：读写 `~/.campusclaw/settings.json`
+- `SettingsManager`：读写 `~/file/.campusclaw/settings.json`
 
 **`com.campusclaw.codingagent.auth`**
 - `AuthStore` / `AuthStorage`：provider 凭据存取
@@ -535,7 +535,7 @@ classDiagram
 
 - 主配置：`src/main/resources/application.yml`（canonical 副本，**禁止**在仓库根再放一份）
 - profile：`application-k8s.yml`（k8s 部署用，Spring profile 切换）
-- 用户配置：`~/.campusclaw/settings.json`（由 `SettingsManager` 读写，不打入 JAR）
+- 用户配置：`~/file/.campusclaw/settings.json`（由 `SettingsManager` 读写，不打入 JAR）
 
 **关键配置项：**
 
@@ -569,7 +569,7 @@ classDiagram
 | `CAMPUSCLAW_REMOTE_AGENT_TOKEN` | `subagent.backends.remote-http.auth-token` 替换源 |
 | 各 provider API key（如 `ANTHROPIC_API_KEY`、`OPENAI_API_KEY` 等） | 由 `campusclaw-ai` 模块的 provider 实现读取 |
 
-**用户目录布局（`~/.campusclaw/`）：**
+**用户目录布局（`~/file/.campusclaw/`）：**
 
 | 子路径 | 内容 |
 |---|---|
@@ -622,7 +622,7 @@ classDiagram
 - **JDK 版本**：21（虚拟线程、sealed、record、pattern matching switch）；
 - **接口稳定性**：所有 public 类标注 `@version [br_eCampusCore 25.1.0_Next, YYYY/MM/DD]` + `@since`；
 - **CLI 参数兼容**：`-p` 与 `--print` 同时存在并向 `--mode one-shot` 路由（参考 `call()` 中 `if (printMode) { mode = "one-shot"; }`）——向后兼容；
-- **目录迁移**：`MigrationManager` 把老 `~/.pi/` 等历史路径上的内容迁到 `~/.campusclaw/`，对老用户透明；
+- **目录迁移**：`MigrationManager` 把老 `~/.pi/` 等历史路径上的内容迁到 `~/file/.campusclaw/`，对老用户透明；
 - **OS 兼容**：
   - shell：`ShellResolver` 在 Windows 上回退到 `/bin/bash`（Git Bash） → `which bash` → `sh`；
   - 调度器：`SystemSchedulerInstaller` 区分 macOS launchd / Linux crontab；
@@ -671,7 +671,7 @@ classDiagram
 
 | 序号 | 检查项 | 是否涉及 | 说明 |
 |---|---|---|---|
-| 5.1 | 是否有认证机制 | 是 | （a）本模块对外 HTTP server 当前**未实现**鉴权（`/api/chat` / `/api/skills` 路由无 `@PreAuthorize` / SecurityFilter，由部署侧通过反向代理添加鉴权）；（b）对**外部** provider 走 API key / OAuth，凭据由 `AuthStore` 持久化到 `~/.campusclaw/auth/<provider>.json`，`LoginCommand` / `LogoutCommand` 管理；（c）对 sub-agent HTTP backend 支持 `bearer` / `header` / `none` 三种鉴权（继承 `agent-core` 的 `HttpAgentConfig`），token 由 `subagent.backends.<id>.auth-token` 注入，支持 `${ENV}` 占位 |
+| 5.1 | 是否有认证机制 | 是 | （a）本模块对外 HTTP server 当前**未实现**鉴权（`/api/chat` / `/api/skills` 路由无 `@PreAuthorize` / SecurityFilter，由部署侧通过反向代理添加鉴权）；（b）对**外部** provider 走 API key / OAuth，凭据由 `AuthStore` 持久化到 `~/file/.campusclaw/auth/<provider>.json`，`LoginCommand` / `LogoutCommand` 管理；（c）对 sub-agent HTTP backend 支持 `bearer` / `header` / `none` 三种鉴权（继承 `agent-core` 的 `HttpAgentConfig`），token 由 `subagent.backends.<id>.auth-token` 注入，支持 `${ENV}` 占位 |
 | 5.2 | 纵向/横向越权 | 否 | 本模块 server 模式为单租户本地服务，无多用户隔离；`SessionPool` 按 conversation_id 路由 session，但 conversation_id 本身不绑定 owner——**部署到公网必须前置鉴权代理** |
 | 5.3 | 记录操作日志 | 是 | SLF4J 全链路日志：mode 切换、session 加载、skill install/remove、bash 命令执行（命令本身不记录到 INFO，避免泄露 secret）、HTTP 请求由 reactor-netty 内置 access log |
 | 5.4 | SQL 注入 | 不涉及（间接相关） | 本模块自身无 SQL 调用（grep 验证：无 `executeQuery` / `String.format` + SQL）。当 `pi.assistant.gateway.enabled=true` 时通过 `assistant` 模块的 MyBatis Mapper 落库——SQL 注入风险由 `assistant` 模块 `#{}` 占位防护负责，不在本模块边界 |
@@ -679,13 +679,13 @@ classDiagram
 | 5.6 | XML 注入 | 不涉及 | 全链路 JSON（Jackson）+ YAML（snakeyaml）；无 `DocumentBuilderFactory` / `SAXParserFactory` |
 | 5.7 | 命令注入 | **是（核心风险面）** | 多处 `ProcessBuilder` 调用：（a）`BashExecutor` / `LocalBashOperations.buildProcessBuilder` —— `bash` 工具是 LLM **设计要执行用户/agent 提供的命令**的能力，本质上属于"开放命令面"。防护策略：（i）`ProcessBuilder(List<String>)` 形式而非 `Runtime.exec(String)`——argv 不经 `/bin/sh -c` 拼接（避免 shell 元字符注入到 argv 边界），但 `command` 字符串本身确实通过 `bash -c <command>` 由 bash 解析，shell 元字符按设计有效；（ii）超时机制：`BashExecutor` 强制 `timeout` 参数与全局 `local-timeout-seconds`；（iii）进程树清理：`killProcessTree` 递归杀子进程，防止悬挂；（iv）输出截断：`BashTool.MAX_OUTPUT_BYTES=100_000` 防止巨型输出耗尽内存；（v）**沙箱**：当 `tool.execution.default-mode=SANDBOX` 或 hybrid 路由判定为高风险，命令在 `DockerSandboxClient` 拉起的临时容器（默认 alpine:3.19，512m / 1.0 CPU）中执行，配合 `SandboxSecurityPolicy`（capability drop / readonly fs / 网络隔离）——把命令注入降级为"容器内部行为"，逃逸需要 Docker 漏洞。（b）`ShellResolver.resolveBashPath` 调 `which bash` —— argv 固定，无外部输入。（c）`SkillManager.installFromGit` 调 `git clone <url>` —— URL 来自用户 `/skills install <url>`，argv 形式不经 shell，但 URL 本身仍流入 git，建议进一步白名单/校验协议（`https://` / `git@`）。**总体**：bash 工具的命令注入是**设计能力**，沙箱是核心防线；非 bash 路径（git / which / docker exec）走 argv list 形式避免拼接 |
 | 5.8 | 输入校验 | 是 | （a）所有 `AgentTool` 的入参由 `agent-core` 的 `ToolExecutionPipeline.validateArguments` 用 networknt JSON-Schema (2020-12) 校验，schema 在每个 tool 的 `parameters()` 方法中声明；（b）`SkillHandler.upload` 校验文件扩展名（`.zip` / `.tar.gz` / `.tgz`）；（c）Picocli 自动对 `--mode` / `--port` 等做类型校验；（d）`ChatHandler.chat` 反序列化 JSON 由 Jackson 校验类型 |
-| 5.9 | 敏感数据/个人隐私数据 | 是 | provider API key、sub-agent `auth-token` 是敏感凭据。处理：（a）`AuthStorage` 写入 `~/.campusclaw/auth/`，**未加密**（与 ssh / aws cli 行为一致，依赖 UNIX 文件权限保护）；（b）日志中**不输出** token（`HttpAgentConfig` 的 `toString` 排除 token，`ProxyConfig.toUrl()` 屏蔽 password）；（c）`application.yml` 的 secret 通过 `${ENV:default}` 占位，避免 commit 明文；（d）`/share` 命令上传会话需 review：会否携带 stack trace 中的环境变量 |
+| 5.9 | 敏感数据/个人隐私数据 | 是 | provider API key、sub-agent `auth-token` 是敏感凭据。处理：（a）`AuthStorage` 写入 `~/file/.campusclaw/auth/`，**未加密**（与 ssh / aws cli 行为一致，依赖 UNIX 文件权限保护）；（b）日志中**不输出** token（`HttpAgentConfig` 的 `toString` 排除 token，`ProxyConfig.toUrl()` 屏蔽 password）；（c）`application.yml` 的 secret 通过 `${ENV:default}` 占位，避免 commit 明文；（d）`/share` 命令上传会话需 review：会否携带 stack trace 中的环境变量 |
 | 5.10 | 加解密 | 不涉及 | 本模块无 `Cipher` / `MessageDigest` 调用。TLS 由 HttpClient 默认（JDK / OkHttp）负责；本模块未自管证书 |
-| 5.11 | 文件上传下载 | 是 | （a）上传：`SkillHandler.upload` 用 webflux `FilePart.transferTo(tempFile)` 接 multipart，写入 `Files.createTempFile`，限定扩展名为压缩包，由 `SkillManager` 解压到 `~/.campusclaw/packages/`——zip 解压需防 zip slip（`SkillManager` 的 `Files.copy(zis, entryPath)` 应校验 `entryPath` 在 target dir 之内，**待审计**确认 path traversal 防护）；（b）下载：`/export` 把会话写到本地 HTML 文件，由用户指定路径（命令参数），路径越权风险由 OS 文件权限承担；（c）`MigrationManager.Files.copy` 在备份目录间复制——内部路径，受控 |
-| 5.12 | 硬编码 | 否 | secret 通过 `${ENV:default}` 占位（如 `CAMPUSCLAW_REMOTE_AGENT_TOKEN`、`GAUSSDB_PASSWORD`）或 `~/.campusclaw/auth/` 持久化获取；`application.yml` 默认 `root/root` 仅本地开发占位；常量如 `DEFAULT_MODEL="claude-sonnet-4-20250514"`、`alpine:3.19` 等是模型名/镜像名，非凭据 |
+| 5.11 | 文件上传下载 | 是 | （a）上传：`SkillHandler.upload` 用 webflux `FilePart.transferTo(tempFile)` 接 multipart，写入 `Files.createTempFile`，限定扩展名为压缩包，由 `SkillManager` 解压到 `~/file/.campusclaw/packages/`——zip 解压需防 zip slip（`SkillManager` 的 `Files.copy(zis, entryPath)` 应校验 `entryPath` 在 target dir 之内，**待审计**确认 path traversal 防护）；（b）下载：`/export` 把会话写到本地 HTML 文件，由用户指定路径（命令参数），路径越权风险由 OS 文件权限承担；（c）`MigrationManager.Files.copy` 在备份目录间复制——内部路径，受控 |
+| 5.12 | 硬编码 | 否 | secret 通过 `${ENV:default}` 占位（如 `CAMPUSCLAW_REMOTE_AGENT_TOKEN`、`GAUSSDB_PASSWORD`）或 `~/file/.campusclaw/auth/` 持久化获取；`application.yml` 默认 `root/root` 仅本地开发占位；常量如 `DEFAULT_MODEL="claude-sonnet-4-20250514"`、`alpine:3.19` 等是模型名/镜像名，非凭据 |
 | 5.13 | 安全资料 | 否 | 待补充：通信矩阵（server 模式默认 listen `localhost`，端口可配；sub-agent backend 出站到配置 URL；provider 出站到 SaaS LLM endpoint）、命令清单（26 个 slash 命令 + 14 个 LLM tool） |
 | 5.14 | 不安全算法/协议 | 否 | （a）未使用 MD5/SHA1/DES；（b）未发现 `new Random()` 主路径用法；（c）HTTP server 默认明文（部署侧加 TLS 终结）；（d）WebSocket 默认 ws://，部署侧应升级 wss |
-| 5.15 | 文件权限 | 是 | （a）`~/.campusclaw/auth/*.json` 含凭据应限制为 owner-only（0600）；当前代码在 `AuthStorage` 处**待审计**是否显式设置 POSIX 权限；（b）`SessionPersistence` 写 JSONL 用 JDK 默认权限（受 umask 控制）；（c）`SkillManager` 解压 zip 时若条目自带可执行位需谨慎 |
+| 5.15 | 文件权限 | 是 | （a）`~/file/.campusclaw/auth/*.json` 含凭据应限制为 owner-only（0600）；当前代码在 `AuthStorage` 处**待审计**是否显式设置 POSIX 权限；（b）`SessionPersistence` 写 JSONL 用 JDK 默认权限（受 umask 控制）；（c）`SkillManager` 解压 zip 时若条目自带可执行位需谨慎 |
 | 5.16 | 权限最小化 | 是 | （a）sandbox 容器：`SandboxSecurityPolicy` 设计为 capability drop + readonly fs（详见 `tool/sandbox/`）；（b）进程：本进程以用户身份运行，无 setuid；（c）网络：server 模式默认 bind `localhost`，`--host` 显式才暴露 |
 | 5.17 | Sudo 提权 | 否 | 不需要 sudo；`SystemSchedulerInstaller` 安装到**当前用户** launchd / crontab，无 root 操作 |
 

@@ -10,7 +10,7 @@ import com.huawei.hicampus.mate.matecampusclaw.codingagent.command.SlashCommand;
 import com.huawei.hicampus.mate.matecampusclaw.codingagent.command.SlashCommandContext;
 
 /**
- * Persists an API key for a provider into {@code ~/.campusclaw/agent/auth.json}.
+ * Persists an API key for a provider into {@code ~/file/.campusclaw/agent/auth.json}.
  *
  * <p>Usage: {@code /login <provider> <api-key>}
  *
@@ -62,6 +62,7 @@ public class LoginCommand implements SlashCommand {
         Provider provider = providerOpt.get();
         authStore.setApiKey(provider, key);
         context.output()
-                .println("Saved API key for " + provider.value() + " to ~/.campusclaw/agent/auth.json (mode 0600).");
+                .println("Saved API key for " + provider.value()
+                        + " to ~/file/.campusclaw/agent/auth.json (mode 0600).");
     }
 }

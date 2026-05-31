@@ -36,7 +36,7 @@ import org.slf4j.LoggerFactory;
  * Sessions are created on demand and evicted after an idle timeout.
  *
  * <p>When persistence is enabled, each session is backed by a {@link SessionManager}
- * that writes JSONL to {@code ~/.campusclaw/agent/sessions/--<encoded-cwd>--/<id>.jsonl}.
+ * that writes JSONL to {@code ~/file/.campusclaw/agent/sessions/--<encoded-cwd>--/<id>.jsonl}.
  * The JSONL filename equals the conversation ID, so reconnects with the same
  * {@code conversation_id} after eviction or process restart resume from disk.
  *

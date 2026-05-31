@@ -26,7 +26,7 @@ import org.springframework.stereotype.Component;
 
 /**
  * File-backed {@link SubAgentSessionStore} that writes one JSON document per session under
- * {@code ~/.campusclaw/agent/subagents/<backend>/<uuid>.json}.
+ * {@code ~/file/.campusclaw/agent/subagents/<backend>/<uuid>.json}.
  *
  * <p>Failures are logged and swallowed: persistence is best-effort metadata, not a correctness
  * dependency for the prompt path.
