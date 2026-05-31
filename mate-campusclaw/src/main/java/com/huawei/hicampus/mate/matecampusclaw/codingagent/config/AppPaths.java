@@ -8,12 +8,14 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
+import com.huawei.hicampus.mate.matecampusclaw.ai.utils.CampusClawHome;
+
 import org.slf4j.LoggerFactory;
 
 /**
  * Central definition of all configuration directory paths.
  *
- * <p>User-level: {@code ~/.campusclaw/agent/}
+ * <p>User-level: {@code ~/file/.campusclaw/agent/}
  * <p>Project-level: {@code {cwd}/.campusclaw/}
  *
  * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
@@ -27,32 +29,32 @@ public final class AppPaths {
     public static final String CONFIG_DIR_NAME = ".campusclaw";
 
     /**
-     * User-level agent directory: {@code ~/.campusclaw/agent/}.
+     * User-level agent directory: {@code ~/file/.campusclaw/agent/}.
      */
-    public static final Path USER_AGENT_DIR = Path.of(System.getProperty("user.home"), CONFIG_DIR_NAME, "agent");
+    public static final Path USER_AGENT_DIR = CampusClawHome.agentDir();
 
     /**
-     * User-level settings file: {@code ~/.campusclaw/agent/settings.json}.
+     * User-level settings file: {@code ~/file/.campusclaw/agent/settings.json}.
      */
     public static final Path GLOBAL_SETTINGS = USER_AGENT_DIR.resolve("settings.json");
 
     /**
-     * User-level auth file: {@code ~/.campusclaw/agent/auth.json}.
+     * User-level auth file: {@code ~/file/.campusclaw/agent/auth.json}.
      */
     public static final Path AUTH_FILE = USER_AGENT_DIR.resolve("auth.json");
 
     /**
-     * User-level keybindings file: {@code ~/.campusclaw/agent/keybindings.json}.
+     * User-level keybindings file: {@code ~/file/.campusclaw/agent/keybindings.json}.
      */
     public static final Path KEYBINDINGS_FILE = USER_AGENT_DIR.resolve("keybindings.json");
 
     /**
-     * User-level sessions directory: {@code ~/.campusclaw/agent/sessions/}.
+     * User-level sessions directory: {@code ~/file/.campusclaw/agent/sessions/}.
      */
     public static final Path SESSIONS_DIR = USER_AGENT_DIR.resolve("sessions");
 
     /**
-     * User-level skills directory: {@code ~/.campusclaw/agent/skills/}.
+     * User-level skills directory: {@code ~/file/.campusclaw/agent/skills/}.
      */
     public static final Path USER_SKILLS_DIR = USER_AGENT_DIR.resolve("skills");
 
@@ -80,7 +82,7 @@ public final class AppPaths {
      * Ensures the user-level directory structure exists.
      * Call once at startup to create:
      * <pre>
-     * ~/.campusclaw/agent/
+     * ~/file/.campusclaw/agent/
      *   ├── skills/
      *   ├── prompts/
      *   ├── sessions/

@@ -1019,7 +1019,7 @@ public class CampusClawCommand implements Callable<Integer> {
                     """
                     Usage: campusclaw skill install <git-url>
 
-                    Clone a git repository into ~/.campusclaw/agent/skills/.
+                    Clone a git repository into ~/file/.campusclaw/agent/skills/.
                     The repository must contain at least one SKILL.md file.
 
                     Examples:
@@ -1030,7 +1030,7 @@ public class CampusClawCommand implements Callable<Integer> {
                     """
                     Usage: campusclaw skill import <archive-path>
 
-                    Extract a .zip or .tar.gz archive into ~/.campusclaw/agent/skills/.
+                    Extract a .zip or .tar.gz archive into ~/file/.campusclaw/agent/skills/.
                     The archive must contain at least one SKILL.md file.
                     If the archive contains a single top-level directory, it will be unwrapped.
 
@@ -1044,7 +1044,7 @@ public class CampusClawCommand implements Callable<Integer> {
                     """
                     Usage: campusclaw skill list
 
-                    List all skills in ~/.campusclaw/agent/skills/ with their source and description."""),
+                    List all skills in ~/file/.campusclaw/agent/skills/ with their source and description."""),
             java.util.Map.entry(
                     "remove",
                     """
@@ -1058,7 +1058,7 @@ public class CampusClawCommand implements Callable<Integer> {
                     """
                     Usage: campusclaw skill link <path>
 
-                    Create a symbolic link in ~/.campusclaw/agent/skills/ pointing to a local directory.
+                    Create a symbolic link in ~/file/.campusclaw/agent/skills/ pointing to a local directory.
                     Useful for developing and testing skills without copying files.
 
                     Example:

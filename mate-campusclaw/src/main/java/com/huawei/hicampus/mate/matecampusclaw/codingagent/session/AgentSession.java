@@ -494,7 +494,7 @@ public class AgentSession {
     void loadSkills(Path cwd) {
         skillRegistry.clear();
 
-        // User-level skills: ~/.campusclaw/agent/skills/
+        // User-level skills: ~/file/.campusclaw/agent/skills/
         // Filter out skills explicitly disabled via the REST API.
         java.util.Set<String> disabled = new SkillStateStore(userSkillsDir()).loadDisabled();
         List<Skill> userSkills = skillLoader.loadFromDirectory(userSkillsDir(), "user").stream()

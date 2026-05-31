@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import com.campusclaw.ai.utils.CampusClawHome;
 import com.campusclaw.cron.model.CronRunRecord;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.DeserializationFeature;
@@ -25,7 +26,7 @@ import org.springframework.stereotype.Service;
 
 /**
  * Append-only JSONL log for cron job execution records.
- * Each job has its own log file at {@code ~/.campusclaw/agent/cron/runs/{jobId}.jsonl}.
+ * Each job has its own log file at {@code ~/file/.campusclaw/agent/cron/runs/{jobId}.jsonl}.
  *
  * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
  * @since [br_eCampusCore 25.1.0_Next]
@@ -95,10 +96,6 @@ public class CronRunLog {
     }
 
     private static Path defaultRunsDir() {
-        return Path.of(System.getProperty("user.home"))
-                .resolve(".campusclaw")
-                .resolve("agent")
-                .resolve("cron")
-                .resolve("runs");
+        return CampusClawHome.agentDir().resolve("cron").resolve("runs");
     }
 }

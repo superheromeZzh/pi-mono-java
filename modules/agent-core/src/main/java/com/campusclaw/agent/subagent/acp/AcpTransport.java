@@ -13,13 +13,13 @@ import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
 import com.campusclaw.agent.subagent.SubAgentException;
 import com.campusclaw.agent.util.LoggingUncaughtExceptionHandler;
+import com.campusclaw.ai.utils.CampusClawHome;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import org.slf4j.Logger;
@@ -40,7 +40,7 @@ public class AcpTransport implements AutoCloseable {
      * JSONL trace of every ACP envelope (in/out). Default ON to make "no answer" issues
      * diagnosable without env-var rituals — TUI swallows logback console output and Windows
      * env propagation is unreliable. Opt out with {@code CAMPUSCLAW_ACP_TRACE=0} (or
-     * {@code -Dcampusclaw.acp.trace=0}). File lives at {@code ~/.campusclaw/acp-trace.jsonl}
+     * {@code -Dcampusclaw.acp.trace=0}). File lives at {@code ~/file/.campusclaw/acp-trace.jsonl}
      * (TRUNCATE on each JVM start). Writes a startup marker line so the file always exists
      * after class load — its presence/contents proves the JVM ran with the latest code.
      */
@@ -54,7 +54,7 @@ public class AcpTransport implements AutoCloseable {
             return null;
         }
         try {
-            Path dir = Paths.get(System.getProperty("user.home", "."), ".campusclaw");
+            Path dir = CampusClawHome.baseDir();
             Files.createDirectories(dir);
             Path file = dir.resolve("acp-trace.jsonl");
             PrintWriter writer = new PrintWriter(Files.newBufferedWriter(

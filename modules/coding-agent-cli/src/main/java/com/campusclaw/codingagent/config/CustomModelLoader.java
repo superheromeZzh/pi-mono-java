@@ -26,7 +26,7 @@ import org.springframework.stereotype.Service;
 /**
  * Registers user-defined models into the {@link ModelRegistry} once Spring is
  * ready: both {@code settings.customModels} entries and any catalog file at
- * {@code ~/.campusclaw/agent/models.json}. Runs once at startup so that the
+ * {@code ~/file/.campusclaw/agent/models.json}. Runs once at startup so that the
  * model selector overlay and {@code -m} flag see the same catalog.
  *
  * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]

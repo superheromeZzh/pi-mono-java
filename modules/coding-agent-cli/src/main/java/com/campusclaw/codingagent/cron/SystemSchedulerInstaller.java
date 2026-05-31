@@ -13,6 +13,8 @@ import java.nio.file.Path;
 import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 
+import com.campusclaw.ai.utils.CampusClawHome;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -123,7 +125,7 @@ public class SystemSchedulerInstaller {
             """;
 
     private String installLaunchd(int intervalSeconds) throws IOException {
-        Path logDir = Path.of(System.getProperty("user.home")).resolve(".campusclaw/agent/cron");
+        Path logDir = CampusClawHome.agentDir().resolve("cron");
         Files.createDirectories(logDir);
         Files.createDirectories(PLIST_PATH.getParent());
         String plist = PLIST_TEMPLATE.formatted(LABEL, launcherScript, intervalSeconds, logDir, logDir);
@@ -245,7 +247,7 @@ public class SystemSchedulerInstaller {
         int minutes = Math.max(1, intervalSeconds / 60);
         String cronExpr = minutes >= 60 ? "0 */" + (minutes / 60) + " * * *" : "*/" + minutes + " * * * *";
         String cronLine = cronExpr + " " + launcherScript + " --cron-tick >> "
-                + Path.of(System.getProperty("user.home")).resolve(".campusclaw/agent/cron/cron-tick.log")
+                + CampusClawHome.agentDir().resolve("cron/cron-tick.log")
                 + " 2>&1 " + CRONTAB_MARKER;
 
         String existing = getCurrentCrontab();
@@ -312,7 +314,7 @@ public class SystemSchedulerInstaller {
     // --- Windows Task Scheduler ---
 
     private String installWindows(int intervalSeconds) throws IOException {
-        Path logDir = Path.of(System.getProperty("user.home")).resolve(".campusclaw/agent/cron");
+        Path logDir = CampusClawHome.agentDir().resolve("cron");
         Files.createDirectories(logDir);
 
         // schtasks /MINUTE supports 1-1439 minute intervals

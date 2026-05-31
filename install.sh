@@ -8,11 +8,11 @@ set -euo pipefail
 # source tree. Every run auto-detects source changes and rebuilds.
 #
 # Layout after install:
-#   ~/.campusclaw/bin/campusclaw   (shell wrapper → this repo)
+#   ~/file/.campusclaw/bin/campusclaw   (shell wrapper → this repo; base overridable via $CAMPUSCLAW_HOME)
 # ──────────────────────────────────────────────────────────────
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-BIN_DIR="$HOME/.campusclaw/bin"
+BIN_DIR="${CAMPUSCLAW_HOME:-$HOME/file/.campusclaw}/bin"
 
 # ── Verify JDK 21 exists ──────────────────────────────────────
 detect_jdk21() {
@@ -178,7 +178,7 @@ echo "Created command at $BIN_DIR/campusclaw"
 
 # ── Add to PATH ────────────────────────────────────────────────
 add_to_path() {
-    local line="export PATH=\"\$HOME/.campusclaw/bin:\$PATH\""
+    local line="export PATH=\"\${CAMPUSCLAW_HOME:-\$HOME/file/.campusclaw}/bin:\$PATH\""
 
     if echo "$PATH" | tr ':' '\n' | grep -qx "$BIN_DIR"; then
         echo "PATH already configured."
@@ -188,7 +188,7 @@ add_to_path() {
     local added=false
     for rc in "$HOME/.zshrc" "$HOME/.bashrc" "$HOME/.bash_profile"; do
         if [ -f "$rc" ]; then
-            if ! grep -qF '.campusclaw/bin' "$rc"; then
+            if ! grep -qF '# CampusClaw' "$rc"; then
                 printf '\n# CampusClaw\n%s\n' "$line" >> "$rc"
                 echo "Added to PATH in $rc"
                 added=true
@@ -207,7 +207,7 @@ add_to_path
 echo ""
 echo "Installation complete!"
 echo "Restart your terminal or run:"
-echo "  export PATH=\"\$HOME/.campusclaw/bin:\$PATH\""
+echo "  export PATH=\"\${CAMPUSCLAW_HOME:-\$HOME/file/.campusclaw}/bin:\$PATH\""
 echo ""
 echo "Then try:"
 echo "  campusclaw --help"

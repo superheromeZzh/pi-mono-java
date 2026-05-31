@@ -31,7 +31,7 @@ public class SourceInfo {
     @SuppressWarnings("checkstyle:top_class_comment")
     public enum SourceType {
         BUILTIN, // Shipped with the application
-        GLOBAL_CONFIG, // From ~/.campusclaw/agent/ directory
+        GLOBAL_CONFIG, // From ~/file/.campusclaw/agent/ directory
         PROJECT_CONFIG, // From .campusclaw/ in current project
         PACKAGE, // From an installed package
         EXTENSION, // From extension system

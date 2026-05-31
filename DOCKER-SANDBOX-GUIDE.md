@@ -156,7 +156,7 @@ java -jar modules/coding-agent-cli/build/libs/campusclaw-agent-1.0.0-SNAPSHOT.ja
 
 ### 配置文件
 
-编辑 `~/.campusclaw/settings.json`:
+编辑 `~/file/.campusclaw/settings.json`:
 
 ```json
 {

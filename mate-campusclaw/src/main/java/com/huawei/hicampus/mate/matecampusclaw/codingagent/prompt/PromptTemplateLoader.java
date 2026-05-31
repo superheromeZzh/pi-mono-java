@@ -27,7 +27,7 @@ import org.slf4j.LoggerFactory;
  *
  * <p>Search locations (in order):
  * <ol>
- *   <li>Global: {@code ~/.campusclaw/agent/prompts/}</li>
+ *   <li>Global: {@code ~/file/.campusclaw/agent/prompts/}</li>
  *   <li>Project: {@code {cwd}/.campusclaw/prompts/}</li>
  * </ol>
  *
@@ -45,7 +45,7 @@ public class PromptTemplateLoader {
      * Loads prompt templates from global and project directories.
      *
      * @param cwd      the current working directory
-     * @param agentDir the global agent config directory (e.g. ~/.campusclaw/agent)
+     * @param agentDir the global agent config directory (e.g. ~/file/.campusclaw/agent)
      * @return list of prompt templates (project templates override global ones with the same name)
      */
     public List<PromptTemplateEntry> load(Path cwd, Path agentDir) {

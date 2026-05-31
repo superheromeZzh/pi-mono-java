@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
+import com.campusclaw.ai.utils.CampusClawHome;
 import com.campusclaw.cron.model.CronJob;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.DeserializationFeature;
@@ -26,7 +27,7 @@ import org.springframework.stereotype.Service;
 
 /**
  * JSON file persistence for cron job definitions.
- * Stores jobs in {@code ~/.campusclaw/agent/cron/jobs.json}.
+ * Stores jobs in {@code ~/file/.campusclaw/agent/cron/jobs.json}.
  *
  * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
  * @since [br_eCampusCore 25.1.0_Next]
@@ -189,11 +190,7 @@ public class CronStore {
     }
 
     private static Path defaultJobsPath() {
-        return Path.of(System.getProperty("user.home"))
-                .resolve(".campusclaw")
-                .resolve("agent")
-                .resolve("cron")
-                .resolve("jobs.json");
+        return CampusClawHome.agentDir().resolve("cron").resolve("jobs.json");
     }
 
     record JobsFile(int version, List<CronJob> jobs) {}
