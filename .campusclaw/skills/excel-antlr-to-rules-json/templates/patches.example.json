@@ -1,0 +1,15 @@
+{
+  "description": "Optional patch list. apply_excel_patch.py writes lab_equipment_rules_patched.xlsx by default; never overwrites the input xlsx.",
+  "patches": [
+    {
+      "row": 5,
+      "column": "触发条件",
+      "value": "abs([valvePosition] - [valvePositionCmd]) > 3"
+    },
+    {
+      "row": 8,
+      "column": "有效数据",
+      "value": "15min内，90%"
+    }
+  ]
+}
