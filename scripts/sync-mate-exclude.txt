@@ -6,6 +6,3 @@
 # not derived from modules/*). The sync script must NOT overwrite or delete them.
 # When you intentionally add a new file under mate-campusclaw/ that has no
 # counterpart in modules/*, add its path here so future syncs preserve it.
-
-# Java code only on mate side
-/com/huawei/hicampus/mate/matecampusclaw/codingagent/channel/
