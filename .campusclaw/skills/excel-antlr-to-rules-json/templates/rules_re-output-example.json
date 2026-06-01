@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "rules": [
+    {
+      "id": "lab_rule_8f3c2a91",
+      "name": "冷却泵振动偏高",
+      "原因分析": "轴承磨损或叶轮不平衡",
+      "专家处理建议": "1.停机检查轴承；2.动平衡校验",
+      "meta": {
+        "deviceType": "冷冻站",
+        "component": "一级冷却泵",
+        "points": ["PumpVibrationRms", "PumpRunStatus"]
+      },
+      "window": { "type": "rolling", "durationSeconds": 900 },
+      "trigger": {
+        "rule_engine": "((PumpRunStatus == 1) && (PumpVibrationRms > 4.5))"
+      },
+      "effective": {
+        "metric": "ratio_true",
+        "threshold": 0.9,
+        "minSamples": 1
+      }
+    }
+  ]
+}
