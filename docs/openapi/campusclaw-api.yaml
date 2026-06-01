@@ -7,14 +7,27 @@ info:
     `campusclaw --mode server` 模式下暴露的 REST + SSE + WebSocket 接口。
 
     CampusClaw 的 HTTP Server 模式对外提供一组 REST 端点，用于流式对话、会话
-    管理以及技能（skill）包管理。
+    管理、技能（skill）包管理以及 settings 写入。
 
-    **当前覆盖范围**：本文档收录 **会话浏览**（`/api/conversations`、
-    `/api/conversations/{id}`）和 **skill 管理** 相关端点
-    （`/api/skills`、`/api/skills/{name}`、`/api/skills/{name}/enable`、
-    `/api/skills/{name}/disable`）。WebSocket 通道（`/api/ws/chat`）定义
-    在 `docs/asyncapi/chat-ws.yaml` 中；流式对话端点（`POST /api/chat`）
-    尚未规范化，后续会迁移到本文件。
+    **本文件覆盖范围**（仅 HTTP：REST + SSE）：
+
+    | 类别 | 路径 |
+    |---|---|
+    | health | `GET /api/health` |
+    | chat（SSE 流式对话） | `POST /api/chat` |
+    | conversations | `GET /api/conversations`、`DELETE /api/conversations/{id}` |
+    | skills | `GET\|POST /api/skills`、`DELETE /api/skills/{name}`、`POST /api/skills/{name}/{enable\|disable}` |
+    | settings | `GET /api/settings/models`、`PUT /api/settings/models/default`、`PUT /api/settings/customModels` |
+
+    **WebSocket 通道 `/api/ws/chat` 不在本文件**：它是消息 / 事件驱动的双向
+    通道，用 **AsyncAPI 3.0** 描述在 `docs/asyncapi/chat-ws.yaml` 中——OpenAPI
+    没有 WebSocket 语义，不强行塞进来。功能上 `POST /api/chat` 是
+    "fire-and-forget" 的 SSE，缺少 steer / abort / 模型切换等交互能力；需要
+    完整能力的客户端应走 WebSocket，并参考那份 AsyncAPI 契约。
+
+    **CORS**：所有 `/api/**` 路径都接受 `OPTIONS` 预检请求，服务端返回 204
+    并附 `Access-Control-Allow-Origin: *`、允许的方法 / 头部、`Max-Age: 3600`。
+    本文件不再为每个端点单独罗列 OPTIONS。
 
     **实现说明**：服务端是一个 Reactor Netty 实例，通过
     `modules/coding-agent-cli/.../ServerMode.java` 中的 `RouterFunctions`
@@ -38,6 +51,22 @@ servers:
         default: "3000"
 
 tags:
+  - name: health
+    description: 进程存活探针。无认证、无副作用，运维 / load balancer 用来判断进程是否在跑。
+  - name: chat
+    description: |
+      Server-Sent Events 流式对话。一次 HTTP 请求 = 一次 agent turn，事件以
+      `event: <type>\ndata: <json>\n\n` 的形式推流，无上行通道。
+
+      支持的事件类型（`event:` 字段）：
+      `message_start`、`message_update`、`message_end`、`tool_start`、
+      `tool_end`、`done`、`error`。每个事件的 `data:` 行是一段 JSON，
+      具体 schema 见 `POST /api/chat` 的 200 响应描述。
+
+      **与 WebSocket 通道的关系**：SSE 是单向的，不支持 steer、abort 或
+      连接中切换模型。需要这些能力时改用 `/api/ws/chat`（见
+      `docs/asyncapi/chat-ws.yaml`）。两者底层共用 `SessionPool`，相同
+      `conversation_id` 在两个端点之间互通。
   - name: conversations
     description: |
       浏览服务端持久化的会话历史。每条会话对应
@@ -79,6 +108,153 @@ tags:
       会读到最新目录。
 
 paths:
+  /api/health:
+    get:
+      tags: [health]
+      summary: 健康检查
+      operationId: getHealth
+      description: |
+        进程存活探针。永远返回 200 `{"status":"ok"}` —— 不检查模型 provider、
+        数据库或文件系统等下游依赖。LB / k8s liveness probe 可以直接打这个
+        端点。
+      responses:
+        "200":
+          description: 服务进程在跑。
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status]
+                properties:
+                  status:
+                    type: string
+                    enum: [ok]
+              example:
+                status: ok
+
+  /api/chat:
+    post:
+      tags: [chat]
+      summary: 流式对话（SSE）
+      operationId: streamChat
+      description: |
+        发起一次 agent turn，响应以 `text/event-stream` 推送。同一
+        `conversation_id` 对应的 session 由 `SessionPool` 复用，所以多次
+        请求会沿用对话历史。请求未带 `conversation_id` 时服务端会生成
+        一个新的，并在每条事件的 JSON `data` 中携带回去。
+
+        **客户端中断**：关闭 SSE 连接会被服务端识别为「中断当前 turn」——
+        若该会话还在 streaming，服务端会自动调用 `session.abort()`。
+
+        **每次请求级别的 override**：`model` / `thinking` 字段允许在不开
+        一个完整 WS 会话的情况下，临时切换当次 turn 的模型或思考等级。
+        校验失败（model id 不存在、thinking level 不合法）会立即返回
+        400，不进入 SSE。
+
+        **事件类型**（`event:` 字段）：
+          - `message_start` — `{ conversation_id }`，assistant 消息开始
+          - `message_update` — `{ message }`，包含到目前为止的完整
+            assistant Message（增量请前端自行 diff）
+          - `message_end` — `{ message }`，assistant 消息最终值
+          - `tool_start` — `{ toolName, toolCallId }`
+          - `tool_end` — `{ toolCallId }`（不携带具体 result，需要 result
+            请改用 WebSocket 的 `tool_end` 事件）
+          - `done` — `{ conversation_id }`，turn 完成，紧随其后 server
+            会关闭 SSE 流
+          - `error` — `{ error, conversation_id }`，`session.prompt(...)`
+            完成异常时发出，随后 server 关闭 SSE 流
+
+        SSE 端点的事件集合相对最小化；需要 `tool_update`、`agent_start`、
+        `done` 中携带 `finalText`/`usage`/`stopReason` 等更丰富的字段时
+        请改用 WebSocket（`/api/ws/chat`）。
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChatRequest"
+            examples:
+              firstTurn:
+                summary: 首次请求，不带 conversation_id
+                value:
+                  message: 用 Java 写一个快速排序
+              followUp:
+                summary: 继续既有会话
+                value:
+                  message: 改写成迭代版本
+                  conversation_id: a1b2c3d4e5f6
+              withOverrides:
+                summary: 当次切模型 + 调高 thinking
+                value:
+                  message: 分析一下这段栈
+                  conversation_id: a1b2c3d4e5f6
+                  model: glm-5
+                  thinking: high
+      responses:
+        "200":
+          description: |
+            SSE 流。响应 Content-Type 为 `text/event-stream`，每个事件
+            形如 `event: <type>\ndata: <json>\n\n`。事件类型与 JSON 形态
+            见上方描述。
+          content:
+            text/event-stream:
+              schema:
+                type: string
+                description: |
+                  按 SSE 协议编码的事件流。OpenAPI 无法以 schema 表达
+                  事件序列，请参考端点描述里的事件类型表。
+              example: |
+                event: message_start
+                data: {"conversation_id":"a1b2c3d4e5f6"}
+
+                event: message_update
+                data: {"message":{"role":"assistant","content":[{"type":"text","text":"快速排序"}]}}
+
+                event: message_end
+                data: {"message":{"role":"assistant","content":[{"type":"text","text":"..."}]}}
+
+                event: done
+                data: {"conversation_id":"a1b2c3d4e5f6"}
+        "400":
+          description: |
+            请求体缺 `message`、`model` 不存在于 registry，或 `thinking`
+            不是合法 ThinkingLevel。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              examples:
+                missing-message:
+                  value:
+                    error: message is required
+                bad-model:
+                  value:
+                    error: "Invalid model: unknown model id: foobar"
+                bad-thinking:
+                  value:
+                    error: "Invalid thinking level: super-high"
+        "409":
+          description: |
+            同一 `conversation_id` 已经在 streaming 中。客户端必须先等待
+            前一个 turn 完成（或调用 WebSocket 的 `abort` 命令）。
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [error, conversation_id]
+                properties:
+                  error: { type: string }
+                  conversation_id: { type: string }
+              example:
+                error: This conversation is already processing a prompt
+                conversation_id: a1b2c3d4e5f6
+        "500":
+          description: 服务端意外错误（一般是 JSON 解析 / 序列化失败）。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
   /api/conversations:
     get:
       tags: [conversations]
@@ -622,6 +798,44 @@ paths:
 
 components:
   schemas:
+    ChatRequest:
+      type: object
+      description: "`POST /api/chat` 的请求体。"
+      required: [message]
+      properties:
+        message:
+          type: string
+          minLength: 1
+          description: |
+            用户输入文本。`null` 或全空白会被拒绝（400）。与 WebSocket `prompt`
+            命令一致，SSE 也走 `AgentSession.prompt(...)`：前导 `/<name> args`
+            先按 prompt template 展开，`/skill:name args` 再按 skill 命令展开，
+            然后才交给 agent。
+          example: 用 Java 写一个快速排序
+        conversation_id:
+          type: string
+          nullable: true
+          description: |
+            目标会话 id。未提供时由服务端生成一个新 id 并在所有 SSE 事件的
+            JSON `data` 中回传。
+          example: a1b2c3d4e5f6
+        model:
+          type: string
+          nullable: true
+          description: |
+            本次 turn 临时切换的模型 id。**会改写 session 上的模型** ——
+            后续 turn 也会沿用，直到下次再传 `model` 或通过 WebSocket
+            `set_model` 改回。id 不在 ModelRegistry 中时返回 400。
+          example: glm-5
+        thinking:
+          type: string
+          nullable: true
+          enum: [off, minimal, low, medium, high, xhigh]
+          description: |
+            本次 turn 临时切换的思考等级。与 `model` 一样会写入 session，
+            后续 turn 沿用直到再次修改。非法值返回 400。
+          example: high
+
     ConversationSummary:
       type: object
       description: "`GET /api/conversations` 返回的单条会话条目。"
