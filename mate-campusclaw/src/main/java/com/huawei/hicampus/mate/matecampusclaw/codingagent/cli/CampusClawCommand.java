@@ -623,10 +623,7 @@ public class CampusClawCommand implements Callable<Integer> {
     }
 
     private void continueLatestSession(SessionManager sessionManager, AgentSession session, Path effectiveCwd) {
-        List<com.huawei.hicampus.mate.matecampusclaw.ai.types.Message> messages = loadMessagesFromChatMemory(sessionManager);
-        if (messages.isEmpty()) {
-            messages = sessionManager.resumeLatestSession(effectiveCwd.toString());
-        }
+        List<com.huawei.hicampus.mate.matecampusclaw.ai.types.Message> messages = sessionManager.resumeLatestSession(effectiveCwd.toString());
         if (messages.isEmpty()) {
             sessionManager.createSession(effectiveCwd.toString());
             return;
@@ -635,20 +632,6 @@ public class CampusClawCommand implements Callable<Integer> {
             session.getAgent().getState().appendMessage(msg);
         }
         err().println("Resumed session " + sessionManager.getSessionId() + " (" + messages.size() + " messages)");
-    }
-
-    private List<com.huawei.hicampus.mate.matecampusclaw.ai.types.Message> loadMessagesFromChatMemory(SessionManager sessionManager) {
-        if (applicationContext == null) {
-            return List.of();
-        }
-        try {
-            var store = applicationContext.getBean(com.huawei.hicampus.mate.matecampusclaw.assistant.memory.ChatMemoryStore.class);
-            return store.load(sessionManager.getSessionId());
-        } catch (Exception e) {
-            // Memory store may not be wired (e.g. assistant module disabled) — fall back to empty.
-            log.debug("ChatMemoryStore unavailable; loading no prior messages", e);
-            return List.of();
-        }
     }
 
     private void applyThinkingLevel(AgentSession session, String effectiveThinking) {
@@ -675,8 +658,7 @@ public class CampusClawCommand implements Callable<Integer> {
                             agentModelResolver),
                     modelRegistry,
                     cronService,
-                    loopManager,
-                    applicationContext);
+                    loopManager);
             applyScopedModels(interactiveMode);
             if (effectivePrompt != null) {
                 interactiveMode.setInitialPrompt(effectivePrompt);

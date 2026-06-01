@@ -18,7 +18,7 @@
 
 ### 1.1 需求来源
 
-待开发者补充。从仓库根 `CLAUDE.md` 与 `docs/module-architecture.md` 可推断为"演进式架构治理"——把分散在 ai / tui / agent-core / cron / assistant 五个 lib 中的能力，聚合到一个独立的 Spring Boot CLI 应用，提供给最终用户作为"终端 AI 编码代理"产品。`pom.xml` 中 `<start-class>com.campusclaw.codingagent.CampusClawApplication</start-class>` 与 `<finalName>campusclaw-agent</finalName>` 表明这是面向用户交付的可执行包。
+待开发者补充。从仓库根 `CLAUDE.md` 与 `docs/module-architecture.md` 可推断为"演进式架构治理"——把分散在 ai / tui / agent-core / cron 四个 lib 中的能力，聚合到一个独立的 Spring Boot CLI 应用，提供给最终用户作为"终端 AI 编码代理"产品。`pom.xml` 中 `<start-class>com.campusclaw.codingagent.CampusClawApplication</start-class>` 与 `<finalName>campusclaw-agent</finalName>` 表明这是面向用户交付的可执行包。
 
 ### 1.2 需求背景/价值/详情
 
@@ -51,7 +51,6 @@
 | campusclaw-agent-core | 依赖 | 使用 `Agent` 门面、`AgentTool` 接口、`AgentEvent` 流、`SubAgentRegistry`、`ProxyConfig` |
 | campusclaw-tui | 依赖 | 使用 `JLineTerminal` / `Terminal` 抽象、ANSI 工具、组件 |
 | campusclaw-cron | 依赖（可选 `@Nullable`） | 调用 `CronService` 创建/触发定时任务；本模块通过 `--cron-tick` 暴露给 launchd/crontab |
-| campusclaw-assistant | 依赖 | WebSocket gateway 通道、MyBatis/PostgreSQL 会话持久化（按 `pi.assistant.gateway.enabled` 开关） |
 | docs/openapi/campusclaw-api.yaml | 输出 | HTTP server 模式 API 契约文档（由本模块 `ServerMode` 实现） |
 | docs/asyncapi/chat-ws.yaml | 输出 | `/api/ws/chat` WebSocket 契约（由 `ChatWebSocketHandler` 实现） |
 
@@ -67,7 +66,6 @@ flowchart LR
     core["campusclaw-agent-core"]
     tui["campusclaw-tui"]
     cron["campusclaw-cron"]
-    assistant["campusclaw-assistant"]
     cli["campusclaw-coding-agent"]
     spring["spring-boot + webflux (外部)"]
     picocli["picocli (外部)"]
@@ -76,7 +74,6 @@ flowchart LR
     core --> cli
     tui --> cli
     cron --> cli
-    assistant --> cli
     spring --> cli
     picocli --> cli
     cli -.可选.-> docker
@@ -85,7 +82,7 @@ flowchart LR
 文字补充：
 
 - **本模块 artifactId**：`campusclaw-coding-agent`，`<finalName>campusclaw-agent</finalName>`
-- **上游（pom `<dependency>`）**：`campusclaw-ai`、`campusclaw-agent-core`、`campusclaw-tui`、`campusclaw-cron`、`campusclaw-assistant`（全部 5 个内部模块）
+- **上游（pom `<dependency>`）**：`campusclaw-ai`、`campusclaw-agent-core`、`campusclaw-tui`、`campusclaw-cron`（全部 4 个内部模块）
 - **下游**：本模块是**应用层**，无 Java 模块依赖它——它产出的是 fat JAR / 二进制
 - **外部关键依赖**：`spring-boot-starter`、`spring-boot-starter-webflux`（server 模式）、`picocli-spring-boot-starter`、`jackson-databind`、`snakeyaml`、`micrometer-core`、`reactor-netty`（来自 webflux，server 模式用）；测试链路含 `okhttp3:mockwebserver`
 - **运行期可选**：Docker daemon（hybrid 模式 / sandbox 模式启用时）
@@ -125,7 +122,7 @@ flowchart LR
 5. **JSONL 会话**：消息序列化为 polymorphic Jackson JSON（`role` 字段作为 discriminator），按 `--<encoded-cwd>--/<id>.jsonl` 路径组织，每条消息一行，方便 grep / 增量追加；
 6. **Skill / Extension 双层扩展**：Skill 是**运行时**用户可装的 markdown 包（带 `SKILL.md` 元数据），主要内容是 prompt 片段；Extension 是**编译期**仓库内 Java 类实现，注册到 6 种 `ExtensionPoint`；
 7. **Hybrid 路由**：每个工具实现 `ToolExecutionStrategy`（local 策略）+ 对应的 `SandboxExecutionStrategy`（Docker 策略），`ExecutionRouter` 按 `ExecutionMode` 选一个执行；这套机制独立于 agent-core 的 `ToolExecutionPipeline`，只在工具内部生效；
-8. **配置外置**：`application.yml`（canonical 副本，仓库根曾经有第二份已删除）声明 `tool.execution.*` / `subagent.backends.*` / `pi.assistant.gateway.*` / `server.session.persistence.enabled`。
+8. **配置外置**：`application.yml`（canonical 副本，仓库根曾经有第二份已删除）声明 `tool.execution.*` / `subagent.backends.*` / `server.session.persistence.enabled`。
 
 设计取向：**保持上游 lib 的纯粹性，所有应用胶水（Spring 装配、bean 选择、容器交互、CLI flag）都收敛到本模块**——上游模块可在没有 Spring Boot / Picocli / Docker 的环境下独立测试。
 
@@ -314,11 +311,7 @@ sequenceDiagram
 | `~/.campusclaw/settings.json` | JSON | `SettingsManager` | 用户设置 |
 | `~/.campusclaw/auth/<provider>.json` | JSON | `AuthStorage` | provider 凭据（apiKey / refreshToken 等） |
 
-**2. 数据库持久化（间接转发到 `assistant` 模块）：**
-
-当 `pi.assistant.gateway.enabled=true` 时，`spring.datasource.url` 指向 PostgreSQL/GaussDB（`application.yml` 默认 `jdbc:postgresql://localhost:5432/pi_assistant`），MyBatis 通过 `assistant` 模块的 mapper 把消息写入 DB。本模块只提供 datasource 配置入口与 lazy-init bean 排除（`webSocketGatewayConfig,gatewayChannel`），实际表结构与 SQL 在 `campusclaw-assistant` 模块的 `schema.sql` 中。
-
-**默认状态：** `pi.assistant.gateway.enabled=false`，DB 链路不启用；纯本地使用时只走 JSONL 文件持久化。
+持久化均为本地文件，无数据库链路；会话历史只走上述 JSONL。
 
 ### 3.6 代码设计
 
@@ -553,9 +546,7 @@ classDiagram
 | `tool.execution.local-timeout-seconds` | `60` | 本地执行超时 |
 | `subagent.enabled` | `true` | 启用 sub-agent 框架 |
 | `subagent.backends.*` | 内置 `claude-code` / `codex` / `remote-http` 三例 | 每条目类型 acp 或 http |
-| `pi.assistant.gateway.enabled` | `false` | 是否启用 assistant gateway WebSocket |
 | `server.session.persistence.enabled` | `true` | server 模式下是否持久化 conversation JSONL |
-| `spring.datasource.url` | `jdbc:postgresql://localhost:5432/pi_assistant` | DB URL（仅 gateway 启用时使用） |
 | `logging.level.root` | `WARN` | 默认日志级别 |
 | `logging.level.CampusClawStartupBanner` | `INFO` | server 模式启动 banner 固定 INFO |
 
@@ -674,7 +665,7 @@ classDiagram
 | 5.1 | 是否有认证机制 | 是 | （a）本模块对外 HTTP server 当前**未实现**鉴权（`/api/chat` / `/api/skills` 路由无 `@PreAuthorize` / SecurityFilter，由部署侧通过反向代理添加鉴权）；（b）对**外部** provider 走 API key / OAuth，凭据由 `AuthStore` 持久化到 `~/.campusclaw/auth/<provider>.json`，`LoginCommand` / `LogoutCommand` 管理；（c）对 sub-agent HTTP backend 支持 `bearer` / `header` / `none` 三种鉴权（继承 `agent-core` 的 `HttpAgentConfig`），token 由 `subagent.backends.<id>.auth-token` 注入，支持 `${ENV}` 占位 |
 | 5.2 | 纵向/横向越权 | 否 | 本模块 server 模式为单租户本地服务，无多用户隔离；`SessionPool` 按 conversation_id 路由 session，但 conversation_id 本身不绑定 owner——**部署到公网必须前置鉴权代理** |
 | 5.3 | 记录操作日志 | 是 | SLF4J 全链路日志：mode 切换、session 加载、skill install/remove、bash 命令执行（命令本身不记录到 INFO，避免泄露 secret）、HTTP 请求由 reactor-netty 内置 access log |
-| 5.4 | SQL 注入 | 不涉及（间接相关） | 本模块自身无 SQL 调用（grep 验证：无 `executeQuery` / `String.format` + SQL）。当 `pi.assistant.gateway.enabled=true` 时通过 `assistant` 模块的 MyBatis Mapper 落库——SQL 注入风险由 `assistant` 模块 `#{}` 占位防护负责，不在本模块边界 |
+| 5.4 | SQL 注入 | 不涉及 | 本模块自身无 SQL 调用（grep 验证：无 `executeQuery` / `String.format` + SQL），且不含任何 DB 持久化链路（会话历史只走本地 JSONL） |
 | 5.5 | XSS 注入 | 是（导出 HTML 场景） | `/export` 把会话导出为 HTML（`export/` 包），消息文本来自 LLM / 用户输入；当前流程下导出文件供用户本地查看不上线公网，但导出器应对 user content 做 HTML escape。**待审计**：`ExportCommand` 链路是否对 message.text 做了 `StringEscapeUtils.escapeHtml4` 类处理 |
 | 5.6 | XML 注入 | 不涉及 | 全链路 JSON（Jackson）+ YAML（snakeyaml）；无 `DocumentBuilderFactory` / `SAXParserFactory` |
 | 5.7 | 命令注入 | **是（核心风险面）** | 多处 `ProcessBuilder` 调用：（a）`BashExecutor` / `LocalBashOperations.buildProcessBuilder` —— `bash` 工具是 LLM **设计要执行用户/agent 提供的命令**的能力，本质上属于"开放命令面"。防护策略：（i）`ProcessBuilder(List<String>)` 形式而非 `Runtime.exec(String)`——argv 不经 `/bin/sh -c` 拼接（避免 shell 元字符注入到 argv 边界），但 `command` 字符串本身确实通过 `bash -c <command>` 由 bash 解析，shell 元字符按设计有效；（ii）超时机制：`BashExecutor` 强制 `timeout` 参数与全局 `local-timeout-seconds`；（iii）进程树清理：`killProcessTree` 递归杀子进程，防止悬挂；（iv）输出截断：`BashTool.MAX_OUTPUT_BYTES=100_000` 防止巨型输出耗尽内存；（v）**沙箱**：当 `tool.execution.default-mode=SANDBOX` 或 hybrid 路由判定为高风险，命令在 `DockerSandboxClient` 拉起的临时容器（默认 alpine:3.19，512m / 1.0 CPU）中执行，配合 `SandboxSecurityPolicy`（capability drop / readonly fs / 网络隔离）——把命令注入降级为"容器内部行为"，逃逸需要 Docker 漏洞。（b）`ShellResolver.resolveBashPath` 调 `which bash` —— argv 固定，无外部输入。（c）`SkillManager.installFromGit` 调 `git clone <url>` —— URL 来自用户 `/skills install <url>`，argv 形式不经 shell，但 URL 本身仍流入 git，建议进一步白名单/校验协议（`https://` / `git@`）。**总体**：bash 工具的命令注入是**设计能力**，沙箱是核心防线；非 bash 路径（git / which / docker exec）走 argv list 形式避免拼接 |

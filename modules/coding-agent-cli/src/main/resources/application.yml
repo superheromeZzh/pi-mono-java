@@ -3,28 +3,8 @@ spring:
     banner-mode: off
     lazy-initialization: true
     web-application-type: none
-  lazy-initialization:
-    exclude: webSocketGatewayConfig,gatewayChannel
   application:
     name: campusclaw-agent
-  datasource:
-    url: ${GAUSSDB_URL:jdbc:postgresql://localhost:5432/pi_assistant}
-    username: ${GAUSSDB_USER:root}
-    password: ${GAUSSDB_PASSWORD:root}
-    driver-class-name: org.postgresql.Driver
-  sql:
-    init:
-      mode: never
-
-mybatis:
-  configuration:
-    map-underscore-to-camel-case: true
-
-pi:
-  assistant:
-    gateway:
-      enabled: false
-      token:
 
 # 服务器模式（--mode server）下 /api/ws/chat 与 /api/chat 的会话持久化
 # 开启后会把每个 conversation_id 的消息历史写入

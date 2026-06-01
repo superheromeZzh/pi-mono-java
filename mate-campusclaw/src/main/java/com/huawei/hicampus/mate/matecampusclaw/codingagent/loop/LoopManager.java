@@ -17,7 +17,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import com.huawei.hicampus.mate.matecampusclaw.agent.util.LoggingUncaughtExceptionHandler;
-import com.huawei.hicampus.mate.matecampusclaw.assistant.channel.MessageSubmitter;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,7 +31,7 @@ import org.springframework.stereotype.Service;
  * @since [br_eCampusCore 25.1.0_Next]
  */
 @Service
-public class LoopManager implements MessageSubmitter {
+public class LoopManager {
 
     private static final Logger log = LoggerFactory.getLogger(LoopManager.class);
 
@@ -126,7 +125,6 @@ public class LoopManager implements MessageSubmitter {
         return scheduler != null;
     }
 
-    @Override
     public boolean submitMessage(String message) {
         BlockingQueue<String> q = submitQueue;
         if (q != null) {

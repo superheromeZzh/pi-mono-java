@@ -15,7 +15,6 @@
         <module>modules/ai</module>
         <module>modules/tui</module>
         <module>modules/agent-core</module>
-        <module>modules/assistant</module>
         <module>modules/cron</module>
         <module>modules/coding-agent-cli</module>
     </modules>
@@ -72,11 +71,6 @@
             <dependency>
                 <groupId>com.campusclaw</groupId>
                 <artifactId>campusclaw-cron</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.campusclaw</groupId>
-                <artifactId>campusclaw-assistant</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>

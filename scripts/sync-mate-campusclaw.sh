@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #
 # Syncs the in-tree mate-campusclaw/ module from modules/{ai,tui,agent-core,
-# assistant,cron,coding-agent-cli}, applying the package rename
+# cron,coding-agent-cli}, applying the package rename
 # com.campusclaw -> com.huawei.hicampus.mate.matecampusclaw, then verifies
 # the result by compiling mate-campusclaw/.
 #
@@ -36,7 +36,7 @@ ROOT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
 OUT="$ROOT/build/mate-campusclaw"
 MATE="$ROOT/mate-campusclaw"
 EXCLUDE_FILE="$ROOT/scripts/sync-mate-exclude.txt"
-MODULES=(ai tui agent-core assistant cron coding-agent-cli)
+MODULES=(ai tui agent-core cron coding-agent-cli)
 
 # Resources we DO want to keep in sync from modules/* — anything else under
 # src/main/resources/ on the mate side is hand-tuned and skipped.
