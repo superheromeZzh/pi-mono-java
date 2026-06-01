@@ -654,8 +654,10 @@ paths:
           - `defaultModel` —— 合并 `model` / `defaultModel` 后的当前默认模型 id（可能为 null）
           - `customModels` —— `settings.customModels` 数组的当前值
           - `availableModels` —— `ModelCatalogService.getAvailableModels()` 的输出
-            （即过滤后允许给 UI 切换的模型集，始终包含 `provider==custom` 的条目）
-          - `filtered` —— `enabledModels` 是否生效（true 表示 `availableModels` 是过滤后的子集）
+            （仅含有凭证的「可用」模型，可选再经 `enabledModels` 收窄；`provider==custom`
+            条目始终包含且排在最前）
+          - `filtered` —— `enabledModels` 白名单是否生效（true 表示 `availableModels` 在白名单
+            维度上是子集）。无论该标志如何，默认列表都已按「有凭证」过滤
       responses:
         "200":
           description: 当前的模型 settings snapshot。
@@ -1093,7 +1095,8 @@ components:
           description: |
             UI 模型选择器应当展示的条目。等同于
             `ModelCatalogService.getAvailableModels()` + 同样的 wire 格式，
-            与 WS `list_models` 命令返回的 `models` 字段一致。
+            与 WS `list_models`（默认 `all:false`）返回的 `models` 字段一致：
+            仅含有凭证的可用模型，custom 置顶；要全量需走 WS `list_models all:true`。
           items:
             type: object
             required: [id, name, provider, contextWindow, maxTokens, reasoning, hasCredentials]
@@ -1104,7 +1107,9 @@ components:
               contextWindow: { type: integer }
               maxTokens: { type: integer }
               reasoning: { type: boolean }
-              hasCredentials: { type: boolean }
+              hasCredentials:
+                type: boolean
+                description: 服务端能否为该模型解析出 API key。默认列表里恒为 true（无凭证模型已被过滤）；custom 恒 true。
               cost:
                 type: object
                 description: 价格表（USD per 1M tokens）。所有内置/自定义模型都会含此结构（自定义默认全 0）。
@@ -1116,8 +1121,9 @@ components:
         filtered:
           type: boolean
           description: |
-            `enabledModels` 是否生效。true 表示 `availableModels` 是从全集
-            过滤后的子集；false 表示返回了全部已注册模型。
+            `enabledModels` 白名单是否生效。true 表示在白名单维度上 `availableModels`
+            是子集。注意：与该标志无关，`availableModels` 始终已按「有凭证」过滤——
+            该标志只反映白名单，不反映凭证过滤。
 
     Error:
       type: object

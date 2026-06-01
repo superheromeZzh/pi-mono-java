@@ -6,6 +6,7 @@ package com.huawei.hicampus.mate.matecampusclaw.codingagent.model;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
@@ -140,6 +141,17 @@ class ModelCatalogServiceTest {
             List<Model> sorted = svc.getAllModels();
             assertThat(sorted).extracting(Model::id).containsExactly("alpha", "beta", "zeta");
         }
+
+        @Test
+        void customProviderSortedFirst() {
+            when(modelRegistry.getAllModels())
+                    .thenReturn(List.of(
+                            model("aaa", "a", Provider.ANTHROPIC),
+                            model("mmm", "m", Provider.CUSTOM),
+                            model("bbb", "b", Provider.OPENAI)));
+            ModelCatalogService svc = new ModelCatalogService(modelRegistry, settingsManager);
+            assertThat(svc.getAllModels()).extracting(Model::id).containsExactly("mmm", "aaa", "bbb");
+        }
     }
 
     @Nested
@@ -192,6 +204,40 @@ class ModelCatalogServiceTest {
             when(modelRegistry.getAllModels()).thenReturn(List.of(model("m", "m", Provider.ANTHROPIC)));
             ModelCatalogService svc = new ModelCatalogService(modelRegistry, settingsManager);
             assertThat(svc.getAvailableModels()).hasSize(1);
+        }
+
+        @Test
+        void filtersOutModelsWithoutCredentials() {
+            when(settingsManager.load()).thenReturn(Settings.empty());
+            when(modelRegistry.getAllModels())
+                    .thenReturn(
+                            List.of(model("keyed", "K", Provider.ANTHROPIC), model("unkeyed", "U", Provider.OPENAI)));
+            when(providerConfigResolver.resolve(eq(Provider.ANTHROPIC), any(Model.class)))
+                    .thenReturn(new ResolvedProviderConfig("sk-key", null, null));
+            when(providerConfigResolver.resolve(eq(Provider.OPENAI), any(Model.class)))
+                    .thenReturn(new ResolvedProviderConfig(null, null, null));
+            ModelCatalogService svc = new ModelCatalogService(modelRegistry, settingsManager, providerConfigResolver);
+            assertThat(svc.getAvailableModels()).extracting(Model::id).containsExactly("keyed");
+        }
+
+        @Test
+        void customSurvivesCredentialFilter() {
+            when(settingsManager.load()).thenReturn(Settings.empty());
+            when(modelRegistry.getAllModels())
+                    .thenReturn(List.of(model("unkeyed", "U", Provider.OPENAI), model("mine", "C", Provider.CUSTOM)));
+            when(providerConfigResolver.resolve(any(Provider.class), any(Model.class)))
+                    .thenReturn(new ResolvedProviderConfig(null, null, null));
+            ModelCatalogService svc = new ModelCatalogService(modelRegistry, settingsManager, providerConfigResolver);
+            assertThat(svc.getAvailableModels()).extracting(Model::id).containsExactly("mine");
+        }
+
+        @Test
+        void customProviderSortedFirst() {
+            when(settingsManager.load()).thenReturn(Settings.empty());
+            when(modelRegistry.getAllModels())
+                    .thenReturn(List.of(model("aaa", "a", Provider.ANTHROPIC), model("zzz", "z", Provider.CUSTOM)));
+            ModelCatalogService svc = new ModelCatalogService(modelRegistry, settingsManager);
+            assertThat(svc.getAvailableModels()).extracting(Model::id).containsExactly("zzz", "aaa");
         }
     }
 

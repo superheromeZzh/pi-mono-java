@@ -22,11 +22,13 @@ import org.springframework.stereotype.Service;
 /**
  * Single source of truth for "which models is this CLI/server willing to expose".
  *
- * <p>The full {@link ModelRegistry} contains every built-in entry; users may
- * narrow the visible set through {@code settings.enabledModels}. This service
- * applies that filter consistently for the model picker, the {@code -m} flag's
- * scoped cycling, and the WS {@code list_models} command, so the three never
- * disagree.
+ * <p>The full {@link ModelRegistry} contains every built-in entry. This
+ * service narrows that down to what a UI / API client should actually be
+ * offered: models with resolvable credentials, optionally further narrowed by
+ * {@code settings.enabledModels}, with custom-provider models surfaced first.
+ * It backs the WS {@code list_models} command and the REST settings snapshot;
+ * the interactive picker and the {@code -m} flag query {@link ModelRegistry}
+ * directly and are intentionally not credential-filtered.
  *
  * <p>Custom models registered via {@code settings.customModels} are always
  * included regardless of {@code enabledModels}: the user added them on
@@ -37,6 +39,12 @@ import org.springframework.stereotype.Service;
  */
 @Service
 public class ModelCatalogService {
+
+    // Orders custom-provider models first, then alphabetically by provider value and id.
+    private static final Comparator<Model> CUSTOM_FIRST = Comparator.comparingInt(
+                    (Model m) -> m.provider() == Provider.CUSTOM ? 0 : 1)
+            .thenComparing(m -> m.provider().value())
+            .thenComparing(Model::id);
 
     private final ModelRegistry modelRegistry;
     private final SettingsManager settingsManager;
@@ -97,35 +105,67 @@ public class ModelCatalogService {
     }
 
     /**
-     * Every model registered, regardless of {@code enabledModels}. Sorted by provider+id.
+     * Every model registered, regardless of {@code enabledModels} or credentials.
+     * Sorted with custom-provider models first, then by provider value and id.
+     * This is the "show everything" escape hatch behind {@code list_models all:true}.
      *
      * @return the result
      */
     public List<Model> getAllModels() {
         var all = new ArrayList<>(modelRegistry.getAllModels());
-        all.sort(Comparator.comparing((Model m) -> m.provider().value()).thenComparing(Model::id));
+        all.sort(CUSTOM_FIRST);
         return all;
     }
 
     /**
-     * The models a UI / API client should be allowed to switch to.
+     * The models a UI / API client should be allowed to switch to: only models
+     * with resolvable credentials, optionally narrowed by
+     * {@code settings.enabledModels}, with custom-provider models always
+     * included and sorted to the head of the list.
      *
      * <ul>
-     *   <li>If {@code settings.enabledModels} is non-empty, return its
-     *       glob/substring expansion plus all custom-provider models.</li>
-     *   <li>Otherwise return everything.</li>
+     *   <li>Start from the {@code enabledModels} glob/substring expansion (plus
+     *       all custom-provider models) when configured; otherwise the full
+     *       registry.</li>
+     *   <li>Drop any model the server cannot authenticate
+     *       ({@link #hasCredentials}). Custom-provider models always pass.</li>
+     *   <li>Sort custom-provider models first, then by provider value and id.</li>
      * </ul>
+     *
+     * <p>Callers that need the unfiltered registry should use
+     * {@link #getAllModels()} instead.
      *
      * @return the result
      */
     public List<Model> getAvailableModels() {
+        List<Model> candidates = narrowToEnabled(modelRegistry.getAllModels());
+
+        // Keep only models the server can actually authenticate; custom always passes.
+        var usable = new ArrayList<Model>(candidates.size());
+        for (Model m : candidates) {
+            if (hasCredentials(m)) {
+                usable.add(m);
+            }
+        }
+        usable.sort(CUSTOM_FIRST);
+        return usable;
+    }
+
+    /**
+     * Applies the {@code settings.enabledModels} whitelist to the full model
+     * list, always keeping custom-provider models. No credential filtering or
+     * sorting here — that is layered on by {@link #getAvailableModels()}.
+     *
+     * @param all the full model list from the registry
+     * @return the whitelist-narrowed candidate list (unsorted)
+     */
+    private List<Model> narrowToEnabled(List<Model> all) {
         Settings settings = safeLoad();
         List<String> patterns = settings.enabledModels();
         if (patterns == null || patterns.isEmpty()) {
-            return getAllModels();
+            return new ArrayList<>(all);
         }
 
-        var all = modelRegistry.getAllModels();
         var picked = new ArrayList<Model>();
         for (String pattern : patterns) {
             if (pattern == null) {
@@ -148,7 +188,6 @@ public class ModelCatalogService {
                 picked.add(m);
             }
         }
-        picked.sort(Comparator.comparing((Model m) -> m.provider().value()).thenComparing(Model::id));
         return picked;
     }
 

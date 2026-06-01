@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ADR-0003 · enabledModels 白名单保留为交集</title>
+  <style>
+    :root{--fg:#1a1a1a;--dim:#666;--accent:#2563eb;--ok:#16a34a;--no:#dc2626;--bg:#fff;--card:#f6f7f9}
+    body{font:15px/1.6 -apple-system,Segoe UI,Roboto,"PingFang SC",sans-serif;color:var(--fg);
+         background:var(--bg);max-width:820px;margin:2rem auto;padding:0 1.2rem}
+    h1{font-size:1.5rem;margin:.2rem 0}
+    .meta{color:var(--dim);font-size:.9rem;margin-bottom:1.2rem}
+    .badge{display:inline-block;padding:.1rem .6rem;border-radius:1rem;font-size:.8rem;background:var(--ok);color:#fff}
+    section{margin:1.4rem 0}
+    h2{font-size:1.05rem;border-bottom:1px solid #eee;padding-bottom:.3rem}
+    .opt{background:var(--card);border-radius:.5rem;padding:.7rem 1rem;margin:.5rem 0}
+    .pro::before{content:"Pro";color:var(--ok);font-weight:600;margin-right:.4rem}
+    .con::before{content:"Con";color:var(--no);font-weight:600;margin-right:.4rem}
+    a{color:var(--accent)} code{background:var(--card);padding:.1rem .3rem;border-radius:.3rem}
+  </style>
+</head>
+<body>
+  <h1>ADR-0003 · enabledModels 白名单保留为交集（凭证 ∩ 白名单）</h1>
+  <div class="meta">Status: <span class="badge">Accepted</span> · Date: 2026-06-01 ·
+    设计文档: <a href="../designs/list-models-usable-filter.md">list-models-usable-filter</a></div>
+
+  <section><h2>Context</h2>
+    <p>需求是「返回可用模型，而不是白名单模型」。「有凭证」与「在 <code>enabledModels</code> 白名单内」是两个正交维度——
+    需要决定引入凭证过滤后，既有的 <code>enabledModels</code> curation 功能是否保留。</p></section>
+
+  <section><h2>Decision</h2>
+    <p>保留 <code>enabledModels</code> 为**交集**：配了白名单时，默认列表 = 白名单 ∩ 有凭证；没配白名单（常见）时
+    = 所有有凭证的模型。custom 始终包含。</p></section>
+
+  <section><h2>考虑过的选项</h2>
+    <div class="opt"><b>A · 凭证 ∩ 白名单（选中）</b><br>
+      <span class="pro"></span>非破坏性，保留既有 curation 功能<br>
+      <span class="pro"></span>任何情况下都满足「只返回可用模型」（交集是可用集的子集）<br>
+      <span class="con"></span>配过白名单的用户，有凭证但不在白名单的模型仍不显示</div>
+    <div class="opt"><b>B · 完全忽略 enabledModels，纯凭证过滤</b><br>
+      <span class="pro"></span>最贴近字面「不要白名单」<br>
+      <span class="con"></span>配过白名单做 curation 的用户会发现筛选静默失效</div></section>
+
+  <section><h2>Rationale</h2>
+    <p>用户在 Q1 重述时把「可用」纯粹用凭证来源定义，未提白名单。交集方案既兑现「只返回可用」，又不悄悄废弃一个用户主动配置过的特性，代价仅是「有凭证但被 curation 排除」的少数模型不显示——这与 curation 的本意一致。</p></section>
+
+  <section><h2>Consequences</h2>
+    <p>＋ 既有 <code>enabledModels</code> 用户行为平滑。<br>
+       － 若后续确认要「完全忽略白名单」，改动仅几行（删去 <code>narrowToEnabled</code> 调用），届时本 ADR 置
+       Superseded 并新建 ADR 记录。</p></section>
+
+  <section><h2>Related</h2>
+    <p><a href="0001-list-models-usable-credentials.html">ADR-0001</a> ·
+       <a href="0005-filtered-flag-semantics.html">ADR-0005</a></p></section>
+</body>
+</html>
