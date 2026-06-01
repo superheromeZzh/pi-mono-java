@@ -1,34 +1,50 @@
-asyncapi: 3.0.0
-
+asyncapi: 3.1.0
 info:
   title: CampusClaw Chat WebSocket API
   version: 1.0.0
   description: |
     Bidirectional interactive chat channel over WebSocket.
-    Complements `POST /api/chat` (SSE) by adding support for:
+    Complements `POST /api/chat` (SSE — see `docs/openapi/campusclaw-api.yaml`)
+    by adding support for:
       - mid-run steering (`steer`)
       - interactive abort without tearing the connection
       - in-session model / thinking-level switching
       - session resume via `conversation_id` handshake parameter
+      - querying session state, history, prompt templates and installed skills
+      - listing the model catalogue without going through the REST settings endpoint
 
     Every frame is a JSON object with a required `type` discriminator.
     Client-to-server commands may include an `id` that will be echoed in a
-    matching `response` frame.
+    matching `response` frame; the response's `data` field shape depends on
+    the command — see the `*ResponseData` schemas under `components.schemas`.
 
+    The WebSocket shares its `SessionPool` with `POST /api/chat`, so reusing
+    the same `conversation_id` between the two endpoints resumes the same
+    session.
+
+    > **Tooling note**: this is an AsyncAPI 3.0 document — render it with
+    > AsyncAPI tooling: AsyncAPI Studio (studio.asyncapi.com),
+    > `@asyncapi/html-template`, `@asyncapi/cli`, or the VS Code AsyncAPI
+    > preview. **Swagger UI / Swagger Editor only understand OpenAPI and will
+    > reject this file with "does not specify a valid version field"** — that
+    > is expected, not a bug; WebSocket is message/event-driven and has no
+    > OpenAPI representation, so it is intentionally NOT mirrored into
+    > `campusclaw-api.yaml`. The REST + SSE HTTP surface lives separately in
+    > `docs/openapi/campusclaw-api.yaml`.
   contact:
     name: CampusClaw
-    url: https://github.com/mariozechner/pi-mono-java
+    url: 'https://github.com/mariozechner/pi-mono-java'
   license:
     name: MIT
-
 defaultContentType: application/json
-
 servers:
   local:
-    host: localhost:3000
+    host: 'localhost:3000'
     protocol: ws
     pathname: /api/ws/chat
-    description: Local developer instance started via `campusclaw --mode server --port 3000`.
+    description: >-
+      Local developer instance started via `campusclaw --mode server --port
+      3000`.
   production:
     host: api.example.com
     protocol: wss
@@ -36,7 +52,6 @@ servers:
     description: Production endpoint. Requires bearer token on handshake.
     security:
       - $ref: '#/components/securitySchemes/bearerToken'
-
 channels:
   chat:
     address: /api/ws/chat
@@ -56,45 +71,74 @@ channels:
       restarted. Set the property to `false` to revert to the previous
       in-memory-only behaviour.
 
-      Close codes:
-        - 1000  normal close
-        - 4400  protocol error (bad frame / validation failure)
-        - 4401  unauthenticated or token expired
-        - 4409  conversation busy (client tried to start a second `prompt` while streaming)
+      Close codes (current implementation):
+        - 1000  normal close (client closed the WebSocket)
+
+      The server does **not** close the connection on protocol errors, bad
+      frames, or busy conversations — those surface as a synchronous
+      `response { success: false, error: "<msg>" }` frame and the connection
+      stays open so the client can keep working. Close codes `4400` /
+      `4401` / `4409` were considered but are not yet emitted; treat the
+      `response` frame as the authoritative error channel for inbound
+      commands, and the `error` event as the authoritative channel for
+      runtime / model failures.
     parameters:
       conversation_id:
-        description: Optional existing conversation ID to resume. Passed as query parameter on the handshake URL.
+        description: >-
+          Optional existing conversation ID to resume. Passed as query parameter
+          on the handshake URL.
     messages:
-      # Client → Server commands
-      Prompt: { $ref: '#/components/messages/Prompt' }
-      Steer: { $ref: '#/components/messages/Steer' }
-      Abort: { $ref: '#/components/messages/Abort' }
-      NewSession: { $ref: '#/components/messages/NewSession' }
-      SetModel: { $ref: '#/components/messages/SetModel' }
-      ListModels: { $ref: '#/components/messages/ListModels' }
-      SetThinkingLevel: { $ref: '#/components/messages/SetThinkingLevel' }
-      GetState: { $ref: '#/components/messages/GetState' }
-      GetHistory: { $ref: '#/components/messages/GetHistory' }
-      GetPromptTemplates: { $ref: '#/components/messages/GetPromptTemplates' }
-      ListSkills: { $ref: '#/components/messages/ListSkills' }
-      Ping: { $ref: '#/components/messages/Ping' }
-      # Server → Client frames
-      Response: { $ref: '#/components/messages/Response' }
-      AgentStart: { $ref: '#/components/messages/AgentStart' }
-      MessageStart: { $ref: '#/components/messages/MessageStart' }
-      MessageUpdate: { $ref: '#/components/messages/MessageUpdate' }
-      MessageEnd: { $ref: '#/components/messages/MessageEnd' }
-      ToolStart: { $ref: '#/components/messages/ToolStart' }
-      ToolUpdate: { $ref: '#/components/messages/ToolUpdate' }
-      ToolEnd: { $ref: '#/components/messages/ToolEnd' }
-      Done: { $ref: '#/components/messages/Done' }
-      ErrorEvent: { $ref: '#/components/messages/ErrorEvent' }
-      Pong: { $ref: '#/components/messages/Pong' }
-
+      Prompt:
+        $ref: '#/components/messages/Prompt'
+      Steer:
+        $ref: '#/components/messages/Steer'
+      Abort:
+        $ref: '#/components/messages/Abort'
+      NewSession:
+        $ref: '#/components/messages/NewSession'
+      SetModel:
+        $ref: '#/components/messages/SetModel'
+      ListModels:
+        $ref: '#/components/messages/ListModels'
+      SetThinkingLevel:
+        $ref: '#/components/messages/SetThinkingLevel'
+      GetState:
+        $ref: '#/components/messages/GetState'
+      GetHistory:
+        $ref: '#/components/messages/GetHistory'
+      GetPromptTemplates:
+        $ref: '#/components/messages/GetPromptTemplates'
+      ListSkills:
+        $ref: '#/components/messages/ListSkills'
+      Ping:
+        $ref: '#/components/messages/Ping'
+      Response:
+        $ref: '#/components/messages/Response'
+      AgentStart:
+        $ref: '#/components/messages/AgentStart'
+      MessageStart:
+        $ref: '#/components/messages/MessageStart'
+      MessageUpdate:
+        $ref: '#/components/messages/MessageUpdate'
+      MessageEnd:
+        $ref: '#/components/messages/MessageEnd'
+      ToolStart:
+        $ref: '#/components/messages/ToolStart'
+      ToolUpdate:
+        $ref: '#/components/messages/ToolUpdate'
+      ToolEnd:
+        $ref: '#/components/messages/ToolEnd'
+      Done:
+        $ref: '#/components/messages/Done'
+      ErrorEvent:
+        $ref: '#/components/messages/ErrorEvent'
+      Pong:
+        $ref: '#/components/messages/Pong'
 operations:
   sendCommand:
     action: send
-    channel: { $ref: '#/channels/chat' }
+    channel:
+      $ref: '#/channels/chat'
     summary: Client sends a command to the agent.
     messages:
       - $ref: '#/channels/chat/messages/Prompt'
@@ -109,10 +153,10 @@ operations:
       - $ref: '#/channels/chat/messages/GetPromptTemplates'
       - $ref: '#/channels/chat/messages/ListSkills'
       - $ref: '#/channels/chat/messages/Ping'
-
   receiveEvent:
     action: receive
-    channel: { $ref: '#/channels/chat' }
+    channel:
+      $ref: '#/channels/chat'
     summary: Server pushes agent events or a synchronous response to the client.
     messages:
       - $ref: '#/channels/chat/messages/Response'
@@ -126,46 +170,56 @@ operations:
       - $ref: '#/channels/chat/messages/Done'
       - $ref: '#/channels/chat/messages/ErrorEvent'
       - $ref: '#/channels/chat/messages/Pong'
-
 components:
-
   securitySchemes:
     bearerToken:
       type: httpApiKey
       in: query
       name: token
-      description: Bearer token passed as the `token` query parameter on the WebSocket handshake URL.
-
+      description: >-
+        Bearer token passed as the `token` query parameter on the WebSocket
+        handshake URL.
   messages:
-
-    # =========================================================================
-    # Client → Server commands
-    # =========================================================================
-
     Prompt:
       name: Prompt
       title: Send user message
-      summary: Start a new assistant turn. Rejected with close code 4409 (or response error) if the conversation is already streaming.
-      payload: { $ref: '#/components/schemas/PromptCmd' }
-      examples:
-        - payload: { type: prompt, id: req-1, message: "用 Java 写一个快速排序" }
+      summary: |
+        Start a new assistant turn. Rejected with `response { success:false }`
+        if the conversation is already streaming.
 
+        Successful response data is `{ conversation_id }` — see
+        `PromptResponseData`. After the response frame the server emits
+        `agent_start`, then the message/tool stream, then `done`.
+      payload:
+        $ref: '#/components/schemas/PromptCmd'
+      examples:
+        - payload:
+            type: prompt
+            id: req-1
+            message: 用 Java 写一个快速排序
     Steer:
       name: Steer
       title: Steer the running agent
-      summary: Inject an additional user message while the agent is mid-run. Does not start a new turn.
-      payload: { $ref: '#/components/schemas/SteerCmd' }
+      summary: >-
+        Inject an additional user message while the agent is mid-run. Does not
+        start a new turn.
+      payload:
+        $ref: '#/components/schemas/SteerCmd'
       examples:
-        - payload: { type: steer, id: req-2, message: "改用 Python 实现" }
-
+        - payload:
+            type: steer
+            id: req-2
+            message: 改用 Python 实现
     Abort:
       name: Abort
       title: Abort current generation
       summary: Stop the currently running turn. Safe to call when idle (no-op).
-      payload: { $ref: '#/components/schemas/AbortCmd' }
+      payload:
+        $ref: '#/components/schemas/AbortCmd'
       examples:
-        - payload: { type: abort, id: req-3 }
-
+        - payload:
+            type: abort
+            id: req-3
     NewSession:
       name: NewSession
       title: Reset conversation history
@@ -180,18 +234,29 @@ components:
         `data.conversation_id`, and subsequent `agent_start` / `done` frames
         will carry it. Frontends that cache `conversation_id` for resume
         MUST replace the cached value from the response.
-      payload: { $ref: '#/components/schemas/NewSessionCmd' }
+      payload:
+        $ref: '#/components/schemas/NewSessionCmd'
       examples:
-        - payload: { type: new_session, id: req-4 }
-
+        - payload:
+            type: new_session
+            id: req-4
     SetModel:
       name: SetModel
       title: Switch model
-      summary: Change the model used by this conversation. Accepts exact model ID, provider/id, or fuzzy substring.
-      payload: { $ref: '#/components/schemas/SetModelCmd' }
-      examples:
-        - payload: { type: set_model, id: req-5, model: "claude-sonnet-4" }
+      summary: |
+        Change the model used by this conversation. Accepts exact model ID,
+        provider/id, or fuzzy substring.
 
+        Successful response data is `{ model }` — the resolved canonical id
+        (see `SetModelResponseData`). Mismatch / ambiguous fuzzy match
+        returns `success:false` with a human-readable error.
+      payload:
+        $ref: '#/components/schemas/SetModelCmd'
+      examples:
+        - payload:
+            type: set_model
+            id: req-5
+            model: claude-sonnet-4
     ListModels:
       name: ListModels
       title: List available models
@@ -200,98 +265,139 @@ components:
         only models that pass `settings.enabledModels` filtering are returned;
         send `all: true` to bypass the filter. Custom-provider models from
         `settings.customModels` are always included regardless of filtering.
-      payload: { $ref: '#/components/schemas/ListModelsCmd' }
+      payload:
+        $ref: '#/components/schemas/ListModelsCmd'
       examples:
-        - payload: { type: list_models, id: req-9 }
-        - payload: { type: list_models, id: req-10, all: true }
-
+        - payload:
+            type: list_models
+            id: req-9
+        - payload:
+            type: list_models
+            id: req-10
+            all: true
     SetThinkingLevel:
       name: SetThinkingLevel
       title: Change thinking level
-      payload: { $ref: '#/components/schemas/SetThinkingLevelCmd' }
+      summary: |
+        Update the assistant's thinking level for subsequent turns.
+        Successful response data is `{ level }` echoing the canonical value
+        (see `SetThinkingLevelResponseData`). Illegal values return
+        `success:false`.
+      payload:
+        $ref: '#/components/schemas/SetThinkingLevelCmd'
       examples:
-        - payload: { type: set_thinking_level, id: req-6, level: high }
-
+        - payload:
+            type: set_thinking_level
+            id: req-6
+            level: high
     GetState:
       name: GetState
       title: Query session state
-      summary: Returns streaming flag, current model, thinking level, and message count.
-      payload: { $ref: '#/components/schemas/GetStateCmd' }
+      summary: |
+        Returns the current conversation id, streaming flag, model id,
+        thinking level, and message count. See `GetStateResponseData`.
+      payload:
+        $ref: '#/components/schemas/GetStateCmd'
       examples:
-        - payload: { type: get_state, id: req-7 }
-
+        - payload:
+            type: get_state
+            id: req-7
     GetHistory:
       name: GetHistory
       title: Return full message history
-      payload: { $ref: '#/components/schemas/GetHistoryCmd' }
+      summary: |
+        Returns every Message currently in the session's in-memory history,
+        in order. Frontends typically use this on (re)connect to backfill
+        the chat panel. Response data shape: `GetHistoryResponseData`.
+      payload:
+        $ref: '#/components/schemas/GetHistoryCmd'
       examples:
-        - payload: { type: get_history, id: req-8 }
-
+        - payload:
+            type: get_history
+            id: req-8
     GetPromptTemplates:
       name: GetPromptTemplates
       title: List installed prompt templates
-      payload: { $ref: '#/components/schemas/GetPromptTemplatesCmd' }
-
+      summary: |
+        Returns every prompt template visible to the session (built-in plus
+        user-installed). Response data shape: `GetPromptTemplatesResponseData`.
+      payload:
+        $ref: '#/components/schemas/GetPromptTemplatesCmd'
     ListSkills:
       name: ListSkills
       title: List installed skills
-      payload: { $ref: '#/components/schemas/ListSkillsCmd' }
-
+      summary: |
+        Returns every skill registered in the session's `SkillRegistry`
+        (already filtered through `~/.campusclaw/packages/.disabled.json`).
+        Response data shape: `ListSkillsResponseData`.
+      payload:
+        $ref: '#/components/schemas/ListSkillsCmd'
     Ping:
       name: Ping
       title: Application-level heartbeat
-      summary: Server replies with a `pong` frame. The server also emits `pong` autonomously every 20s.
-      payload: { $ref: '#/components/schemas/PingCmd' }
-
-    # =========================================================================
-    # Server → Client frames
-    # =========================================================================
-
+      summary: >-
+        Server replies with a `pong` frame. The server also emits `pong`
+        autonomously every 20s.
+      payload:
+        $ref: '#/components/schemas/PingCmd'
     Response:
       name: Response
       title: Synchronous response to a command with an id
-      payload: { $ref: '#/components/schemas/ResponseFrame' }
+      payload:
+        $ref: '#/components/schemas/ResponseFrame'
       examples:
-        - payload: { type: response, id: req-1, success: true, data: { conversation_id: a1b2c3d4 } }
-        - payload: { type: response, id: req-5, success: false, error: "Unknown model: foobar" }
-
+        - payload:
+            type: response
+            id: req-1
+            success: true
+            data:
+              conversation_id: a1b2c3d4
+        - payload:
+            type: response
+            id: req-5
+            success: false
+            error: 'Unknown model: foobar'
     AgentStart:
       name: AgentStart
       title: Agent run started
-      summary: Emitted once at the start of a turn, after a `prompt` or `steer` is accepted.
-      payload: { $ref: '#/components/schemas/AgentStartEvt' }
-
+      summary: >-
+        Emitted once at the start of a turn, after a `prompt` or `steer` is
+        accepted.
+      payload:
+        $ref: '#/components/schemas/AgentStartEvt'
     MessageStart:
       name: MessageStart
       title: Assistant message streaming started
-      payload: { $ref: '#/components/schemas/MessageStartEvt' }
-
+      payload:
+        $ref: '#/components/schemas/MessageStartEvt'
     MessageUpdate:
       name: MessageUpdate
       title: Assistant message incremental update
-      summary: Carries the in-progress Message object. Frontends should diff against the previous update rather than assume pure deltas.
-      payload: { $ref: '#/components/schemas/MessageUpdateEvt' }
-
+      summary: >-
+        Carries the in-progress Message object. Frontends should diff against
+        the previous update rather than assume pure deltas.
+      payload:
+        $ref: '#/components/schemas/MessageUpdateEvt'
     MessageEnd:
       name: MessageEnd
       title: Assistant message finalized
-      payload: { $ref: '#/components/schemas/MessageEndEvt' }
-
+      payload:
+        $ref: '#/components/schemas/MessageEndEvt'
     ToolStart:
       name: ToolStart
       title: Tool execution started
-      payload: { $ref: '#/components/schemas/ToolStartEvt' }
-
+      payload:
+        $ref: '#/components/schemas/ToolStartEvt'
     ToolUpdate:
       name: ToolUpdate
       title: Tool execution partial result
-      payload: { $ref: '#/components/schemas/ToolUpdateEvt' }
-
+      payload:
+        $ref: '#/components/schemas/ToolUpdateEvt'
     ToolEnd:
       name: ToolEnd
       title: Tool execution finished
-      payload: { $ref: '#/components/schemas/ToolEndEvt' }
-
+      payload:
+        $ref: '#/components/schemas/ToolEndEvt'
     Done:
       name: Done
       title: Agent turn completed
@@ -300,82 +406,102 @@ components:
         Includes the final assistant text, usage, and stopReason extracted from
         the last `AssistantMessage` in the turn's message history, so frontends
         don't have to track assistant bubbles themselves.
-      payload: { $ref: '#/components/schemas/DoneEvt' }
-
+      payload:
+        $ref: '#/components/schemas/DoneEvt'
     ErrorEvent:
       name: ErrorEvent
       title: Runtime or model-level error
-      summary: |
+      summary: >
         Emitted in two cases:
           1. The `session.prompt(...)` future completes exceptionally (Java exception, transport error).
           2. The final `AssistantMessage` has `stopReason=error` — model returned a provider-level failure.
-        In case 2, this `error` frame is emitted **in addition to** `message_end` and `done`,
-        so frontends can treat this frame as the single source of truth for "something went wrong
-        with this turn". The connection stays open; clients may retry.
-      payload: { $ref: '#/components/schemas/ErrorEvt' }
+        In case 2, this `error` frame is emitted **in addition to**
+        `message_end` and `done`,
 
+        so frontends can treat this frame as the single source of truth for
+        "something went wrong
+
+        with this turn". The connection stays open; clients may retry.
+      payload:
+        $ref: '#/components/schemas/ErrorEvt'
     Pong:
       name: Pong
       title: Heartbeat
-      payload: { $ref: '#/components/schemas/PongFrame' }
-
+      payload:
+        $ref: '#/components/schemas/PongFrame'
   schemas:
-
-    # -------------------------------------------------------------------------
-    # Command schemas
-    # -------------------------------------------------------------------------
-
     PromptCmd:
       type: object
-      required: [type, message]
+      required:
+        - type
+        - message
       properties:
-        type: { const: prompt }
+        type:
+          const: prompt
         id:
           type: string
           description: Client-assigned correlation id. Echoed back in a `response` frame.
         message:
           type: string
           minLength: 1
-          description: Raw user input. Leading `/name args` is expanded as a prompt template before hitting the agent.
-
+          description: >-
+            Raw user input. Leading `/name args` is expanded as a prompt
+            template before hitting the agent.
     SteerCmd:
       type: object
-      required: [type, message]
+      required:
+        - type
+        - message
       properties:
-        type: { const: steer }
-        id: { type: string }
-        message: { type: string, minLength: 1 }
-
+        type:
+          const: steer
+        id:
+          type: string
+        message:
+          type: string
+          minLength: 1
     AbortCmd:
       type: object
-      required: [type]
+      required:
+        - type
       properties:
-        type: { const: abort }
-        id: { type: string }
-
+        type:
+          const: abort
+        id:
+          type: string
     NewSessionCmd:
       type: object
-      required: [type]
+      required:
+        - type
       properties:
-        type: { const: new_session }
-        id: { type: string }
-
+        type:
+          const: new_session
+        id:
+          type: string
     SetModelCmd:
       type: object
-      required: [type, model]
+      required:
+        - type
+        - model
       properties:
-        type: { const: set_model }
-        id: { type: string }
+        type:
+          const: set_model
+        id:
+          type: string
         model:
           type: string
-          description: Model identifier. Accepts exact id (`glm-5`), provider-qualified (`zai/glm-5`), or fuzzy substring (`sonnet`).
-
+          description: >-
+            Model identifier. Accepts exact id (`glm-5`), provider-qualified
+            (`zai/glm-5`), or fuzzy substring (`sonnet`).
     ListModelsCmd:
       type: object
-      required: [type]
+      required:
+        - type
       properties:
-        type: { const: list_models }
-        id: { type: string }
+        type:
+          const: list_models
+        id:
+          type: string
         all:
           type: boolean
           default: false
@@ -383,36 +509,190 @@ components:
             When `true`, return every model registered in the registry. When
             `false` (default), return only models that pass
             `settings.enabledModels` filtering plus all custom-provider models.
-
     ListModelsResponseData:
       type: object
       description: |
         `data` payload of a successful `list_models` response.
-      required: [models]
+      required:
+        - models
       properties:
         current:
           type: string
           nullable: true
-          description: Currently active model id, or null before the session is initialised.
+          description: >-
+            Currently active model id, or null before the session is
+            initialised.
         filtered:
           type: boolean
-          description: True when `settings.enabledModels` narrowed the result; false when `all: true` or no filter is configured.
+          description: >-
+            True when `settings.enabledModels` narrowed the result; false when
+            `all: true` or no filter is configured.
         models:
           type: array
-          items: { $ref: '#/components/schemas/ModelInfo' }
-
+          items:
+            $ref: '#/components/schemas/ModelInfo'
+    PromptResponseData:
+      type: object
+      description: |
+        `data` payload of a successful `prompt` acknowledgement. The actual
+        assistant output arrives later via `agent_start` / `message_*` / `done`.
+      required:
+        - conversation_id
+      properties:
+        conversation_id:
+          type: string
+    NewSessionResponseData:
+      type: object
+      description: |
+        `data` payload of a successful `new_session` ack. With persistence
+        enabled this `conversation_id` is the **rotated** id pointing to a
+        fresh JSONL file; frontends must overwrite any cached id.
+      required:
+        - conversation_id
+      properties:
+        conversation_id:
+          type: string
+    SetModelResponseData:
+      type: object
+      description: '`data` payload of a successful `set_model` response.'
+      required:
+        - model
+      properties:
+        model:
+          type: string
+          description: Canonical model id the session is now using.
+    SetThinkingLevelResponseData:
+      type: object
+      description: '`data` payload of a successful `set_thinking_level` response.'
+      required:
+        - level
+      properties:
+        level:
+          type: string
+          enum:
+            - 'off'
+            - minimal
+            - low
+            - medium
+            - high
+            - xhigh
+    GetStateResponseData:
+      type: object
+      description: '`data` payload of a successful `get_state` response.'
+      required:
+        - conversation_id
+        - isStreaming
+        - thinkingLevel
+        - messageCount
+      properties:
+        conversation_id:
+          type: string
+        isStreaming:
+          type: boolean
+          description: True while the session is mid-turn.
+        model:
+          type: string
+          nullable: true
+          description: Currently selected model id (null before initialisation).
+        thinkingLevel:
+          type: string
+          enum:
+            - 'off'
+            - minimal
+            - low
+            - medium
+            - high
+            - xhigh
+        messageCount:
+          type: integer
+          minimum: 0
+          description: Number of Message entries in the session's in-memory history.
+    GetHistoryResponseData:
+      type: object
+      description: '`data` payload of a successful `get_history` response.'
+      required:
+        - messages
+      properties:
+        messages:
+          type: array
+          items:
+            $ref: '#/components/schemas/Message'
+    PromptTemplateInfo:
+      type: object
+      required:
+        - name
+        - description
+        - source
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        source:
+          type: string
+          description: >-
+            Where the template was loaded from (e.g. `built-in`, `user`, skill
+            package id).
+    GetPromptTemplatesResponseData:
+      type: object
+      description: '`data` payload of a successful `get_prompt_templates` response.'
+      required:
+        - templates
+      properties:
+        templates:
+          type: array
+          items:
+            $ref: '#/components/schemas/PromptTemplateInfo'
+    SkillInfo:
+      type: object
+      required:
+        - name
+        - description
+        - source
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        source:
+          type: string
+          description: 'Where the skill was loaded from (e.g. `user`, `project`, built-in).'
+    ListSkillsResponseData:
+      type: object
+      description: '`data` payload of a successful `list_skills` response.'
+      required:
+        - skills
+      properties:
+        skills:
+          type: array
+          items:
+            $ref: '#/components/schemas/SkillInfo'
     ModelInfo:
       type: object
-      required: [id, name, provider, contextWindow, maxTokens, reasoning, hasCredentials]
+      required:
+        - id
+        - name
+        - provider
+        - contextWindow
+        - maxTokens
+        - reasoning
+        - hasCredentials
       properties:
-        id: { type: string }
-        name: { type: string }
+        id:
+          type: string
+        name:
+          type: string
         provider:
           type: string
-          description: Provider value as serialised by the `Provider` enum (e.g. `anthropic`, `zai`, `openai`).
-        contextWindow: { type: integer }
-        maxTokens: { type: integer }
-        reasoning: { type: boolean }
+          description: >-
+            Provider value as serialised by the `Provider` enum (e.g.
+            `anthropic`, `zai`, `openai`).
+        contextWindow:
+          type: integer
+        maxTokens:
+          type: integer
+        reasoning:
+          type: boolean
         hasCredentials:
           type: boolean
           description: |
@@ -424,143 +704,195 @@ components:
         cost:
           type: object
           properties:
-            input: { type: number }
-            output: { type: number }
-            cacheRead: { type: number }
-            cacheWrite: { type: number }
-
+            input:
+              type: number
+            output:
+              type: number
+            cacheRead:
+              type: number
+            cacheWrite:
+              type: number
     SetThinkingLevelCmd:
       type: object
-      required: [type, level]
+      required:
+        - type
+        - level
       properties:
-        type: { const: set_thinking_level }
-        id: { type: string }
-        level:
-          type: string
-          enum: [off, minimal, low, medium, high, xhigh]
-
-    GetStateCmd:
-      type: object
-      required: [type]
-      properties:
-        type: { const: get_state }
-        id: { type: string }
-
-    GetHistoryCmd:
-      type: object
-      required: [type]
-      properties:
-        type: { const: get_history }
-        id: { type: string }
-
-    GetPromptTemplatesCmd:
-      type: object
-      required: [type]
-      properties:
-        type: { const: get_prompt_templates }
-        id: { type: string }
-
-    ListSkillsCmd:
-      type: object
-      required: [type]
-      properties:
-        type: { const: list_skills }
-        id: { type: string }
-
-    PingCmd:
-      type: object
-      required: [type]
-      properties:
-        type: { const: ping }
-
-    # -------------------------------------------------------------------------
-    # Server frame schemas
-    # -------------------------------------------------------------------------
-
-    ResponseFrame:
-      type: object
-      required: [type, success]
-      properties:
-        type: { const: response }
+        type:
+          const: set_thinking_level
         id:
           type: string
-          description: Echoes the `id` from the originating command. Absent if the command omitted one.
-        success: { type: boolean }
+        level:
+          type: string
+          enum:
+            - 'off'
+            - minimal
+            - low
+            - medium
+            - high
+            - xhigh
+    GetStateCmd:
+      type: object
+      required:
+        - type
+      properties:
+        type:
+          const: get_state
+        id:
+          type: string
+    GetHistoryCmd:
+      type: object
+      required:
+        - type
+      properties:
+        type:
+          const: get_history
+        id:
+          type: string
+    GetPromptTemplatesCmd:
+      type: object
+      required:
+        - type
+      properties:
+        type:
+          const: get_prompt_templates
+        id:
+          type: string
+    ListSkillsCmd:
+      type: object
+      required:
+        - type
+      properties:
+        type:
+          const: list_skills
+        id:
+          type: string
+    PingCmd:
+      type: object
+      required:
+        - type
+      properties:
+        type:
+          const: ping
+    ResponseFrame:
+      type: object
+      required:
+        - type
+        - success
+      properties:
+        type:
+          const: response
+        id:
+          type: string
+          description: >-
+            Echoes the `id` from the originating command. Absent if the command
+            omitted one.
+        success:
+          type: boolean
         data:
-          description: Command-specific payload when `success` is true. Shape depends on the command; see individual command docs.
+          description: >-
+            Command-specific payload when `success` is true. Shape depends on
+            the command; see individual command docs.
         error:
           type: string
           description: Human-readable error message when `success` is false.
-
     AgentStartEvt:
       type: object
-      required: [type]
+      required:
+        - type
       properties:
-        type: { const: agent_start }
-        conversation_id: { type: string }
-
+        type:
+          const: agent_start
+        conversation_id:
+          type: string
     MessageStartEvt:
       type: object
-      required: [type]
+      required:
+        - type
       properties:
-        type: { const: message_start }
-        conversation_id: { type: string }
+        type:
+          const: message_start
+        conversation_id:
+          type: string
         message:
           $ref: '#/components/schemas/Message'
-          description: The Message being started (role, empty content so far).
-
+          description: 'The Message being started (role, empty content so far).'
     MessageUpdateEvt:
       type: object
-      required: [type]
+      required:
+        - type
       properties:
-        type: { const: message_update }
-        message: { $ref: '#/components/schemas/Message' }
-
+        type:
+          const: message_update
+        message:
+          $ref: '#/components/schemas/Message'
     MessageEndEvt:
       type: object
-      required: [type]
+      required:
+        - type
       properties:
-        type: { const: message_end }
-        message: { $ref: '#/components/schemas/Message' }
-
+        type:
+          const: message_end
+        message:
+          $ref: '#/components/schemas/Message'
     ToolStartEvt:
       type: object
-      required: [type, toolCallId, toolName]
+      required:
+        - type
+        - toolCallId
+        - toolName
       properties:
-        type: { const: tool_start }
-        toolCallId: { type: string }
-        toolName: { type: string }
+        type:
+          const: tool_start
+        toolCallId:
+          type: string
+        toolName:
+          type: string
         args:
           description: Tool input arguments (tool-specific JSON).
-
     ToolUpdateEvt:
       type: object
-      required: [type, toolCallId, toolName]
+      required:
+        - type
+        - toolCallId
+        - toolName
       properties:
-        type: { const: tool_update }
-        toolCallId: { type: string }
-        toolName: { type: string }
+        type:
+          const: tool_update
+        toolCallId:
+          type: string
+        toolName:
+          type: string
         args: {}
         partialResult:
           description: In-progress tool output (tool-specific JSON).
-
     ToolEndEvt:
       type: object
-      required: [type, toolCallId, toolName, isError]
+      required:
+        - type
+        - toolCallId
+        - toolName
+        - isError
       properties:
-        type: { const: tool_end }
-        toolCallId: { type: string }
-        toolName: { type: string }
-        isError: { type: boolean }
+        type:
+          const: tool_end
+        toolCallId:
+          type: string
+        toolName:
+          type: string
+        isError:
+          type: boolean
         result:
           description: Tool result (may be truncated by the server for large outputs).
-
     DoneEvt:
       type: object
-      required: [type]
+      required:
+        - type
       properties:
-        type: { const: done }
-        conversation_id: { type: string }
+        type:
+          const: done
+        conversation_id:
+          type: string
         finalText:
           type: string
           description: |
@@ -570,41 +902,53 @@ components:
         usage:
           type: object
           additionalProperties: true
-          description: |
+          description: >
             Token usage and cost for the last assistant message. Mirrors
-            `com.campusclaw.ai.types.Usage` (inputTokens / outputTokens / cost etc.).
+
+            `com.campusclaw.ai.types.Usage` (inputTokens / outputTokens / cost
+            etc.).
+
             Shape is passed through from the provider, so frontends should
+
             tolerate extra keys.
         stopReason:
           type: string
-          enum: [stop, length, toolUse, error, aborted]
+          enum:
+            - stop
+            - length
+            - toolUse
+            - error
+            - aborted
           description: |
             Why the last assistant message stopped generating. `error` /
             `aborted` are terminal conditions you may want to surface in UI.
             When `error`, an additional `error` frame is emitted alongside this
             `done` frame.
-
     ErrorEvt:
       type: object
-      required: [type, error]
+      required:
+        - type
+        - error
       properties:
-        type: { const: error }
-        error: { type: string }
-        conversation_id: { type: string }
-
+        type:
+          const: error
+        error:
+          type: string
+        conversation_id:
+          type: string
     PongFrame:
       type: object
-      required: [type]
+      required:
+        - type
       properties:
-        type: { const: pong }
-
-    # -------------------------------------------------------------------------
-    # Shared: Message (minimal; authoritative shape is com.campusclaw.ai.types.Message)
-    # -------------------------------------------------------------------------
-
+        type:
+          const: pong
     Message:
       type: object
-      description: |
-        Opaque Message object from `com.campusclaw.ai.types.Message`. Fields vary by role
-        (user, assistant, tool-result, etc). Frontends should tolerate unknown fields.
+      description: >
+        Opaque Message object from `com.campusclaw.ai.types.Message`. Fields
+        vary by role
+
+        (user, assistant, tool-result, etc). Frontends should tolerate unknown
+        fields.
       additionalProperties: true
