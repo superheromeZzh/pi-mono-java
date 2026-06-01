@@ -29,7 +29,7 @@ import org.springframework.stereotype.Service;
  * file from {@code settings.json} so it can be excluded from version control
  * and locked down to {@code 0600}.
  *
- * <p>File: {@code ~/file/.campusclaw/agent/auth.json}.
+ * <p>File: {@code ~/.campusclaw/agent/auth.json}.
  *
  * <p>Schema mirrors opencode's auth.json:
  * <pre>{@code

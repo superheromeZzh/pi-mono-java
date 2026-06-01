@@ -20,7 +20,7 @@ import org.springframework.stereotype.Service;
 
 /**
  * Manages themes for the coding agent. Supports built-in themes and custom themes
- * loaded from ~/file/.campusclaw/agent/themes/.
+ * loaded from ~/.campusclaw/agent/themes/.
  *
  * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
  * @since [br_eCampusCore 25.1.0_Next]

@@ -21,7 +21,7 @@ import org.slf4j.LoggerFactory;
  *
  * <p>Search order:
  * <ol>
- *   <li>Global: {@code ~/file/.campusclaw/agent/AGENTS.md} or {@code ~/file/.campusclaw/agent/CLAUDE.md}</li>
+ *   <li>Global: {@code ~/.campusclaw/agent/AGENTS.md} or {@code ~/.campusclaw/agent/CLAUDE.md}</li>
  *   <li>Ancestor directories: walks from cwd up to filesystem root</li>
  * </ol>
  *
@@ -39,7 +39,7 @@ public class ContextFileLoader {
      * Loads all context files from the global agent directory and the cwd ancestor chain.
      *
      * @param cwd      the current working directory
-     * @param agentDir the global agent config directory (e.g. ~/file/.campusclaw/agent)
+     * @param agentDir the global agent config directory (e.g. ~/.campusclaw/agent)
      * @return ordered list of context files (global first, then ancestors root-to-cwd)
      */
     public List<ContextFile> loadProjectContextFiles(Path cwd, Path agentDir) {

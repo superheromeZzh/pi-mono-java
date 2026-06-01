@@ -10,7 +10,7 @@ import java.time.Instant;
  * Persisted metadata snapshot for a {@link SubAgentSession}.
  *
  * <p>Captured at open and updated on close. First-class wire shape so the JSON written under
- * {@code ~/file/.campusclaw/agent/subagents/} stays stable across releases.
+ * {@code ~/.campusclaw/agent/subagents/} stays stable across releases.
  *
  * @param sessionKey canonical {@link SubAgentSessionKey#asString()}
  * @param backendId backend id

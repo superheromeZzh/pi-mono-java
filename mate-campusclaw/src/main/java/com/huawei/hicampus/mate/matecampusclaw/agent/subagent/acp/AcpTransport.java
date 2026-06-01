@@ -40,7 +40,7 @@ public class AcpTransport implements AutoCloseable {
      * JSONL trace of every ACP envelope (in/out). Default ON to make "no answer" issues
      * diagnosable without env-var rituals — TUI swallows logback console output and Windows
      * env propagation is unreliable. Opt out with {@code CAMPUSCLAW_ACP_TRACE=0} (or
-     * {@code -Dcampusclaw.acp.trace=0}). File lives at {@code ~/file/.campusclaw/acp-trace.jsonl}
+     * {@code -Dcampusclaw.acp.trace=0}). File lives at {@code ~/.campusclaw/acp-trace.jsonl}
      * (TRUNCATE on each JVM start). Writes a startup marker line so the file always exists
      * after class load — its presence/contents proves the JVM ran with the latest code.
      */

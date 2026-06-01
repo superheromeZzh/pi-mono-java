@@ -23,7 +23,7 @@ import org.slf4j.LoggerFactory;
  * <p>Discovers resources from multiple layers in priority order:
  * <ol>
  *   <li>Project-level: {@code {cwd}/.campusclaw/}</li>
- *   <li>User-level: {@code ~/file/.campusclaw/agent/}</li>
+ *   <li>User-level: {@code ~/.campusclaw/agent/}</li>
  *   <li>Built-in: classpath resources</li>
  * </ol>
  *
@@ -43,7 +43,7 @@ public class ResourceLoader {
      * Creates a new ResourceLoader.
      *
      * @param cwd     the current working directory (project root)
-     * @param userDir the user-level resource directory (e.g. ~/file/.campusclaw/agent)
+     * @param userDir the user-level resource directory (e.g. ~/.campusclaw/agent)
      */
     public ResourceLoader(Path cwd, Path userDir) {
         this.cwd = cwd;

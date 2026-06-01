@@ -28,7 +28,7 @@
 CampusClaw 主进程是 TUI 交互式 Agent，对话生命周期 = 进程生命周期；用户存在"定期执行某条 prompt"（每日总结、每小时巡检、定时构建）的诉求，但主对话无法长期驻留前台。需要在主 Agent 之外有一个可被持久化、可被独立调度的副 Agent 入口。
 
 **价值：**
-- 把 LLM 调度任务沉淀为可持久化记录（`~/file/.campusclaw/agent/cron/jobs.json`），跨会话存活
+- 把 LLM 调度任务沉淀为可持久化记录（`~/.campusclaw/agent/cron/jobs.json`），跨会话存活
 - 通过 `CronTool`（`AgentTool`）暴露给 LLM 自身——agent 可以自调度
 - 通过 `tickOnce()` 与 `--cron-tick` CLI 模式与系统调度器（launchd / crontab）集成，主进程不在时仍可触发
 - 不修改 `agent-core` / `ai` / `tui` 三个核心模块的 Java 源码，作为独立 Maven 模块挂载
@@ -80,7 +80,7 @@ flowchart LR
 
 | 序号 | 功能点 | 描述 | 优先级 | 预估工作量 |
 |---|---|---|---|---|
-| 1 | 任务定义与持久化 | 通过 `CronStore` 在 `~/file/.campusclaw/agent/cron/jobs.json` 保存 `CronJob` 列表，支持文件锁多进程共享 | 高 | - |
+| 1 | 任务定义与持久化 | 通过 `CronStore` 在 `~/.campusclaw/agent/cron/jobs.json` 保存 `CronJob` 列表，支持文件锁多进程共享 | 高 | - |
 | 2 | 三种调度类型 | `CronSchedule.At` / `Every` / `CronExpr` sealed 协议，覆盖一次性、固定间隔、cron 表达式 | 高 | - |
 | 3 | 进程内调度引擎 | `CronEngine` 用单线程 `ScheduledExecutorService` 驱动 tick，支持 `start` / `stop` / `scheduleJob` / `unscheduleJob` / `triggerJob` | 高 | - |
 | 4 | 隔离 Agent 执行 | `CronJobExecutor` 每次任务 `new Agent(aiService)`，通过 `payload.modelId` / `allowedTools` / `systemPrompt` 定制 | 高 | - |
@@ -211,9 +211,9 @@ sequenceDiagram
 
 | 路径 | 格式 | 写入器 | 说明 |
 |---|---|---|---|
-| `~/file/.campusclaw/agent/cron/jobs.json` | JSON `{"version": 1, "jobs": [CronJob...]}` | `CronStore` | 任务定义与运行时状态合并存储；写前 pretty-print；进程内 `ReentrantReadWriteLock`；进程间 `FileChannel.tryLock` |
-| `~/file/.campusclaw/agent/cron/jobs.json.lock` | 二进制 advisory lock | `CronStore.acquireProcessLock` | 多进程互斥（主进程 + `--cron-tick` 子进程） |
-| `~/file/.campusclaw/agent/cron/runs/{jobId}.jsonl` | JSON-Lines | `CronRunLog` | append-only；每行一条 `CronRunRecord`；`StandardCharsets.UTF_8` 显式编码 |
+| `~/.campusclaw/agent/cron/jobs.json` | JSON `{"version": 1, "jobs": [CronJob...]}` | `CronStore` | 任务定义与运行时状态合并存储；写前 pretty-print；进程内 `ReentrantReadWriteLock`；进程间 `FileChannel.tryLock` |
+| `~/.campusclaw/agent/cron/jobs.json.lock` | 二进制 advisory lock | `CronStore.acquireProcessLock` | 多进程互斥（主进程 + `--cron-tick` 子进程） |
+| `~/.campusclaw/agent/cron/runs/{jobId}.jsonl` | JSON-Lines | `CronRunLog` | append-only；每行一条 `CronRunRecord`；`StandardCharsets.UTF_8` 显式编码 |
 
 `CronJob` 字段（持久化结构）：
 
@@ -340,7 +340,7 @@ classDiagram
 
 运行时依赖外部资源：
 
-- 文件系统写入权限：`$HOME/file/.campusclaw/agent/cron/`（jobs.json + runs/）
+- 文件系统写入权限：`$HOME/.campusclaw/agent/cron/`（jobs.json + runs/）
 - JVM：JDK 21（继承自父 pom；用了 sealed interface / record / pattern matching switch）
 - 无网络 / 无数据库
 
@@ -404,7 +404,7 @@ classDiagram
 | 5.6 | XML 注入 | 不涉及 | 仅 JSON 持久化（Jackson）；grep `DocumentBuilderFactory` / `SAXParserFactory` 无命中 |
 | 5.7 | 命令注入 | 不涉及 | 本模块自身**不**调 `ProcessBuilder` / `Runtime.exec`；执行体走 `new Agent(aiService).prompt(...)`，下游 `BashTool` 由 agent 自己的 `allowedTools` 决定，且其防护在 `coding-agent-cli` 的 `BashTool` / `HybridBashTool` 内（本模块不负责） |
 | 5.8 | 输入校验 | 是 | `CronTool.parseSchedule` 显式校验 `at` 必为 epoch millis 或 ISO instant、`every` 必为正整数 ms、`cron` 必通过 `CronExpression.parse`；`handleCreate` 检查 `name` / `prompt` 非空；非法 schedule 返回错误文本而非抛异常 |
-| 5.9 | 敏感数据/个人隐私数据 | 是 | `CronPayload.AgentPrompt.prompt` 可能包含用户输入文本，被持久化到 `jobs.json`；`CronRunRecord.output` 持久化 LLM 输出。当前未做脱敏；`jobs.json` 与 `runs/*.jsonl` 落在 `$HOME/file/.campusclaw/agent/cron/`，依赖文件系统权限保护 |
+| 5.9 | 敏感数据/个人隐私数据 | 是 | `CronPayload.AgentPrompt.prompt` 可能包含用户输入文本，被持久化到 `jobs.json`；`CronRunRecord.output` 持久化 LLM 输出。当前未做脱敏；`jobs.json` 与 `runs/*.jsonl` 落在 `$HOME/.campusclaw/agent/cron/`，依赖文件系统权限保护 |
 | 5.10 | 加解密 | 不涉及 | 无 `Cipher` / `MessageDigest` / `SecretKey` 引用；任务定义与运行日志明文存储 |
 | 5.11 | 文件上传下载 | 不涉及 | 无 `MultipartFile`；`CronStore` / `CronRunLog` 只在固定路径读写自管理文件，无用户控制的路径输入（jobId 由 UUID 生成，不接受外部覆盖） |
 | 5.12 | 硬编码 | 否（合规） | 无 password / apiKey / token 字面量；常量是路径片段（`.campusclaw/agent/cron/jobs.json`）与阈值（`MAX_CONSECUTIVE_ERRORS=3`、`STALE_THRESHOLD_MS`、`DEFAULT_TIMEOUT_SECONDS=300`）—— 业务参数硬编码，未来若需要可暴露为 `@ConfigurationProperties` |
