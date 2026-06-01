@@ -39,15 +39,27 @@ public final class CampusClawHome {
      * @return the resolved configuration root directory
      */
     public static Path baseDir() {
-        String prop = System.getProperty(HOME_PROPERTY);
-        if (prop != null && !prop.isBlank()) {
-            return Path.of(prop);
+        return resolveBaseDir(
+                System.getProperty(HOME_PROPERTY), System.getenv(HOME_ENV), System.getProperty("user.home"));
+    }
+
+    /**
+     * Pure resolution seam for {@link #baseDir()}: picks the config root from the three inputs
+     * without touching process state, so the precedence rules are unit-testable in isolation.
+     *
+     * @param homeProperty value of the {@code campusclaw.home} system property (may be {@code null} or blank)
+     * @param homeEnv value of the {@code CAMPUSCLAW_HOME} environment variable (may be {@code null} or blank)
+     * @param userHome value of the {@code user.home} system property, used for the default location
+     * @return the resolved configuration root directory
+     */
+    static Path resolveBaseDir(String homeProperty, String homeEnv, String userHome) {
+        if (homeProperty != null && !homeProperty.isBlank()) {
+            return Path.of(homeProperty);
         }
-        String env = System.getenv(HOME_ENV);
-        if (env != null && !env.isBlank()) {
-            return Path.of(env);
+        if (homeEnv != null && !homeEnv.isBlank()) {
+            return Path.of(homeEnv);
         }
-        return Path.of(System.getProperty("user.home"), DEFAULT_PARENT, CONFIG_DIR_NAME);
+        return Path.of(userHome, DEFAULT_PARENT, CONFIG_DIR_NAME);
     }
 
     /**
