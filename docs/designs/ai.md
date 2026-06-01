@@ -16,11 +16,11 @@
 
 ### 1.1 需求来源
 
-待开发者补充。代码仓库未为本模块提供独立 README / `*-design.md`；从仓库根 `CLAUDE.md` 与 `docs/module-architecture.md` 可知 ai 模块的定位是 **CampusClaw 项目（前身 pi-mono-java）的"LLM 多供应商抽象层"**。多处源文件注释"Aligned with TypeScript campusclaw <foo>.ts" / "Corresponds to the top-level stream()/complete() functions in the TypeScript campusclaw-ai module"，可推断本模块系按 TypeScript 版 campusclaw-ai 的形状在 Java 侧对位实现，目标是把分散的 LLM SDK（Anthropic / OpenAI / Google / Bedrock / Mistral 等）以及若干 OpenAI 兼容 flavor（z.ai、Kimi、MiniMax、GitHub Copilot、xAI、Groq、Cerebras、OpenRouter 等）收敛到统一的 Java 抽象上，供 agent-core 及上游 cron / assistant / coding-agent-cli 复用。
+待开发者补充。代码仓库未为本模块提供独立 README / `*-design.md`；从仓库根 `CLAUDE.md` 与 `docs/module-architecture.md` 可知 ai 模块的定位是 **CampusClaw 项目（前身 pi-mono-java）的"LLM 多供应商抽象层"**。多处源文件注释"Aligned with TypeScript campusclaw <foo>.ts" / "Corresponds to the top-level stream()/complete() functions in the TypeScript campusclaw-ai module"，可推断本模块系按 TypeScript 版 campusclaw-ai 的形状在 Java 侧对位实现，目标是把分散的 LLM SDK（Anthropic / OpenAI / Google / Bedrock / Mistral 等）以及若干 OpenAI 兼容 flavor（z.ai、Kimi、MiniMax、GitHub Copilot、xAI、Groq、Cerebras、OpenRouter 等）收敛到统一的 Java 抽象上，供 agent-core 及上游 cron / coding-agent-cli 复用。
 
 ### 1.2 需求背景/价值/详情
 
-**背景：** ai 模块是依赖图最底层的 lib（被 agent-core 直接依赖、并通过 agent-core 间接被 cron / assistant / coding-agent-cli 消费）。多个 LLM 服务商各有自己的 SDK、SSE 协议、思考块（thinking）/工具调用（tool_use）/缓存（cache_control）/usage 字段差异；如果没有这一层，每个上游都要重写适配代码且无法跨模型迁移消息。
+**背景：** ai 模块是依赖图最底层的 lib（被 agent-core 直接依赖、并通过 agent-core 间接被 cron / coding-agent-cli 消费）。多个 LLM 服务商各有自己的 SDK、SSE 协议、思考块（thinking）/工具调用（tool_use）/缓存（cache_control）/usage 字段差异；如果没有这一层，每个上游都要重写适配代码且无法跨模型迁移消息。
 
 **价值（公开 API 反推）：** 对外提供以下能力——
 
@@ -41,7 +41,6 @@
 |---|---|---|
 | campusclaw-agent-core | 被依赖 | `AgentLoop` 通过 `StreamFunction`（默认包装 `CampusClawAiService::streamSimple`）消费本模块的 `AssistantMessageEventStream`；`Agent` / `AgentState` 直接引用 `Model` / `AssistantMessage` / `StopReason` |
 | campusclaw-cron | 被依赖（经 agent-core 间接） | `CronJobExecutor` / `CronTool` 通过 agent-core 间接调用本模块 |
-| campusclaw-assistant | 被依赖 | 会话记忆持久化复用 `Message` / `AssistantMessage` 等类型 |
 | campusclaw-coding-agent | 被依赖 | CLI 装配 `CampusClawAiService` / `ApiProviderRegistry` / `ModelRegistry`；override `ProviderConfigResolver` 以读取 `settings.json` |
 | anthropic-java / openai-java / google-cloud-aiplatform / aws bedrockruntime SDK | 依赖（外部） | 各 `*Provider` 的底层传输与协议实现 |
 | reactor-core / spring-webflux / reactor-netty-http | 依赖（外部） | 流式抽象（`Mono` / `Flux` / `Sinks`）与 HTTP 客户端 |
@@ -58,7 +57,6 @@ flowchart LR
     ai["campusclaw-ai"]
     core["campusclaw-agent-core"]
     cron["campusclaw-cron"]
-    assistant["campusclaw-assistant"]
     cli["campusclaw-coding-agent"]
     anthropic_sdk["anthropic-java (外部)"]
     openai_sdk["openai-java (外部)"]
@@ -74,7 +72,6 @@ flowchart LR
     jackson --> ai
     ai --> core
     core --> cron
-    core --> assistant
     core --> cli
 ```
 
@@ -82,7 +79,7 @@ flowchart LR
 
 - **本模块 artifactId**：`campusclaw-ai`
 - **上游（pom 内项目依赖）**：无（本模块是依赖图叶子）
-- **下游（grep 反查 import）**：`campusclaw-agent-core`（一级消费者）；`campusclaw-cron` / `campusclaw-assistant` / `campusclaw-coding-agent` 经 agent-core 间接消费
+- **下游（grep 反查 import）**：`campusclaw-agent-core`（一级消费者）；`campusclaw-cron` / `campusclaw-coding-agent` 经 agent-core 间接消费
 - **外部依赖（top）**：`anthropic-java`、`openai-java`、`google-cloud-aiplatform`、`software.amazon.awssdk:bedrockruntime`、`reactor-core` + `spring-webflux` + `reactor-netty-http`、`jackson-databind` + `jackson-core`、`com.networknt:json-schema-validator`、`spring-context`、`jakarta.annotation-api`
 
 ### 2.2 功能点分解

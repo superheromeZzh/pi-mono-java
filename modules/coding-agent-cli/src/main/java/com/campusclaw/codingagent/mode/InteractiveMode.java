@@ -68,7 +68,6 @@ import com.campusclaw.tui.terminal.Terminal;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.ApplicationContext;
 
 /**
  * Full-screen interactive REPL using TUI component tree rendering.
@@ -96,8 +95,6 @@ public class InteractiveMode {
     private final ModelRegistry modelRegistry;
     private final com.campusclaw.cron.CronService cronService;
     private final com.campusclaw.codingagent.loop.LoopManager loopManager;
-    private final ApplicationContext applicationContext;
-    private com.campusclaw.assistant.memory.ChatMemoryStore chatMemoryStore;
 
     // Scoped models for Ctrl+P cycling (from --models flag)
     private List<Model> scopedModels = List.of();
@@ -178,15 +175,13 @@ public class InteractiveMode {
             Compactor compactor,
             ModelRegistry modelRegistry,
             com.campusclaw.cron.CronService cronService,
-            com.campusclaw.codingagent.loop.LoopManager loopManager,
-            ApplicationContext applicationContext) {
+            com.campusclaw.codingagent.loop.LoopManager loopManager) {
         this.commandRegistry = Objects.requireNonNull(commandRegistry, "commandRegistry");
         this.bashExecutor = bashExecutor;
         this.compactor = compactor;
         this.modelRegistry = modelRegistry;
         this.cronService = cronService;
         this.loopManager = loopManager;
-        this.applicationContext = applicationContext;
     }
 
     /**
@@ -199,7 +194,6 @@ public class InteractiveMode {
         Objects.requireNonNull(session, "session");
         Objects.requireNonNull(terminal, "terminal");
         this.currentSession = session;
-        resolveChatMemoryStore();
         buildComponentTree(session);
         String cwd = System.getProperty("user.dir", "");
         applyInitialFooterState(session, cwd);
@@ -244,18 +238,6 @@ public class InteractiveMode {
                 cronService.stop();
             }
             tui.stop();
-        }
-    }
-
-    // ChatMemoryStore is optional — silently no-op when the DB isn't configured.
-    private void resolveChatMemoryStore() {
-        if (applicationContext == null) {
-            return;
-        }
-        try {
-            chatMemoryStore = applicationContext.getBean(com.campusclaw.assistant.memory.ChatMemoryStore.class);
-        } catch (Exception e) {
-            chatMemoryStore = null;
         }
     }
 
@@ -854,13 +836,6 @@ public class InteractiveMode {
         if (sm != null) {
             sm.appendMessage(new UserMessage(input, System.currentTimeMillis()));
         }
-        if (chatMemoryStore != null && sm != null) {
-            try {
-                chatMemoryStore.append(sm.getSessionId(), List.of(new UserMessage(input, System.currentTimeMillis())));
-            } catch (Exception e) {
-                log.debug("Failed to persist user message to ChatMemory (DB unavailable?): {}", e.getMessage());
-            }
-        }
     }
 
     // Drives re-renders at 80ms so the "Working..." spinner animates while
@@ -913,17 +888,6 @@ public class InteractiveMode {
             return;
         }
         currentAssistantMessage.setComplete(true);
-        if (applicationContext != null && currentAssistantMessage.hasContent()) {
-            String replyText = currentAssistantMessage.getTextContent();
-            if (replyText != null && !replyText.isEmpty()) {
-                try {
-                    applicationContext.publishEvent(
-                            new com.campusclaw.assistant.channel.gateway.AgentResponseEvent(this, replyText));
-                } catch (Exception e) {
-                    log.error("Failed to publish AgentResponseEvent", e);
-                }
-            }
-        }
         currentAssistantMessage = null;
     }
 
@@ -1401,13 +1365,6 @@ public class InteractiveMode {
         var sm = currentSession.getSessionManager();
         if (sm != null) {
             sm.appendMessage(msg);
-        }
-        if (chatMemoryStore != null && sm != null) {
-            try {
-                chatMemoryStore.append(sm.getSessionId(), List.of(msg));
-            } catch (Exception ex) {
-                log.debug("Failed to persist assistant message to ChatMemory (DB unavailable?): {}", ex.getMessage());
-            }
         }
     }
 

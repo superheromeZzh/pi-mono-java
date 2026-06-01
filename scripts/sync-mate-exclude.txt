@@ -8,5 +8,4 @@
 # counterpart in modules/*, add its path here so future syncs preserve it.
 
 # Java code only on mate side
-/com/huawei/hicampus/mate/matecampusclaw/assistant/config/
 /com/huawei/hicampus/mate/matecampusclaw/codingagent/channel/
