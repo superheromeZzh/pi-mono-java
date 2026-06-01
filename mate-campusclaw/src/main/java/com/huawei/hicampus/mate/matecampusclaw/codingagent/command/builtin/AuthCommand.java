@@ -77,8 +77,7 @@ public class AuthCommand implements SlashCommand {
         Provider provider = providerOpt.get();
         authStore.setApiKey(provider, p[1].trim());
         context.output()
-                .println("Saved API key for " + provider.value()
-                        + " to ~/file/.campusclaw/agent/auth.json (mode 0600).");
+                .println("Saved API key for " + provider.value() + " to ~/.campusclaw/agent/auth.json (mode 0600).");
     }
 
     private void doList(SlashCommandContext context) {

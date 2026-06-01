@@ -13,7 +13,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.annotation.Nullable;
 
 /**
- * User-facing settings loaded from {@code ~/file/.campusclaw/agent/settings.json} (global) and merged
+ * User-facing settings loaded from {@code ~/.campusclaw/agent/settings.json} (global) and merged
  * with the per-project {@code .campusclaw/settings.json}. Captures provider/model defaults,
  * transport and UI preferences, and nested configuration blocks for compaction, retry,
  * terminal, images, per-provider credentials and per-agent overrides. Many field names mirror

@@ -234,7 +234,7 @@ public class ModelRegistry {
      * <ol>
      *   <li>Built-in models from {@link #builtInModels()} (compiled-in defaults)</li>
      *   <li>Optional classpath resource {@code /campusclaw-models.json} (override / add)</li>
-     *   <li>Optional user file {@code ~/file/.campusclaw/agent/models.json} (override / add)</li>
+     *   <li>Optional user file {@code ~/.campusclaw/agent/models.json} (override / add)</li>
      * </ol>
      */
     @PostConstruct

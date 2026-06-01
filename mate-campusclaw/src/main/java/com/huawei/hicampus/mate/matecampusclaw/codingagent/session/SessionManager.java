@@ -91,7 +91,7 @@ public class SessionManager {
         this.sessionId = sessionId;
         this.lastEntryId = null;
 
-        // Encode cwd into safe directory name: ~/file/.campusclaw/agent/sessions/--path--/
+        // Encode cwd into safe directory name: ~/.campusclaw/agent/sessions/--path--/
         String safePath = "--" + cwd.replaceFirst("^[/\\\\]", "").replaceAll("[/\\\\:]", "-") + "--";
         Path sessionDir = AppPaths.SESSIONS_DIR.resolve(safePath);
         try {

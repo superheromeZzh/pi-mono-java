@@ -32,7 +32,7 @@ import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
 /**
- * Handles HTTP endpoints that mutate {@code ~/file/.campusclaw/agent/settings.json}
+ * Handles HTTP endpoints that mutate {@code ~/.campusclaw/agent/settings.json}
  * from a UI. Three endpoints today, all writing to the global file only:
  *
  * <ul>

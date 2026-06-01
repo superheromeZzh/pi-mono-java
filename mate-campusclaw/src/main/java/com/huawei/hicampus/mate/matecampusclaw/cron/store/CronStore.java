@@ -27,7 +27,7 @@ import org.springframework.stereotype.Service;
 
 /**
  * JSON file persistence for cron job definitions.
- * Stores jobs in {@code ~/file/.campusclaw/agent/cron/jobs.json}.
+ * Stores jobs in {@code ~/.campusclaw/agent/cron/jobs.json}.
  *
  * @version [br_eCampusCore 25.1.0_Next, 2026/05/06]
  * @since [br_eCampusCore 25.1.0_Next]

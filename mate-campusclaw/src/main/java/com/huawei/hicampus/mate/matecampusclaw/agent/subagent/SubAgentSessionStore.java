@@ -9,7 +9,7 @@ import java.util.Optional;
 
 /**
  * Persistence backend for {@link SubAgentSessionRecord}s. The default file-backed implementation
- * writes one JSON document per session under {@code ~/file/.campusclaw/agent/subagents/<backend>/}.
+ * writes one JSON document per session under {@code ~/.campusclaw/agent/subagents/<backend>/}.
  *
  * <p>First version only persists metadata for audit/inspection; sessions are not auto-resumed on
  * startup.
