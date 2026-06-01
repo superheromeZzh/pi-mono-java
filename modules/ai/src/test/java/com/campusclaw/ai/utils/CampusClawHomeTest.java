@@ -56,17 +56,17 @@ class CampusClawHomeTest {
 
     @Test
     void blankEnvFallsThroughToDefault() {
-        assertEquals(Path.of("/home/u", "file", ".campusclaw"), CampusClawHome.resolveBaseDir(null, "  ", "/home/u"));
+        assertEquals(Path.of("/home/u", ".campusclaw"), CampusClawHome.resolveBaseDir(null, "  ", "/home/u"));
     }
 
     @Test
     void defaultWhenPropertyAndEnvNull() {
-        assertEquals(Path.of("/home/u", "file", ".campusclaw"), CampusClawHome.resolveBaseDir(null, null, "/home/u"));
+        assertEquals(Path.of("/home/u", ".campusclaw"), CampusClawHome.resolveBaseDir(null, null, "/home/u"));
     }
 
     @Test
     void defaultWhenPropertyAndEnvBothBlank() {
-        assertEquals(Path.of("/home/u", "file", ".campusclaw"), CampusClawHome.resolveBaseDir("", "", "/home/u"));
+        assertEquals(Path.of("/home/u", ".campusclaw"), CampusClawHome.resolveBaseDir("", "", "/home/u"));
     }
 
     @Test
@@ -87,6 +87,6 @@ class CampusClawHomeTest {
         // CAMPUSCLAW_HOME env var is absent on the runner (it normally is).
         assumeTrue(System.getenv("CAMPUSCLAW_HOME") == null, "CAMPUSCLAW_HOME is set on this runner");
         System.clearProperty(HOME_PROPERTY);
-        assertEquals(Path.of(System.getProperty("user.home"), "file", ".campusclaw"), CampusClawHome.baseDir());
+        assertEquals(Path.of(System.getProperty("user.home"), ".campusclaw"), CampusClawHome.baseDir());
     }
 }

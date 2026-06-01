@@ -13,7 +13,7 @@ import java.nio.file.Path;
  * <ol>
  *   <li>system property {@code -Dcampusclaw.home}</li>
  *   <li>environment variable {@code CAMPUSCLAW_HOME}</li>
- *   <li>default {@code ~/file/.campusclaw}</li>
+ *   <li>default {@code ~/.campusclaw}</li>
  * </ol>
  *
  * <p>This lives in the {@code ai} module — the lowest module in the dependency graph — so
@@ -27,14 +27,13 @@ public final class CampusClawHome {
 
     private static final String HOME_PROPERTY = "campusclaw.home";
     private static final String HOME_ENV = "CAMPUSCLAW_HOME";
-    private static final String DEFAULT_PARENT = "file";
     private static final String CONFIG_DIR_NAME = ".campusclaw";
     private static final String AGENT_SUBDIR = "agent";
 
     private CampusClawHome() {}
 
     /**
-     * Returns the user-level configuration root (default {@code ~/file/.campusclaw}).
+     * Returns the user-level configuration root (default {@code ~/.campusclaw}).
      *
      * @return the resolved configuration root directory
      */
@@ -59,7 +58,7 @@ public final class CampusClawHome {
         if (homeEnv != null && !homeEnv.isBlank()) {
             return Path.of(homeEnv);
         }
-        return Path.of(userHome, DEFAULT_PARENT, CONFIG_DIR_NAME);
+        return Path.of(userHome, CONFIG_DIR_NAME);
     }
 
     /**
