@@ -286,6 +286,24 @@ class ChatWebSocketHandlerTest {
                 null);
     }
 
+    private static com.campusclaw.ai.types.Model testModelWithProvider(
+            String id, com.campusclaw.ai.types.Provider provider) {
+        return new com.campusclaw.ai.types.Model(
+                id,
+                id,
+                com.campusclaw.ai.types.Api.OPENAI_COMPLETIONS,
+                provider,
+                "https://example.com",
+                false,
+                List.of(com.campusclaw.ai.types.InputModality.TEXT),
+                new com.campusclaw.ai.types.ModelCost(1, 2, 0, 0),
+                128000,
+                4096,
+                null,
+                null,
+                null);
+    }
+
     @Test
     void listModelsReturnsAvailableModelsWithCurrent() throws Exception {
         var modelRegistry = buildSeededTestModelRegistry();
@@ -321,6 +339,46 @@ class ChatWebSocketHandlerTest {
         assertEquals("openai", models.get(0).path("provider").asText());
         assertTrue(models.get(0).has("contextWindow"));
         assertTrue(models.get(0).has("cost"));
+    }
+
+    @Test
+    void listModelsDefaultFiltersByCredentialsAllTrueBypasses() throws Exception {
+        var modelRegistry = new com.campusclaw.ai.model.ModelRegistry();
+        modelRegistry.register(testModelWithProvider("keyed-a", com.campusclaw.ai.types.Provider.ANTHROPIC));
+        modelRegistry.register(testModelWithProvider("unkeyed-z", com.campusclaw.ai.types.Provider.OPENAI));
+        var settingsManager = mock(com.campusclaw.codingagent.settings.SettingsManager.class);
+        when(settingsManager.load()).thenReturn(com.campusclaw.codingagent.settings.Settings.empty());
+        var resolver = mock(com.campusclaw.ai.env.ProviderConfigResolver.class);
+        when(resolver.resolve(eq(com.campusclaw.ai.types.Provider.ANTHROPIC), any()))
+                .thenReturn(new com.campusclaw.ai.env.ResolvedProviderConfig("sk-key", null, null));
+        when(resolver.resolve(eq(com.campusclaw.ai.types.Provider.OPENAI), any()))
+                .thenReturn(new com.campusclaw.ai.env.ResolvedProviderConfig(null, null, null));
+        var catalog =
+                new com.campusclaw.codingagent.model.ModelCatalogService(modelRegistry, settingsManager, resolver);
+        when(session.getModelId()).thenReturn("keyed-a");
+        ChatWebSocketHandler handler = new ChatWebSocketHandler(pool, catalog);
+
+        if (server != null) {
+            server.disposeNow();
+        }
+        server = HttpServer.create()
+                .host("127.0.0.1")
+                .port(0)
+                .route(r -> r.get(
+                        "/api/ws/chat", (req, res) -> res.sendWebsocket((in, out) -> handler.handle(in, out, null))))
+                .bindNow();
+
+        // Default (all:false) → only the credentialed model is offered.
+        JsonNode def = runRequestResponse("{\"type\":\"list_models\",\"id\":\"d\"}", "d");
+        assertTrue(def.path("success").asBoolean(), "list_models should succeed");
+        JsonNode defModels = def.path("data").path("models");
+        assertEquals(1, defModels.size(), "default lists only usable (credentialed) models");
+        assertEquals("keyed-a", defModels.get(0).path("id").asText());
+
+        // all:true → full registry escape hatch, includes the uncredentialed model.
+        JsonNode all = runRequestResponse("{\"type\":\"list_models\",\"id\":\"a\",\"all\":true}", "a");
+        assertTrue(all.path("success").asBoolean(), "list_models all:true should succeed");
+        assertEquals(2, all.path("data").path("models").size(), "all:true returns the full registry");
     }
 
     // =========================================================================

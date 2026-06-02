@@ -262,9 +262,14 @@ components:
       title: List available models
       summary: |
         Returns the catalogue of models the client may switch to. By default
-        only models that pass `settings.enabledModels` filtering are returned;
-        send `all: true` to bypass the filter. Custom-provider models from
-        `settings.customModels` are always included regardless of filtering.
+        only **usable** models are returned — those with resolvable credentials
+        (an API key from auth.json, `settings.provider.<id>.apiKey`, a
+        provider env var, or an embedded key; custom-provider models always
+        count). The default set is additionally narrowed by
+        `settings.enabledModels` when configured, and custom-provider models
+        are always included and sorted to the front of the list. Send
+        `all: true` to bypass both filters and get every registered model
+        (including ones without credentials).
       payload:
         $ref: '#/components/schemas/ListModelsCmd'
       examples:
@@ -506,9 +511,11 @@ components:
           type: boolean
           default: false
           description: |
-            When `true`, return every model registered in the registry. When
-            `false` (default), return only models that pass
-            `settings.enabledModels` filtering plus all custom-provider models.
+            When `true`, return every model registered in the registry,
+            including models without resolvable credentials. When `false`
+            (default), return only usable models — those with resolvable
+            credentials — optionally narrowed by `settings.enabledModels`, with
+            all custom-provider models always included and sorted first.
     ListModelsResponseData:
       type: object
       description: |
@@ -526,7 +533,10 @@ components:
           type: boolean
           description: >-
             True when `settings.enabledModels` narrowed the result; false when
-            `all: true` or no filter is configured.
+            `all: true` or no whitelist is configured. Independently of this
+            flag, the default (`all: false`) list is always filtered to models
+            with resolvable credentials — `filtered` reflects only the
+            `enabledModels` whitelist, not the credential filter.
         models:
           type: array
           items:
@@ -698,9 +708,11 @@ components:
           description: |
             True when the server can resolve an API key for this model from any
             source (auth.json, settings.provider.&lt;id&gt;.apiKey, env vars, or
-            embedded). Frontends should disable / annotate options where this
-            is false to avoid users selecting models that will fail at runtime.
-            Custom-provider models are always reported as `true`.
+            embedded). Custom-provider models are always reported as `true`.
+            In the default (`all: false`) listing this is always `true`, since
+            uncredentialed models are filtered out; it is meaningful mainly in
+            the `all: true` listing, where frontends should disable / annotate
+            options where this is false to avoid runtime failures.
         cost:
           type: object
           properties:

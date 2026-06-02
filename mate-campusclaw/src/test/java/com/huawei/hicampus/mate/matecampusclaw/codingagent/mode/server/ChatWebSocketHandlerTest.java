@@ -286,6 +286,24 @@ class ChatWebSocketHandlerTest {
                 null);
     }
 
+    private static com.huawei.hicampus.mate.matecampusclaw.ai.types.Model testModelWithProvider(
+            String id, com.huawei.hicampus.mate.matecampusclaw.ai.types.Provider provider) {
+        return new com.huawei.hicampus.mate.matecampusclaw.ai.types.Model(
+                id,
+                id,
+                com.huawei.hicampus.mate.matecampusclaw.ai.types.Api.OPENAI_COMPLETIONS,
+                provider,
+                "https://example.com",
+                false,
+                List.of(com.huawei.hicampus.mate.matecampusclaw.ai.types.InputModality.TEXT),
+                new com.huawei.hicampus.mate.matecampusclaw.ai.types.ModelCost(1, 2, 0, 0),
+                128000,
+                4096,
+                null,
+                null,
+                null);
+    }
+
     @Test
     void listModelsReturnsAvailableModelsWithCurrent() throws Exception {
         var modelRegistry = buildSeededTestModelRegistry();
@@ -321,6 +339,46 @@ class ChatWebSocketHandlerTest {
         assertEquals("openai", models.get(0).path("provider").asText());
         assertTrue(models.get(0).has("contextWindow"));
         assertTrue(models.get(0).has("cost"));
+    }
+
+    @Test
+    void listModelsDefaultFiltersByCredentialsAllTrueBypasses() throws Exception {
+        var modelRegistry = new com.huawei.hicampus.mate.matecampusclaw.ai.model.ModelRegistry();
+        modelRegistry.register(testModelWithProvider("keyed-a", com.huawei.hicampus.mate.matecampusclaw.ai.types.Provider.ANTHROPIC));
+        modelRegistry.register(testModelWithProvider("unkeyed-z", com.huawei.hicampus.mate.matecampusclaw.ai.types.Provider.OPENAI));
+        var settingsManager = mock(com.huawei.hicampus.mate.matecampusclaw.codingagent.settings.SettingsManager.class);
+        when(settingsManager.load()).thenReturn(com.huawei.hicampus.mate.matecampusclaw.codingagent.settings.Settings.empty());
+        var resolver = mock(com.huawei.hicampus.mate.matecampusclaw.ai.env.ProviderConfigResolver.class);
+        when(resolver.resolve(eq(com.huawei.hicampus.mate.matecampusclaw.ai.types.Provider.ANTHROPIC), any()))
+                .thenReturn(new com.huawei.hicampus.mate.matecampusclaw.ai.env.ResolvedProviderConfig("sk-key", null, null));
+        when(resolver.resolve(eq(com.huawei.hicampus.mate.matecampusclaw.ai.types.Provider.OPENAI), any()))
+                .thenReturn(new com.huawei.hicampus.mate.matecampusclaw.ai.env.ResolvedProviderConfig(null, null, null));
+        var catalog =
+                new com.huawei.hicampus.mate.matecampusclaw.codingagent.model.ModelCatalogService(modelRegistry, settingsManager, resolver);
+        when(session.getModelId()).thenReturn("keyed-a");
+        ChatWebSocketHandler handler = new ChatWebSocketHandler(pool, catalog);
+
+        if (server != null) {
+            server.disposeNow();
+        }
+        server = HttpServer.create()
+                .host("127.0.0.1")
+                .port(0)
+                .route(r -> r.get(
+                        "/api/ws/chat", (req, res) -> res.sendWebsocket((in, out) -> handler.handle(in, out, null))))
+                .bindNow();
+
+        // Default (all:false) → only the credentialed model is offered.
+        JsonNode def = runRequestResponse("{\"type\":\"list_models\",\"id\":\"d\"}", "d");
+        assertTrue(def.path("success").asBoolean(), "list_models should succeed");
+        JsonNode defModels = def.path("data").path("models");
+        assertEquals(1, defModels.size(), "default lists only usable (credentialed) models");
+        assertEquals("keyed-a", defModels.get(0).path("id").asText());
+
+        // all:true → full registry escape hatch, includes the uncredentialed model.
+        JsonNode all = runRequestResponse("{\"type\":\"list_models\",\"id\":\"a\",\"all\":true}", "a");
+        assertTrue(all.path("success").asBoolean(), "list_models all:true should succeed");
+        assertEquals(2, all.path("data").path("models").size(), "all:true returns the full registry");
     }
 
     // =========================================================================
